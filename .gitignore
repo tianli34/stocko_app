@@ -1,0 +1,44 @@
+# === Generic ===
+*.class
+*.log
+*.pyc
+*.swp
+.DS_Store
+.atom/
+.history
+.svn/
+migrate_working_dir/
+
+# === IDEs ===
+*.iml
+*.ipr
+*.iws
+.idea/
+.vscode/  # 可根据需要决定是否注释
+
+# === Flutter/Dart/Pub ===
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.pub-cache/
+.pub/
+build/
+**/ios/Flutter/.last_build_id
+
+# === Android build artifacts ===
+/android/app/debug
+/android/app/profile
+/android/app/release
+
+# === Generated Code ===
+**/*.g.dart
+**/*.freezed.dart
+**/*.gr.dart
+**/*.mocks.dart
+
+# === Drift (if applicable) ===
+.drift_tool/
+
+# === Symbolication & Obfuscation ===
+app.*.symbols
+app.*.map.json
