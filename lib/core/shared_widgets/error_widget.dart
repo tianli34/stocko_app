@@ -11,7 +11,7 @@ class CustomErrorWidget extends StatelessWidget {
   final bool showIcon;
 
   const CustomErrorWidget({
-    Key? key,
+    super.key,
     this.title,
     required this.message,
     this.icon,
@@ -20,7 +20,7 @@ class CustomErrorWidget extends StatelessWidget {
     this.onSecondaryAction,
     this.secondaryActionText,
     this.showIcon = true,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -86,8 +86,7 @@ class NetworkErrorWidget extends StatelessWidget {
   final VoidCallback? onRetry;
   final String? customMessage;
 
-  const NetworkErrorWidget({Key? key, this.onRetry, this.customMessage})
-    : super(key: key);
+  const NetworkErrorWidget({super.key, this.onRetry, this.customMessage});
 
   @override
   Widget build(BuildContext context) {
@@ -109,13 +108,13 @@ class EmptyStateWidget extends StatelessWidget {
   final String? actionText;
 
   const EmptyStateWidget({
-    Key? key,
+    super.key,
     this.title,
     required this.message,
     this.icon,
     this.onAction,
     this.actionText,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

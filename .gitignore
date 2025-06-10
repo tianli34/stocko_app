@@ -42,3 +42,9 @@ build/
 # === Symbolication & Obfuscation ===
 app.*.symbols
 app.*.map.json
+
+
+# === 打包输出（如打包为 zip/apk ===
+*.zip
+*.aab
+*.apk

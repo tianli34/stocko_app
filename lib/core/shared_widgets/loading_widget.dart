@@ -7,12 +7,12 @@ class LoadingWidget extends StatelessWidget {
   final bool showMessage;
 
   const LoadingWidget({
-    Key? key,
+    super.key,
     this.message,
     this.size = 40.0,
     this.color,
     this.showMessage = true,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -50,11 +50,11 @@ class LoadingOverlay extends StatelessWidget {
   final String? loadingMessage;
 
   const LoadingOverlay({
-    Key? key,
+    super.key,
     required this.child,
     required this.isLoading,
     this.loadingMessage,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
