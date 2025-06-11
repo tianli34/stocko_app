@@ -69,6 +69,55 @@ class FakeProductRepository implements IProductRepository {
       return null;
     }
   }
+
+  @override
+  Future<List<Product>> getProductsByCondition({
+    String? categoryId,
+    String? status,
+    String? keyword,
+  }) async {
+    if (_shouldThrow) throw Exception('Network error');
+
+    var filteredProducts = _products.where((product) {
+      bool matches = true;
+
+      if (categoryId != null) {
+        matches = matches && product.categoryId == categoryId;
+      }
+
+      if (status != null) {
+        matches = matches && product.status == status;
+      }
+      if (keyword != null && keyword.isNotEmpty) {
+        matches =
+            matches &&
+            (product.name.toLowerCase().contains(keyword.toLowerCase()) ||
+                (product.barcode?.toLowerCase().contains(
+                      keyword.toLowerCase(),
+                    ) ??
+                    false) ||
+                (product.sku?.toLowerCase().contains(keyword.toLowerCase()) ??
+                    false));
+      }
+
+      return matches;
+    });
+
+    return filteredProducts.toList();
+  }
+
+  @override
+  Stream<List<Product>> watchProductsByCategory(String categoryId) {
+    if (_shouldThrow) {
+      return Stream.error(Exception('Network error'));
+    }
+
+    final filteredProducts = _products
+        .where((product) => product.categoryId == categoryId)
+        .toList();
+
+    return Stream.value(filteredProducts);
+  }
 }
 
 void main() {

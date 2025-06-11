@@ -7,15 +7,20 @@ import 'dart:io';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'products_table.dart';
+import 'categories_table.dart';
 import '../../features/product/data/dao/product_dao.dart';
+import '../../features/product/data/dao/category_dao.dart';
 
 part 'database.g.dart';
 
-@DriftDatabase(tables: [ProductsTable], daos: [ProductDao])
+@DriftDatabase(
+  tables: [ProductsTable, CategoriesTable],
+  daos: [ProductDao, CategoryDao],
+)
 class AppDatabase extends _$AppDatabase {
   AppDatabase(super.e);
   @override
-  int get schemaVersion => 2;
+  int get schemaVersion => 3;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -27,6 +32,15 @@ class AppDatabase extends _$AppDatabase {
         // 从版本1升级到版本2：修改产品表的ID列为非空
         // 由于SQLite不支持直接修改列的null约束，我们需要重建表
         await m.recreateAllViews();
+      }
+      if (from == 2 && to == 3) {
+        // 从版本2升级到版本3：添加类别表
+        await m.createTable(categoriesTable);
+      }
+      if (from == 1 && to == 3) {
+        // 从版本1直接升级到版本3
+        await m.recreateAllViews();
+        await m.createTable(categoriesTable);
       }
     },
   );

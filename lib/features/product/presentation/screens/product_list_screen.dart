@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import '../../application/provider/product_providers.dart';
 import '../../domain/model/product.dart';
 import '../../../../core/shared_widgets/error_widget.dart';
 import '../../../../core/shared_widgets/loading_widget.dart';
+import '../../../../core/constants/app_routes.dart';
 import '../widgets/product_list_tile.dart';
 import 'product_add_edit_screen.dart';
 
@@ -39,6 +41,11 @@ class ProductListScreen extends ConsumerWidget {
     return Scaffold(
       appBar: AppBar(
         title: const Text('产品列表'),
+        leading: IconButton(
+          onPressed: () => context.go(AppRoutes.home),
+          icon: const Icon(Icons.home),
+          tooltip: '返回主页',
+        ),
         actions: [
           IconButton(
             onPressed: () {

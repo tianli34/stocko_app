@@ -3,11 +3,44 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:stocko_app/features/product/domain/model/category.dart';
-import 'package:stocko_app/features/product/application/provider/category_providers.dart';
+import 'package:stocko_app/features/product/domain/repository/i_product_repository.dart';
+import 'package:stocko_app/features/product/data/repository/product_repository.dart';
+import 'package:stocko_app/features/product/application/category_notifier.dart';
+import 'package:stocko_app/features/product/application/category_service.dart';
 import 'package:stocko_app/features/product/presentation/screens/category_selection_screen.dart';
 
 // Mock类定义
-class MockCategoryNotifier extends Mock implements CategoryNotifier {}
+class MockCategoryService extends Mock implements CategoryService {}
+
+class MockProductRepository extends Mock implements IProductRepository {}
+
+class MockCategoryListNotifier extends CategoryListNotifier {
+  MockCategoryListNotifier(
+    List<Category> categories,
+    MockCategoryService mockService,
+  ) : super(mockService) {
+    state = CategoryListState(categories: categories);
+  }
+
+  @override
+  Future<void> addCategory({required String name, String? parentId}) async {
+    // Mock implementation - do nothing for tests
+  }
+
+  @override
+  Future<void> updateCategory({
+    required String id,
+    required String name,
+    String? parentId,
+  }) async {
+    // Mock implementation - do nothing for tests
+  }
+
+  @override
+  Future<void> deleteCategory(String id) async {
+    // Mock implementation - do nothing for tests
+  }
+}
 
 // 为了让Mocktail能够识别Category类型
 class FakeCategory extends Fake implements Category {}
@@ -20,7 +53,6 @@ void main() {
       // 注册Fake类型
       registerFallbackValue(FakeCategory());
     });
-
     setUp(() {
       // 准备测试数据
       testCategories = [
@@ -28,19 +60,31 @@ void main() {
         const Category(id: '2', name: '日用百货'),
         const Category(id: '3', name: '服装鞋帽'),
       ];
-    });
-
-    // 辅助函数：创建测试Widget
+    }); // 辅助函数：创建测试Widget
     Widget createTestWidget({
       String? selectedCategoryId,
       bool isSelectionMode = true,
       List<Category>? categories,
     }) {
+      final mockService = MockCategoryService();
+      final mockProductRepository = MockProductRepository();
+
+      // 设置mock产品仓储的默认行为
+      when(
+        () => mockProductRepository.getProductsByCondition(
+          categoryId: any(named: 'categoryId'),
+        ),
+      ).thenAnswer((_) async => []); // 返回空的产品列表
+
       return ProviderScope(
         overrides: [
-          categoriesProvider.overrideWith(
-            (ref) => CategoryNotifier()..state = categories ?? testCategories,
+          categoryListProvider.overrideWith(
+            (ref) => MockCategoryListNotifier(
+              categories ?? testCategories,
+              mockService,
+            ),
           ),
+          productRepositoryProvider.overrideWithValue(mockProductRepository),
         ],
         child: MaterialApp(
           home: CategorySelectionScreen(
@@ -143,9 +187,7 @@ void main() {
         await tester.pumpWidget(
           ProviderScope(
             overrides: [
-              categoriesProvider.overrideWith(
-                (ref) => CategoryNotifier()..state = testCategories,
-              ),
+              categoriesProvider.overrideWith((ref) => testCategories),
             ],
             child: MaterialApp(
               home: Builder(
@@ -283,7 +325,6 @@ void main() {
         // 验证输入框中有原来的名称
         expect(find.text('食品饮料'), findsAtLeastNWidgets(1));
       });
-
       testWidgets('点击菜单中的删除应该显示删除确认对话框', (WidgetTester tester) async {
         await tester.pumpWidget(createTestWidget());
 
@@ -296,8 +337,8 @@ void main() {
         await tester.pumpAndSettle(); // 验证删除确认对话框出现
         expect(find.byType(AlertDialog), findsOneWidget);
         expect(find.text('删除类别'), findsOneWidget);
-        expect(find.textContaining('确定要删除类别"食品饮料"吗？'), findsOneWidget);
-        expect(find.textContaining('删除后无法恢复'), findsOneWidget);
+        expect(find.textContaining('即将删除类别 "食品饮料"'), findsOneWidget);
+        expect(find.textContaining('此操作不可恢复'), findsOneWidget);
       });
 
       testWidgets('添加子类时输入为空应该显示验证错误', (WidgetTester tester) async {
@@ -380,8 +421,7 @@ void main() {
         // 验证子类别图标
         expect(find.byIcon(Icons.subdirectory_arrow_right), findsNWidgets(2));
       });
-
-      testWidgets('子类别不应该显示新增子类选项', (WidgetTester tester) async {
+      testWidgets('子类别应该显示新增子类选项（支持最多三级）', (WidgetTester tester) async {
         // 创建包含子类的测试数据
         final categoriesWithSub = [
           const Category(id: '1', name: '食品饮料'),
@@ -400,7 +440,33 @@ void main() {
         await tester.tap(menuButtons.at(1));
         await tester.pumpAndSettle();
 
-        // 验证子类别菜单中没有"新增子类"选项
+        // 验证子类别菜单中有"新增子类"选项（因为是二级，可以添加三级）
+        expect(find.text('新增子类'), findsOneWidget);
+        expect(find.text('重命名'), findsOneWidget);
+        expect(find.text('删除'), findsOneWidget);
+      });
+
+      testWidgets('三级类别不应该显示新增子类选项', (WidgetTester tester) async {
+        // 创建包含三级类别的测试数据
+        final categoriesWithThreeLevels = [
+          const Category(id: '1', name: '食品饮料'),
+          const Category(id: 'sub1', name: '牛奶饮品', parentId: '1'),
+          const Category(id: 'sub2', name: '纯牛奶', parentId: 'sub1'),
+        ];
+
+        await tester.pumpWidget(
+          createTestWidget(categories: categoriesWithThreeLevels),
+        );
+
+        // 找到三级类别的菜单按钮并点击
+        final menuButtons = find.byType(PopupMenuButton<String>);
+        expect(menuButtons, findsNWidgets(3)); // 主类别、子类别和三级类别各一个
+
+        // 点击三级类别的菜单按钮（第三个）
+        await tester.tap(menuButtons.at(2));
+        await tester.pumpAndSettle();
+
+        // 验证三级类别菜单中没有"新增子类"选项（已达到最大层级）
         expect(find.text('新增子类'), findsNothing);
         expect(find.text('重命名'), findsOneWidget);
         expect(find.text('删除'), findsOneWidget);
@@ -497,11 +563,7 @@ void main() {
       testWidgets('当categories为null时应该正常处理', (WidgetTester tester) async {
         await tester.pumpWidget(
           ProviderScope(
-            overrides: [
-              categoriesProvider.overrideWith(
-                (ref) => CategoryNotifier()..state = [],
-              ),
-            ],
+            overrides: [categoriesProvider.overrideWith((ref) => [])],
             child: const MaterialApp(home: CategorySelectionScreen()),
           ),
         );
@@ -558,6 +620,64 @@ void main() {
         await tester.pumpAndSettle(); // 验证对话框结构
         expect(find.byType(Form), findsOneWidget);
         expect(find.byType(TextFormField), findsOneWidget);
+      });
+    });
+
+    group('多级类别测试', () {
+      testWidgets('应该正确显示三级类别层级结构', (WidgetTester tester) async {
+        // 创建三级类别测试数据
+        final categoriesWithThreeLevels = [
+          const Category(id: '1', name: '食品饮料'),
+          const Category(id: 'sub1', name: '牛奶饮品', parentId: '1'),
+          const Category(id: 'sub2', name: '纯牛奶', parentId: 'sub1'),
+          const Category(id: 'sub3', name: '低脂牛奶', parentId: 'sub1'),
+        ];
+
+        await tester.pumpWidget(
+          createTestWidget(categories: categoriesWithThreeLevels),
+        );
+
+        // 验证所有类别都显示
+        expect(find.text('食品饮料'), findsOneWidget);
+        expect(find.text('牛奶饮品'), findsOneWidget);
+        expect(find.text('纯牛奶'), findsOneWidget);
+        expect(find.text('低脂牛奶'), findsOneWidget);
+
+        // 验证三级类别有正确的subtitle
+        expect(find.text('子类别'), findsOneWidget); // 二级类别
+        expect(find.text('三级类别'), findsNWidgets(2)); // 三级类别
+
+        // 验证有正确数量的菜单按钮
+        expect(find.byType(PopupMenuButton<String>), findsNWidgets(4));
+      });
+      testWidgets('删除包含多级子类别的类别应该显示正确的提示信息', (WidgetTester tester) async {
+        // 创建多级类别测试数据
+        final categoriesWithMultipleLevels = [
+          const Category(id: '1', name: '食品饮料'),
+          const Category(id: 'sub1', name: '牛奶饮品', parentId: '1'),
+          const Category(id: 'sub2', name: '纯牛奶', parentId: 'sub1'),
+          const Category(id: 'sub3', name: '酒类', parentId: '1'),
+        ];
+
+        await tester.pumpWidget(
+          createTestWidget(categories: categoriesWithMultipleLevels),
+        );
+
+        // 点击顶级类别的菜单按钮
+        await tester.tap(find.byType(PopupMenuButton<String>).first);
+        await tester.pumpAndSettle();
+
+        // 点击删除
+        await tester.tap(find.text('删除'));
+        await tester.pumpAndSettle();
+
+        // 验证新的删除对话框显示正确的信息
+        expect(find.byType(AlertDialog), findsOneWidget);
+        expect(find.text('删除类别'), findsOneWidget);
+        expect(find.textContaining('即将删除类别'), findsOneWidget);
+        expect(find.textContaining('子类别：3 个'), findsOneWidget); // 应该显示3个子类别
+        expect(find.text('仅删除当前类别'), findsOneWidget);
+        expect(find.text('级联删除所有内容'), findsOneWidget);
       });
     });
   });

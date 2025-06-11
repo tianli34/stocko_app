@@ -31,4 +31,20 @@ abstract class IProductRepository {
   /// 获取所有产品
   /// 返回当前所有产品的列表
   Future<List<Product>> getAllProducts();
+
+  /// 根据条件查询产品
+  /// [categoryId] 类别ID
+  /// [status] 产品状态
+  /// [keyword] 关键字
+  /// 返回符合条件的产品列表
+  Future<List<Product>> getProductsByCondition({
+    String? categoryId,
+    String? status,
+    String? keyword,
+  });
+
+  /// 监听指定类别的产品
+  /// [categoryId] 类别ID
+  /// 返回指定类别产品的数据流
+  Stream<List<Product>> watchProductsByCategory(String categoryId);
 }

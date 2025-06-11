@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../application/provider/category_providers.dart';
+import 'package:go_router/go_router.dart';
+import '../../application/category_notifier.dart';
 import '../../domain/model/category.dart';
+import '../../data/repository/product_repository.dart';
+import '../../../../core/constants/app_routes.dart';
 
 /// 类别选择屏幕
 /// 支持选择、新增、重命名、删除类别的功能
@@ -37,6 +40,11 @@ class _CategorySelectionScreenState
     return Scaffold(
       appBar: AppBar(
         title: Text(widget.isSelectionMode ? '选择类别' : '类别管理'),
+        leading: IconButton(
+          onPressed: () => context.go(AppRoutes.home),
+          icon: const Icon(Icons.home),
+          tooltip: '返回主页',
+        ),
         actions: [
           IconButton(
             onPressed: () => _showAddCategoryDialog(context),
@@ -96,19 +104,34 @@ class _CategorySelectionScreenState
         .toList();
 
     for (final category in topLevelCategories) {
-      widgets.add(_buildCategoryTile(context, category, 0));
-
-      // 获取子类别
-      final subCategories = categories
-          .where((subCat) => subCat.parentId == category.id)
-          .toList();
-
-      for (final subCategory in subCategories) {
-        widgets.add(_buildCategoryTile(context, subCategory, 1));
-      }
+      _buildCategoryWithChildren(widgets, categories, category, 0);
     }
 
     return widgets;
+  }
+
+  void _buildCategoryWithChildren(
+    List<Widget> widgets,
+    List<Category> allCategories,
+    Category category,
+    int level,
+  ) {
+    widgets.add(_buildCategoryTile(context, category, level));
+
+    // 获取当前类别的子类别
+    final subCategories = allCategories
+        .where((subCat) => subCat.parentId == category.id)
+        .toList();
+
+    // 递归添加子类别
+    for (final subCategory in subCategories) {
+      _buildCategoryWithChildren(
+        widgets,
+        allCategories,
+        subCategory,
+        level + 1,
+      );
+    }
   }
 
   Widget _buildCategoryTile(
@@ -118,9 +141,13 @@ class _CategorySelectionScreenState
   ]) {
     final isSelected = _selectedCategoryId == category.id;
     final isSubCategory = level > 0;
+    final isThirdLevel = level > 1;
+
+    // 计算左侧边距
+    final leftMargin = level * 24.0;
 
     return Container(
-      margin: EdgeInsets.only(bottom: 8, left: isSubCategory ? 24.0 : 0.0),
+      margin: EdgeInsets.only(bottom: 8, left: leftMargin),
       child: Card(
         elevation: isSelected ? 4 : 1,
         color: isSelected
@@ -147,9 +174,9 @@ class _CategorySelectionScreenState
             ),
           ),
           subtitle: isSubCategory
-              ? const Text(
-                  '子类别',
-                  style: TextStyle(fontSize: 12, color: Colors.grey),
+              ? Text(
+                  isThirdLevel ? '三级类别' : '子类别',
+                  style: const TextStyle(fontSize: 12, color: Colors.grey),
                 )
               : null,
           trailing: Row(
@@ -169,8 +196,8 @@ class _CategorySelectionScreenState
                 onSelected: (action) =>
                     _handleCategoryAction(context, category, action),
                 itemBuilder: (context) => [
-                  // 只有顶级类别可以添加子类
-                  if (!isSubCategory)
+                  // 只有非三级类别可以添加子类（支持最多三级）
+                  if (level < 2)
                     const PopupMenuItem(
                       value: 'add_subcategory',
                       child: Row(
@@ -271,18 +298,27 @@ class _CategorySelectionScreenState
             child: const Text('取消'),
           ),
           ElevatedButton(
-            onPressed: () {
+            onPressed: () async {
               if (formKey.currentState!.validate()) {
-                ref
-                    .read(categoriesProvider.notifier)
-                    .addCategory(nameController.text.trim());
-                Navigator.of(context).pop();
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('类别添加成功'),
-                    backgroundColor: Colors.green,
-                  ),
-                );
+                try {
+                  await ref
+                      .read(categoryListProvider.notifier)
+                      .addCategory(name: nameController.text.trim());
+                  Navigator.of(context).pop();
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('类别添加成功'),
+                      backgroundColor: Colors.green,
+                    ),
+                  );
+                } catch (e) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('添加失败: $e'),
+                      backgroundColor: Colors.red,
+                    ),
+                  );
+                }
               }
             },
             child: const Text('添加'),
@@ -331,21 +367,30 @@ class _CategorySelectionScreenState
             child: const Text('取消'),
           ),
           ElevatedButton(
-            onPressed: () {
+            onPressed: () async {
               if (formKey.currentState!.validate()) {
-                ref
-                    .read(categoriesProvider.notifier)
-                    .addSubCategory(
-                      nameController.text.trim(),
-                      parentCategory.id,
-                    );
-                Navigator.of(context).pop();
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text('子类"${nameController.text.trim()}"添加成功'),
-                    backgroundColor: Colors.green,
-                  ),
-                );
+                try {
+                  await ref
+                      .read(categoryListProvider.notifier)
+                      .addCategory(
+                        name: nameController.text.trim(),
+                        parentId: parentCategory.id,
+                      );
+                  Navigator.of(context).pop();
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('子类"${nameController.text.trim()}"添加成功'),
+                      backgroundColor: Colors.green,
+                    ),
+                  );
+                } catch (e) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('添加失败: $e'),
+                      backgroundColor: Colors.red,
+                    ),
+                  );
+                }
               }
             },
             child: const Text('添加'),
@@ -392,18 +437,30 @@ class _CategorySelectionScreenState
             child: const Text('取消'),
           ),
           ElevatedButton(
-            onPressed: () {
+            onPressed: () async {
               if (formKey.currentState!.validate()) {
-                ref
-                    .read(categoriesProvider.notifier)
-                    .updateCategory(category.id, nameController.text.trim());
-                Navigator.of(context).pop();
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('类别重命名成功'),
-                    backgroundColor: Colors.green,
-                  ),
-                );
+                try {
+                  await ref
+                      .read(categoryListProvider.notifier)
+                      .updateCategory(
+                        id: category.id,
+                        name: nameController.text.trim(),
+                      );
+                  Navigator.of(context).pop();
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('类别重命名成功'),
+                      backgroundColor: Colors.green,
+                    ),
+                  );
+                } catch (e) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('重命名失败: $e'),
+                      backgroundColor: Colors.red,
+                    ),
+                  );
+                }
               }
             },
             child: const Text('保存'),
@@ -413,51 +470,389 @@ class _CategorySelectionScreenState
     );
   }
 
-  void _showDeleteCategoryDialog(BuildContext context, Category category) {
+  void _showDeleteCategoryDialog(
+    BuildContext context,
+    Category category,
+  ) async {
     final categories = ref.read(categoriesProvider);
-    final hasSubCategories = categories.any(
-      (cat) => cat.parentId == category.id,
-    );
+    final allSubCategories = _getAllSubCategories(categories, category.id);
+    final hasSubCategories = allSubCategories.isNotEmpty;
+
+    // 获取关联产品数量
+    int relatedProductsCount = 0;
+    try {
+      final productRepository = ref.read(productRepositoryProvider);
+      final products = await productRepository.getProductsByCondition(
+        categoryId: category.id,
+      );
+      relatedProductsCount = products.length;
+    } catch (e) {
+      print('获取产品数量失败: $e');
+      // 如果获取失败，使用0作为默认值
+    }
 
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('删除类别'),
-        content: Text(
-          hasSubCategories
-              ? '确定要删除类别"${category.name}"吗？\n\n删除后该类别下的所有子类别也将被删除，且无法恢复。'
-              : '确定要删除类别"${category.name}"吗？\n\n删除后无法恢复。',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('取消'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              ref.read(categoriesProvider.notifier).deleteCategory(category.id);
-              Navigator.of(context).pop();
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('类别删除成功'),
-                  backgroundColor: Colors.orange,
-                ),
-              );
-              // 如果删除的是当前选中的类别，清除选择
-              if (_selectedCategoryId == category.id) {
-                setState(() {
-                  _selectedCategoryId = null;
-                });
-              }
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.red,
-              foregroundColor: Colors.white,
-            ),
-            child: const Text('删除'),
-          ),
+      builder: (context) => _DeleteCategoryDialog(
+        category: category,
+        hasSubCategories: hasSubCategories,
+        subCategoriesCount: allSubCategories.length,
+        relatedProductsCount: relatedProductsCount,
+        onDeleteOnly: () async {
+          try {
+            await ref
+                .read(categoryListProvider.notifier)
+                .deleteCategoryOnly(category.id);
+            Navigator.of(context).pop();
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('类别删除成功，子类别和产品已保留'),
+                backgroundColor: Colors.green,
+              ),
+            );
+            // 如果删除的是当前选中的类别，清除选择
+            if (_selectedCategoryId == category.id) {
+              setState(() {
+                _selectedCategoryId = null;
+              });
+            }
+          } catch (e) {
+            Navigator.of(context).pop();
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text('删除失败: $e'), backgroundColor: Colors.red),
+            );
+          }
+        },
+        onDeleteCascade: () async {
+          try {
+            await ref
+                .read(categoryListProvider.notifier)
+                .deleteCategoryCascade(category.id);
+            Navigator.of(context).pop();
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('类别及所有关联内容删除成功'),
+                backgroundColor: Colors.orange,
+              ),
+            );
+            // 如果删除的是当前选中的类别，清除选择
+            if (_selectedCategoryId == category.id) {
+              setState(() {
+                _selectedCategoryId = null;
+              });
+            }
+          } catch (e) {
+            Navigator.of(context).pop();
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text('删除失败: $e'), backgroundColor: Colors.red),
+            );
+          }
+        },
+      ),
+    );
+  }
+
+  // 递归获取所有子类别
+  List<Category> _getAllSubCategories(
+    List<Category> allCategories,
+    String parentId,
+  ) {
+    final result = <Category>[];
+
+    // 获取直接子类别
+    final directSubCategories = allCategories
+        .where((cat) => cat.parentId == parentId)
+        .toList();
+
+    for (final subCategory in directSubCategories) {
+      result.add(subCategory);
+      // 递归获取子类别的子类别
+      result.addAll(_getAllSubCategories(allCategories, subCategory.id));
+    }
+    return result;
+  }
+}
+
+/// 删除类别对话框组件
+class _DeleteCategoryDialog extends StatefulWidget {
+  final Category category;
+  final bool hasSubCategories;
+  final int subCategoriesCount;
+  final int relatedProductsCount;
+  final VoidCallback onDeleteOnly;
+  final VoidCallback onDeleteCascade;
+
+  const _DeleteCategoryDialog({
+    required this.category,
+    required this.hasSubCategories,
+    required this.subCategoriesCount,
+    required this.relatedProductsCount,
+    required this.onDeleteOnly,
+    required this.onDeleteCascade,
+  });
+
+  @override
+  State<_DeleteCategoryDialog> createState() => _DeleteCategoryDialogState();
+}
+
+class _DeleteCategoryDialogState extends State<_DeleteCategoryDialog> {
+  int _selectedOption = 0; // 0: 仅删除当前类别, 1: 级联删除
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: Row(
+        children: [
+          Icon(Icons.warning, color: Colors.orange, size: 24),
+          const SizedBox(width: 8),
+          const Text('删除类别'),
         ],
       ),
+      content: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              '即将删除类别 "${widget.category.name}"',
+              style: const TextStyle(fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 16),
+
+            // 显示影响范围信息
+            if (widget.hasSubCategories || widget.relatedProductsCount > 0) ...[
+              const Text(
+                '影响范围：',
+                style: TextStyle(fontWeight: FontWeight.w600),
+              ),
+              const SizedBox(height: 8),
+
+              if (widget.hasSubCategories)
+                Row(
+                  children: [
+                    Icon(Icons.folder, size: 16, color: Colors.blue),
+                    const SizedBox(width: 4),
+                    Text('子类别：${widget.subCategoriesCount} 个'),
+                  ],
+                ),
+
+              if (widget.relatedProductsCount > 0) ...[
+                const SizedBox(height: 4),
+                Row(
+                  children: [
+                    Icon(Icons.inventory, size: 16, color: Colors.green),
+                    const SizedBox(width: 4),
+                    Text('关联产品：${widget.relatedProductsCount} 个'),
+                  ],
+                ),
+              ],
+
+              const SizedBox(height: 16),
+            ],
+
+            const Text(
+              '请选择删除模式：',
+              style: TextStyle(fontWeight: FontWeight.w600),
+            ),
+            const SizedBox(height: 12),
+
+            // 选项1：仅删除当前类别
+            Container(
+              decoration: BoxDecoration(
+                border: Border.all(
+                  color: _selectedOption == 0
+                      ? Theme.of(context).primaryColor
+                      : Colors.grey.shade300,
+                  width: _selectedOption == 0 ? 2 : 1,
+                ),
+                borderRadius: BorderRadius.circular(8),
+                color: _selectedOption == 0
+                    ? Theme.of(context).primaryColor.withOpacity(0.1)
+                    : null,
+              ),
+              child: RadioListTile<int>(
+                value: 0,
+                groupValue: _selectedOption,
+                onChanged: (value) {
+                  setState(() {
+                    _selectedOption = value!;
+                  });
+                },
+                title: const Text(
+                  '仅删除当前类别',
+                  style: TextStyle(fontWeight: FontWeight.w600),
+                ),
+                subtitle: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const SizedBox(height: 4),
+                    const Text('保留子类别和关联产品'),
+                    const SizedBox(height: 8),
+
+                    if (widget.hasSubCategories) ...[
+                      Row(
+                        children: [
+                          Icon(
+                            Icons.arrow_forward,
+                            size: 14,
+                            color: Colors.blue,
+                          ),
+                          const SizedBox(width: 4),
+                          Expanded(
+                            child: Text(
+                              widget.category.parentId != null
+                                  ? '子类别将转移到上级类别'
+                                  : '子类别将成为根类别',
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: Colors.blue.shade700,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 4),
+                    ],
+
+                    if (widget.relatedProductsCount > 0) ...[
+                      Row(
+                        children: [
+                          Icon(
+                            Icons.arrow_forward,
+                            size: 14,
+                            color: Colors.green,
+                          ),
+                          const SizedBox(width: 4),
+                          Expanded(
+                            child: Text(
+                              widget.category.parentId != null
+                                  ? '产品将转移到上级类别'
+                                  : '产品将取消类别关联',
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: Colors.green.shade700,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 4),
+                    ],
+                  ],
+                ),
+                contentPadding: const EdgeInsets.symmetric(horizontal: 8),
+              ),
+            ),
+
+            const SizedBox(height: 12),
+
+            // 选项2：级联删除
+            Container(
+              decoration: BoxDecoration(
+                border: Border.all(
+                  color: _selectedOption == 1
+                      ? Colors.red
+                      : Colors.grey.shade300,
+                  width: _selectedOption == 1 ? 2 : 1,
+                ),
+                borderRadius: BorderRadius.circular(8),
+                color: _selectedOption == 1
+                    ? Colors.red.withOpacity(0.1)
+                    : null,
+              ),
+              child: RadioListTile<int>(
+                value: 1,
+                groupValue: _selectedOption,
+                onChanged: (value) {
+                  setState(() {
+                    _selectedOption = value!;
+                  });
+                },
+                title: const Text(
+                  '级联删除所有内容',
+                  style: TextStyle(fontWeight: FontWeight.w600),
+                ),
+                subtitle: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const SizedBox(height: 4),
+                    const Text('删除类别及所有关联内容'),
+                    const SizedBox(height: 8),
+
+                    if (widget.hasSubCategories) ...[
+                      Row(
+                        children: [
+                          Icon(Icons.delete, size: 14, color: Colors.red),
+                          const SizedBox(width: 4),
+                          Text(
+                            '删除所有子类别（${widget.subCategoriesCount} 个）',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Colors.red.shade700,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 4),
+                    ],
+
+                    if (widget.relatedProductsCount > 0) ...[
+                      Row(
+                        children: [
+                          Icon(Icons.delete, size: 14, color: Colors.red),
+                          const SizedBox(width: 4),
+                          Text(
+                            '删除所有关联产品（${widget.relatedProductsCount} 个）',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Colors.red.shade700,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 4),
+                    ],
+
+                    const Row(
+                      children: [
+                        Icon(Icons.warning, size: 14, color: Colors.orange),
+                        SizedBox(width: 4),
+                        Expanded(
+                          child: Text(
+                            '此操作不可恢复',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Colors.orange,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+                contentPadding: const EdgeInsets.symmetric(horizontal: 8),
+              ),
+            ),
+          ],
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: const Text('取消'),
+        ),
+        ElevatedButton(
+          onPressed: _selectedOption == 0
+              ? widget.onDeleteOnly
+              : widget.onDeleteCascade,
+          style: ElevatedButton.styleFrom(
+            backgroundColor: _selectedOption == 0 ? Colors.blue : Colors.red,
+            foregroundColor: Colors.white,
+          ),
+          child: Text(_selectedOption == 0 ? '仅删除类别' : '级联删除'),
+        ),
+      ],
     );
   }
 }

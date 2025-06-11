@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../domain/model/product.dart';
 import '../../domain/model/category.dart';
 import '../../application/provider/product_providers.dart';
-import '../../application/provider/category_providers.dart';
+import '../../application/category_notifier.dart';
 import 'category_selection_screen.dart';
 
 /// 产品添加/编辑页面
