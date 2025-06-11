@@ -24,7 +24,13 @@ class MockCategoryListNotifier extends CategoryListNotifier {
 
   @override
   Future<void> addCategory({required String name, String? parentId}) async {
-    // Mock implementation - do nothing for tests
+    // Mock implementation - add category to current state
+    final newCategory = Category(
+      id: 'new_${DateTime.now().millisecondsSinceEpoch}',
+      name: name,
+      parentId: parentId,
+    );
+    state = state.copyWith(categories: [...state.categories, newCategory]);
   }
 
   @override
@@ -33,12 +39,28 @@ class MockCategoryListNotifier extends CategoryListNotifier {
     required String name,
     String? parentId,
   }) async {
-    // Mock implementation - do nothing for tests
+    // Mock implementation - update category in current state
+    final updatedCategories = state.categories.map((cat) {
+      if (cat.id == id) {
+        return Category(id: id, name: name, parentId: parentId);
+      }
+      return cat;
+    }).toList();
+    state = state.copyWith(categories: updatedCategories);
   }
 
   @override
   Future<void> deleteCategory(String id) async {
-    // Mock implementation - do nothing for tests
+    // Mock implementation - remove category from current state
+    final updatedCategories = state.categories
+        .where((cat) => cat.id != id)
+        .toList();
+    state = state.copyWith(categories: updatedCategories);
+  }
+
+  @override
+  Future<void> loadCategories() async {
+    // Mock implementation - do nothing as categories are already loaded
   }
 }
 
@@ -239,23 +261,22 @@ void main() {
         expect(find.text('取消'), findsOneWidget);
         expect(find.text('添加'), findsOneWidget);
       });
-
-      testWidgets('点击新增子类应该显示子类添加对话框', (WidgetTester tester) async {
+      testWidgets('点击新增父类应该显示父类添加对话框', (WidgetTester tester) async {
         await tester.pumpWidget(createTestWidget());
 
         // 点击第一个类别的菜单按钮
         await tester.tap(find.byType(PopupMenuButton<String>).first);
         await tester.pumpAndSettle();
 
-        // 点击新增子类
-        await tester.tap(find.text('新增子类'));
+        // 点击新增父类
+        await tester.tap(find.text('新增父类'));
         await tester.pumpAndSettle();
 
-        // 验证子类添加对话框出现
+        // 验证父类添加对话框出现
         expect(find.byType(AlertDialog), findsOneWidget);
-        expect(find.textContaining('新增子类 - 食品饮料'), findsOneWidget);
-        expect(find.text('子类名称'), findsOneWidget);
-        expect(find.text('请输入子类名称'), findsOneWidget);
+        expect(find.textContaining('为"食品饮料"新增父类'), findsOneWidget);
+        expect(find.text('父类名称'), findsOneWidget);
+        expect(find.text('请输入父类名称'), findsOneWidget);
         expect(find.text('取消'), findsOneWidget);
         expect(find.text('添加'), findsOneWidget);
       });
@@ -340,14 +361,13 @@ void main() {
         expect(find.textContaining('即将删除类别 "食品饮料"'), findsOneWidget);
         expect(find.textContaining('此操作不可恢复'), findsOneWidget);
       });
-
-      testWidgets('添加子类时输入为空应该显示验证错误', (WidgetTester tester) async {
+      testWidgets('添加父类时输入为空应该显示验证错误', (WidgetTester tester) async {
         await tester.pumpWidget(createTestWidget());
 
-        // 打开新增子类对话框
+        // 打开新增父类对话框
         await tester.tap(find.byType(PopupMenuButton<String>).first);
         await tester.pumpAndSettle();
-        await tester.tap(find.text('新增子类'));
+        await tester.tap(find.text('新增父类'));
         await tester.pumpAndSettle();
 
         // 直接点击添加按钮（输入为空）
@@ -355,16 +375,15 @@ void main() {
         await tester.pump();
 
         // 验证错误信息
-        expect(find.text('请输入子类名称'), findsAtLeastNWidgets(1));
+        expect(find.text('请输入父类名称'), findsAtLeastNWidgets(1));
       });
-
-      testWidgets('添加重复名称的子类应该显示错误', (WidgetTester tester) async {
+      testWidgets('添加重复名称的父类应该显示错误', (WidgetTester tester) async {
         await tester.pumpWidget(createTestWidget());
 
-        // 打开新增子类对话框
+        // 打开新增父类对话框
         await tester.tap(find.byType(PopupMenuButton<String>).first);
         await tester.pumpAndSettle();
-        await tester.tap(find.text('新增子类'));
+        await tester.tap(find.text('新增父类'));
         await tester.pumpAndSettle();
 
         // 输入已存在的类别名称
@@ -375,23 +394,22 @@ void main() {
         // 验证错误信息
         expect(find.text('类别名称已存在'), findsOneWidget);
       });
-
-      testWidgets('成功添加子类应该显示成功消息', (WidgetTester tester) async {
+      testWidgets('成功添加父类应该显示成功消息', (WidgetTester tester) async {
         await tester.pumpWidget(createTestWidget());
 
-        // 打开新增子类对话框
+        // 打开新增父类对话框
         await tester.tap(find.byType(PopupMenuButton<String>).first);
         await tester.pumpAndSettle();
-        await tester.tap(find.text('新增子类'));
+        await tester.tap(find.text('新增父类'));
         await tester.pumpAndSettle();
 
-        // 输入新的子类名称
-        await tester.enterText(find.byType(TextFormField), '牛奶饮品');
+        // 输入新的父类名称
+        await tester.enterText(find.byType(TextFormField), '商品分类');
         await tester.tap(find.text('添加'));
         await tester.pumpAndSettle();
 
         // 验证成功消息
-        expect(find.text('子类"牛奶饮品"添加成功'), findsOneWidget);
+        expect(find.text('父类"商品分类"创建成功'), findsOneWidget);
       });
     });
 
@@ -421,7 +439,7 @@ void main() {
         // 验证子类别图标
         expect(find.byIcon(Icons.subdirectory_arrow_right), findsNWidgets(2));
       });
-      testWidgets('子类别应该显示新增子类选项（支持最多三级）', (WidgetTester tester) async {
+      testWidgets('所有类别都应该显示新增父类选项', (WidgetTester tester) async {
         // 创建包含子类的测试数据
         final categoriesWithSub = [
           const Category(id: '1', name: '食品饮料'),
@@ -440,13 +458,12 @@ void main() {
         await tester.tap(menuButtons.at(1));
         await tester.pumpAndSettle();
 
-        // 验证子类别菜单中有"新增子类"选项（因为是二级，可以添加三级）
-        expect(find.text('新增子类'), findsOneWidget);
+        // 验证子类别菜单中有"新增父类"选项
+        expect(find.text('新增父类'), findsOneWidget);
         expect(find.text('重命名'), findsOneWidget);
         expect(find.text('删除'), findsOneWidget);
       });
-
-      testWidgets('三级类别不应该显示新增子类选项', (WidgetTester tester) async {
+      testWidgets('三级类别也应该显示新增父类选项', (WidgetTester tester) async {
         // 创建包含三级类别的测试数据
         final categoriesWithThreeLevels = [
           const Category(id: '1', name: '食品饮料'),
@@ -466,21 +483,21 @@ void main() {
         await tester.tap(menuButtons.at(2));
         await tester.pumpAndSettle();
 
-        // 验证三级类别菜单中没有"新增子类"选项（已达到最大层级）
-        expect(find.text('新增子类'), findsNothing);
+        // 验证三级类别菜单中有"新增父类"选项
+        expect(find.text('新增父类'), findsOneWidget);
         expect(find.text('重命名'), findsOneWidget);
         expect(find.text('删除'), findsOneWidget);
       });
 
-      testWidgets('顶级类别应该显示新增子类选项', (WidgetTester tester) async {
+      testWidgets('顶级类别应该显示新增父类选项', (WidgetTester tester) async {
         await tester.pumpWidget(createTestWidget());
 
         // 点击第一个类别的菜单按钮
         await tester.tap(find.byType(PopupMenuButton<String>).first);
         await tester.pumpAndSettle();
 
-        // 验证顶级类别菜单中有"新增子类"选项
-        expect(find.text('新增子类'), findsOneWidget);
+        // 验证顶级类别菜单中有"新增父类"选项
+        expect(find.text('新增父类'), findsOneWidget);
         expect(find.text('重命名'), findsOneWidget);
         expect(find.text('删除'), findsOneWidget);
       });

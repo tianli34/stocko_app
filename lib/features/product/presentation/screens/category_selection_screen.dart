@@ -196,18 +196,17 @@ class _CategorySelectionScreenState
                 onSelected: (action) =>
                     _handleCategoryAction(context, category, action),
                 itemBuilder: (context) => [
-                  // 只有非三级类别可以添加子类（支持最多三级）
-                  if (level < 2)
-                    const PopupMenuItem(
-                      value: 'add_subcategory',
-                      child: Row(
-                        children: [
-                          Icon(Icons.add, size: 20),
-                          SizedBox(width: 8),
-                          Text('新增子类'),
-                        ],
-                      ),
+                  // 可以为任何类别添加父类
+                  const PopupMenuItem(
+                    value: 'add_parent_category',
+                    child: Row(
+                      children: [
+                        Icon(Icons.add, size: 20),
+                        SizedBox(width: 8),
+                        Text('新增父类'),
+                      ],
                     ),
+                  ),
                   const PopupMenuItem(
                     value: 'edit',
                     child: Row(
@@ -250,8 +249,8 @@ class _CategorySelectionScreenState
     String action,
   ) {
     switch (action) {
-      case 'add_subcategory':
-        _showAddSubCategoryDialog(context, category);
+      case 'add_parent_category':
+        _showAddParentCategoryDialog(context, category);
         break;
       case 'edit':
         _showEditCategoryDialog(context, category);
@@ -328,9 +327,9 @@ class _CategorySelectionScreenState
     );
   }
 
-  void _showAddSubCategoryDialog(
+  void _showAddParentCategoryDialog(
     BuildContext context,
-    Category parentCategory,
+    Category childCategory,
   ) {
     final nameController = TextEditingController();
     final formKey = GlobalKey<FormState>();
@@ -338,19 +337,19 @@ class _CategorySelectionScreenState
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text('新增子类 - ${parentCategory.name}'),
+        title: Text('为"${childCategory.name}"新增父类'),
         content: Form(
           key: formKey,
           child: TextFormField(
             controller: nameController,
             decoration: const InputDecoration(
-              labelText: '子类名称',
-              hintText: '请输入子类名称',
+              labelText: '父类名称',
+              hintText: '请输入父类名称',
               border: OutlineInputBorder(),
             ),
             validator: (value) {
               if (value == null || value.trim().isEmpty) {
-                return '请输入子类名称';
+                return '请输入父类名称';
               }
               final categories = ref.read(categoriesProvider);
               if (categories.any((cat) => cat.name == value.trim())) {
@@ -370,16 +369,36 @@ class _CategorySelectionScreenState
             onPressed: () async {
               if (formKey.currentState!.validate()) {
                 try {
+                  // 1. 先创建新的父类别
                   await ref
                       .read(categoryListProvider.notifier)
                       .addCategory(
                         name: nameController.text.trim(),
-                        parentId: parentCategory.id,
+                        parentId: childCategory.parentId, // 新父类继承当前类别的父级
                       );
+
+                  // 2. 获取新创建的父类别ID（根据名称查找）
+                  await ref
+                      .read(categoryListProvider.notifier)
+                      .loadCategories();
+                  final updatedCategories = ref.read(categoriesProvider);
+                  final newParent = updatedCategories.firstWhere(
+                    (cat) => cat.name == nameController.text.trim(),
+                  );
+
+                  // 3. 更新当前类别，让它成为新父类的子类
+                  await ref
+                      .read(categoryListProvider.notifier)
+                      .updateCategory(
+                        id: childCategory.id,
+                        name: childCategory.name,
+                        parentId: newParent.id, // 设置新创建的父类为父级
+                      );
+
                   Navigator.of(context).pop();
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
-                      content: Text('子类"${nameController.text.trim()}"添加成功'),
+                      content: Text('父类"${nameController.text.trim()}"创建成功'),
                       backgroundColor: Colors.green,
                     ),
                   );
