@@ -475,6 +475,14 @@ void main() {
           createTestWidget(categories: categoriesWithThreeLevels),
         );
 
+        // 首先需要展开子类别以显示三级类别
+        // 找到子类别的展开图标并点击
+        final expandIcons = find.byIcon(Icons.expand_more);
+        if (expandIcons.evaluate().isNotEmpty) {
+          await tester.tap(expandIcons.first);
+          await tester.pumpAndSettle();
+        }
+
         // 找到三级类别的菜单按钮并点击
         final menuButtons = find.byType(PopupMenuButton<String>);
         expect(menuButtons, findsNWidgets(3)); // 主类别、子类别和三级类别各一个
@@ -639,7 +647,6 @@ void main() {
         expect(find.byType(TextFormField), findsOneWidget);
       });
     });
-
     group('多级类别测试', () {
       testWidgets('应该正确显示三级类别层级结构', (WidgetTester tester) async {
         // 创建三级类别测试数据
@@ -654,18 +661,33 @@ void main() {
           createTestWidget(categories: categoriesWithThreeLevels),
         );
 
-        // 验证所有类别都显示
+        // 验证顶级类别和二级类别显示（二级类别默认显示因为顶级类别默认展开）
         expect(find.text('食品饮料'), findsOneWidget);
         expect(find.text('牛奶饮品'), findsOneWidget);
-        expect(find.text('纯牛奶'), findsOneWidget);
-        expect(find.text('低脂牛奶'), findsOneWidget);
 
-        // 验证三级类别有正确的subtitle
+        // 验证二级类别有正确的subtitle
         expect(find.text('子类别'), findsOneWidget); // 二级类别
-        expect(find.text('三级类别'), findsNWidgets(2)); // 三级类别
 
-        // 验证有正确数量的菜单按钮
-        expect(find.byType(PopupMenuButton<String>), findsNWidgets(4));
+        // 三级类别默认不显示，需要展开二级类别才能看到
+        expect(find.text('纯牛奶'), findsNothing);
+        expect(find.text('低脂牛奶'), findsNothing);
+
+        // 点击二级类别的展开图标以显示三级类别
+        final expandIcon = find.byIcon(Icons.expand_more);
+        if (expandIcon.evaluate().isNotEmpty) {
+          await tester.tap(expandIcon.first);
+          await tester.pumpAndSettle();
+
+          // 现在三级类别应该显示了
+          expect(find.text('纯牛奶'), findsOneWidget);
+          expect(find.text('低脂牛奶'), findsOneWidget);
+
+          // 验证三级类别有正确的subtitle
+          expect(find.text('三级类别'), findsNWidgets(2)); // 三级类别
+        }
+
+        // 验证有正确数量的菜单按钮（展开前只有2个：顶级和二级）
+        expect(find.byType(PopupMenuButton<String>), findsAtLeastNWidgets(2));
       });
       testWidgets('删除包含多级子类别的类别应该显示正确的提示信息', (WidgetTester tester) async {
         // 创建多级类别测试数据

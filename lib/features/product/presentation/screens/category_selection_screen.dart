@@ -26,6 +26,8 @@ class CategorySelectionScreen extends ConsumerStatefulWidget {
 class _CategorySelectionScreenState
     extends ConsumerState<CategorySelectionScreen> {
   String? _selectedCategoryId;
+  // 用于管理每个类别的展开/收起状态
+  final Map<String, bool> _expandedCategories = {};
 
   @override
   void initState() {
@@ -116,21 +118,23 @@ class _CategorySelectionScreenState
     Category category,
     int level,
   ) {
-    widgets.add(_buildCategoryTile(context, category, level));
+    widgets.add(_buildCategoryTile(context, category, level, allCategories));
 
     // 获取当前类别的子类别
     final subCategories = allCategories
         .where((subCat) => subCat.parentId == category.id)
-        .toList();
-
-    // 递归添加子类别
-    for (final subCategory in subCategories) {
-      _buildCategoryWithChildren(
-        widgets,
-        allCategories,
-        subCategory,
-        level + 1,
-      );
+        .toList(); // 只有在展开状态下才递归添加子类别
+    final isExpanded =
+        _expandedCategories[category.id] ?? (level == 0); // 顶级类别默认展开，子类别默认收起
+    if (isExpanded && subCategories.isNotEmpty) {
+      for (final subCategory in subCategories) {
+        _buildCategoryWithChildren(
+          widgets,
+          allCategories,
+          subCategory,
+          level + 1,
+        );
+      }
     }
   }
 
@@ -138,10 +142,17 @@ class _CategorySelectionScreenState
     BuildContext context,
     Category category, [
     int level = 0,
+    List<Category>? allCategories,
   ]) {
     final isSelected = _selectedCategoryId == category.id;
     final isSubCategory = level > 0;
     final isThirdLevel = level > 1;
+
+    // 检查是否有子类别
+    final hasSubCategories =
+        allCategories?.any((cat) => cat.parentId == category.id) ?? false;
+    final isExpanded =
+        _expandedCategories[category.id] ?? (level == 0); // 顶级类别默认展开，子类别默认收起
 
     // 计算左侧边距
     final leftMargin = level * 24.0;
@@ -166,16 +177,45 @@ class _CategorySelectionScreenState
               size: isSubCategory ? 18 : 20,
             ),
           ),
-          title: Text(
-            category.name,
-            style: TextStyle(
-              fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-              fontSize: isSubCategory ? 14 : 16,
-            ),
+          title: Row(
+            children: [
+              // 展开/收起图标（只对有子类别的类别显示）
+              if (hasSubCategories) ...[
+                GestureDetector(
+                  onTap: () {
+                    setState(() {
+                      _expandedCategories[category.id] = !isExpanded;
+                    });
+                  },
+                  child: Icon(
+                    isExpanded ? Icons.expand_less : Icons.expand_more,
+                    size: 20,
+                    color: Colors.grey.shade600,
+                  ),
+                ),
+                const SizedBox(width: 8),
+              ],
+              Expanded(
+                child: Text(
+                  category.name,
+                  style: TextStyle(
+                    fontWeight: isSelected
+                        ? FontWeight.bold
+                        : FontWeight.normal,
+                    fontSize: isSubCategory ? 14 : 16,
+                  ),
+                ),
+              ),
+            ],
           ),
           subtitle: isSubCategory
               ? Text(
                   isThirdLevel ? '三级类别' : '子类别',
+                  style: const TextStyle(fontSize: 12, color: Colors.grey),
+                )
+              : hasSubCategories
+              ? Text(
+                  '${allCategories?.where((cat) => cat.parentId == category.id).length ?? 0} 个子类别',
                   style: const TextStyle(fontSize: 12, color: Colors.grey),
                 )
               : null,
@@ -231,13 +271,19 @@ class _CategorySelectionScreenState
               ),
             ],
           ),
-          onTap: widget.isSelectionMode
-              ? () {
-                  setState(() {
-                    _selectedCategoryId = category.id;
-                  });
-                }
-              : null,
+          onTap: () {
+            if (widget.isSelectionMode) {
+              // 选择模式：选择类别
+              setState(() {
+                _selectedCategoryId = category.id;
+              });
+            } else if (hasSubCategories) {
+              // 非选择模式且有子类别：切换展开/收起状态
+              setState(() {
+                _expandedCategories[category.id] = !isExpanded;
+              });
+            }
+          },
         ),
       ),
     );
