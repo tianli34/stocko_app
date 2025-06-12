@@ -2,9 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../domain/model/product.dart';
 import '../../domain/model/category.dart';
+import '../../domain/model/unit.dart';
+import '../../domain/model/product_unit.dart';
 import '../../application/provider/product_providers.dart';
 import '../../application/category_notifier.dart';
+import '../../application/provider/unit_providers.dart';
+import '../../application/provider/product_unit_providers.dart';
 import 'category_selection_screen.dart';
+import 'unit_edit_screen.dart';
 
 /// 产品添加/编辑页面
 /// 表单页面，提交时调用 ref.read(productControllerProvider.notifier).addProduct(...)
@@ -35,10 +40,11 @@ class _ProductAddEditScreenState extends ConsumerState<ProductAddEditScreen> {
   late TextEditingController _shelfLifeController;
   late TextEditingController _ownershipController;
   late TextEditingController _remarksController;
-
   // 表单状态
   String _status = 'active';
   String? _selectedCategoryId; // 添加类别选择状态
+  String? _selectedUnitId; // 添加单位选择状态
+  List<ProductUnit>? _productUnits; // 存储单位配置数据
   final List<String> _statusOptions = ['active', 'inactive', 'discontinued'];
 
   @override
@@ -78,6 +84,7 @@ class _ProductAddEditScreenState extends ConsumerState<ProductAddEditScreen> {
     _remarksController = TextEditingController(text: product?.remarks ?? '');
     _status = product?.status ?? 'active';
     _selectedCategoryId = product?.categoryId; // 初始化类别选择
+    _selectedUnitId = product?.unitId; // 初始化单位选择
   }
 
   @override
@@ -102,6 +109,7 @@ class _ProductAddEditScreenState extends ConsumerState<ProductAddEditScreen> {
   Widget build(BuildContext context) {
     final controllerState = ref.watch(productControllerProvider);
     final categories = ref.watch(categoriesProvider); // 获取类别列表
+    final unitsAsyncValue = ref.watch(allUnitsProvider); // 获取单位列表
     final isEdit = widget.product != null;
 
     // 监听操作结果
@@ -233,6 +241,85 @@ class _ProductAddEditScreenState extends ConsumerState<ProductAddEditScreen> {
                           ),
                         ),
                       ],
+                    ),
+                    const SizedBox(height: 16),
+
+                    // 单位选择
+                    unitsAsyncValue.when(
+                      data: (units) => Row(
+                        children: [
+                          Expanded(child: _buildUnitDropdown(units)),
+                          const SizedBox(width: 8),
+                          IconButton(
+                            onPressed: () => _navigateToUnitSelection(context),
+                            icon: const Icon(Icons.settings),
+                            tooltip: '管理单位',
+                            style: IconButton.styleFrom(
+                              backgroundColor: Theme.of(
+                                context,
+                              ).primaryColor.withOpacity(0.1),
+                              foregroundColor: Theme.of(context).primaryColor,
+                            ),
+                          ),
+                        ],
+                      ),
+                      loading: () => Row(
+                        children: [
+                          Expanded(
+                            child: Container(
+                              height: 58,
+                              decoration: BoxDecoration(
+                                border: Border.all(color: Colors.grey.shade300),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: const Center(child: Text('加载单位中...')),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          IconButton(
+                            onPressed: () => _navigateToUnitSelection(context),
+                            icon: const Icon(Icons.settings),
+                            tooltip: '管理单位',
+                            style: IconButton.styleFrom(
+                              backgroundColor: Theme.of(
+                                context,
+                              ).primaryColor.withOpacity(0.1),
+                              foregroundColor: Theme.of(context).primaryColor,
+                            ),
+                          ),
+                        ],
+                      ),
+                      error: (error, stackTrace) => Row(
+                        children: [
+                          Expanded(
+                            child: Container(
+                              height: 58,
+                              decoration: BoxDecoration(
+                                border: Border.all(color: Colors.red.shade300),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: const Center(
+                                child: Text(
+                                  '加载失败',
+                                  style: TextStyle(color: Colors.red),
+                                ),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          IconButton(
+                            onPressed: () => _navigateToUnitSelection(context),
+                            icon: const Icon(Icons.settings),
+                            tooltip: '管理单位',
+                            style: IconButton.styleFrom(
+                              backgroundColor: Theme.of(
+                                context,
+                              ).primaryColor.withOpacity(0.1),
+                              foregroundColor: Theme.of(context).primaryColor,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                     const SizedBox(height: 24),
 
@@ -490,6 +577,41 @@ class _ProductAddEditScreenState extends ConsumerState<ProductAddEditScreen> {
     );
   }
 
+  /// 构建单位下拉选择器
+  Widget _buildUnitDropdown(List<Unit> units) {
+    return DropdownButtonFormField<String>(
+      value: _selectedUnitId,
+      decoration: InputDecoration(
+        labelText: '计量单位',
+        prefixIcon: const Icon(Icons.straighten),
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: Colors.grey.shade300),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: Theme.of(context).primaryColor),
+        ),
+      ),
+      hint: const Text('请选择计量单位'),
+      items: [
+        const DropdownMenuItem<String>(value: null, child: Text('无')),
+        ...units.map((unit) {
+          return DropdownMenuItem<String>(
+            value: unit.id,
+            child: Text(unit.name),
+          );
+        }).toList(),
+      ],
+      onChanged: (value) {
+        setState(() {
+          _selectedUnitId = value;
+        });
+      },
+    );
+  }
+
   /// 获取状态显示名称
   String _getStatusDisplayName(String status) {
     switch (status) {
@@ -505,7 +627,7 @@ class _ProductAddEditScreenState extends ConsumerState<ProductAddEditScreen> {
   }
 
   /// 提交表单
-  void _submitForm() {
+  void _submitForm() async {
     if (!_formKey.currentState!.validate()) {
       return;
     }
@@ -529,6 +651,7 @@ class _ProductAddEditScreenState extends ConsumerState<ProductAddEditScreen> {
           ? _brandController.text.trim()
           : null,
       categoryId: _selectedCategoryId, // 添加类别ID
+      unitId: _selectedUnitId, // 添加单位ID
       retailPrice: _retailPriceController.text.trim().isNotEmpty
           ? double.tryParse(_retailPriceController.text.trim())
           : null,
@@ -556,12 +679,57 @@ class _ProductAddEditScreenState extends ConsumerState<ProductAddEditScreen> {
       lastUpdated: DateTime.now(),
     );
 
-    if (widget.product == null) {
-      // 新增模式 - 调用 addProduct
-      controller.addProduct(product);
-    } else {
-      // 编辑模式 - 调用 updateProduct
-      controller.updateProduct(product);
+    try {
+      if (widget.product == null) {
+        // 新增模式 - 调用 addProduct
+        await controller.addProduct(product);
+      } else {
+        // 编辑模式 - 调用 updateProduct
+        await controller.updateProduct(product);
+      }
+
+      // 产品保存成功后，保存单位配置
+      if (_productUnits != null && _productUnits!.isNotEmpty) {
+        print('🔧 ProductAddEditScreen: 开始保存单位配置');
+        try {
+          final productUnitController = ref.read(
+            productUnitControllerProvider.notifier,
+          );
+
+          // 更新产品ID为实际保存的产品ID
+          final updatedProductUnits = _productUnits!
+              .map(
+                (unit) => ProductUnit(
+                  productUnitId: '${product.id}_${unit.unitId}',
+                  productId: product.id,
+                  unitId: unit.unitId,
+                  conversionRate: unit.conversionRate,
+                ),
+              )
+              .toList();
+
+          await productUnitController.replaceProductUnits(
+            product.id,
+            updatedProductUnits,
+          );
+          print('🔧 ProductAddEditScreen: 单位配置保存成功');
+        } catch (e) {
+          print('🔧 ProductAddEditScreen: 单位配置保存失败: $e');
+          // 单位配置保存失败不应该影响产品保存的成功状态
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('产品保存成功，但单位配置保存失败: $e'),
+                backgroundColor: Colors.orange,
+                duration: const Duration(seconds: 3),
+              ),
+            );
+          }
+        }
+      }
+    } catch (e) {
+      // 产品保存失败的处理由 ProductController 的监听器处理
+      print('🔧 ProductAddEditScreen: 产品保存失败: $e');
     }
   }
 
@@ -618,6 +786,79 @@ class _ProductAddEditScreenState extends ConsumerState<ProductAddEditScreen> {
       setState(() {
         _selectedCategoryId = selectedCategory.id;
       });
+    }
+  }
+
+  /// 导航到单位编辑屏幕
+  void _navigateToUnitSelection(BuildContext context) async {
+    print('🔧 ProductAddEditScreen: 开始导航到单位编辑屏幕');
+    print('🔧 ProductAddEditScreen: 产品ID = ${widget.product?.id}');
+
+    // 如果是编辑现有产品，获取产品的单位信息
+    List<ProductUnit>? initialProductUnits;
+    if (widget.product?.id != null) {
+      print('🔧 ProductAddEditScreen: 尝试获取产品单位信息');
+      try {
+        final productUnitController = ref.read(
+          productUnitControllerProvider.notifier,
+        );
+        initialProductUnits = await productUnitController
+            .getProductUnitsByProductId(widget.product!.id);
+        print(
+          '🔧 ProductAddEditScreen: 获取到 ${initialProductUnits.length} 个产品单位',
+        );
+        for (final pu in initialProductUnits) {
+          print(
+            '🔧 ProductAddEditScreen: - 单位ID: ${pu.unitId}, 换算率: ${pu.conversionRate}',
+          );
+        }
+      } catch (e) {
+        print('🔧 ProductAddEditScreen: 获取产品单位信息失败: $e');
+        // 如果获取失败，使用空列表
+        initialProductUnits = null;
+      }
+    } else {
+      print('🔧 ProductAddEditScreen: 新产品，跳过获取单位信息');
+    }
+
+    print(
+      '🔧 ProductAddEditScreen: 传递给UnitEditScreen的初始数据: $initialProductUnits',
+    );
+
+    final List<ProductUnit>? result = await Navigator.of(context)
+        .push<List<ProductUnit>>(
+          MaterialPageRoute(
+            builder: (context) => UnitEditScreen(
+              productId: widget.product?.id,
+              initialProductUnits: initialProductUnits,
+            ),
+          ),
+        );
+
+    print(
+      '🔧 ProductAddEditScreen: 从UnitEditScreen返回的结果: $result',
+    ); // 处理返回的单位配置结果
+    if (result != null && result.isNotEmpty) {
+      // 保存单位配置数据
+      _productUnits = result;
+
+      // 找到基础单位（换算率为1.0的单位）
+      final baseProductUnit = result.firstWhere(
+        (unit) => unit.conversionRate == 1.0,
+        orElse: () => result.first, // 如果没有基础单位，使用第一个单位
+      );
+
+      print('🔧 ProductAddEditScreen: 更新表单中的单位选择为: ${baseProductUnit.unitId}');
+
+      // 更新产品表单中的单位选择
+      setState(() {
+        _selectedUnitId = baseProductUnit.unitId;
+      });
+
+      // 显示成功提示
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('单位配置完成'), backgroundColor: Colors.green),
+      );
     }
   }
 }

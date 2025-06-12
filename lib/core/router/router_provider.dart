@@ -9,6 +9,7 @@ import '../../features/product/presentation/screens/product_detail_screen.dart';
 import '../../features/product/presentation/screens/category_selection_screen.dart';
 import '../../features/product/presentation/pages/category_test_page.dart';
 import '../../features/product/application/provider/product_providers.dart';
+import '../../features/database/presentation/screens/database_viewer_screen.dart';
 
 // GoRouter Provider
 final routerProvider = Provider<GoRouter>((ref) {
@@ -20,47 +21,83 @@ final routerProvider = Provider<GoRouter>((ref) {
         name: 'home',
         builder: (context, state) => Scaffold(
           appBar: AppBar(title: const Text('Stocko - 首页')),
-          body: Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const Text(
-                  '欢迎使用 Stocko 库存管理系统',
-                  style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+          body: SingleChildScrollView(
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const SizedBox(height: 20),
+                    const Text(
+                      '欢迎使用 Stocko 库存管理系统',
+                      style: TextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 40),
+                    const Text('请选择功能模块', style: TextStyle(fontSize: 16)),
+                    const SizedBox(height: 40),
+                    SizedBox(
+                      width: 200,
+                      child: ElevatedButton(
+                        onPressed: () => context.go(AppRoutes.products),
+                        child: const Text('产品管理'),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    SizedBox(
+                      width: 200,
+                      child: ElevatedButton(
+                        onPressed: () => context.go(AppRoutes.categories),
+                        child: const Text('类别管理'),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    SizedBox(
+                      width: 200,
+                      child: ElevatedButton(
+                        onPressed: () => context.go(AppRoutes.inventory),
+                        child: const Text('库存管理'),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    SizedBox(
+                      width: 200,
+                      child: ElevatedButton(
+                        onPressed: () => context.go(AppRoutes.sales),
+                        child: const Text('销售管理'),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    SizedBox(
+                      width: 200,
+                      child: ElevatedButton(
+                        onPressed: () => context.go(AppRoutes.test),
+                        child: const Text('数据库测试'),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    SizedBox(
+                      width: 200,
+                      child: ElevatedButton(
+                        onPressed: () => context.go(AppRoutes.categoryTest),
+                        child: const Text('类别管理测试'),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    SizedBox(
+                      width: 200,
+                      child: ElevatedButton(
+                        onPressed: () => context.go(AppRoutes.databaseViewer),
+                        child: const Text('数据库查看器'),
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                  ],
                 ),
-                const SizedBox(height: 40),
-                const Text('请选择功能模块', style: TextStyle(fontSize: 16)),
-                const SizedBox(height: 40),
-                ElevatedButton(
-                  onPressed: () => context.go(AppRoutes.products),
-                  child: const Text('产品管理'),
-                ),
-                const SizedBox(height: 16),
-                ElevatedButton(
-                  onPressed: () => context.go(AppRoutes.categories),
-                  child: const Text('类别管理'),
-                ),
-                const SizedBox(height: 16),
-                ElevatedButton(
-                  onPressed: () => context.go(AppRoutes.inventory),
-                  child: const Text('库存管理'),
-                ),
-                const SizedBox(height: 16),
-                ElevatedButton(
-                  onPressed: () => context.go(AppRoutes.sales),
-                  child: const Text('销售管理'),
-                ),
-                const SizedBox(height: 16),
-                ElevatedButton(
-                  onPressed: () => context.go(AppRoutes.test),
-                  child: const Text('数据库测试'),
-                ),
-                const SizedBox(height: 16),
-                ElevatedButton(
-                  onPressed: () => context.go(AppRoutes.categoryTest),
-                  child: const Text('类别管理测试'),
-                ),
-              ],
+              ),
             ),
           ),
         ),
@@ -175,6 +212,11 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: AppRoutes.test,
         name: 'test',
         builder: (context, state) => const TestPage(),
+      ),
+      GoRoute(
+        path: AppRoutes.databaseViewer,
+        name: 'database-viewer',
+        builder: (context, state) => const DatabaseViewerScreen(),
       ),
     ],
     errorBuilder: (context, state) => Scaffold(

@@ -8,19 +8,24 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'products_table.dart';
 import 'categories_table.dart';
+import 'units_table.dart';
+import 'product_units_table.dart';
 import '../../features/product/data/dao/product_dao.dart';
 import '../../features/product/data/dao/category_dao.dart';
+import '../../features/product/data/dao/unit_dao.dart';
+import '../../features/product/data/dao/product_unit_dao.dart';
 
 part 'database.g.dart';
 
 @DriftDatabase(
-  tables: [ProductsTable, CategoriesTable],
-  daos: [ProductDao, CategoryDao],
+  tables: [ProductsTable, CategoriesTable, UnitsTable, ProductUnitsTable],
+  daos: [ProductDao, CategoryDao, UnitDao, ProductUnitDao],
 )
 class AppDatabase extends _$AppDatabase {
   AppDatabase(super.e);
+
   @override
-  int get schemaVersion => 3;
+  int get schemaVersion => 5;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -37,10 +42,47 @@ class AppDatabase extends _$AppDatabase {
         // 从版本2升级到版本3：添加类别表
         await m.createTable(categoriesTable);
       }
+      if (from == 3 && to == 4) {
+        // 从版本3升级到版本4：添加单位表
+        await m.createTable(unitsTable);
+      }
+      if (from == 4 && to == 5) {
+        // 从版本4升级到版本5：添加产品单位表
+        await m.createTable(productUnitsTable);
+      }
       if (from == 1 && to == 3) {
         // 从版本1直接升级到版本3
         await m.recreateAllViews();
         await m.createTable(categoriesTable);
+      }
+      if (from == 1 && to == 4) {
+        // 从版本1直接升级到版本4
+        await m.recreateAllViews();
+        await m.createTable(categoriesTable);
+        await m.createTable(unitsTable);
+      }
+      if (from == 1 && to == 5) {
+        // 从版本1直接升级到版本5
+        await m.recreateAllViews();
+        await m.createTable(categoriesTable);
+        await m.createTable(unitsTable);
+        await m.createTable(productUnitsTable);
+      }
+      if (from == 2 && to == 4) {
+        // 从版本2直接升级到版本4
+        await m.createTable(categoriesTable);
+        await m.createTable(unitsTable);
+      }
+      if (from == 2 && to == 5) {
+        // 从版本2升级到版本5
+        await m.createTable(categoriesTable);
+        await m.createTable(unitsTable);
+        await m.createTable(productUnitsTable);
+      }
+      if (from == 3 && to == 5) {
+        // 从版本3升级到版本5
+        await m.createTable(unitsTable);
+        await m.createTable(productUnitsTable);
       }
     },
   );
