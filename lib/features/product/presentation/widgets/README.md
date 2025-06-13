@@ -9,7 +9,6 @@
 ### 1. 完整版 ProductListTile
 
 - **产品基本信息显示**：名称、SKU、条码、品牌、规格等
-- **状态标签**：显示产品启用/禁用状态
 - **价格信息**：支持促销价、零售价、建议零售价，并显示价格类型
 - **操作按钮**：编辑、删除功能
 - **自定义回调**：支持点击、编辑、删除的自定义处理
@@ -17,7 +16,7 @@
 
 ### 2. 简化版 SimpleProductListTile
 
-- **基本信息显示**：名称、SKU、价格、状态
+- **基本信息显示**：名称、SKU、价格
 - **头像显示**：使用产品名称首字母作为头像
 - **轻量级设计**：适用于简单列表场景
 
@@ -58,7 +57,6 @@ ProductListTile(
   product: product,
   showActions: true,    // 显示操作按钮
   showPrice: true,      // 显示价格信息
-  showStatus: true,     // 显示状态标签
   onTap: () {
     // 自定义点击处理
   },
@@ -151,7 +149,6 @@ class ProductListExample extends ConsumerWidget {
 | onDelete | VoidCallback? | ✗ | null | 点击删除按钮时的回调 |
 | showActions | bool | ✗ | true | 是否显示操作按钮 |
 | showPrice | bool | ✗ | true | 是否显示价格信息 |
-| showStatus | bool | ✗ | true | 是否显示状态标签 |
 
 ### SimpleProductListTile 参数
 
@@ -166,7 +163,6 @@ class ProductListExample extends ConsumerWidget {
 
 - **卡片样式**：使用 Card 组件，提供阴影效果
 - **响应式设计**：适配不同屏幕尺寸
-- **状态颜色**：启用状态为绿色，禁用状态为灰色
 - **价格突出显示**：使用主题色突出显示价格信息
 - **促销价标识**：促销价使用红色文字，原价显示删除线
 

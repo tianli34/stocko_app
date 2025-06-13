@@ -20,6 +20,7 @@ abstract class Product with _$Product {
     double? promotionalPrice, // 促销价
     int? stockWarningValue, // 库存预警值
     int? shelfLife, // 保质期(天数)
+    @Default('months') String shelfLifeUnit, // 保质期单位 (days, months, years)
     String? ownership, // 归属
     @Default('active') String status, // 状态，默认为 'active'
     String? remarks, // 备注

@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../domain/model/product.dart';
 import '../../application/provider/product_providers.dart';
+import '../../../../core/widgets/cached_image_widget.dart';
+import '../../../../core/widgets/full_screen_image_viewer.dart';
 
 /// 产品列表项组件
 /// 用于在产品列表中显示单个产品的信息
@@ -12,7 +14,6 @@ class ProductListTile extends ConsumerWidget {
   final VoidCallback? onDelete;
   final bool showActions;
   final bool showPrice;
-  final bool showStatus;
 
   const ProductListTile({
     super.key,
@@ -22,7 +23,6 @@ class ProductListTile extends ConsumerWidget {
     this.onDelete,
     this.showActions = true,
     this.showPrice = true,
-    this.showStatus = true,
   });
 
   @override
@@ -40,9 +40,21 @@ class ProductListTile extends ConsumerWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // 头部信息：名称和状态
+              // 头部信息：图片、名称和状态
               Row(
                 children: [
+                  // 产品图片
+                  Container(
+                    width: 60,
+                    height: 60,
+                    margin: const EdgeInsets.only(right: 12),
+                    decoration: BoxDecoration(
+                      color: Colors.grey.shade100,
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: Colors.grey.shade300),
+                    ),
+                    child: _buildProductImage(context),
+                  ),
                   Expanded(
                     child: Text(
                       product.name,
@@ -53,10 +65,6 @@ class ProductListTile extends ConsumerWidget {
                       overflow: TextOverflow.ellipsis,
                     ),
                   ),
-                  if (showStatus) ...[
-                    const SizedBox(width: 8),
-                    _buildStatusChip(context),
-                  ],
                 ],
               ),
 
@@ -78,29 +86,6 @@ class ProductListTile extends ConsumerWidget {
               ],
             ],
           ),
-        ),
-      ),
-    );
-  }
-
-  /// 构建状态标签
-  Widget _buildStatusChip(BuildContext context) {
-    final isActive = product.isActive;
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      decoration: BoxDecoration(
-        color: isActive ? Colors.green.shade100 : Colors.grey.shade100,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: isActive ? Colors.green.shade300 : Colors.grey.shade300,
-        ),
-      ),
-      child: Text(
-        isActive ? '启用' : '禁用',
-        style: TextStyle(
-          fontSize: 12,
-          color: isActive ? Colors.green.shade700 : Colors.grey.shade600,
-          fontWeight: FontWeight.w500,
         ),
       ),
     );
@@ -299,6 +284,62 @@ class ProductListTile extends ConsumerWidget {
       ],
     );
   }
+
+  /// 构建产品图片
+  Widget _buildProductImage(BuildContext context) {
+    if (product.image != null && product.image!.isNotEmpty) {
+      return GestureDetector(
+        onTap: onTap, // 单击跳转到详情页
+        onLongPress: () {
+          // 长按打开全屏查看器
+          Navigator.of(context).push(
+            PageRouteBuilder(
+              pageBuilder: (context, animation, secondaryAnimation) =>
+                  FullScreenImageViewer(
+                    imagePath: product.image!,
+                    heroTag:
+                        'product_thumbnail_${product.id}_${product.image!}',
+                  ),
+              transitionsBuilder:
+                  (context, animation, secondaryAnimation, child) {
+                    return FadeTransition(opacity: animation, child: child);
+                  },
+              transitionDuration: const Duration(milliseconds: 300),
+              reverseTransitionDuration: const Duration(milliseconds: 200),
+            ),
+          );
+        },
+        child: Hero(
+          tag: 'product_thumbnail_${product.id}_${product.image!}',
+          child: CachedImageWidget(
+            imagePath: product.image!,
+            width: 60,
+            height: 60,
+            fit: BoxFit.cover,
+            borderRadius: BorderRadius.circular(6),
+            quality: 75,
+            placeholder: _buildImagePlaceholder(),
+            errorWidget: _buildImagePlaceholder(),
+          ),
+        ),
+      );
+    } else {
+      return _buildImagePlaceholder();
+    }
+  }
+
+  /// 构建图片占位符
+  Widget _buildImagePlaceholder() {
+    return Container(
+      width: 60,
+      height: 60,
+      decoration: BoxDecoration(
+        color: Colors.grey.shade100,
+        borderRadius: BorderRadius.circular(6),
+      ),
+      child: Icon(Icons.image_outlined, color: Colors.grey.shade400, size: 30),
+    );
+  }
 }
 
 /// 产品列表项的简化版本
@@ -340,25 +381,6 @@ class SimpleProductListTile extends StatelessWidget {
               ),
             ),
         ],
-      ),
-      trailing: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-        decoration: BoxDecoration(
-          color: product.isActive
-              ? Colors.green.shade100
-              : Colors.grey.shade100,
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: Text(
-          product.isActive ? '启用' : '禁用',
-          style: TextStyle(
-            fontSize: 12,
-            color: product.isActive
-                ? Colors.green.shade700
-                : Colors.grey.shade600,
-            fontWeight: FontWeight.w500,
-          ),
-        ),
       ),
     );
   }

@@ -6,6 +6,8 @@ import '../../domain/model/product.dart';
 import '../../../../core/constants/app_routes.dart';
 import '../../../../core/shared_widgets/loading_widget.dart';
 import '../../../../core/shared_widgets/error_widget.dart';
+import '../../../../core/widgets/cached_image_widget.dart';
+import '../../../../core/widgets/full_screen_image_viewer.dart';
 
 /// 商品详情页面
 class ProductDetailScreen extends ConsumerWidget {
@@ -74,47 +76,23 @@ class ProductDetailScreen extends ConsumerWidget {
                               ?.copyWith(fontWeight: FontWeight.bold),
                         ),
                       ),
-                      // 状态标签
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 6,
-                        ),
-                        decoration: BoxDecoration(
-                          color: product.isActive
-                              ? Colors.green.shade100
-                              : Colors.grey.shade100,
-                          borderRadius: BorderRadius.circular(16),
-                          border: Border.all(
-                            color: product.isActive
-                                ? Colors.green.shade300
-                                : Colors.grey.shade300,
-                          ),
-                        ),
-                        child: Text(
-                          product.isActive ? '启用' : '禁用',
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: product.isActive
-                                ? Colors.green.shade700
-                                : Colors.grey.shade600,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ),
                     ],
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 16), // 产品图片
+                  if (product.image != null && product.image!.isNotEmpty)
+                    Center(
+                      child: ProductDetailImage(
+                        imagePath: product.image!,
+                        onTap: () =>
+                            _showFullScreenImage(context, product.image!),
+                      ),
+                    ),
 
                   // 基本信息
                   if (product.sku != null)
                     _buildDetailItem(context, 'SKU', product.sku!),
                   if (product.barcode != null)
                     _buildDetailItem(context, '条码', product.barcode!),
-                  if (product.brand != null)
-                    _buildDetailItem(context, '品牌', product.brand!),
-                  if (product.specification != null)
-                    _buildDetailItem(context, '规格', product.specification!),
                 ],
               ),
             ),
@@ -239,7 +217,14 @@ class ProductDetailScreen extends ConsumerWidget {
                       '${product.stockWarningValue}',
                     ),
                   if (product.shelfLife != null)
-                    _buildDetailItem(context, '保质期', '${product.shelfLife}天'),
+                    _buildDetailItem(
+                      context,
+                      '保质期',
+                      _formatShelfLife(
+                        product.shelfLife,
+                        _getProductShelfLifeUnit(product),
+                      ),
+                    ),
                   if (product.ownership != null)
                     _buildDetailItem(context, '归属', product.ownership!),
                   if (product.remarks != null)
@@ -314,5 +299,51 @@ class ProductDetailScreen extends ConsumerWidget {
   String _formatDateTime(DateTime dateTime) {
     return '${dateTime.year}-${dateTime.month.toString().padLeft(2, '0')}-${dateTime.day.toString().padLeft(2, '0')} '
         '${dateTime.hour.toString().padLeft(2, '0')}:${dateTime.minute.toString().padLeft(2, '0')}';
+  }
+
+  /// 格式化保质期显示
+  String _formatShelfLife(int? shelfLife, String? unit) {
+    if (shelfLife == null) return '';
+
+    final unitText = _getShelfLifeUnitDisplayName(unit ?? 'months');
+    return '$shelfLife$unitText';
+  }
+
+  /// 获取保质期单位显示名称
+  String _getShelfLifeUnitDisplayName(String unit) {
+    switch (unit) {
+      case 'days':
+        return '天';
+      case 'months':
+        return '个月';
+      case 'years':
+        return '年';
+      default:
+        return '个月';
+    }
+  }
+
+  /// 获取产品的保质期单位
+  String _getProductShelfLifeUnit(Product product) {
+    // 返回产品实际的保质期单位
+    return product.shelfLifeUnit;
+  }
+
+  /// 显示全屏图片查看器
+  void _showFullScreenImage(BuildContext context, String imagePath) {
+    Navigator.of(context).push(
+      PageRouteBuilder(
+        pageBuilder: (context, animation, secondaryAnimation) =>
+            FullScreenImageViewer(
+              imagePath: imagePath,
+              heroTag: 'product_detail_image_$imagePath',
+            ),
+        transitionsBuilder: (context, animation, secondaryAnimation, child) {
+          return FadeTransition(opacity: animation, child: child);
+        },
+        transitionDuration: const Duration(milliseconds: 300),
+        reverseTransitionDuration: const Duration(milliseconds: 200),
+      ),
+    );
   }
 }

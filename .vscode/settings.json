@@ -1,3 +1,7 @@
 {
-    "makefile.configureOnOpen": false
+    "makefile.configureOnOpen": false,
+    "files.associations": {
+        "*.plist": "plist"
+    },
+    "xml.validate.enable": false
 }

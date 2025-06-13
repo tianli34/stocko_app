@@ -38,13 +38,10 @@ void main() {
       // 设置 mock database 返回 mock dao
       when(() => mockDatabase.productDao).thenReturn(mockProductDao);
 
-      repository = ProductRepository(mockDatabase);
-
-      // 创建测试数据
+      repository = ProductRepository(mockDatabase); // 创建测试数据
       testProduct = const Product(
         id: 'test-id-001',
         name: '测试产品',
-        barcode: '123456789',
         sku: 'TEST-SKU-001',
         image: 'test-image.jpg',
         categoryId: 'category-001',
@@ -56,15 +53,14 @@ void main() {
         promotionalPrice: 6.0,
         stockWarningValue: 10,
         shelfLife: 365,
+        shelfLifeUnit: 'days',
         ownership: '测试商家',
         status: 'active',
         remarks: '测试备注',
       );
-
       testProductData = ProductsTableData(
         id: 'test-id-001',
         name: '测试产品',
-        barcode: '123456789',
         sku: 'TEST-SKU-001',
         image: 'test-image.jpg',
         categoryId: 'category-001',
@@ -76,6 +72,7 @@ void main() {
         promotionalPrice: 6.0,
         stockWarningValue: 10,
         shelfLife: 365,
+        shelfLifeUnit: 'days',
         ownership: '测试商家',
         status: 'active',
         remarks: '测试备注',
@@ -494,11 +491,10 @@ void main() {
         ).thenAnswer((_) async => testProductData);
 
         final result = await repository.getProductById('test-id-001');
-
         expect(result, isNotNull);
         expect(result!.id, equals(testProductData.id));
         expect(result.name, equals(testProductData.name));
-        expect(result.barcode, equals(testProductData.barcode));
+        expect(result.sku, equals(testProductData.sku));
       });
     });
 

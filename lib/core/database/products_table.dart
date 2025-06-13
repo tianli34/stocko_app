@@ -3,7 +3,6 @@ import 'package:drift/drift.dart';
 class ProductsTable extends Table {
   @override
   String get tableName => 'products';
-
   TextColumn get id => text()(); // 改为不可为空的主键
   TextColumn get name => text()(); // 名称必须
   TextColumn get barcode => text().nullable()(); // 条码
@@ -18,6 +17,8 @@ class ProductsTable extends Table {
   RealColumn get promotionalPrice => real().nullable()(); // 促销价
   IntColumn get stockWarningValue => integer().nullable()(); // 库存预警值
   IntColumn get shelfLife => integer().nullable()(); // 保质期(天数)
+  TextColumn get shelfLifeUnit =>
+      text().withDefault(const Constant('months'))(); // 保质期单位
   TextColumn get ownership => text().nullable()(); // 归属
   TextColumn get status =>
       text().withDefault(const Constant('active'))(); // 状态，默认为 'active'

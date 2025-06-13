@@ -82,6 +82,7 @@ class ProductRepository implements IProductRepository {
   }
 
   /// 根据条件查询产品
+  @override
   Future<List<Product>> getProductsByCondition({
     String? categoryId,
     String? status,
@@ -100,6 +101,7 @@ class ProductRepository implements IProductRepository {
   }
 
   /// 监听指定类别的产品
+  @override
   Stream<List<Product>> watchProductsByCategory(String categoryId) {
     return _productDao
         .watchProductsByCategory(categoryId)
@@ -162,7 +164,6 @@ class ProductRepository implements IProductRepository {
     return ProductsTableCompanion(
       id: Value(product.id),
       name: Value(product.name),
-      barcode: Value(product.barcode),
       sku: Value(product.sku),
       image: Value(product.image),
       categoryId: Value(product.categoryId),
@@ -174,6 +175,7 @@ class ProductRepository implements IProductRepository {
       promotionalPrice: Value(product.promotionalPrice),
       stockWarningValue: Value(product.stockWarningValue),
       shelfLife: Value(product.shelfLife),
+      shelfLifeUnit: Value(product.shelfLifeUnit),
       ownership: Value(product.ownership),
       status: Value(product.status),
       remarks: Value(product.remarks),
@@ -186,7 +188,6 @@ class ProductRepository implements IProductRepository {
     return Product(
       id: data.id, // ID现在是必需的，不需要null检查
       name: data.name,
-      barcode: data.barcode,
       sku: data.sku,
       image: data.image,
       categoryId: data.categoryId,
@@ -198,6 +199,7 @@ class ProductRepository implements IProductRepository {
       promotionalPrice: data.promotionalPrice,
       stockWarningValue: data.stockWarningValue,
       shelfLife: data.shelfLife,
+      shelfLifeUnit: data.shelfLifeUnit,
       ownership: data.ownership,
       status: data.status,
       remarks: data.remarks,

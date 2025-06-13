@@ -1,4 +1,3 @@
-import '../../../features/product/domain/model/unit.dart';
 import '../../../features/product/domain/model/product_unit.dart';
 
 /// ProductUnit 的扩展方法

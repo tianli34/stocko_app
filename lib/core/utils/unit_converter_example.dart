@@ -1,6 +1,7 @@
 /// 单位换算工具类使用示例
 ///
 /// 这个文件展示了如何使用 UnitConverter 类进行单位换算操作
+library;
 
 import 'utils.dart';
 import '../../../features/product/domain/model/unit.dart';

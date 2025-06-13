@@ -36,7 +36,7 @@ class ProductDao extends DatabaseAccessor<AppDatabase> with _$ProductDaoMixin {
   Future<bool> updateProduct(ProductsTableCompanion companion) async {
     final rowsAffected = await (update(
       db.productsTable,
-    )..where((tbl) => tbl.id.equals(companion.id.value!))).write(companion);
+    )..where((tbl) => tbl.id.equals(companion.id.value))).write(companion);
     return rowsAffected > 0;
   }
 
@@ -107,13 +107,11 @@ class ProductDao extends DatabaseAccessor<AppDatabase> with _$ProductDaoMixin {
   ) async {
     await batch((batch) {
       for (final companion in companions) {
-        if (companion.id.value != null) {
-          batch.update(
-            db.productsTable,
-            companion,
-            where: (tbl) => tbl.id.equals(companion.id.value!),
-          );
-        }
+        batch.update(
+          db.productsTable,
+          companion,
+          where: (tbl) => tbl.id.equals(companion.id.value),
+        );
       }
     });
   }

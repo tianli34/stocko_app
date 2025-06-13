@@ -8,6 +8,8 @@ import '../../../../core/shared_widgets/loading_widget.dart';
 import '../../../../core/constants/app_routes.dart';
 import '../widgets/product_list_tile.dart';
 import 'product_add_edit_screen.dart';
+import '../../../../core/widgets/cached_image_widget.dart';
+import '../../../../core/widgets/full_screen_image_viewer.dart';
 
 /// 产品列表页面
 /// 展示如何使用 ProductListTile 组件
@@ -216,23 +218,44 @@ class ProductDetailsDialog extends StatelessWidget {
                 ),
               ],
             ),
-
-            const SizedBox(height: 16),
+            const SizedBox(height: 16), // 产品图片
+            if (product.image != null && product.image!.isNotEmpty)
+              GestureDetector(
+                onTap: () {
+                  Navigator.of(context).push(
+                    PageRouteBuilder(
+                      pageBuilder: (context, animation, secondaryAnimation) =>
+                          FullScreenImageViewer(
+                            imagePath: product.image!,
+                            heroTag:
+                                'product_dialog_image_${product.id}_${product.image!}',
+                          ),
+                      transitionsBuilder:
+                          (context, animation, secondaryAnimation, child) {
+                            return FadeTransition(
+                              opacity: animation,
+                              child: child,
+                            );
+                          },
+                      transitionDuration: const Duration(milliseconds: 300),
+                      reverseTransitionDuration: const Duration(
+                        milliseconds: 200,
+                      ),
+                    ),
+                  );
+                },
+                child: Hero(
+                  tag: 'product_dialog_image_${product.id}_${product.image!}',
+                  child: ProductDialogImage(imagePath: product.image!),
+                ),
+              ),
 
             // 产品详情
-            _buildDetailItem(context, '状态', product.isActive ? '启用' : '禁用'),
-
             if (product.sku != null)
               _buildDetailItem(context, 'SKU', product.sku!),
 
             if (product.barcode != null)
               _buildDetailItem(context, '条码', product.barcode!),
-
-            if (product.brand != null)
-              _buildDetailItem(context, '品牌', product.brand!),
-
-            if (product.specification != null)
-              _buildDetailItem(context, '规格', product.specification!),
 
             if (product.effectivePrice != null)
               _buildDetailItem(
@@ -247,9 +270,15 @@ class ProductDetailsDialog extends StatelessWidget {
                 '库存预警值',
                 '${product.stockWarningValue}',
               ),
-
             if (product.shelfLife != null)
-              _buildDetailItem(context, '保质期', '${product.shelfLife}天'),
+              _buildDetailItem(
+                context,
+                '保质期',
+                _formatShelfLife(
+                  product.shelfLife,
+                  _getProductShelfLifeUnit(product),
+                ),
+              ),
 
             if (product.ownership != null)
               _buildDetailItem(context, '归属', product.ownership!),
@@ -308,6 +337,34 @@ class ProductDetailsDialog extends StatelessWidget {
   String _formatDateTime(DateTime dateTime) {
     return '${dateTime.year}-${dateTime.month.toString().padLeft(2, '0')}-${dateTime.day.toString().padLeft(2, '0')} '
         '${dateTime.hour.toString().padLeft(2, '0')}:${dateTime.minute.toString().padLeft(2, '0')}';
+  }
+
+  /// 格式化保质期显示
+  String _formatShelfLife(int? shelfLife, String? unit) {
+    if (shelfLife == null) return '';
+
+    final unitText = _getShelfLifeUnitDisplayName(unit ?? 'months');
+    return '$shelfLife$unitText';
+  }
+
+  /// 获取保质期单位显示名称
+  String _getShelfLifeUnitDisplayName(String unit) {
+    switch (unit) {
+      case 'days':
+        return '天';
+      case 'months':
+        return '个月';
+      case 'years':
+        return '年';
+      default:
+        return '个月';
+    }
+  }
+
+  /// 获取产品的保质期单位
+  String _getProductShelfLifeUnit(Product product) {
+    // 返回产品实际的保质期单位
+    return product.shelfLifeUnit;
   }
 }
 

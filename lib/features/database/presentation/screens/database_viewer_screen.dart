@@ -5,6 +5,8 @@ import '../../../product/application/provider/product_providers.dart';
 import '../../../product/application/category_notifier.dart';
 import '../../../product/data/repository/product_unit_repository.dart';
 import '../../../product/data/repository/unit_repository.dart';
+import '../../../../core/widgets/cached_image_widget.dart';
+import '../../../../core/widgets/full_screen_image_viewer.dart';
 
 /// 数据库展示屏幕
 /// 显示数据库中所有表的数据
@@ -122,7 +124,9 @@ class _DatabaseViewerScreenState extends ConsumerState<DatabaseViewerScreen>
                     vertical: 4,
                   ),
                   child: ListTile(
-                    leading: CircleAvatar(child: Text('${index + 1}')),
+                    leading: product.image != null && product.image!.isNotEmpty
+                        ? _buildCachedCircleAvatar(product.image!, index + 1)
+                        : CircleAvatar(child: Text('${index + 1}')),
                     title: Text(product.name),
                     subtitle: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -404,6 +408,48 @@ class _DatabaseViewerScreenState extends ConsumerState<DatabaseViewerScreen>
           },
         );
       },
+    );
+  }
+
+  /// 构建缓存的圆形头像
+  Widget _buildCachedCircleAvatar(String imagePath, int fallbackNumber) {
+    return GestureDetector(
+      onTap: () {
+        Navigator.of(context).push(
+          PageRouteBuilder(
+            pageBuilder: (context, animation, secondaryAnimation) =>
+                FullScreenImageViewer(
+                  imagePath: imagePath,
+                  heroTag: 'database_avatar_$imagePath',
+                ),
+            transitionsBuilder:
+                (context, animation, secondaryAnimation, child) {
+                  return FadeTransition(opacity: animation, child: child);
+                },
+            transitionDuration: const Duration(milliseconds: 300),
+            reverseTransitionDuration: const Duration(milliseconds: 200),
+          ),
+        );
+      },
+      child: Hero(
+        tag: 'database_avatar_$imagePath',
+        child: SizedBox(
+          width: 40,
+          height: 40,
+          child: ClipOval(
+            child: CachedImageWidget(
+              imagePath: imagePath,
+              width: 40,
+              height: 40,
+              fit: BoxFit.cover,
+              enableCache: true,
+              quality: 70, // 头像使用较低质量
+              placeholder: CircleAvatar(child: Text('$fallbackNumber')),
+              errorWidget: CircleAvatar(child: Text('$fallbackNumber')),
+            ),
+          ),
+        ),
+      ),
     );
   }
 }

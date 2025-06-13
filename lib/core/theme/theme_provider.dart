@@ -18,6 +18,19 @@ class AppTheme {
       brightness: Brightness.light,
     ),
     fontFamily: fontFamily,
+
+    appBarTheme: const AppBarTheme(
+      // backgroundColor: Color.fromARGB(255, 33, 243, 44),
+      foregroundColor: Color.fromARGB(255, 33, 124, 243), // 文字和图标颜色
+      elevation: 8.0,
+      toolbarHeight: 37,
+
+      titleTextStyle: TextStyle(
+        color: Color.fromARGB(255, 0, 0, 0), // 显式设置颜色
+        fontSize: 19,
+      ),
+    ),
+
     elevatedButtonTheme: ElevatedButtonThemeData(
       style: ElevatedButton.styleFrom(
         padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),

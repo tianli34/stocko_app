@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../application/category_notifier.dart';
 import '../../application/category_sample_data_service.dart';
-import '../../domain/model/category.dart';
 import '../screens/category_selection_screen.dart';
 
 /// 删除类别功能演示页面
