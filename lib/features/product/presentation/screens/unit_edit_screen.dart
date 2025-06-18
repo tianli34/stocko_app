@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:mobile_scanner/mobile_scanner.dart';
 import '../../domain/model/unit.dart';
 import '../../domain/model/product_unit.dart';
 import '../../application/provider/unit_providers.dart';
+import '../../application/provider/unit_draft_providers.dart';
 import 'unit_selection_screen.dart';
 
 /// 单位编辑屏幕
@@ -32,7 +34,9 @@ class _UnitEditScreenState extends ConsumerState<UnitEditScreen> {
   @override
   void initState() {
     super.initState();
-    _baseUnitController = TextEditingController();
+    _baseUnitController = TextEditingController(text: '个'); // 默认单位为"个"
+    // 设置默认基本单位
+    _setDefaultBaseUnit();
     // 使用 WidgetsBinding.instance.addPostFrameCallback 来确保在 build 完成后初始化
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _initializeUnits();
@@ -48,6 +52,32 @@ class _UnitEditScreenState extends ConsumerState<UnitEditScreen> {
     super.dispose();
   }
 
+  /// 设置默认基本单位为"个"
+  void _setDefaultBaseUnit() async {
+    try {
+      final allUnits = await ref.read(allUnitsProvider.future);
+      final defaultUnit = allUnits.firstWhere(
+        (unit) => unit.name == '个',
+        orElse: () => Unit(id: 'default_unit_ge', name: '个'),
+      );
+
+      if (mounted) {
+        setState(() {
+          _baseUnit = defaultUnit;
+        });
+      }
+    } catch (e) {
+      // 如果无法获取单位数据，创建一个默认的"个"单位
+      final defaultUnit = Unit(id: 'default_unit_ge', name: '个');
+
+      if (mounted) {
+        setState(() {
+          _baseUnit = defaultUnit;
+        });
+      }
+    }
+  }
+
   /// 初始化单位数据
   void _initializeUnits() async {
     print('🔧 UnitEditScreen: 开始初始化单位数据');
@@ -55,17 +85,27 @@ class _UnitEditScreenState extends ConsumerState<UnitEditScreen> {
       '🔧 UnitEditScreen: initialProductUnits = ${widget.initialProductUnits}',
     );
 
-    if (widget.initialProductUnits != null &&
-        widget.initialProductUnits!.isNotEmpty) {
-      print(
-        '🔧 UnitEditScreen: 发现 ${widget.initialProductUnits!.length} 个初始单位',
-      );
+    // 首先检查是否有草稿数据
+    List<ProductUnit>? dataToLoad = widget.initialProductUnits;
+
+    if (widget.productId != null) {
+      final draftData = ref
+          .read(unitEditDraftProvider.notifier)
+          .getDraft(widget.productId!);
+      if (draftData != null && draftData.isNotEmpty) {
+        print('🔧 UnitEditScreen: 发现草稿数据，使用草稿数据加载');
+        dataToLoad = draftData;
+      }
+    }
+
+    if (dataToLoad != null && dataToLoad.isNotEmpty) {
+      print('🔧 UnitEditScreen: 发现 ${dataToLoad.length} 个单位数据');
 
       // 临时存储要添加的辅单位
       final List<_AuxiliaryUnit> tempAuxiliaryUnits = [];
       Unit? tempBaseUnit;
 
-      for (final productUnit in widget.initialProductUnits!) {
+      for (final productUnit in dataToLoad) {
         print(
           '🔧 UnitEditScreen: 处理单位 ${productUnit.unitId}, 换算率: ${productUnit.conversionRate}',
         );
@@ -90,15 +130,28 @@ class _UnitEditScreenState extends ConsumerState<UnitEditScreen> {
             print(
               '🔧 UnitEditScreen: 添加辅单位: ${unit.name}, 换算率: ${productUnit.conversionRate}',
             );
-            tempAuxiliaryUnits.add(
-              _AuxiliaryUnit(
-                id: _auxiliaryCounter,
-                unit: unit,
-                conversionRate: productUnit.conversionRate,
-              ),
+            final auxiliaryUnit = _AuxiliaryUnit(
+              id: _auxiliaryCounter,
+              unit: unit,
+              conversionRate: productUnit.conversionRate,
+              onDataChanged: _autoSaveDraft, // 传递自动保存回调
             );
+
             // 设置controller的text
-            tempAuxiliaryUnits.last.unitController.text = unit.name;
+            auxiliaryUnit.unitController.text = unit.name;
+
+            // 设置条码和建议零售价
+            if (productUnit.barcode != null &&
+                productUnit.barcode!.isNotEmpty) {
+              auxiliaryUnit.barcodeController.text = productUnit.barcode!;
+            }
+            if (productUnit.sellingPrice != null) {
+              auxiliaryUnit.retailPriceController.text = productUnit
+                  .sellingPrice!
+                  .toString();
+            }
+
+            tempAuxiliaryUnits.add(auxiliaryUnit);
             _auxiliaryCounter++;
           }
         } catch (e) {
@@ -152,8 +205,6 @@ class _UnitEditScreenState extends ConsumerState<UnitEditScreen> {
 
               // 辅单位部分
               _buildAuxiliaryUnitsSection(),
-
-              const Spacer(),
             ],
           ),
         ),
@@ -175,32 +226,34 @@ class _UnitEditScreenState extends ConsumerState<UnitEditScreen> {
           children: [
             Expanded(
               child: TextFormField(
-                readOnly: true,
-                decoration: InputDecoration(
-                  hintText: '请选择基本单位',
-                  border: const OutlineInputBorder(),
-                  suffixIcon: const Icon(Icons.arrow_drop_down),
+                decoration: const InputDecoration(
+                  hintText: '请输入基本单位名称',
+                  border: OutlineInputBorder(),
+                  helperText: '默认为"个"，可直接输入其他单位名称',
                 ),
                 controller: _baseUnitController,
                 validator: (value) {
-                  if (_baseUnit == null) {
-                    return '请选择基本单位';
+                  if (value == null || value.trim().isEmpty) {
+                    return '请输入基本单位名称';
                   }
                   return null;
                 },
-                onTap: _selectBaseUnit,
+                onChanged: (value) {
+                  _onBaseUnitNameChanged(value);
+                },
               ),
             ),
             const SizedBox(width: 8),
             IconButton(
-              onPressed: _selectBaseUnit,
-              icon: const Icon(Icons.search),
+              onPressed: () => _selectBaseUnit(),
+              icon: const Icon(Icons.list),
               style: IconButton.styleFrom(
                 backgroundColor: Theme.of(
                   context,
                 ).primaryColor.withOpacity(0.1),
                 foregroundColor: Theme.of(context).primaryColor,
               ),
+              tooltip: '选择单位',
             ),
           ],
         ),
@@ -234,6 +287,7 @@ class _UnitEditScreenState extends ConsumerState<UnitEditScreen> {
           // 辅单位列表
           Expanded(
             child: ListView.builder(
+              padding: const EdgeInsets.only(bottom: 80), // 添加底部边距避免遮挡
               itemCount: _auxiliaryUnits.length,
               itemBuilder: (context, index) {
                 return Column(
@@ -281,7 +335,7 @@ class _UnitEditScreenState extends ConsumerState<UnitEditScreen> {
             Row(
               children: [
                 Text(
-                  '辅单位${auxiliaryUnit.id}',
+                  '辅单位${index + 1}',
                   style: const TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
@@ -295,47 +349,42 @@ class _UnitEditScreenState extends ConsumerState<UnitEditScreen> {
                 ),
               ],
             ),
-
-            const SizedBox(height: 12),
-
-            // 单位选择
+            const SizedBox(height: 12), // 单位选择
             Row(
               children: [
                 Expanded(
                   child: TextFormField(
-                    readOnly: true,
                     decoration: const InputDecoration(
-                      hintText: '请选择单位',
+                      hintText: '请输入单位名称',
                       border: OutlineInputBorder(),
-                      suffixIcon: Icon(Icons.arrow_drop_down),
+                      helperText: '可直接输入单位名称，如：箱、包、瓶等',
                     ),
                     controller: auxiliaryUnit.unitController,
                     validator: (value) {
-                      if (auxiliaryUnit.unit == null) {
-                        return '请选择单位';
+                      if (value == null || value.trim().isEmpty) {
+                        return '请输入单位名称';
                       }
                       return null;
                     },
-                    onTap: () => _selectAuxiliaryUnit(index),
+                    onChanged: (value) =>
+                        _onAuxiliaryUnitNameChanged(index, value),
                   ),
                 ),
                 const SizedBox(width: 8),
                 IconButton(
                   onPressed: () => _selectAuxiliaryUnit(index),
-                  icon: const Icon(Icons.search),
+                  icon: const Icon(Icons.list),
                   style: IconButton.styleFrom(
                     backgroundColor: Theme.of(
                       context,
                     ).primaryColor.withOpacity(0.1),
                     foregroundColor: Theme.of(context).primaryColor,
                   ),
+                  tooltip: '选择单位',
                 ),
               ],
             ),
-
-            const SizedBox(height: 12),
-
-            // 换算率输入
+            const SizedBox(height: 12), // 换算率输入
             TextFormField(
               decoration: const InputDecoration(
                 labelText: '换算率',
@@ -364,7 +413,60 @@ class _UnitEditScreenState extends ConsumerState<UnitEditScreen> {
                 final rate = double.tryParse(value.trim());
                 if (rate != null) {
                   auxiliaryUnit.conversionRate = rate;
+                  _autoSaveDraft(); // 自动保存草稿
                 }
+              },
+            ),
+
+            const SizedBox(height: 12), // 条码输入
+            Row(
+              children: [
+                Expanded(
+                  child: TextFormField(
+                    controller: auxiliaryUnit.barcodeController,
+                    decoration: const InputDecoration(
+                      labelText: '条码',
+                      hintText: '请输入或扫描条码',
+                      border: OutlineInputBorder(),
+                    ),
+                    keyboardType: TextInputType.text,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                IconButton(
+                  onPressed: () => _scanBarcode(index),
+                  icon: const Icon(Icons.qr_code_scanner),
+                  style: IconButton.styleFrom(
+                    backgroundColor: Theme.of(
+                      context,
+                    ).primaryColor.withOpacity(0.1),
+                    foregroundColor: Theme.of(context).primaryColor,
+                  ),
+                  tooltip: '扫描条码',
+                ),
+              ],
+            ),
+
+            const SizedBox(height: 12),
+
+            // 建议零售价输入
+            TextFormField(
+              controller: auxiliaryUnit.retailPriceController,
+              decoration: const InputDecoration(
+                labelText: '建议零售价',
+                hintText: '请输入建议零售价',
+                border: OutlineInputBorder(),
+                prefixText: '¥ ',
+              ),
+              keyboardType: TextInputType.numberWithOptions(decimal: true),
+              validator: (value) {
+                if (value != null && value.trim().isNotEmpty) {
+                  final price = double.tryParse(value.trim());
+                  if (price == null || price < 0) {
+                    return '请输入有效的价格';
+                  }
+                }
+                return null;
               },
             ),
           ],
@@ -373,32 +475,69 @@ class _UnitEditScreenState extends ConsumerState<UnitEditScreen> {
     );
   }
 
-  /// 选择基本单位
-  void _selectBaseUnit() async {
-    final Unit? selectedUnit = await Navigator.of(context).push<Unit>(
-      MaterialPageRoute(
-        builder: (context) => const UnitSelectionScreen(isSelectionMode: true),
-      ),
-    );
-    if (selectedUnit != null) {
+  /// 处理基本单位名称变化
+  void _onBaseUnitNameChanged(String unitName) async {
+    final trimmedName = unitName.trim();
+    if (trimmedName.isEmpty) {
       setState(() {
-        _baseUnit = selectedUnit;
-        _baseUnitController.text = selectedUnit.name;
+        _baseUnit = null;
       });
+      return;
+    }
+
+    try {
+      // 首先查找现有单位
+      final allUnits = await ref.read(allUnitsProvider.future);
+      Unit? existingUnit = allUnits.firstWhere(
+        (unit) => unit.name == trimmedName,
+        orElse: () => Unit(id: '', name: ''), // 临时占位符
+      );
+
+      // 如果找不到现有单位，创建新单位
+      if (existingUnit.id.isEmpty) {
+        existingUnit = Unit(
+          id: 'unit_${DateTime.now().millisecondsSinceEpoch}',
+          name: trimmedName,
+        );
+      }
+
+      setState(() {
+        _baseUnit = existingUnit;
+      });
+      _autoSaveDraft(); // 自动保存草稿
+    } catch (e) {
+      print('处理基本单位名称变化失败: $e');
     }
   }
 
-  /// 选择辅单位
-  void _selectAuxiliaryUnit(int index) async {
-    final Unit? selectedUnit = await Navigator.of(context).push<Unit>(
-      MaterialPageRoute(
-        builder: (context) => const UnitSelectionScreen(isSelectionMode: true),
-      ),
-    );
+  /// 处理辅单位名称变化
+  void _onAuxiliaryUnitNameChanged(int index, String unitName) async {
+    final trimmedName = unitName.trim();
+    if (trimmedName.isEmpty) {
+      setState(() {
+        _auxiliaryUnits[index].unit = null;
+      });
+      return;
+    }
 
-    if (selectedUnit != null) {
+    try {
+      // 首先查找现有单位
+      final allUnits = await ref.read(allUnitsProvider.future);
+      Unit? existingUnit = allUnits.firstWhere(
+        (unit) => unit.name == trimmedName,
+        orElse: () => Unit(id: '', name: ''), // 临时占位符
+      );
+
+      // 如果找不到现有单位，创建新单位
+      if (existingUnit.id.isEmpty) {
+        existingUnit = Unit(
+          id: 'unit_${DateTime.now().millisecondsSinceEpoch}',
+          name: trimmedName,
+        );
+      }
+
       // 检查是否与基本单位重复
-      if (_baseUnit != null && selectedUnit.id == _baseUnit!.id) {
+      if (_baseUnit != null && existingUnit.name == _baseUnit!.name) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
@@ -412,7 +551,7 @@ class _UnitEditScreenState extends ConsumerState<UnitEditScreen> {
 
       // 检查是否与其他辅单位重复
       final existingIndex = _auxiliaryUnits.indexWhere(
-        (aux) => aux.unit?.id == selectedUnit.id,
+        (aux) => aux.unit?.name == existingUnit!.name,
       );
       if (existingIndex != -1 && existingIndex != index) {
         if (mounted) {
@@ -425,10 +564,13 @@ class _UnitEditScreenState extends ConsumerState<UnitEditScreen> {
         }
         return;
       }
+
       setState(() {
-        _auxiliaryUnits[index].unit = selectedUnit;
-        _auxiliaryUnits[index].unitController.text = selectedUnit.name;
+        _auxiliaryUnits[index].unit = existingUnit;
       });
+      _autoSaveDraft(); // 自动保存草稿
+    } catch (e) {
+      print('处理辅单位名称变化失败: $e');
     }
   }
 
@@ -436,10 +578,16 @@ class _UnitEditScreenState extends ConsumerState<UnitEditScreen> {
   void _addAuxiliaryUnit() {
     setState(() {
       _auxiliaryUnits.add(
-        _AuxiliaryUnit(id: _auxiliaryCounter, unit: null, conversionRate: 0),
+        _AuxiliaryUnit(
+          id: _auxiliaryCounter,
+          unit: null,
+          conversionRate: 0,
+          onDataChanged: _autoSaveDraft, // 传递自动保存回调
+        ),
       );
       _auxiliaryCounter++;
     });
+    _autoSaveDraft(); // 自动保存草稿
   }
 
   /// 删除辅单位
@@ -448,20 +596,131 @@ class _UnitEditScreenState extends ConsumerState<UnitEditScreen> {
       _auxiliaryUnits[index].dispose();
       _auxiliaryUnits.removeAt(index);
     });
+    _autoSaveDraft(); // 自动保存草稿
+  }
+
+  /// 选择基本单位
+  void _selectBaseUnit() async {
+    try {
+      final Unit? selectedUnit = await Navigator.of(context).push<Unit>(
+        MaterialPageRoute(
+          builder: (context) => UnitSelectionScreen(
+            selectedUnitId: _baseUnit?.id,
+            isSelectionMode: true,
+          ),
+        ),
+      );
+
+      if (selectedUnit != null) {
+        setState(() {
+          _baseUnit = selectedUnit;
+          _baseUnitController.text = selectedUnit.name;
+        });
+        _autoSaveDraft(); // 自动保存草稿
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('选择单位失败: $e'), backgroundColor: Colors.red),
+        );
+      }
+    }
+  }
+
+  /// 选择辅单位
+  void _selectAuxiliaryUnit(int index) async {
+    try {
+      final Unit? selectedUnit = await Navigator.of(context).push<Unit>(
+        MaterialPageRoute(
+          builder: (context) => UnitSelectionScreen(
+            selectedUnitId: _auxiliaryUnits[index].unit?.id,
+            isSelectionMode: true,
+          ),
+        ),
+      );
+
+      if (selectedUnit != null) {
+        // 检查是否与基本单位重复
+        if (_baseUnit != null && selectedUnit.name == _baseUnit!.name) {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('辅单位不能与基本单位相同'),
+                backgroundColor: Colors.orange,
+              ),
+            );
+          }
+          return;
+        }
+
+        // 检查是否与其他辅单位重复
+        final existingIndex = _auxiliaryUnits.indexWhere(
+          (aux) => aux.unit?.name == selectedUnit.name,
+        );
+        if (existingIndex != -1 && existingIndex != index) {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('该单位已被其他辅单位使用'),
+                backgroundColor: Colors.orange,
+              ),
+            );
+          }
+          return;
+        }
+
+        setState(() {
+          _auxiliaryUnits[index].unit = selectedUnit;
+          _auxiliaryUnits[index].unitController.text = selectedUnit.name;
+        });
+        _autoSaveDraft(); // 自动保存草稿
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('选择单位失败: $e'), backgroundColor: Colors.red),
+        );
+      }
+    }
+  }
+
+  /// 扫描条码
+  void _scanBarcode(int index) async {
+    try {
+      final String? barcode = await Navigator.of(context).push<String>(
+        MaterialPageRoute(builder: (context) => const _BarcodeScannerScreen()),
+      );
+
+      if (barcode != null && barcode.isNotEmpty) {
+        setState(() {
+          _auxiliaryUnits[index].barcodeController.text = barcode;
+        });
+
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('扫描成功: $barcode'),
+              backgroundColor: Colors.green,
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('扫描失败: $e'), backgroundColor: Colors.red),
+        );
+      }
+    }
   }
 
   /// 检查是否可以提交
   bool _canSubmit() {
-    return _baseUnit != null;
+    return _baseUnit != null && _baseUnitController.text.trim().isNotEmpty;
   }
 
-  /// 提交表单
-  void _submitForm() async {
-    if (!_formKey.currentState!.validate()) {
-      return;
-    }
-
-    // 构建ProductUnit列表
+  /// 构建ProductUnit列表的通用方法
+  List<ProductUnit> _buildProductUnits() {
     final List<ProductUnit> productUnits = [];
 
     // 添加基本单位
@@ -472,6 +731,7 @@ class _UnitEditScreenState extends ConsumerState<UnitEditScreen> {
           productId: widget.productId ?? 'new',
           unitId: _baseUnit!.id,
           conversionRate: 1.0,
+          // 基本单位暂不设置条码和售价，这些信息在产品主表中管理
         ),
       );
     }
@@ -485,15 +745,53 @@ class _UnitEditScreenState extends ConsumerState<UnitEditScreen> {
             productId: widget.productId ?? 'new',
             unitId: aux.unit!.id,
             conversionRate: aux.conversionRate,
+            barcode: aux.barcodeController.text.trim().isNotEmpty
+                ? aux.barcodeController.text.trim()
+                : null,
+            sellingPrice: aux.retailPriceController.text.trim().isNotEmpty
+                ? double.tryParse(aux.retailPriceController.text.trim())
+                : null,
+            lastUpdated: DateTime.now(),
           ),
         );
       }
     }
 
+    return productUnits;
+  }
+
+  /// 自动保存草稿（每次数据变更时调用）
+  void _autoSaveDraft() {
+    if (widget.productId != null && _baseUnit != null) {
+      final productUnits = _buildProductUnits();
+      if (productUnits.isNotEmpty) {
+        ref
+            .read(unitEditDraftProvider.notifier)
+            .saveDraft(widget.productId!, productUnits);
+      }
+    }
+  }
+
+  /// 提交表单
+  void _submitForm() async {
+    if (!_formKey.currentState!.validate()) {
+      return;
+    }
+
+    // 构建ProductUnit列表
+    final List<ProductUnit> productUnits = _buildProductUnits();
+
+    // 自动保存草稿（每次提交时都保存当前状态，下次进入还能看到）
+    if (widget.productId != null && productUnits.isNotEmpty) {
+      ref
+          .read(unitEditDraftProvider.notifier)
+          .saveDraft(widget.productId!, productUnits);
+    }
+
     // 显示配置完成提示
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('单位配置完成'), backgroundColor: Colors.green),
+        const SnackBar(content: Text('单位配置已保存'), backgroundColor: Colors.green),
       );
     }
 
@@ -508,12 +806,142 @@ class _AuxiliaryUnit {
   Unit? unit;
   double conversionRate;
   late TextEditingController unitController;
+  late TextEditingController barcodeController;
+  late TextEditingController retailPriceController;
+  VoidCallback? onDataChanged; // 添加数据变更回调
 
-  _AuxiliaryUnit({required this.id, this.unit, required this.conversionRate}) {
+  _AuxiliaryUnit({
+    required this.id,
+    this.unit,
+    required this.conversionRate,
+    this.onDataChanged,
+  }) {
     unitController = TextEditingController(text: unit?.name ?? '');
+    barcodeController = TextEditingController();
+    retailPriceController = TextEditingController();
+
+    // 添加监听器，当条码或零售价变化时触发回调
+    barcodeController.addListener(() {
+      onDataChanged?.call();
+    });
+    retailPriceController.addListener(() {
+      onDataChanged?.call();
+    });
   }
 
   void dispose() {
     unitController.dispose();
+    barcodeController.dispose();
+    retailPriceController.dispose();
+  }
+}
+
+/// 条码扫描屏幕
+class _BarcodeScannerScreen extends StatefulWidget {
+  const _BarcodeScannerScreen();
+
+  @override
+  State<_BarcodeScannerScreen> createState() => _BarcodeScannerScreenState();
+}
+
+class _BarcodeScannerScreenState extends State<_BarcodeScannerScreen> {
+  late MobileScannerController controller;
+  bool isScanning = true;
+
+  @override
+  void initState() {
+    super.initState();
+    controller = MobileScannerController();
+  }
+
+  @override
+  void dispose() {
+    controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('扫描条码'),
+        backgroundColor: Colors.black,
+        foregroundColor: Colors.white,
+        actions: [
+          IconButton(
+            onPressed: () async {
+              await controller.toggleTorch();
+            },
+            icon: const Icon(Icons.flash_on),
+            tooltip: '开关闪光灯',
+          ),
+          IconButton(
+            onPressed: () async {
+              await controller.switchCamera();
+            },
+            icon: const Icon(Icons.camera_rear),
+            tooltip: '切换摄像头',
+          ),
+        ],
+      ),
+      body: Stack(
+        children: [
+          // 扫描器视图
+          MobileScanner(
+            controller: controller,
+            onDetect: (BarcodeCapture capture) {
+              if (!isScanning) return;
+
+              final List<Barcode> barcodes = capture.barcodes;
+              if (barcodes.isNotEmpty) {
+                final barcode = barcodes.first;
+                final String? code = barcode.rawValue;
+
+                if (code != null && code.isNotEmpty) {
+                  setState(() {
+                    isScanning = false;
+                  });
+
+                  // 返回扫描结果
+                  Navigator.of(context).pop(code);
+                }
+              }
+            },
+          ),
+
+          // 扫描框
+          Center(
+            child: Container(
+              width: 250,
+              height: 250,
+              decoration: BoxDecoration(
+                border: Border.all(color: Colors.red, width: 2),
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+          ),
+
+          // 底部提示
+          Positioned(
+            bottom: 100,
+            left: 0,
+            right: 0,
+            child: Container(
+              margin: const EdgeInsets.symmetric(horizontal: 20),
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Colors.black54,
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: const Text(
+                '请将条码对准扫描框中央',
+                style: TextStyle(color: Colors.white, fontSize: 16),
+                textAlign: TextAlign.center,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }

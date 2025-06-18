@@ -54,7 +54,6 @@ void main() {
         stockWarningValue: 10,
         shelfLife: 365,
         shelfLifeUnit: 'days',
-        ownership: '测试商家',
         status: 'active',
         remarks: '测试备注',
       );
@@ -73,7 +72,7 @@ void main() {
         stockWarningValue: 10,
         shelfLife: 365,
         shelfLifeUnit: 'days',
-        ownership: '测试商家',
+        enableBatchManagement: false,
         status: 'active',
         remarks: '测试备注',
         lastUpdated: DateTime.now(),

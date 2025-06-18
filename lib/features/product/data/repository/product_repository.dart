@@ -111,6 +111,17 @@ class ProductRepository implements IProductRepository {
         });
   }
 
+  /// 根据条码查询产品
+  @override
+  Future<Product?> getProductByBarcode(String barcode) async {
+    try {
+      final result = await _productDao.getProductByBarcode(barcode);
+      return result != null ? _dataToProduct(result) : null;
+    } catch (e) {
+      throw Exception('根据条码查询产品失败: $e');
+    }
+  }
+
   /// 获取库存预警产品
   Future<List<Product>> getStockWarningProducts() async {
     try {
@@ -164,6 +175,7 @@ class ProductRepository implements IProductRepository {
     return ProductsTableCompanion(
       id: Value(product.id),
       name: Value(product.name),
+      barcode: Value(product.barcode), // 添加条码字段
       sku: Value(product.sku),
       image: Value(product.image),
       categoryId: Value(product.categoryId),
@@ -176,7 +188,7 @@ class ProductRepository implements IProductRepository {
       stockWarningValue: Value(product.stockWarningValue),
       shelfLife: Value(product.shelfLife),
       shelfLifeUnit: Value(product.shelfLifeUnit),
-      ownership: Value(product.ownership),
+      enableBatchManagement: Value(product.enableBatchManagement),
       status: Value(product.status),
       remarks: Value(product.remarks),
       lastUpdated: Value(product.lastUpdated),
@@ -188,6 +200,7 @@ class ProductRepository implements IProductRepository {
     return Product(
       id: data.id, // ID现在是必需的，不需要null检查
       name: data.name,
+      barcode: data.barcode, // 添加条码字段
       sku: data.sku,
       image: data.image,
       categoryId: data.categoryId,
@@ -200,7 +213,7 @@ class ProductRepository implements IProductRepository {
       stockWarningValue: data.stockWarningValue,
       shelfLife: data.shelfLife,
       shelfLifeUnit: data.shelfLifeUnit,
-      ownership: data.ownership,
+      enableBatchManagement: data.enableBatchManagement,
       status: data.status,
       remarks: data.remarks,
       lastUpdated: data.lastUpdated,

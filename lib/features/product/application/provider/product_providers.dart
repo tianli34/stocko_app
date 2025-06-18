@@ -158,6 +158,19 @@ class ProductController extends StateNotifier<ProductControllerState> {
     }
   }
 
+  /// 根据条码获取产品
+  Future<Product?> getProductByBarcode(String barcode) async {
+    try {
+      return await _repository.getProductByBarcode(barcode);
+    } catch (e) {
+      state = state.copyWith(
+        status: ProductOperationStatus.error,
+        errorMessage: '根据条码查询产品失败: ${e.toString()}',
+      );
+      return null;
+    }
+  }
+
   /// 重置状态
   void resetState() {
     state = const ProductControllerState();

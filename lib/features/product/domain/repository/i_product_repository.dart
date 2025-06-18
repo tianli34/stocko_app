@@ -47,4 +47,9 @@ abstract class IProductRepository {
   /// [categoryId] 类别ID
   /// 返回指定类别产品的数据流
   Stream<List<Product>> watchProductsByCategory(String categoryId);
+
+  /// 根据条码查询产品
+  /// [barcode] 条码
+  /// 返回匹配的产品，如果不存在则返回null
+  Future<Product?> getProductByBarcode(String barcode);
 }

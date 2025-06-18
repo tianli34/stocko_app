@@ -5,11 +5,10 @@ import '../../application/provider/product_providers.dart';
 import '../../domain/model/product.dart';
 import '../../../../core/shared_widgets/error_widget.dart';
 import '../../../../core/shared_widgets/loading_widget.dart';
-import '../../../../core/constants/app_routes.dart';
 import '../widgets/product_list_tile.dart';
-import 'product_add_edit_screen.dart';
 import '../../../../core/widgets/cached_image_widget.dart';
 import '../../../../core/widgets/full_screen_image_viewer.dart';
+import '../../../../core/constants/app_routes.dart';
 
 /// 产品列表页面
 /// 展示如何使用 ProductListTile 组件
@@ -44,18 +43,20 @@ class ProductListScreen extends ConsumerWidget {
       appBar: AppBar(
         title: const Text('产品列表'),
         leading: IconButton(
-          onPressed: () => context.go(AppRoutes.home),
-          icon: const Icon(Icons.home),
-          tooltip: '返回主页',
+          onPressed: () {
+            if (context.canPop()) {
+              context.pop();
+            } else {
+              context.go(AppRoutes.home);
+            }
+          },
+          icon: const Icon(Icons.arrow_back),
+          tooltip: '返回',
         ),
         actions: [
           IconButton(
             onPressed: () {
-              Navigator.of(context).push(
-                MaterialPageRoute(
-                  builder: (context) => const ProductAddEditScreen(),
-                ),
-              );
+              context.go(AppRoutes.productNew);
             },
             icon: const Icon(Icons.add),
             tooltip: '添加产品',
@@ -126,11 +127,7 @@ class ProductListScreen extends ConsumerWidget {
 
   /// 编辑产品
   void _editProduct(BuildContext context, Product product) {
-    Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (context) => ProductAddEditScreen(product: product),
-      ),
-    );
+    context.go(AppRoutes.productEditPath(product.id));
   }
 
   /// 删除产品
@@ -280,8 +277,11 @@ class ProductDetailsDialog extends StatelessWidget {
                 ),
               ),
 
-            if (product.ownership != null)
-              _buildDetailItem(context, '归属', product.ownership!),
+            _buildDetailItem(
+              context,
+              '批次管理',
+              product.enableBatchManagement ? '已启用' : '未启用',
+            ),
 
             if (product.remarks != null)
               _buildDetailItem(context, '备注', product.remarks!),
@@ -397,12 +397,8 @@ class ProductGridPage extends ConsumerWidget {
                   final product = products[index];
                   return SimpleProductListTile(
                     product: product,
-                    onTap: () => Navigator.of(context).push(
-                      MaterialPageRoute(
-                        builder: (context) =>
-                            ProductAddEditScreen(product: product),
-                      ),
-                    ),
+                    onTap: () =>
+                        context.go(AppRoutes.productEditPath(product.id)),
                   );
                 },
               ),

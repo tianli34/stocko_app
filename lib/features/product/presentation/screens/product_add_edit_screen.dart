@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import '../../domain/model/product.dart';
 import '../../domain/model/category.dart';
 import '../../domain/model/unit.dart';
@@ -31,11 +32,9 @@ class _ProductAddEditScreenState extends ConsumerState<ProductAddEditScreen> {
   late TextEditingController _barcodeController;
   late TextEditingController _retailPriceController;
   late TextEditingController _promotionalPriceController;
-  late TextEditingController _suggestedRetailPriceController;
-  // 添加缺失的字段控制器
+  late TextEditingController _suggestedRetailPriceController; // 添加缺失的字段控制器
   late TextEditingController _stockWarningValueController;
   late TextEditingController _shelfLifeController;
-  late TextEditingController _ownershipController;
   late TextEditingController _remarksController;
 
   // 表单状态
@@ -46,6 +45,8 @@ class _ProductAddEditScreenState extends ConsumerState<ProductAddEditScreen> {
   // 保质期单位相关
   String _shelfLifeUnit = 'months'; // 保质期单位：days, months, years
   final List<String> _shelfLifeUnitOptions = ['days', 'months', 'years'];
+  // 批次管理开关
+  bool _enableBatchManagement = false;
 
   @override
   void initState() {
@@ -73,14 +74,14 @@ class _ProductAddEditScreenState extends ConsumerState<ProductAddEditScreen> {
     _shelfLifeController = TextEditingController(
       text: product?.shelfLife?.toString() ?? '',
     );
-    _ownershipController = TextEditingController(
-      text: product?.ownership ?? '',
-    );
     _remarksController = TextEditingController(text: product?.remarks ?? '');
     _selectedCategoryId = product?.categoryId; // 初始化类别选择
-    _selectedUnitId = product?.unitId; // 初始化单位选择
+    // 初始化单位选择，如果是新产品或产品没有设置单位，默认为"个"
+    _selectedUnitId = product?.unitId ?? 'unit_piece'; // 默认为"个"
     _selectedImagePath = product?.image; // 初始化图片路径
     _shelfLifeUnit = product?.shelfLifeUnit ?? 'months'; // 正确初始化保质期单位
+    _enableBatchManagement =
+        product?.enableBatchManagement ?? false; // 初始化批次管理开关
   }
 
   @override
@@ -89,11 +90,9 @@ class _ProductAddEditScreenState extends ConsumerState<ProductAddEditScreen> {
     _barcodeController.dispose();
     _retailPriceController.dispose();
     _promotionalPriceController.dispose();
-    _suggestedRetailPriceController.dispose();
-    // 释放新增的控制器
+    _suggestedRetailPriceController.dispose(); // 释放新增的控制器
     _stockWarningValueController.dispose();
     _shelfLifeController.dispose();
-    _ownershipController.dispose();
     _remarksController.dispose();
     super.dispose();
   }
@@ -117,7 +116,7 @@ class _ProductAddEditScreenState extends ConsumerState<ProductAddEditScreen> {
             backgroundColor: Colors.green,
           ),
         );
-        Navigator.of(context).pop(); // 操作成功后返回
+        context.pop(); // 操作成功后返回
       } else if (next.isError) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -174,11 +173,6 @@ class _ProductAddEditScreenState extends ConsumerState<ProductAddEditScreen> {
                         Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(
-                              '产品图片',
-                              style: Theme.of(context).textTheme.bodyLarge
-                                  ?.copyWith(fontWeight: FontWeight.w500),
-                            ),
                             const SizedBox(height: 8),
                             ProductImagePicker(
                               initialImagePath: _selectedImagePath,
@@ -193,49 +187,6 @@ class _ProductAddEditScreenState extends ConsumerState<ProductAddEditScreen> {
                           ],
                         ),
                         const SizedBox(width: 16),
-                        // 图片说明
-                        Expanded(
-                          child: Container(
-                            padding: const EdgeInsets.all(12),
-                            decoration: BoxDecoration(
-                              color: Colors.blue.shade50,
-                              borderRadius: BorderRadius.circular(8),
-                              border: Border.all(color: Colors.blue.shade200),
-                            ),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Row(
-                                  children: [
-                                    Icon(
-                                      Icons.info,
-                                      size: 16,
-                                      color: Colors.blue.shade600,
-                                    ),
-                                    const SizedBox(width: 4),
-                                    Text(
-                                      '图片提示',
-                                      style: TextStyle(
-                                        fontWeight: FontWeight.w600,
-                                        color: Colors.blue.shade700,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                const SizedBox(height: 8),
-                                Text(
-                                  '• 支持从相册选择或拍照\n'
-                                  '• 建议使用清晰的产品图片\n'
-                                  '• 图片将自动压缩处理',
-                                  style: TextStyle(
-                                    fontSize: 12,
-                                    color: Colors.blue.shade700,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
                       ],
                     ),
                     const SizedBox(height: 16),
@@ -290,27 +241,32 @@ class _ProductAddEditScreenState extends ConsumerState<ProductAddEditScreen> {
                         ),
                       ],
                     ),
-                    const SizedBox(height: 16),
-
-                    // 单位选择
+                    const SizedBox(height: 16), // 单位选择
                     unitsAsyncValue.when(
-                      data: (units) => Row(
-                        children: [
-                          Expanded(child: _buildUnitDropdown(units)),
-                          const SizedBox(width: 8),
-                          IconButton(
-                            onPressed: () => _navigateToUnitSelection(context),
-                            icon: const Icon(Icons.settings),
-                            tooltip: '管理单位',
-                            style: IconButton.styleFrom(
-                              backgroundColor: Theme.of(
-                                context,
-                              ).primaryColor.withOpacity(0.1),
-                              foregroundColor: Theme.of(context).primaryColor,
+                      data: (units) {
+                        // 确保单位选择有效性
+                        WidgetsBinding.instance.addPostFrameCallback((_) {
+                          _ensureValidUnitSelection(units);
+                        });
+                        return Row(
+                          children: [
+                            Expanded(child: _buildUnitDropdown(units)),
+                            const SizedBox(width: 8),
+                            IconButton(
+                              onPressed: () =>
+                                  _navigateToUnitSelection(context),
+                              icon: const Icon(Icons.settings),
+                              tooltip: '管理单位',
+                              style: IconButton.styleFrom(
+                                backgroundColor: Theme.of(
+                                  context,
+                                ).primaryColor.withOpacity(0.1),
+                                foregroundColor: Theme.of(context).primaryColor,
+                              ),
                             ),
-                          ),
-                        ],
-                      ),
+                          ],
+                        );
+                      },
                       loading: () => Row(
                         children: [
                           Expanded(
@@ -436,11 +392,18 @@ class _ProductAddEditScreenState extends ConsumerState<ProductAddEditScreen> {
                     ),
                     const SizedBox(height: 16),
 
-                    _buildTextField(
-                      controller: _ownershipController,
-                      label: '归属',
-                      hint: '请输入归属信息',
-                      icon: Icons.business,
+                    // 批次管理开关
+                    Card(
+                      child: SwitchListTile(
+                        title: const Text('启用批次管理'),
+                        value: _enableBatchManagement,
+                        onChanged: (bool value) {
+                          setState(() {
+                            _enableBatchManagement = value;
+                          });
+                        },
+                        secondary: const Icon(Icons.inventory_2),
+                      ),
                     ),
                     const SizedBox(height: 16),
 
@@ -574,7 +537,7 @@ class _ProductAddEditScreenState extends ConsumerState<ProductAddEditScreen> {
     return DropdownButtonFormField<String>(
       value: _selectedUnitId,
       decoration: InputDecoration(
-        labelText: '计量单位',
+        labelText: '计量单位 *',
         prefixIcon: const Icon(Icons.straighten),
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
         enabledBorder: OutlineInputBorder(
@@ -587,15 +550,15 @@ class _ProductAddEditScreenState extends ConsumerState<ProductAddEditScreen> {
         ),
       ),
       hint: const Text('请选择计量单位'),
-      items: [
-        const DropdownMenuItem<String>(value: null, child: Text('无')),
-        ...units.map((unit) {
-          return DropdownMenuItem<String>(
-            value: unit.id,
-            child: Text(unit.name),
-          );
-        }),
-      ],
+      items: units.map((unit) {
+        return DropdownMenuItem<String>(value: unit.id, child: Text(unit.name));
+      }).toList(),
+      validator: (value) {
+        if (value == null || value.isEmpty) {
+          return '请选择计量单位';
+        }
+        return null;
+      },
       onChanged: (value) {
         setState(() {
           _selectedUnitId = value;
@@ -689,9 +652,7 @@ class _ProductAddEditScreenState extends ConsumerState<ProductAddEditScreen> {
           ? int.tryParse(_shelfLifeController.text.trim())
           : null,
       shelfLifeUnit: _shelfLifeUnit, // 添加保质期单位
-      ownership: _ownershipController.text.trim().isNotEmpty
-          ? _ownershipController.text.trim()
-          : null,
+      enableBatchManagement: _enableBatchManagement, // 添加批次管理开关
       status: 'active', // 默认状态为active
       remarks: _remarksController.text.trim().isNotEmpty
           ? _remarksController.text.trim()
@@ -706,50 +667,78 @@ class _ProductAddEditScreenState extends ConsumerState<ProductAddEditScreen> {
       } else {
         // 编辑模式 - 调用 updateProduct
         await controller.updateProduct(product);
-      }
-
-      // 产品保存成功后，保存单位配置
-      if (_productUnits != null && _productUnits!.isNotEmpty) {
-        print('🔧 ProductAddEditScreen: 开始保存单位配置');
-        try {
-          final productUnitController = ref.read(
-            productUnitControllerProvider.notifier,
-          );
-
-          // 更新产品ID为实际保存的产品ID
-          final updatedProductUnits = _productUnits!
-              .map(
-                (unit) => ProductUnit(
-                  productUnitId: '${product.id}_${unit.unitId}',
-                  productId: product.id,
-                  unitId: unit.unitId,
-                  conversionRate: unit.conversionRate,
-                ),
-              )
-              .toList();
-
-          await productUnitController.replaceProductUnits(
-            product.id,
-            updatedProductUnits,
-          );
-          print('🔧 ProductAddEditScreen: 单位配置保存成功');
-        } catch (e) {
-          print('🔧 ProductAddEditScreen: 单位配置保存失败: $e');
-          // 单位配置保存失败不应该影响产品保存的成功状态
-          if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text('产品保存成功，但单位配置保存失败: $e'),
-                backgroundColor: Colors.orange,
-                duration: const Duration(seconds: 3),
-              ),
-            );
-          }
-        }
-      }
+      } // 产品保存成功后，保存单位配置
+      await _saveProductUnits(product);
     } catch (e) {
       // 产品保存失败的处理由 ProductController 的监听器处理
       print('🔧 ProductAddEditScreen: 产品保存失败: $e');
+    }
+  }
+
+  /// 保存产品单位配置
+  /// 如果有单位配置数据则使用，否则为选中的单位创建基础配置
+  Future<void> _saveProductUnits(Product product) async {
+    try {
+      final productUnitController = ref.read(
+        productUnitControllerProvider.notifier,
+      );
+
+      List<ProductUnit> unitsToSave = [];
+
+      if (_productUnits != null && _productUnits!.isNotEmpty) {
+        // 如果有通过单位编辑屏幕配置的单位数据，使用这些数据
+        print('🔧 ProductAddEditScreen: 使用已配置的单位数据');
+        unitsToSave = _productUnits!
+            .map(
+              (unit) => ProductUnit(
+                productUnitId: '${product.id}_${unit.unitId}',
+                productId: product.id,
+                unitId: unit.unitId,
+                conversionRate: unit.conversionRate,
+                barcode: unit.barcode, // 保留条码信息
+                sellingPrice: unit.sellingPrice, // 保留建议零售价信息
+                lastUpdated: DateTime.now(),
+              ),
+            )
+            .toList();
+      } else if (_selectedUnitId != null) {
+        // 如果没有配置单位数据，但选择了单位，为选中的单位创建基础配置
+        print('🔧 ProductAddEditScreen: 为选中单位创建基础配置');
+        unitsToSave = [
+          ProductUnit(
+            productUnitId: '${product.id}_$_selectedUnitId',
+            productId: product.id,
+            unitId: _selectedUnitId!,
+            conversionRate: 1.0, // 基础单位换算率为1.0
+            barcode: null,
+            sellingPrice: null,
+            lastUpdated: DateTime.now(),
+          ),
+        ];
+      }
+
+      if (unitsToSave.isNotEmpty) {
+        print('🔧 ProductAddEditScreen: 开始保存 ${unitsToSave.length} 个单位配置');
+        await productUnitController.replaceProductUnits(
+          product.id,
+          unitsToSave,
+        );
+        print('🔧 ProductAddEditScreen: 单位配置保存成功');
+      } else {
+        print('🔧 ProductAddEditScreen: 没有单位配置需要保存');
+      }
+    } catch (e) {
+      print('🔧 ProductAddEditScreen: 单位配置保存失败: $e');
+      // 单位配置保存失败不应该影响产品保存的成功状态
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('产品保存成功，但单位配置保存失败: $e'),
+            backgroundColor: Colors.orange,
+            duration: const Duration(seconds: 3),
+          ),
+        );
+      }
     }
   }
 
@@ -912,6 +901,23 @@ class _ProductAddEditScreenState extends ConsumerState<ProductAddEditScreen> {
           duration: const Duration(seconds: 3),
         ),
       );
+    }
+  }
+
+  /// 验证并确保单位选择的有效性
+  void _ensureValidUnitSelection(List<Unit> units) {
+    // 如果当前选择的单位ID不在单位列表中，设置为默认值"个"
+    if (_selectedUnitId != null &&
+        !units.any((unit) => unit.id == _selectedUnitId)) {
+      setState(() {
+        _selectedUnitId = 'unit_piece'; // 默认为"个"
+      });
+    }
+    // 如果还没有选择单位，也设置为默认值"个"
+    else if (_selectedUnitId == null) {
+      setState(() {
+        _selectedUnitId = 'unit_piece'; // 默认为"个"
+      });
     }
   }
 }

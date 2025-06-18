@@ -93,53 +93,29 @@ class ProductListTile extends ConsumerWidget {
 
   /// 构建产品信息
   Widget _buildProductInfo(BuildContext context) {
-    final infoItems = <Widget>[];
-
-    // SKU 信息
+    final infoItems = <Widget>[]; // SKU 信息
     if (product.sku != null) {
-      infoItems.add(
-        _buildInfoItem(
-          context,
-          icon: Icons.qr_code_2,
-          label: 'SKU',
-          value: product.sku!,
-        ),
-      );
+      infoItems.add(_buildInfoItem(context, label: 'SKU', value: product.sku!));
     }
 
     // 条码信息
     if (product.barcode != null) {
       infoItems.add(
-        _buildInfoItem(
-          context,
-          icon: Icons.barcode_reader,
-          label: '条码',
-          value: product.barcode!,
-        ),
+        _buildInfoItem(context, label: '条码', value: product.barcode!),
       );
     }
 
     // 品牌信息
     if (product.brand != null) {
       infoItems.add(
-        _buildInfoItem(
-          context,
-          icon: Icons.branding_watermark,
-          label: '品牌',
-          value: product.brand!,
-        ),
+        _buildInfoItem(context, label: '品牌', value: product.brand!),
       );
     }
 
     // 规格信息
     if (product.specification != null) {
       infoItems.add(
-        _buildInfoItem(
-          context,
-          icon: Icons.info_outline,
-          label: '规格',
-          value: product.specification!,
-        ),
+        _buildInfoItem(context, label: '规格', value: product.specification!),
       );
     }
 
@@ -151,15 +127,12 @@ class ProductListTile extends ConsumerWidget {
   /// 构建信息项
   Widget _buildInfoItem(
     BuildContext context, {
-    required IconData icon,
     required String label,
     required String value,
   }) {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Icon(icon, size: 16, color: Colors.grey.shade600),
-        const SizedBox(width: 4),
         Text(
           '$label: ',
           style: Theme.of(context).textTheme.bodySmall?.copyWith(
@@ -193,12 +166,6 @@ class ProductListTile extends ConsumerWidget {
       ),
       child: Row(
         children: [
-          Icon(
-            Icons.attach_money,
-            size: 18,
-            color: Theme.of(context).primaryColor,
-          ),
-          const SizedBox(width: 4),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,

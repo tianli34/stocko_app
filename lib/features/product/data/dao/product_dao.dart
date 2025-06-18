@@ -133,4 +133,11 @@ class ProductDao extends DatabaseAccessor<AppDatabase> with _$ProductDaoMixin {
     final result = await query.getSingle();
     return result.read(countExp)!;
   }
+
+  /// 根据条码获取产品
+  Future<ProductsTableData?> getProductByBarcode(String barcode) async {
+    return await (select(
+      db.productsTable,
+    )..where((tbl) => tbl.barcode.equals(barcode))).getSingleOrNull();
+  }
 }

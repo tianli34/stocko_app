@@ -128,6 +128,7 @@ void main() {
       barcode: '111',
       sku: 'SKU-A',
       retailPrice: 10.0,
+      enableBatchManagement: false,
       status: 'active',
     ),
     Product(
@@ -136,6 +137,7 @@ void main() {
       barcode: '222',
       sku: 'SKU-B',
       retailPrice: 20.0,
+      enableBatchManagement: true,
       status: 'inactive',
     ),
   ];

@@ -8,6 +8,10 @@ class AppRoutes {
   static const String categories = '/categories';
   static const String categoryTest = '/categories/test';
   static const String inventory = '/inventory';
+  static const String inventoryQuery = '/inventory/query';
+  static const String inventoryInboundRecords = '/inventory/inbound-records';
+  static const String inbound = '/inbound';
+  static const String inboundCreate = '/inbound/create';
   static const String sales = '/sales';
   static const String test = '/test';
   static const String databaseViewer = '/database-viewer';

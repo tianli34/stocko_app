@@ -19,9 +19,9 @@ abstract class Product with _$Product {
     double? retailPrice, // 零售价
     double? promotionalPrice, // 促销价
     int? stockWarningValue, // 库存预警值
-    int? shelfLife, // 保质期(天数)
+    int? shelfLife, // 保质期(天数) - 修复：添加了缺失的换行符
     @Default('months') String shelfLifeUnit, // 保质期单位 (days, months, years)
-    String? ownership, // 归属
+    @Default(false) bool enableBatchManagement, // 批量管理开关，默认为false
     @Default('active') String status, // 状态，默认为 'active'
     String? remarks, // 备注
     DateTime? lastUpdated, // 最后更新日期
@@ -51,7 +51,23 @@ abstract class Product with _$Product {
   // 是否已过期（如果有保质期）
   bool get isExpired {
     if (shelfLife == null || lastUpdated == null) return false;
-    final expiryDate = lastUpdated!.add(Duration(days: shelfLife!));
+
+    Duration duration;
+    switch (shelfLifeUnit.toLowerCase()) {
+      case 'days':
+        duration = Duration(days: shelfLife!);
+        break;
+      case 'months':
+        duration = Duration(days: shelfLife! * 30); // 近似计算
+        break;
+      case 'years':
+        duration = Duration(days: shelfLife! * 365); // 近似计算
+        break;
+      default:
+        duration = Duration(days: shelfLife!);
+    }
+
+    final expiryDate = lastUpdated!.add(duration);
     return DateTime.now().isAfter(expiryDate);
   }
 

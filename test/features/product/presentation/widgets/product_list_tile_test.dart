@@ -66,7 +66,7 @@ void main() {
         stockWarningValue: 10,
         shelfLife: 365,
         shelfLifeUnit: 'days',
-        ownership: '测试公司',
+        enableBatchManagement: false,
         remarks: '测试备注',
         image: '/test/image.jpg',
         lastUpdated: DateTime(2024, 1, 2),

@@ -5,7 +5,7 @@ class ProductsTable extends Table {
   String get tableName => 'products';
   TextColumn get id => text()(); // 改为不可为空的主键
   TextColumn get name => text()(); // 名称必须
-  TextColumn get barcode => text().nullable()(); // 条码
+  TextColumn get barcode => text().nullable()(); // 主条码（通常对应基础单位）
   TextColumn get sku => text().nullable()();
   TextColumn get image => text().nullable()(); // 图片
   TextColumn get categoryId => text().nullable()(); // 类别ID
@@ -19,7 +19,8 @@ class ProductsTable extends Table {
   IntColumn get shelfLife => integer().nullable()(); // 保质期(天数)
   TextColumn get shelfLifeUnit =>
       text().withDefault(const Constant('months'))(); // 保质期单位
-  TextColumn get ownership => text().nullable()(); // 归属
+  BoolColumn get enableBatchManagement =>
+      boolean().withDefault(const Constant(false))(); // 批量管理开关，默认为false
   TextColumn get status =>
       text().withDefault(const Constant('active'))(); // 状态，默认为 'active'
   TextColumn get remarks => text().nullable()(); // 备注

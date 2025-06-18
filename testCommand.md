@@ -2,7 +2,7 @@
 
 
 git add .
-git commit -m "产品管理已基本完成"
+git commit -m "产品管理毛坯"
 git push
 
 
@@ -19,13 +19,10 @@ flutter test
 
 
 
-给产品添加图片功能
+在"扫码添加商品"按钮旁边添加"连续扫码"滑动开关，默认为关闭状态
 
 注意：
 以上任务完成即可！不要做任务以外的事情！
-请勿在终端运行flutter test命令！
 请勿运行pub get! 
-请勿运行build_runner build！
 请勿运行flutter analyze！
-不要管那些和程序运行无关的文档！
-如确需执行以上命令，请委托我来执行并结束回答！
+如你有任何质疑或建议，请提出。

@@ -225,8 +225,11 @@ class ProductDetailScreen extends ConsumerWidget {
                         _getProductShelfLifeUnit(product),
                       ),
                     ),
-                  if (product.ownership != null)
-                    _buildDetailItem(context, '归属', product.ownership!),
+                  _buildDetailItem(
+                    context,
+                    '批量管理',
+                    product.enableBatchManagement ? '已启用' : '未启用',
+                  ),
                   if (product.remarks != null)
                     _buildDetailItem(context, '备注', product.remarks!),
                   if (product.lastUpdated != null)

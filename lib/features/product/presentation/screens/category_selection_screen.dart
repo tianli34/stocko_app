@@ -1,10 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 import '../../application/category_notifier.dart';
 import '../../domain/model/category.dart';
 import '../../data/repository/product_repository.dart';
-import '../../../../core/constants/app_routes.dart';
 
 /// 类别选择屏幕
 /// 支持选择、新增、重命名、删除类别的功能
@@ -25,14 +23,12 @@ class CategorySelectionScreen extends ConsumerStatefulWidget {
 
 class _CategorySelectionScreenState
     extends ConsumerState<CategorySelectionScreen> {
-  String? _selectedCategoryId;
   // 用于管理每个类别的展开/收起状态
   final Map<String, bool> _expandedCategories = {};
 
   @override
   void initState() {
     super.initState();
-    _selectedCategoryId = widget.selectedCategoryId;
   }
 
   @override
@@ -43,9 +39,9 @@ class _CategorySelectionScreenState
       appBar: AppBar(
         title: Text(widget.isSelectionMode ? '选择类别' : '类别管理'),
         leading: IconButton(
-          onPressed: () => context.go(AppRoutes.home),
-          icon: const Icon(Icons.home),
-          tooltip: '返回主页',
+          onPressed: () => Navigator.of(context).pop(),
+          icon: const Icon(Icons.arrow_back),
+          tooltip: '返回',
         ),
         actions: [
           IconButton(
@@ -79,21 +75,6 @@ class _CategorySelectionScreenState
                 return item;
               },
             ),
-      floatingActionButton:
-          widget.isSelectionMode &&
-              _selectedCategoryId != null &&
-              categories.any((cat) => cat.id == _selectedCategoryId)
-          ? FloatingActionButton.extended(
-              onPressed: () {
-                final selectedCategory = categories.firstWhere(
-                  (cat) => cat.id == _selectedCategoryId,
-                );
-                Navigator.of(context).pop(selectedCategory);
-              },
-              icon: const Icon(Icons.check),
-              label: const Text('确认选择'),
-            )
-          : null,
     );
   }
 
@@ -144,7 +125,7 @@ class _CategorySelectionScreenState
     int level = 0,
     List<Category>? allCategories,
   ]) {
-    final isSelected = _selectedCategoryId == category.id;
+    final isSelected = widget.selectedCategoryId == category.id;
     final isSubCategory = level > 0;
     final isThirdLevel = level > 1;
 
@@ -222,16 +203,6 @@ class _CategorySelectionScreenState
           trailing: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              if (widget.isSelectionMode)
-                Radio<String>(
-                  value: category.id,
-                  groupValue: _selectedCategoryId,
-                  onChanged: (value) {
-                    setState(() {
-                      _selectedCategoryId = value;
-                    });
-                  },
-                ),
               PopupMenuButton<String>(
                 onSelected: (action) =>
                     _handleCategoryAction(context, category, action),
@@ -273,10 +244,8 @@ class _CategorySelectionScreenState
           ),
           onTap: () {
             if (widget.isSelectionMode) {
-              // 选择模式：选择类别
-              setState(() {
-                _selectedCategoryId = category.id;
-              });
+              // 选择模式：直接返回选中的类别
+              Navigator.of(context).pop(category);
             } else if (hasSubCategories) {
               // 非选择模式且有子类别：切换展开/收起状态
               setState(() {
@@ -575,12 +544,6 @@ class _CategorySelectionScreenState
                 backgroundColor: Colors.green,
               ),
             );
-            // 如果删除的是当前选中的类别，清除选择
-            if (_selectedCategoryId == category.id) {
-              setState(() {
-                _selectedCategoryId = null;
-              });
-            }
           } catch (e) {
             Navigator.of(context).pop();
             ScaffoldMessenger.of(context).showSnackBar(
@@ -600,12 +563,6 @@ class _CategorySelectionScreenState
                 backgroundColor: Colors.orange,
               ),
             );
-            // 如果删除的是当前选中的类别，清除选择
-            if (_selectedCategoryId == category.id) {
-              setState(() {
-                _selectedCategoryId = null;
-              });
-            }
           } catch (e) {
             Navigator.of(context).pop();
             ScaffoldMessenger.of(context).showSnackBar(

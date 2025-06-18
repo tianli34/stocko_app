@@ -10,6 +10,8 @@ import '../../features/product/presentation/screens/category_selection_screen.da
 import '../../features/product/presentation/pages/category_test_page.dart';
 import '../../features/product/application/provider/product_providers.dart';
 import '../../features/database/presentation/screens/database_viewer_screen.dart';
+import '../../features/inbound/presentation/screens/screens.dart';
+import '../../features/inventory/presentation/screens/screens.dart';
 
 // GoRouter Provider
 final routerProvider = Provider<GoRouter>((ref) {
@@ -60,6 +62,14 @@ final routerProvider = Provider<GoRouter>((ref) {
                       child: ElevatedButton(
                         onPressed: () => context.go(AppRoutes.inventory),
                         child: const Text('库存管理'),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    SizedBox(
+                      width: 200,
+                      child: ElevatedButton(
+                        onPressed: () => context.go(AppRoutes.inboundCreate),
+                        child: const Text('新建入库单'),
                       ),
                     ),
                     const SizedBox(height: 16),
@@ -177,7 +187,38 @@ final routerProvider = Provider<GoRouter>((ref) {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const Placeholder(child: Text('库存管理页面')),
+                const Text(
+                  '库存管理功能',
+                  style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 40),
+                SizedBox(
+                  width: 200,
+                  child: ElevatedButton(
+                    onPressed: () => context.go(AppRoutes.inboundCreate),
+                    child: const Text('新建入库单'),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                SizedBox(
+                  width: 200,
+                  child: ElevatedButton(
+                    onPressed: () {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('入库记录功能待实现')),
+                      );
+                    },
+                    child: const Text('入库记录'),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                SizedBox(
+                  width: 200,
+                  child: ElevatedButton(
+                    onPressed: () => context.go(AppRoutes.inventoryQuery),
+                    child: const Text('库存查询'),
+                  ),
+                ),
                 const SizedBox(height: 20),
                 ElevatedButton(
                   onPressed: () => context.go(AppRoutes.home),
@@ -187,6 +228,16 @@ final routerProvider = Provider<GoRouter>((ref) {
             ),
           ),
         ),
+      ),
+      GoRoute(
+        path: AppRoutes.inboundCreate,
+        name: 'inbound-create',
+        builder: (context, state) => const CreateInboundScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.inventoryQuery,
+        name: 'inventory-query',
+        builder: (context, state) => const InventoryQueryScreen(),
       ),
       GoRoute(
         path: AppRoutes.sales,

@@ -87,13 +87,6 @@ class _UnitSelectionScreenState extends ConsumerState<UnitSelectionScreen> {
           ),
         ],
       ),
-      floatingActionButton: widget.isSelectionMode && _selectedUnitId != null
-          ? FloatingActionButton.extended(
-              onPressed: () => _confirmSelection(),
-              icon: const Icon(Icons.check),
-              label: const Text('确认选择'),
-            )
-          : null,
     );
   }
 
@@ -172,12 +165,16 @@ class _UnitSelectionScreenState extends ConsumerState<UnitSelectionScreen> {
               setState(() {
                 _selectedUnitId = value;
               });
+              // 直接确认选择并返回
+              _confirmSelection();
             },
           ),
           onTap: () {
             setState(() {
               _selectedUnitId = unit.id;
             });
+            // 直接确认选择并返回
+            _confirmSelection();
           },
         ),
       );

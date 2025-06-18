@@ -141,7 +141,6 @@ class CategoryService {
           promotionalPrice: product.promotionalPrice,
           stockWarningValue: product.stockWarningValue,
           shelfLife: product.shelfLife,
-          ownership: product.ownership,
           status: product.status,
           remarks: product.remarks,
           lastUpdated: DateTime.now(),
