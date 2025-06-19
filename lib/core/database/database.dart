@@ -18,11 +18,12 @@ import 'inventory_transactions_table.dart';
 import 'locations_table.dart';
 import 'inbound_receipts_table.dart';
 import 'inbound_receipt_items_table.dart';
+import 'purchases_table.dart'; // 新增采购表
 import '../../features/product/data/dao/product_dao.dart';
 import '../../features/product/data/dao/category_dao.dart';
 import '../../features/product/data/dao/unit_dao.dart';
 import '../../features/product/data/dao/product_unit_dao.dart';
-import '../../features/product/data/dao/supplier_dao.dart';
+import '../../features/purchase/data/dao/supplier_dao.dart';
 import '../../features/product/data/dao/batch_dao.dart';
 import '../../features/inventory/data/dao/shop_dao.dart';
 import '../../features/inventory/data/dao/inventory_dao.dart';
@@ -30,6 +31,7 @@ import '../../features/inventory/data/dao/inventory_transaction_dao.dart';
 import '../../features/inbound/data/dao/location_dao.dart';
 import '../../features/inbound/data/dao/inbound_receipt_dao.dart';
 import '../../features/inbound/data/dao/inbound_item_dao.dart';
+import '../../features/purchase/data/dao/purchase_dao.dart';
 
 part 'database.g.dart';
 
@@ -47,6 +49,7 @@ part 'database.g.dart';
     LocationsTable,
     InboundReceiptsTable,
     InboundReceiptItemsTable,
+    PurchasesTable, // 新增采购表
   ],
   daos: [
     ProductDao,
@@ -61,12 +64,13 @@ part 'database.g.dart';
     LocationDao,
     InboundReceiptDao,
     InboundItemDao,
+    PurchaseDao,
   ],
 )
 class AppDatabase extends _$AppDatabase {
   AppDatabase(super.e);
   @override
-  int get schemaVersion => 7;
+  int get schemaVersion => 8; // 提升版本以应用新的迁移
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -74,6 +78,9 @@ class AppDatabase extends _$AppDatabase {
       await m.createAll();
     },
     onUpgrade: (Migrator m, int from, int to) async {
+      if (from < 8 && to == 8) {
+        await m.createTable(purchasesTable);
+      }
       if (from == 1 && to == 2) {
         // 从版本1升级到版本2：修改产品表的ID列为非空
         // 由于SQLite不支持直接修改列的null约束，我们需要重建表

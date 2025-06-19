@@ -12,6 +12,8 @@ class AppRoutes {
   static const String inventoryInboundRecords = '/inventory/inbound-records';
   static const String inbound = '/inbound';
   static const String inboundCreate = '/inbound/create';
+  static const String purchase = '/purchase';
+  static const String purchaseCreate = '/purchase/create';
   static const String sales = '/sales';
   static const String test = '/test';
   static const String databaseViewer = '/database-viewer';

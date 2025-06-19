@@ -12,6 +12,7 @@ import '../../features/product/application/provider/product_providers.dart';
 import '../../features/database/presentation/screens/database_viewer_screen.dart';
 import '../../features/inbound/presentation/screens/screens.dart';
 import '../../features/inventory/presentation/screens/screens.dart';
+import '../../features/purchase/presentation/screens/screens.dart';
 
 // GoRouter Provider
 final routerProvider = Provider<GoRouter>((ref) {
@@ -76,6 +77,14 @@ final routerProvider = Provider<GoRouter>((ref) {
                     SizedBox(
                       width: 200,
                       child: ElevatedButton(
+                        onPressed: () => context.go(AppRoutes.purchaseCreate),
+                        child: const Text('新建采购单'),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    SizedBox(
+                      width: 200,
+                      child: ElevatedButton(
                         onPressed: () => context.go(AppRoutes.sales),
                         child: const Text('销售管理'),
                       ),
@@ -117,6 +126,12 @@ final routerProvider = Provider<GoRouter>((ref) {
         name: 'products',
         builder: (context, state) => const ProductListScreen(),
         routes: [
+          // 新增商品页面 - 必须放在 :id 路由之前
+          GoRoute(
+            path: 'new',
+            name: 'product-new',
+            builder: (context, state) => const ProductAddEditScreen(),
+          ),
           // 商品详情页面
           GoRoute(
             path: ':id',
@@ -156,12 +171,6 @@ final routerProvider = Provider<GoRouter>((ref) {
                 },
               ),
             ],
-          ),
-          // 新增商品页面
-          GoRoute(
-            path: 'new',
-            name: 'product-new',
-            builder: (context, state) => const ProductAddEditScreen(),
           ),
         ],
       ),
@@ -233,6 +242,11 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: AppRoutes.inboundCreate,
         name: 'inbound-create',
         builder: (context, state) => const CreateInboundScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.purchaseCreate,
+        name: 'purchase-create',
+        builder: (context, state) => const CreatePurchaseScreen(),
       ),
       GoRoute(
         path: AppRoutes.inventoryQuery,

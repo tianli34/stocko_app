@@ -39,10 +39,8 @@ class SupplierControllerState {
 /// 供应商控制器 - 管理供应商的增删改操作
 class SupplierController extends StateNotifier<SupplierControllerState> {
   final ISupplierRepository _repository;
-  final Ref _ref;
 
-  SupplierController(this._repository, this._ref)
-    : super(const SupplierControllerState());
+  SupplierController(this._repository) : super(const SupplierControllerState());
 
   /// 添加供应商
   Future<void> addSupplier(Supplier supplier) async {
@@ -157,7 +155,7 @@ final supplierRepositoryProvider = Provider<ISupplierRepository>((ref) {
 final supplierControllerProvider =
     StateNotifierProvider<SupplierController, SupplierControllerState>((ref) {
       final repository = ref.watch(supplierRepositoryProvider);
-      return SupplierController(repository, ref);
+      return SupplierController(repository);
     });
 
 /// 获取所有供应商提供者

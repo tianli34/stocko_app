@@ -117,7 +117,6 @@ class DatabaseInitializer {
         print('📏 单位数据已存在，跳过初始化');
         return;
       }
-
       final defaultUnits = [
         UnitsTableCompanion.insert(
           id: 'unit_piece',
@@ -140,6 +139,12 @@ class DatabaseInitializer {
         UnitsTableCompanion.insert(
           id: 'unit_bottle',
           name: '瓶',
+          createdAt: Value(DateTime.now()),
+          updatedAt: Value(DateTime.now()),
+        ),
+        UnitsTableCompanion.insert(
+          id: 'unit_package',
+          name: '包',
           createdAt: Value(DateTime.now()),
           updatedAt: Value(DateTime.now()),
         ),
@@ -226,7 +231,7 @@ class DatabaseInitializer {
           stockWarningValue: const Value(30),
           shelfLife: const Value(730),
           shelfLifeUnit: const Value('days'),
-          enableBatchManagement: const Value(false),
+          enableBatchManagement: const Value(true), // 启用批次管理
           status: const Value('active'),
           lastUpdated: Value(DateTime.now()),
         ),

@@ -172,6 +172,15 @@ class _CreateInboundScreenState extends ConsumerState<CreateInboundScreen> {
 
       // 2. 创建入库单明细记录并处理库存
       for (final item in _inboundItems) {
+        // 首先获取产品信息，检查是否启用批次管理
+        final database = ref.read(appDatabaseProvider);
+        final productDao = database.productDao;
+        final product = await productDao.getProductById(item.productId);
+
+        if (product == null) {
+          throw Exception('产品 ${item.productName} 信息不存在，无法入库');
+        }
+
         // 插入入库明细
         final itemCompanion = InboundReceiptItemsTableCompanion(
           id: drift.Value(item.id),
@@ -182,7 +191,10 @@ class _CreateInboundScreenState extends ConsumerState<CreateInboundScreen> {
           productionDate: drift.Value(item.productionDate),
           locationId: drift.Value(item.locationId),
           purchaseQuantity: drift.Value(item.purchaseQuantity),
-          batchNumber: item.productionDate != null
+          purchaseOrderId: drift.Value(item.purchaseOrderId),
+          batchNumber:
+              item.productionDate != null &&
+                  product.enableBatchManagement == true
               ? drift.Value(
                   Batch.generateBatchNumber(
                     item.productId,
@@ -191,15 +203,18 @@ class _CreateInboundScreenState extends ConsumerState<CreateInboundScreen> {
                 )
               : const drift.Value.absent(),
         );
-        await inboundItemDao.insertInboundItem(
-          itemCompanion,
-        ); // 3. 如果有生产日期，创建或更新批次记录
-        // 同一批次在多次入库时需要累加 initialQuantity
-        if (item.productionDate != null) {
+        await inboundItemDao.insertInboundItem(itemCompanion);
+
+        // 3. 只有启用批次管理且有生产日期时，才创建或更新批次记录
+        if (item.productionDate != null &&
+            product.enableBatchManagement == true) {
+          print('📦 产品 ${item.productName} 启用批次管理，创建批次记录');
           final batchNumber = Batch.generateBatchNumber(
             item.productId,
             item.productionDate!,
-          ); // 检查批次是否已存在
+          );
+
+          // 检查批次是否已存在
           final existingBatch = await batchDao.getBatchByNumber(batchNumber);
           if (existingBatch != null) {
             // 如果批次已存在，累加初始数量
@@ -215,12 +230,14 @@ class _CreateInboundScreenState extends ConsumerState<CreateInboundScreen> {
               shopId: defaultShopId,
             );
           }
-        }
-
-        // 4. 处理库存和流水
-        final batchNumber = item.productionDate != null
+        } // 4. 处理库存和流水
+        // 根据产品批次管理设置决定批次号生成策略
+        final batchNumber =
+            item.productionDate != null && product.enableBatchManagement == true
             ? Batch.generateBatchNumber(item.productId, item.productionDate!)
             : 'BATCH_${DateTime.now().millisecondsSinceEpoch}';
+
+        print('📦 产品 ${item.productName} 使用批次号: $batchNumber');
 
         final success = await inventoryService.inbound(
           productId: item.productId,

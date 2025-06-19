@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../../../core/services/barcode_scanner_service.dart';
 import '../../domain/model/product.dart';
 import '../../domain/model/category.dart';
 import '../../domain/model/unit.dart';
@@ -11,7 +12,6 @@ import '../../application/provider/unit_providers.dart';
 import '../../application/provider/product_unit_providers.dart';
 import 'category_selection_screen.dart';
 import 'unit_edit_screen.dart';
-import 'barcode_scanner_screen.dart';
 import '../widgets/product_image_picker.dart';
 
 /// 产品添加/编辑页面
@@ -874,8 +874,9 @@ class _ProductAddEditScreenState extends ConsumerState<ProductAddEditScreen> {
   /// 扫描条码
   void _scanBarcode() async {
     try {
-      final String? barcode = await Navigator.of(context).push<String>(
-        MaterialPageRoute(builder: (context) => const BarcodeScannerScreen()),
+      // 使用通用扫码服务
+      final String? barcode = await BarcodeScannerService.scanForProduct(
+        context,
       );
 
       if (barcode != null && barcode.isNotEmpty) {

@@ -2,7 +2,7 @@
 
 
 git add .
-git commit -m "产品管理毛坯"
+git commit -m "部分采购"
 git push
 
 
@@ -22,7 +22,7 @@ flutter test
 在"扫码添加商品"按钮旁边添加"连续扫码"滑动开关，默认为关闭状态
 
 注意：
-以上任务完成即可！不要做任务以外的事情！
+以上任务完成即可！其它功能留待后续实现！
 请勿运行pub get! 
 请勿运行flutter analyze！
 如你有任何质疑或建议，请提出。

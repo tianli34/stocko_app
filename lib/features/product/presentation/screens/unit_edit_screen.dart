@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:mobile_scanner/mobile_scanner.dart';
+import '../../../../core/services/barcode_scanner_service.dart';
 import '../../domain/model/unit.dart';
 import '../../domain/model/product_unit.dart';
 import '../../application/provider/unit_providers.dart';
@@ -687,8 +687,8 @@ class _UnitEditScreenState extends ConsumerState<UnitEditScreen> {
   /// 扫描条码
   void _scanBarcode(int index) async {
     try {
-      final String? barcode = await Navigator.of(context).push<String>(
-        MaterialPageRoute(builder: (context) => const _BarcodeScannerScreen()),
+      final String? barcode = await BarcodeScannerService.scanForProduct(
+        context,
       );
 
       if (barcode != null && barcode.isNotEmpty) {
@@ -828,120 +828,9 @@ class _AuxiliaryUnit {
       onDataChanged?.call();
     });
   }
-
   void dispose() {
     unitController.dispose();
     barcodeController.dispose();
     retailPriceController.dispose();
-  }
-}
-
-/// 条码扫描屏幕
-class _BarcodeScannerScreen extends StatefulWidget {
-  const _BarcodeScannerScreen();
-
-  @override
-  State<_BarcodeScannerScreen> createState() => _BarcodeScannerScreenState();
-}
-
-class _BarcodeScannerScreenState extends State<_BarcodeScannerScreen> {
-  late MobileScannerController controller;
-  bool isScanning = true;
-
-  @override
-  void initState() {
-    super.initState();
-    controller = MobileScannerController();
-  }
-
-  @override
-  void dispose() {
-    controller.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('扫描条码'),
-        backgroundColor: Colors.black,
-        foregroundColor: Colors.white,
-        actions: [
-          IconButton(
-            onPressed: () async {
-              await controller.toggleTorch();
-            },
-            icon: const Icon(Icons.flash_on),
-            tooltip: '开关闪光灯',
-          ),
-          IconButton(
-            onPressed: () async {
-              await controller.switchCamera();
-            },
-            icon: const Icon(Icons.camera_rear),
-            tooltip: '切换摄像头',
-          ),
-        ],
-      ),
-      body: Stack(
-        children: [
-          // 扫描器视图
-          MobileScanner(
-            controller: controller,
-            onDetect: (BarcodeCapture capture) {
-              if (!isScanning) return;
-
-              final List<Barcode> barcodes = capture.barcodes;
-              if (barcodes.isNotEmpty) {
-                final barcode = barcodes.first;
-                final String? code = barcode.rawValue;
-
-                if (code != null && code.isNotEmpty) {
-                  setState(() {
-                    isScanning = false;
-                  });
-
-                  // 返回扫描结果
-                  Navigator.of(context).pop(code);
-                }
-              }
-            },
-          ),
-
-          // 扫描框
-          Center(
-            child: Container(
-              width: 250,
-              height: 250,
-              decoration: BoxDecoration(
-                border: Border.all(color: Colors.red, width: 2),
-                borderRadius: BorderRadius.circular(12),
-              ),
-            ),
-          ),
-
-          // 底部提示
-          Positioned(
-            bottom: 100,
-            left: 0,
-            right: 0,
-            child: Container(
-              margin: const EdgeInsets.symmetric(horizontal: 20),
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: Colors.black54,
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: const Text(
-                '请将条码对准扫描框中央',
-                style: TextStyle(color: Colors.white, fontSize: 16),
-                textAlign: TextAlign.center,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
   }
 }
