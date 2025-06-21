@@ -5,9 +5,10 @@ import '../../data/dao/purchase_dao.dart';
 import '../../../product/data/dao/batch_dao.dart';
 import '../../../inbound/data/dao/inbound_receipt_dao.dart';
 import '../../../inbound/data/dao/inbound_item_dao.dart';
+import '../../data/dao/product_supplier_dao.dart'; // 新增引入
 import '../../../inventory/application/inventory_service.dart';
 import '../../../inventory/domain/model/batch.dart';
-import '../../presentation/screens/create_purchase_screen.dart';
+import '../../domain/model/purchase_item.dart'; // 导入PurchaseItem类
 import '../../domain/repository/i_supplier_repository.dart';
 import '../../domain/model/supplier.dart';
 import '../provider/supplier_providers.dart';
@@ -20,6 +21,7 @@ class PurchaseService {
   final BatchDao _batchDao;
   final InboundReceiptDao _inboundReceiptDao;
   final InboundItemDao _inboundItemDao;
+  final ProductSupplierDao _productSupplierDao; // 新增字段
   final InventoryService _inventoryService;
   final ISupplierRepository _supplierRepository;
 
@@ -30,14 +32,15 @@ class PurchaseService {
   ) : _purchaseDao = _database.purchaseDao,
       _batchDao = _database.batchDao,
       _inboundReceiptDao = _database.inboundReceiptDao,
-      _inboundItemDao = _database.inboundItemDao;
-
+      _inboundItemDao = _database.inboundItemDao,
+      _productSupplierDao = _database.productSupplierDao; // 新增初始化
   /// 一键入库
   /// 1. 检查并创建供应商（如果不存在）
   /// 2. 写入采购表
   /// 3. 根据条件写入批次表
-  /// 4. 写入入库单表、入库单明细表
-  /// 5. 间接写入流水表、库存表
+  /// 4. 写入货品供应商关联表
+  /// 5. 写入入库单表、入库单明细表
+  /// 6. 间接写入流水表、库存表
   Future<String> processOneClickInbound({
     required String supplierId,
     required String shopId,
@@ -74,18 +77,22 @@ class PurchaseService {
 
       // 3. 根据条件写入批次表
       print('⏳ 步骤3: 根据条件写入批次表...');
-      await _writeBatchRecords(
-        shopId: shopId,
+      await _writeBatchRecords(shopId: shopId, purchaseItems: purchaseItems);
+
+      // 4. 写入货品供应商关联表
+      print('⏳ 步骤4: 写入货品供应商关联表...');
+      await _writeProductSupplierRecords(
+        supplierId: actualSupplierId,
         purchaseItems: purchaseItems,
-      ); // 4. 写入入库单表、入库单明细表
-      print('⏳ 步骤4: 写入入库单表、入库单明细表...');
+      ); // 5. 写入入库单表、入库单明细表
+      print('⏳ 步骤5: 写入入库单表、入库单明细表...');
       final receiptNumber = await _writeInboundRecords(
         shopId: shopId,
         purchaseItems: purchaseItems,
         purchaseNumber: purchaseNumber,
         remarks: remarks,
-      ); // 5. 间接写入流水表、库存表
-      print('⏳ 步骤5: 间接写入流水表、库存表...');
+      ); // 6. 间接写入流水表、库存表
+      print('⏳ 步骤6: 间接写入流水表、库存表...');
       await _writeInventoryRecords(
         shopId: shopId,
         purchaseItems: purchaseItems,
@@ -166,6 +173,81 @@ class PurchaseService {
         }
       }
     }
+  }
+
+  /// 3. 写入货品供应商关联表
+  Future<void> _writeProductSupplierRecords({
+    required String supplierId,
+    required List<PurchaseItem> purchaseItems,
+  }) async {
+    print('📋 开始处理货品供应商关联...');
+
+    for (final item in purchaseItems) {
+      try {
+        // 获取单位ID
+        final unitId = await _getUnitIdFromUnitName(item.unitName);
+
+        // 检查该商品-供应商-单位的关联是否已存在
+        final exists = await _productSupplierDao.existsProductSupplierWithUnit(
+          item.productId,
+          supplierId,
+          unitId,
+        );
+
+        if (exists) {
+          // 如果关联已存在，更新供货价格（如果有变化）
+          final existingRelations = await _productSupplierDao
+              .getSuppliersByProductIdAndUnitId(item.productId, unitId);
+
+          if (existingRelations.isNotEmpty) {
+            final existingRelation = existingRelations.firstWhere(
+              (relation) => relation.supplierId == supplierId,
+              orElse: () => existingRelations.first,
+            );
+
+            // 如果价格有变化，更新供货价格
+            if (existingRelation.supplyPrice != item.unitPrice) {
+              final updatedRelation = existingRelation.copyWith(
+                supplyPrice: drift.Value(item.unitPrice),
+                updatedAt: DateTime.now(),
+              );
+              await _productSupplierDao.updateProductSupplier(updatedRelation);
+              print(
+                '📝 更新 ${item.productName}(${item.unitName}) 的供货价格: ${item.unitPrice}',
+              );
+            } else {
+              print('✅ ${item.productName}(${item.unitName}) 的供应商关联已存在，无需更新');
+            }
+          }
+        } else {
+          // 如果关联不存在，创建新的关联记录
+          final relationId =
+              '${item.productId}_${supplierId}_${unitId}_${DateTime.now().millisecondsSinceEpoch}';
+
+          final companion = ProductSuppliersTableCompanion.insert(
+            id: relationId,
+            productId: item.productId,
+            supplierId: supplierId,
+            unitId: unitId,
+            supplierProductName: drift.Value(item.productName),
+            supplyPrice: drift.Value(item.unitPrice),
+            isPrimary: const drift.Value(false), // 默认不设为主要供应商
+            status: const drift.Value('active'),
+            remarks: const drift.Value('通过采购单自动创建'),
+          );
+
+          await _productSupplierDao.insertProductSupplier(companion);
+          print(
+            '✅ 新建货品供应商关联: ${item.productName}(${item.unitName}) - $supplierId',
+          );
+        }
+      } catch (e) {
+        print('❌ 处理 ${item.productName} 的供应商关联失败: $e');
+        // 不抛出异常，继续处理其他商品
+      }
+    }
+
+    print('📋 货品供应商关联处理完成');
   }
 
   /// 3. 写入入库单表、入库单明细表

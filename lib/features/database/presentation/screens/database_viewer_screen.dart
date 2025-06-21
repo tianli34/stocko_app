@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 import '../../../product/application/provider/product_providers.dart';
 import '../../../product/application/category_notifier.dart';
 import '../../../product/data/repository/product_unit_repository.dart';
@@ -43,10 +42,7 @@ class _DatabaseViewerScreenState extends ConsumerState<DatabaseViewerScreen>
     return Scaffold(
       appBar: AppBar(
         title: const Text('数据库查看器'),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => context.go('/'),
-        ),
+        // 移除自定义leading，让go_router自动处理手势返回
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh),

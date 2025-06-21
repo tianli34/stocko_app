@@ -17,6 +17,7 @@ class AppRoutes {
   static const String sales = '/sales';
   static const String test = '/test';
   static const String databaseViewer = '/database-viewer';
+  static const String databaseManagement = '/database-management';
 
   // 辅助方法，用于生成带参数的路由
   static String productDetailPath(String id) => '/products/$id';

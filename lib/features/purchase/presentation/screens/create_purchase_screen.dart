@@ -1,61 +1,24 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_typeahead/flutter_typeahead.dart';
-import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:go_router/go_router.dart';
+import 'package:flutter/services.dart';
+import 'dart:async';
+import '../../../../core/constants/app_routes.dart';
 import '../../domain/model/supplier.dart';
+import '../../domain/model/purchase_item.dart';
 import '../../application/provider/supplier_providers.dart';
 import '../../../inventory/domain/model/shop.dart';
 import '../../../inventory/application/provider/shop_providers.dart';
 import '../widgets/purchase_item_card.dart';
 import '../../../../core/widgets/universal_barcode_scanner.dart';
-import '../../../purchase/application/supplier_sample_data_service.dart';
 import '../../application/service/purchase_service.dart';
+import '../../../product/application/provider/product_providers.dart';
 
-/// 采购单商品项
-class PurchaseItem {
-  final String id;
-  final String productId;
-  final String productName;
-  final String unitName;
-  final double unitPrice;
-  final double quantity;
-  final double amount;
-  final DateTime? productionDate;
-
-  PurchaseItem({
-    required this.id,
-    required this.productId,
-    required this.productName,
-    required this.unitName,
-    required this.unitPrice,
-    required this.quantity,
-    required this.amount,
-    this.productionDate,
-  });
-
-  PurchaseItem copyWith({
-    String? id,
-    String? productId,
-    String? productName,
-    String? unitName,
-    double? unitPrice,
-    double? quantity,
-    double? amount,
-    DateTime? productionDate,
-  }) {
-    return PurchaseItem(
-      id: id ?? this.id,
-      productId: productId ?? this.productId,
-      productName: productName ?? this.productName,
-      unitName: unitName ?? this.unitName,
-      unitPrice: unitPrice ?? this.unitPrice,
-      quantity: quantity ?? this.quantity,
-      amount: amount ?? this.amount,
-      productionDate: productionDate ?? this.productionDate,
-    );
-  }
-}
+// 常量定义
+const String _kDefaultUnitName = '件';
+const Duration _kSnackBarDuration = Duration(seconds: 3);
+const Duration _kShortSnackBarDuration = Duration(milliseconds: 1500);
 
 /// 新建采购单页面
 class CreatePurchaseScreen extends ConsumerStatefulWidget {
@@ -68,36 +31,22 @@ class CreatePurchaseScreen extends ConsumerStatefulWidget {
 
 class _CreatePurchaseScreenState extends ConsumerState<CreatePurchaseScreen> {
   final _remarksController = TextEditingController();
-  final _supplierController = TextEditingController(); // 新增：供应商输入控制器
+  final _supplierController = TextEditingController();
 
   Supplier? _selectedSupplier;
   Shop? _selectedShop;
-  // 模拟商品项数据
-  final List<PurchaseItem> _purchaseItems = [
-    PurchaseItem(
-      id: 'item_001',
-      productId: 'prod_water', // 使用真实存在的产品ID
-      productName: '矿泉水（500ml）',
-      unitName: '瓶',
-      unitPrice: 2.5,
-      quantity: 50,
-      amount: 125.0,
-      productionDate: DateTime(2025, 6, 18),
-    ),
-    PurchaseItem(
-      id: 'item_002',
-      productId: 'prod_chips', // 使用真实存在的产品ID
-      productName: '薯片（原味）',
-      unitName: '包',
-      unitPrice: 5.0,
-      quantity: 4,
-      amount: 20.0,
-    ),
-  ];
+  // 采购商品项列表（初始为空）
+  final List<PurchaseItem> _purchaseItems = [];
+  bool _isProcessing = false; // 添加处理状态
+
+  /// 防抖处理，避免频繁操作
+  Timer? _debounceTimer;
+
   @override
   void dispose() {
     _remarksController.dispose();
     _supplierController.dispose(); // 清理供应商输入控制器
+    _debounceTimer?.cancel(); // 清理定时器
     super.dispose();
   }
 
@@ -117,21 +66,34 @@ class _CreatePurchaseScreenState extends ConsumerState<CreatePurchaseScreen> {
   }
 
   void _addManualProduct() {
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(const SnackBar(content: Text('手动添加商品功能待实现')));
+    // 显示手动添加商品对话框，不需要条码
+    _showManualAddProductDialog('');
   }
 
   void _scanToAddProduct() {
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(const SnackBar(content: Text('扫码添加商品功能待实现')));
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => UniversalBarcodeScanner(
+          config: const BarcodeScannerConfig(
+            title: '扫码添加商品',
+            subtitle: '扫描商品条码以添加到采购单',
+            enableManualInput: true,
+            enableGalleryPicker: false,
+            enableFlashlight: true,
+            enableCameraSwitch: true,
+            enableScanSound: true,
+          ),
+          onBarcodeScanned: _handleSingleProductScan,
+        ),
+      ),
+    );
   }
 
   void _continuousScan() {
     Navigator.of(context).push(
       MaterialPageRoute(
-        builder: (context) => _ContinuousScanPage(
+        builder: (context) => _SimpleContinuousScanPage(
+          ref: ref,
           onProductsScanned: (scannedProducts) {
             setState(() {
               _purchaseItems.addAll(scannedProducts);
@@ -149,6 +111,18 @@ class _CreatePurchaseScreenState extends ConsumerState<CreatePurchaseScreen> {
   }
 
   void _confirmPurchase() async {
+    // 防止重复提交
+    if (_isProcessing) return;
+
+    // 验证表单
+    if (!_validateForm()) {
+      return;
+    }
+
+    setState(() {
+      _isProcessing = true;
+    });
+
     // 获取供应商信息
     String? supplierId;
     String? supplierName;
@@ -158,32 +132,9 @@ class _CreatePurchaseScreenState extends ConsumerState<CreatePurchaseScreen> {
       supplierId = _selectedSupplier!.id;
       supplierName = _selectedSupplier!.name;
     } else {
-      // 检查用户是否输入了供应商名称
-      final inputSupplierName = _supplierController.text.trim();
-      if (inputSupplierName.isEmpty) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text('请选择或输入供应商名称')));
-        return;
-      }
-
       // 为新供应商生成ID
       supplierId = 'supplier_${DateTime.now().millisecondsSinceEpoch}';
-      supplierName = inputSupplierName;
-    }
-
-    if (_selectedShop == null) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('请选择采购店铺')));
-      return;
-    }
-
-    if (_purchaseItems.isEmpty) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('请先添加采购商品')));
-      return;
+      supplierName = _supplierController.text.trim();
     }
 
     // 显示加载对话框
@@ -214,63 +165,318 @@ class _CreatePurchaseScreenState extends ConsumerState<CreatePurchaseScreen> {
       );
 
       // 关闭加载对话框
-      Navigator.of(context).pop();
-
-      // 显示成功提示
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('✅ 一键入库成功！入库单号：$receiptNumber'),
-          backgroundColor: Colors.green,
-          duration: const Duration(seconds: 3),
-        ),
-      );
-
-      // 延迟跳转
+      Navigator.of(context).pop(); // 显示成功提示
+      _showSuccessMessage('✅ 一键入库成功！入库单号：$receiptNumber'); // 延迟跳转到入库记录屏幕
       Future.delayed(const Duration(seconds: 1), () {
         if (mounted) {
-          context.go('/');
+          context.go(AppRoutes.inventoryInboundRecords);
         }
       });
     } catch (e) {
       // 关闭加载对话框
-      Navigator.of(context).pop();
-
-      // 显示错误提示
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('❌ 一键入库失败: ${e.toString()}'),
-          backgroundColor: Colors.red,
-          duration: const Duration(seconds: 3),
-        ),
-      );
-
+      Navigator.of(context).pop(); // 显示错误提示
+      _showErrorMessage('❌ 一键入库失败: ${e.toString()}');
       print('一键入库失败: $e');
+    } finally {
+      setState(() {
+        _isProcessing = false;
+      });
     }
   }
 
   double get _totalQuantity =>
       _purchaseItems.fold(0.0, (sum, item) => sum + item.quantity);
-
   double get _totalAmount =>
       _purchaseItems.fold(0.0, (sum, item) => sum + item.amount);
 
-  void _addTestSuppliers() async {
-    try {
-      final sampleDataService = ref.read(supplierSampleDataServiceProvider);
-      await sampleDataService.createSampleSuppliers();
-
+  /// 处理单次扫码添加商品
+  void _handleSingleProductScan(String barcode) async {
+    // 延迟关闭扫码页面，让音效播放完毕
+    Future.delayed(const Duration(milliseconds: 500), () {
       if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text('✅ 测试供应商数据创建成功！')));
+        Navigator.of(context).pop(); // 关闭扫码页面
+      }
+    });
+
+    // 显示加载提示
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Row(
+          children: [
+            CircularProgressIndicator(),
+            SizedBox(width: 16),
+            Text('正在查询商品信息...'),
+          ],
+        ),
+        duration: Duration(seconds: 2),
+      ),
+    );
+
+    try {
+      // 使用真实的产品查询
+      final productController = ref.read(productControllerProvider.notifier);
+      final product = await productController.getProductByBarcode(barcode);
+
+      if (!mounted) return;
+      if (product != null) {
+        _addOrUpdatePurchaseItem(product);
+      } else {
+        // 商品未找到，显示手动添加对话框
+        _showProductNotFoundDialog(barcode);
       }
     } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('❌ 创建测试数据失败: $e')));
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('❌ 查询商品失败: ${_getErrorMessage(e)}'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
+  /// 获取用户友好的错误信息
+  String _getErrorMessage(dynamic error) {
+    final errorString = error.toString().toLowerCase();
+
+    if (errorString.contains('timeout')) {
+      return '网络连接超时，请检查网络后重试';
+    } else if (errorString.contains('connection') ||
+        errorString.contains('network')) {
+      return '网络连接失败，请检查网络设置';
+    } else if (errorString.contains('permission')) {
+      return '权限不足，请检查应用权限设置';
+    } else if (errorString.contains('database')) {
+      return '数据库操作失败，请重试';
+    } else if (errorString.contains('invalid')) {
+      return '数据格式无效，请检查输入';
+    } else if (errorString.contains('not found')) {
+      return '未找到相关数据';
+    } else {
+      // 返回简化的错误信息，避免暴露技术细节
+      return '操作失败，请重试';
+    }
+  }
+
+  /// 显示商品未找到对话框
+  void _showProductNotFoundDialog(String barcode) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('商品未找到'),
+        content: Text('条码 $barcode 对应的商品未在系统中找到'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('确定'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.of(context).pop();
+              _showManualAddProductDialog(barcode);
+            },
+            child: const Text('手动添加'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// 显示手动添加商品对话框
+  void _showManualAddProductDialog(String barcode) {
+    final nameController = TextEditingController();
+    final priceController = TextEditingController();
+    final quantityController = TextEditingController(text: '1');
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('添加商品'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (barcode.isNotEmpty) ...[
+              Text('条码: $barcode'),
+              const SizedBox(height: 16),
+            ],
+            TextField(
+              controller: nameController,
+              decoration: const InputDecoration(
+                labelText: '商品名称 *',
+                border: OutlineInputBorder(),
+              ),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: priceController,
+              keyboardType: const TextInputType.numberWithOptions(
+                decimal: true,
+              ),
+              decoration: const InputDecoration(
+                labelText: '单价 *',
+                border: OutlineInputBorder(),
+                suffixText: '元',
+              ),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: quantityController,
+              keyboardType: const TextInputType.numberWithOptions(
+                decimal: true,
+              ),
+              decoration: const InputDecoration(
+                labelText: '数量 *',
+                border: OutlineInputBorder(),
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('取消'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              final name = nameController.text.trim();
+              final priceText = priceController.text.trim();
+              final quantityText = quantityController.text.trim();
+
+              // 验证商品名称
+              final nameError = _validateProductName(name);
+              if (nameError != null) {
+                ScaffoldMessenger.of(
+                  context,
+                ).showSnackBar(SnackBar(content: Text(nameError)));
+                return;
+              }
+
+              // 验证价格
+              if (!_isValidNumber(priceText, min: 0.0, max: 999999.99)) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('请输入有效的价格（0-999999.99）')),
+                );
+                return;
+              }
+
+              // 验证数量
+              if (!_isValidNumber(quantityText, min: 0.01, max: 999999.0)) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('请输入有效的数量（0.01-999999）')),
+                );
+                return;
+              }
+
+              final price = double.parse(priceText);
+              final quantity = double.parse(quantityText);
+
+              // 创建新的采购项
+              final purchaseItem = PurchaseItem.create(
+                productId: barcode.isNotEmpty
+                    ? 'manual_$barcode'
+                    : 'manual_${DateTime.now().millisecondsSinceEpoch}',
+                productName: name,
+                unitName: _kDefaultUnitName,
+                unitPrice: price,
+                quantity: quantity,
+                productionDate: DateTime.now(),
+              );
+
+              setState(() {
+                _purchaseItems.add(purchaseItem);
+              });
+
+              Navigator.of(context).pop();
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text('✓ 已添加: $name'),
+                  backgroundColor: Colors.green,
+                ),
+              );
+            },
+            child: const Text('添加'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// 验证表单输入
+  bool _validateForm() {
+    // 检查供应商
+    if (_selectedSupplier == null && _supplierController.text.trim().isEmpty) {
+      _showErrorMessage('请选择或输入供应商名称');
+      return false;
+    }
+
+    // 检查店铺
+    if (_selectedShop == null) {
+      _showErrorMessage('请选择采购店铺');
+      return false;
+    }
+
+    // 检查商品项
+    if (_purchaseItems.isEmpty) {
+      _showErrorMessage('请先添加采购商品');
+      return false;
+    }
+
+    // 检查商品项数据完整性
+    for (final item in _purchaseItems) {
+      if (item.quantity <= 0) {
+        _showErrorMessage('商品"${item.productName}"的数量必须大于0');
+        return false;
+      }
+      if (item.unitPrice < 0) {
+        _showErrorMessage('商品"${item.productName}"的单价不能为负数');
+        return false;
       }
     }
+
+    return true;
+  }
+
+  /// 显示错误消息
+  void _showErrorMessage(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: Colors.red,
+        duration: _kSnackBarDuration,
+      ),
+    );
+  }
+
+  /// 显示成功消息
+  void _showSuccessMessage(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: Colors.green,
+        duration: _kSnackBarDuration,
+      ),
+    );
+  }
+
+  /// 验证输入的数值是否有效
+  bool _isValidNumber(String value, {double? min, double? max}) {
+    final number = double.tryParse(value);
+    if (number == null) return false;
+    if (min != null && number < min) return false;
+    if (max != null && number > max) return false;
+    return true;
+  }
+
+  /// 验证商品名称
+  String? _validateProductName(String? value) {
+    if (value == null || value.trim().isEmpty) {
+      return '商品名称不能为空';
+    }
+    if (value.trim().length > 100) {
+      return '商品名称不能超过100个字符';
+    }
+    return null;
   }
 
   @override
@@ -300,6 +506,98 @@ class _CreatePurchaseScreenState extends ConsumerState<CreatePurchaseScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  // 采购店铺选择
+                  Row(
+                    children: [
+                      const Text(
+                        '采购店铺*',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Consumer(
+                          builder: (context, ref, child) {
+                            final shopsAsync = ref.watch(allShopsProvider);
+                            return shopsAsync.when(
+                              data: (shops) {
+                                // 自动选择'长山的店'作为默认店铺
+                                if (_selectedShop == null && shops.isNotEmpty) {
+                                  final defaultShop = shops.firstWhere(
+                                    (shop) => shop.name == '长山的店',
+                                    orElse: () => shops.first,
+                                  );
+                                  WidgetsBinding.instance.addPostFrameCallback((
+                                    _,
+                                  ) {
+                                    if (mounted) {
+                                      setState(() {
+                                        _selectedShop = defaultShop;
+                                      });
+                                    }
+                                  });
+                                }
+
+                                return DropdownButtonFormField<Shop>(
+                                  value: _selectedShop,
+                                  decoration: const InputDecoration(
+                                    hintText: '请选择店铺',
+                                    border: OutlineInputBorder(),
+                                    contentPadding: EdgeInsets.symmetric(
+                                      horizontal: 12,
+                                      vertical: 8,
+                                    ),
+                                  ),
+                                  items: shops.map((shop) {
+                                    return DropdownMenuItem<Shop>(
+                                      value: shop,
+                                      child: Text(
+                                        '${shop.name} (店长: ${shop.manager})',
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    );
+                                  }).toList(),
+                                  onChanged: (shop) {
+                                    setState(() {
+                                      _selectedShop = shop;
+                                    });
+                                  },
+                                );
+                              },
+                              loading: () => Container(
+                                height: 48,
+                                decoration: BoxDecoration(
+                                  border: Border.all(
+                                    color: Colors.grey.shade300,
+                                  ),
+                                  borderRadius: BorderRadius.circular(4),
+                                ),
+                                child: const Center(child: Text('加载店铺中...')),
+                              ),
+                              error: (error, stack) => Container(
+                                height: 48,
+                                decoration: BoxDecoration(
+                                  border: Border.all(
+                                    color: Colors.red.shade300,
+                                  ),
+                                  borderRadius: BorderRadius.circular(4),
+                                ),
+                                child: Center(
+                                  child: Text(
+                                    '加载失败: $error',
+                                    style: const TextStyle(color: Colors.red),
+                                  ),
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 24),
                   // 供应商选择
                   Row(
                     children: [
@@ -447,92 +745,59 @@ class _CreatePurchaseScreenState extends ConsumerState<CreatePurchaseScreen> {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 16), // 采购店铺选择
-                  Row(
-                    children: [
-                      const Text(
-                        '采购店铺*',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Consumer(
-                          builder: (context, ref, child) {
-                            final shopsAsync = ref.watch(allShopsProvider);
-                            return shopsAsync.when(
-                              data: (shops) => DropdownButtonFormField<Shop>(
-                                value: _selectedShop,
-                                decoration: const InputDecoration(
-                                  hintText: '请选择店铺',
-                                  border: OutlineInputBorder(),
-                                  contentPadding: EdgeInsets.symmetric(
-                                    horizontal: 12,
-                                    vertical: 8,
-                                  ),
-                                ),
-                                items: shops.map((shop) {
-                                  return DropdownMenuItem<Shop>(
-                                    value: shop,
-                                    child: Text(
-                                      '${shop.name} (店长: ${shop.manager})',
-                                      overflow: TextOverflow.ellipsis,
-                                    ),
-                                  );
-                                }).toList(),
-                                onChanged: (shop) {
-                                  setState(() {
-                                    _selectedShop = shop;
-                                  });
-                                },
-                              ),
-                              loading: () => Container(
-                                height: 48,
-                                decoration: BoxDecoration(
-                                  border: Border.all(
-                                    color: Colors.grey.shade300,
-                                  ),
-                                  borderRadius: BorderRadius.circular(4),
-                                ),
-                                child: const Center(child: Text('加载店铺中...')),
-                              ),
-                              error: (error, stack) => Container(
-                                height: 48,
-                                decoration: BoxDecoration(
-                                  border: Border.all(
-                                    color: Colors.red.shade300,
-                                  ),
-                                  borderRadius: BorderRadius.circular(4),
-                                ),
-                                child: Center(
-                                  child: Text(
-                                    '加载失败: $error',
-                                    style: const TextStyle(color: Colors.red),
-                                  ),
-                                ),
-                              ),
-                            );
-                          },
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 16),
 
                   // 商品项列表
-                  ..._purchaseItems.map(
-                    (item) => Padding(
-                      padding: const EdgeInsets.only(bottom: 16),
-                      child: PurchaseItemCard(
-                        item: item,
-                        onUpdate: (updatedItem) =>
-                            _updatePurchaseItem(item.id, updatedItem),
-                        onRemove: () => _removePurchaseItem(item.id),
+                  if (_purchaseItems.isEmpty)
+                    // 空列表提示
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(24),
+                      decoration: BoxDecoration(
+                        border: Border.all(color: Colors.grey.shade300),
+                        borderRadius: BorderRadius.circular(8),
+                        color: Colors.grey.shade50,
+                      ),
+                      child: Column(
+                        children: [
+                          Icon(
+                            Icons.shopping_cart_outlined,
+                            size: 48,
+                            color: Colors.grey.shade400,
+                          ),
+                          const SizedBox(height: 12),
+                          Text(
+                            '暂无商品',
+                            style: TextStyle(
+                              fontSize: 16,
+                              color: Colors.grey.shade600,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            '请使用下方按钮添加商品到采购单',
+                            style: TextStyle(
+                              fontSize: 14,
+                              color: Colors.grey.shade500,
+                            ),
+                          ),
+                        ],
+                      ),
+                    )
+                  else
+                    // 商品项列表
+                    ..._purchaseItems.map(
+                      (item) => Padding(
+                        padding: const EdgeInsets.only(bottom: 16),
+                        child: PurchaseItemCard(
+                          item: item,
+                          onUpdate: (updatedItem) =>
+                              _updatePurchaseItem(item.id, updatedItem),
+                          onRemove: () => _removePurchaseItem(item.id),
+                        ),
                       ),
                     ),
-                  ),
 
                   // 添加商品按钮区域
                   Container(
@@ -550,7 +815,7 @@ class _CreatePurchaseScreenState extends ConsumerState<CreatePurchaseScreen> {
                             onPressed: _addManualProduct,
                             icon: const Icon(Icons.add, size: 18),
                             label: const Text(
-                              '手动添加商品',
+                              '添加商品',
                               style: TextStyle(fontSize: 14),
                             ),
                           ),
@@ -563,7 +828,7 @@ class _CreatePurchaseScreenState extends ConsumerState<CreatePurchaseScreen> {
                             onPressed: _scanToAddProduct,
                             icon: const Icon(Icons.camera_alt, size: 18),
                             label: const Text(
-                              '扫码添加商品',
+                              '扫码添加',
                               style: TextStyle(fontSize: 14),
                             ),
                           ),
@@ -652,13 +917,11 @@ class _CreatePurchaseScreenState extends ConsumerState<CreatePurchaseScreen> {
                   ),
                 ),
 
-                const SizedBox(height: 16),
-
-                // 一键入库按钮
+                const SizedBox(height: 16), // 一键入库按钮
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton(
-                    onPressed: _confirmPurchase,
+                    onPressed: _isProcessing ? null : _confirmPurchase,
                     style: ElevatedButton.styleFrom(
                       padding: const EdgeInsets.symmetric(vertical: 16),
                       textStyle: const TextStyle(
@@ -666,7 +929,23 @@ class _CreatePurchaseScreenState extends ConsumerState<CreatePurchaseScreen> {
                         fontWeight: FontWeight.w600,
                       ),
                     ),
-                    child: const Text('一键入库'),
+                    child: _isProcessing
+                        ? const Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              SizedBox(
+                                width: 20,
+                                height: 20,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: Colors.white,
+                                ),
+                              ),
+                              SizedBox(width: 12),
+                              Text('处理中...'),
+                            ],
+                          )
+                        : const Text('一键入库'),
                   ),
                 ),
               ],
@@ -674,131 +953,128 @@ class _CreatePurchaseScreenState extends ConsumerState<CreatePurchaseScreen> {
           ),
         ],
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: _addTestSuppliers,
-        icon: const Icon(Icons.add_business),
-        label: const Text('添加测试供应商'),
-        backgroundColor: Colors.green,
-      ),
     );
+  }
+
+  /// 添加或更新商品到采购列表（共用逻辑）
+  void _addOrUpdatePurchaseItem(dynamic product) {
+    // 检查是否已存在相同商品
+    final existingItemIndex = _purchaseItems.indexWhere(
+      (item) => item.productId == product.id,
+    );
+
+    if (existingItemIndex != -1) {
+      // 如果商品已存在，增加数量
+      final existingItem = _purchaseItems[existingItemIndex];
+      final updatedItem = existingItem.copyWith(
+        quantity: existingItem.quantity + 1,
+        amount: (existingItem.quantity + 1) * existingItem.unitPrice,
+      );
+
+      setState(() {
+        _purchaseItems[existingItemIndex] = updatedItem;
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('✓ ${product.name} 数量+1 (共${updatedItem.quantity}件)'),
+          backgroundColor: Colors.green,
+        ),
+      );
+    } else {
+      // 如果是新商品，创建新的采购项
+      final unitPrice = product.retailPrice ?? 0.0;
+      final purchaseItem = PurchaseItem.create(
+        productId: product.id,
+        productName: product.name,
+        unitName: _kDefaultUnitName,
+        unitPrice: unitPrice,
+        quantity: 1,
+        productionDate: DateTime.now(),
+      );
+
+      setState(() {
+        _purchaseItems.add(purchaseItem);
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('✓ 已添加: ${product.name}'),
+          backgroundColor: Colors.green,
+        ),
+      );
+    }
   }
 }
 
-/// 连续扫码页面
-class _ContinuousScanPage extends StatefulWidget {
+/// 简洁的连续扫码页面 - 基于 UniversalBarcodeScanner
+class _SimpleContinuousScanPage extends StatefulWidget {
   final Function(List<PurchaseItem>) onProductsScanned;
+  final WidgetRef ref;
 
-  const _ContinuousScanPage({required this.onProductsScanned});
+  const _SimpleContinuousScanPage({
+    required this.onProductsScanned,
+    required this.ref,
+  });
 
   @override
-  State<_ContinuousScanPage> createState() => _ContinuousScanPageState();
+  State<_SimpleContinuousScanPage> createState() =>
+      _SimpleContinuousScanPageState();
 }
 
-class _ContinuousScanPageState extends State<_ContinuousScanPage> {
+class _SimpleContinuousScanPageState extends State<_SimpleContinuousScanPage> {
   final List<PurchaseItem> _scannedItems = [];
-  bool _isProcessing = false;
-  String? _lastScannedCode;
-  final GlobalKey<_ContinuousBarcodeScannerState> _scannerKey = GlobalKey();
+  bool _isLoading = false;
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: Stack(
         children: [
-          // 连续扫码器
-          _ContinuousBarcodeScanner(
-            key: _scannerKey,
-            onBarcodeScanned: _handleBarcodeScanned,
-          ),
-
-          // 处理加载遮罩
-          if (_isProcessing)
-            Container(
-              color: Colors.black.withOpacity(0.5),
-              child: Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const CircularProgressIndicator(color: Colors.white),
-                    const SizedBox(height: 16),
-                    Text(
-                      '正在查找商品: $_lastScannedCode',
-                      style: const TextStyle(color: Colors.white, fontSize: 16),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-
-          // 顶部标题栏
-          Positioned(
-            top: 0,
-            left: 0,
-            right: 0,
-            child: AppBar(
-              title: const Text('连续扫码'),
-              backgroundColor: Colors.transparent,
+          // 使用通用扫码器
+          UniversalBarcodeScanner(
+            config: BarcodeScannerConfig(
+              title: '连续扫码',
+              subtitle: '已扫描: ${_scannedItems.length} 件商品',
+              enableManualInput: true,
+              enableGalleryPicker: false,
+              enableFlashlight: true,
+              enableCameraSwitch: true,
+              enableScanSound: true,
+              continuousMode: true, // 启用连续扫码模式
+              continuousDelay: 800, // 扫码后800毫秒重新启用
+              backgroundColor: Colors.black,
               foregroundColor: Colors.white,
-              elevation: 0,
-              leading: IconButton(
-                icon: const Icon(Icons.arrow_back),
-                onPressed: () => context.canPop()
-                    ? context.pop()
-                    : Navigator.of(context).pop(),
-              ),
-              actions: [
-                IconButton(
-                  icon: const Icon(Icons.flash_on),
-                  onPressed: () => _scannerKey.currentState?.toggleFlashlight(),
-                ),
-                IconButton(
-                  icon: const Icon(Icons.flip_camera_ios),
-                  onPressed: () => _scannerKey.currentState?.switchCamera(),
+              additionalActions: [
+                if (_scannedItems.isNotEmpty)
+                  TextButton(
+                    onPressed: _finishScanning,
+                    child: const Text(
+                      '完成',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+            isLoading: _isLoading,
+            onBarcodeScanned: _handleBarcodeScanned,
+            loadingWidget: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const CircularProgressIndicator(color: Colors.white),
+                const SizedBox(height: 16),
+                Text(
+                  '正在查询商品...',
+                  style: const TextStyle(color: Colors.white, fontSize: 16),
                 ),
               ],
             ),
           ),
 
-          // 浮动操作栏
-          Positioned(
-            top: 100,
-            left: 16,
-            right: 16,
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              decoration: BoxDecoration(
-                color: Colors.black.withOpacity(0.7),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    '已扫描: ${_scannedItems.length} 件商品',
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 16,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                  if (_scannedItems.isNotEmpty)
-                    ElevatedButton(
-                      onPressed: _finishScanning,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.green,
-                        foregroundColor: Colors.white,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                      ),
-                      child: const Text('完成扫码'),
-                    ),
-                ],
-              ),
-            ),
-          ),
-
-          // 商品列表（如果有扫描的商品）
+          // 商品列表浮层
           if (_scannedItems.isNotEmpty)
             Positioned(
               bottom: 0,
@@ -809,6 +1085,13 @@ class _ContinuousScanPageState extends State<_ContinuousScanPage> {
                 decoration: const BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black26,
+                      blurRadius: 8,
+                      offset: Offset(0, -2),
+                    ),
+                  ],
                 ),
                 child: Column(
                   children: [
@@ -817,20 +1100,32 @@ class _ContinuousScanPageState extends State<_ContinuousScanPage> {
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          const Text(
-                            '已扫描商品',
-                            style: TextStyle(
+                          Text(
+                            '已扫描商品 (${_scannedItems.length})',
+                            style: const TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.w600,
                             ),
                           ),
-                          TextButton(
-                            onPressed: () {
-                              setState(() {
-                                _scannedItems.clear();
-                              });
-                            },
-                            child: const Text('清空'),
+                          Row(
+                            children: [
+                              TextButton(
+                                onPressed: () {
+                                  setState(() {
+                                    _scannedItems.clear();
+                                  });
+                                },
+                                child: const Text('清空'),
+                              ),
+                              ElevatedButton(
+                                onPressed: _finishScanning,
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.green,
+                                  foregroundColor: Colors.white,
+                                ),
+                                child: const Text('完成'),
+                              ),
+                            ],
                           ),
                         ],
                       ),
@@ -842,10 +1137,15 @@ class _ContinuousScanPageState extends State<_ContinuousScanPage> {
                           final item = _scannedItems[index];
                           return ListTile(
                             leading: CircleAvatar(
-                              backgroundColor: Colors.green,
+                              backgroundColor: Colors.green.shade100,
                               child: Text('${index + 1}'),
                             ),
-                            title: Text(item.productName),
+                            title: Text(
+                              item.productName,
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
                             subtitle: Text(
                               '数量: ${item.quantity} ${item.unitName}',
                             ),
@@ -873,85 +1173,95 @@ class _ContinuousScanPageState extends State<_ContinuousScanPage> {
     );
   }
 
-  void _handleBarcodeScanned(String barcode) {
-    if (_isProcessing) return;
-
+  void _handleBarcodeScanned(String barcode) async {
     setState(() {
-      _isProcessing = true;
-      _lastScannedCode = barcode;
+      _isLoading = true;
     });
 
-    // 模拟查找商品的延迟
-    Future.delayed(const Duration(milliseconds: 1500), () {
+    try {
+      // 使用真实的产品查询
+      final productController = widget.ref.read(
+        productControllerProvider.notifier,
+      );
+      final product = await productController.getProductByBarcode(barcode);
+
       if (!mounted) return;
 
-      // 模拟根据条码查找商品
-      final mockProduct = _findProductByBarcode(barcode);
-
-      if (mockProduct != null) {
-        setState(() {
-          _scannedItems.add(mockProduct);
-          _isProcessing = false;
-        });
-
-        // 播放成功提示音和震动反馈
-        _showSuccessMessage(mockProduct.productName);
+      if (product != null) {
+        _addOrUpdateProduct(product);
+        _showSuccessMessage('✓ 已添加: ${product.name}');
       } else {
-        setState(() {
-          _isProcessing = false;
-        });
-        _showNotFoundDialog(barcode);
+        _showProductNotFoundDialog(barcode);
       }
-    });
+    } catch (e) {
+      if (!mounted) return;
+      _showErrorMessage('❌ 查询商品失败: ${e.toString()}');
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
   }
 
-  PurchaseItem? _findProductByBarcode(String barcode) {
-    // 模拟商品数据库查询
-    final mockProducts = {
-      '6901234567890': PurchaseItem(
-        id: 'item_${DateTime.now().millisecondsSinceEpoch}',
-        productId: 'prod_water',
-        productName: '农夫山泉(550ml)',
-        unitName: '瓶',
-        unitPrice: 2.0,
+  void _addOrUpdateProduct(dynamic product) {
+    // 检查是否已存在相同商品
+    final existingItemIndex = _scannedItems.indexWhere(
+      (item) => item.productId == product.id,
+    );
+
+    if (existingItemIndex != -1) {
+      // 如果商品已存在，增加数量
+      final existingItem = _scannedItems[existingItemIndex];
+      final updatedItem = existingItem.copyWith(
+        quantity: existingItem.quantity + 1,
+        amount: (existingItem.quantity + 1) * existingItem.unitPrice,
+      );
+
+      setState(() {
+        _scannedItems[existingItemIndex] = updatedItem;
+      });
+
+      _showSuccessMessage('✓ ${product.name} 数量+1 (共${updatedItem.quantity}件)');
+    } else {
+      // 如果是新商品，创建新的采购项
+      final purchaseItem = PurchaseItem.create(
+        productId: product.id,
+        productName: product.name,
+        unitName: _kDefaultUnitName,
+        unitPrice: product.retailPrice ?? 0.0,
         quantity: 1,
-        amount: 2.0,
         productionDate: DateTime.now(),
-      ),
-      '6901234567891': PurchaseItem(
-        id: 'item_${DateTime.now().millisecondsSinceEpoch}',
-        productId: 'prod_chips',
-        productName: '乐事薯片(原味)',
-        unitName: '包',
-        unitPrice: 8.5,
-        quantity: 1,
-        amount: 8.5,
-      ),
-      '6901234567892': PurchaseItem(
-        id: 'item_${DateTime.now().millisecondsSinceEpoch}',
-        productId: 'prod_cookie',
-        productName: '奥利奥饼干',
-        unitName: '包',
-        unitPrice: 12.0,
-        quantity: 1,
-        amount: 12.0,
-      ),
-    };
+      );
 
-    return mockProducts[barcode];
+      setState(() {
+        _scannedItems.add(purchaseItem);
+      });
+    }
   }
 
-  void _showSuccessMessage(String productName) {
+  void _showSuccessMessage(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text('✓ 已添加: $productName'),
+        content: Text(message),
         backgroundColor: Colors.green,
-        duration: const Duration(milliseconds: 1000),
+        duration: _kShortSnackBarDuration,
       ),
     );
   }
 
-  void _showNotFoundDialog(String barcode) {
+  void _showErrorMessage(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: Colors.red,
+        duration: _kSnackBarDuration,
+      ),
+    );
+  }
+
+  void _showProductNotFoundDialog(String barcode) {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -959,15 +1269,13 @@ class _ContinuousScanPageState extends State<_ContinuousScanPage> {
         content: Text('条码 $barcode 对应的商品未在系统中找到'),
         actions: [
           TextButton(
-            onPressed: () {
-              Navigator.of(context).pop();
-            },
+            onPressed: () => Navigator.of(context).pop(),
             child: const Text('继续扫码'),
           ),
           ElevatedButton(
             onPressed: () {
               Navigator.of(context).pop();
-              _showManualInputDialog(barcode);
+              _showManualAddDialog(barcode);
             },
             child: const Text('手动添加'),
           ),
@@ -976,7 +1284,7 @@ class _ContinuousScanPageState extends State<_ContinuousScanPage> {
     );
   }
 
-  void _showManualInputDialog(String barcode) {
+  void _showManualAddDialog(String barcode) {
     final nameController = TextEditingController();
     final priceController = TextEditingController();
     final quantityController = TextEditingController(text: '1');
@@ -1019,35 +1327,49 @@ class _ContinuousScanPageState extends State<_ContinuousScanPage> {
         ),
         actions: [
           TextButton(
-            onPressed: () {
-              Navigator.of(context).pop();
-            },
+            onPressed: () => Navigator.of(context).pop(),
             child: const Text('取消'),
           ),
           ElevatedButton(
             onPressed: () {
               final name = nameController.text.trim();
-              final price = double.tryParse(priceController.text.trim()) ?? 0.0;
-              final quantity =
-                  double.tryParse(quantityController.text.trim()) ?? 1.0;
-              if (name.isNotEmpty && price > 0) {
-                final newItem = PurchaseItem(
-                  id: 'item_${DateTime.now().millisecondsSinceEpoch}',
-                  productId: 'manual_$barcode',
-                  productName: name,
-                  unitName: '个',
-                  unitPrice: price,
-                  quantity: quantity,
-                  amount: price * quantity,
-                );
+              final priceText = priceController.text.trim();
+              final quantityText = quantityController.text.trim();
 
-                setState(() {
-                  _scannedItems.add(newItem);
-                });
-
-                Navigator.of(context).pop();
-                _showSuccessMessage(name);
+              if (name.isEmpty || priceText.isEmpty || quantityText.isEmpty) {
+                ScaffoldMessenger.of(
+                  context,
+                ).showSnackBar(const SnackBar(content: Text('请填写完整信息')));
+                return;
               }
+
+              final price = double.tryParse(priceText);
+              final quantity = double.tryParse(quantityText);
+
+              if (price == null ||
+                  quantity == null ||
+                  price <= 0 ||
+                  quantity <= 0) {
+                ScaffoldMessenger.of(
+                  context,
+                ).showSnackBar(const SnackBar(content: Text('请输入有效的价格和数量')));
+                return;
+              }
+              final purchaseItem = PurchaseItem.create(
+                productId: 'manual_$barcode',
+                productName: name,
+                unitName: _kDefaultUnitName,
+                unitPrice: price,
+                quantity: quantity,
+                productionDate: DateTime.now(),
+              );
+
+              setState(() {
+                _scannedItems.add(purchaseItem);
+              });
+
+              Navigator.of(context).pop();
+              _showSuccessMessage('✓ 已添加: $name');
             },
             child: const Text('添加'),
           ),
@@ -1061,77 +1383,5 @@ class _ContinuousScanPageState extends State<_ContinuousScanPage> {
       widget.onProductsScanned(_scannedItems);
       Navigator.of(context).pop();
     }
-  }
-}
-
-/// 支持连续扫码的条码扫描器
-class _ContinuousBarcodeScanner extends StatefulWidget {
-  final OnBarcodeScanned onBarcodeScanned;
-
-  const _ContinuousBarcodeScanner({super.key, required this.onBarcodeScanned});
-
-  @override
-  State<_ContinuousBarcodeScanner> createState() =>
-      _ContinuousBarcodeScannerState();
-}
-
-class _ContinuousBarcodeScannerState extends State<_ContinuousBarcodeScanner> {
-  late MobileScannerController _cameraController;
-  bool _isScanning = true;
-
-  @override
-  void initState() {
-    super.initState();
-    _cameraController = MobileScannerController();
-  }
-
-  @override
-  void dispose() {
-    _cameraController.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      color: Colors.black,
-      child: MobileScanner(
-        controller: _cameraController,
-        onDetect: (capture) {
-          if (!_isScanning) return;
-
-          final List<Barcode> barcodes = capture.barcodes;
-          if (barcodes.isNotEmpty) {
-            final String? code = barcodes.first.rawValue;
-            if (code != null && code.isNotEmpty) {
-              // 暂停扫描
-              setState(() {
-                _isScanning = false;
-              });
-
-              // 调用回调
-              widget.onBarcodeScanned(code);
-
-              // 延迟重置扫描状态，实现连续扫码
-              Future.delayed(const Duration(milliseconds: 2000), () {
-                if (mounted) {
-                  setState(() {
-                    _isScanning = true;
-                  });
-                }
-              });
-            }
-          }
-        },
-      ),
-    );
-  }
-
-  void toggleFlashlight() {
-    _cameraController.toggleTorch();
-  }
-
-  void switchCamera() {
-    _cameraController.switchCamera();
   }
 }

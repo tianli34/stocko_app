@@ -54,12 +54,14 @@ class InventoryFilterBar extends ConsumerWidget {
               ),
             ),
           ),
-          const SizedBox(width: 12), // 所有分类筛选
+          const SizedBox(width: 12),
+
+          // 所有分类筛选
           Expanded(
             child: _buildFilterDropdown(
               context: context,
               value: filterState.selectedCategory,
-              items: const ['所有类别', '服装', '鞋靴', '配饰'],
+              items: const ['所有分类', '服装', '鞋靴', '配饰'],
               onChanged: (value) {
                 ref
                     .read(inventoryFilterProvider.notifier)
@@ -67,7 +69,9 @@ class InventoryFilterBar extends ConsumerWidget {
               },
             ),
           ),
-          const SizedBox(width: 12), // 库存状态筛选
+          const SizedBox(width: 12),
+
+          // 库存状态筛选
           Expanded(
             child: _buildFilterDropdown(
               context: context,
@@ -85,7 +89,7 @@ class InventoryFilterBar extends ConsumerWidget {
 
   Widget _buildFilterDropdown({
     required BuildContext context,
-    required String value,
+    required String? value,
     required List<String> items,
     required ValueChanged<String?> onChanged,
   }) {
@@ -98,10 +102,8 @@ class InventoryFilterBar extends ConsumerWidget {
       ),
       child: DropdownButtonHideUnderline(
         child: DropdownButton<String>(
-          value: value,
+          value: (value != null && items.contains(value)) ? value : items.first,
           isExpanded: true,
-          menuMaxHeight: 200,
-          alignment: AlignmentDirectional.centerStart,
           items: items.map((String item) {
             return DropdownMenuItem<String>(
               value: item,

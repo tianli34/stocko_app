@@ -49,7 +49,7 @@ class _InboundItemCardState extends State<InboundItemCard> {
       context: context,
       initialDate: _selectedProductionDate ?? DateTime.now(),
       firstDate: DateTime(2020),
-      lastDate: DateTime.now().add(const Duration(days: 365 * 5)),
+      lastDate: DateTime.now(), // 限制最晚选择日期为当前日期
     );
 
     if (selectedDate != null) {

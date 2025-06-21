@@ -17,13 +17,20 @@
 - ✅ 批次号自动生成 (格式: 产品ID前3位 + YYYYMMDD)
 - ✅ 支持同一批次多次入库时的数量累加
 
-### 3. 写入入库单表、入库单明细表 (inbound_receipts, inbound_receipt_items)
+### 3. 写入货品供应商关联表 (product_suppliers) 🆕
+- ✅ 自动创建商品与供应商的关联记录
+- ✅ 支持按单位区分的供应商关联 (商品-供应商-单位三维关联)
+- ✅ 智能更新供货价格，避免重复创建关联
+- ✅ 记录供货价格、商品名称等采购信息
+- ✅ 状态设置为激活，备注标记为"通过采购单自动创建"
+
+### 4. 写入入库单表、入库单明细表 (inbound_receipts, inbound_receipt_items)
 - ✅ 创建入库单主记录，状态直接设置为 `completed`
 - ✅ 为每个采购商品项创建入库明细记录
 - ✅ 关联采购单信息，支持采购数量对比
 - ✅ 对于启用批次管理的商品自动设置批次号
 
-### 4. 间接写入流水表、库存表 (inventory_transactions, inventory)
+### 5. 间接写入流水表、库存表 (inventory_transactions, inventory)
 - ✅ 通过 `InventoryService` 处理库存更新
 - ✅ 自动创建入库流水记录
 - ✅ 更新或创建库存记录

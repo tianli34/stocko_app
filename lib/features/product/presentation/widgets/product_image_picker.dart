@@ -65,7 +65,7 @@ class _ProductImagePickerState extends State<ProductImagePicker> {
         ),
         const SizedBox(height: 8),
         // 操作按钮
-        if (widget.enabled) _buildActionButtons(),
+        // if (widget.enabled) _buildActionButtons(),
       ],
     );
   }
@@ -107,32 +107,32 @@ class _ProductImagePickerState extends State<ProductImagePicker> {
     );
   }
 
-  Widget _buildActionButtons() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-      children: [
-        if (_currentImagePath != null && _currentImagePath!.isNotEmpty)
-          TextButton.icon(
-            onPressed: _removeImage,
-            icon: const Icon(Icons.delete, size: 16),
-            label: const Text('删除'),
-            style: TextButton.styleFrom(
-              foregroundColor: Colors.red,
-              padding: const EdgeInsets.symmetric(horizontal: 8),
-            ),
-          ),
-        TextButton.icon(
-          onPressed: _showImagePickerOptions,
-          icon: const Icon(Icons.photo, size: 16),
-          label: Text(_currentImagePath != null ? '更换' : '选择'),
-          style: TextButton.styleFrom(
-            foregroundColor: Theme.of(context).primaryColor,
-            padding: const EdgeInsets.symmetric(horizontal: 8),
-          ),
-        ),
-      ],
-    );
-  }
+  // Widget _buildActionButtons() {
+  //   return Row(
+  //     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+  //     children: [
+  //       if (_currentImagePath != null && _currentImagePath!.isNotEmpty)
+  //         TextButton.icon(
+  //           onPressed: _removeImage,
+  //           icon: const Icon(Icons.delete, size: 16),
+  //           label: const Text('删除'),
+  //           style: TextButton.styleFrom(
+  //             foregroundColor: Colors.red,
+  //             padding: const EdgeInsets.symmetric(horizontal: 8),
+  //           ),
+  //         ),
+  //       // TextButton.icon(
+  //       //   onPressed: _showImagePickerOptions,
+  //       //   icon: const Icon(Icons.photo, size: 16),
+  //       //   label: Text(_currentImagePath != null ? '更换' : '选择'),
+  //       //   style: TextButton.styleFrom(
+  //       //     foregroundColor: Theme.of(context).primaryColor,
+  //       //     padding: const EdgeInsets.symmetric(horizontal: 8),
+  //       //   ),
+  //       // ),
+  //     ],
+  //   );
+  // }
 
   void _showImagePickerOptions() {
     showModalBottomSheet(
@@ -247,13 +247,12 @@ class _ProductImagePickerState extends State<ProductImagePicker> {
     });
     widget.onImageChanged(imagePath);
   }
-
-  void _removeImage() {
-    setState(() {
-      _currentImagePath = null;
-    });
-    widget.onImageChanged(null);
-  }
+  // void _removeImage() {
+  //   setState(() {
+  //     _currentImagePath = null;
+  //   });
+  //   widget.onImageChanged(null);
+  // }
 
   void _showErrorSnackBar(String message) {
     if (mounted) {

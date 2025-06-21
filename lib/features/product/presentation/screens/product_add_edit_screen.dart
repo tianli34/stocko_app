@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:flutter_typeahead/flutter_typeahead.dart';
 import '../../../../core/services/barcode_scanner_service.dart';
 import '../../domain/model/product.dart';
 import '../../domain/model/category.dart';
@@ -13,6 +14,7 @@ import '../../application/provider/product_unit_providers.dart';
 import 'category_selection_screen.dart';
 import 'unit_edit_screen.dart';
 import '../widgets/product_image_picker.dart';
+import '../../application/category_service.dart';
 
 /// 产品添加/编辑页面
 /// 表单页面，提交时调用 ref.read(productControllerProvider.notifier).addProduct(...)
@@ -28,6 +30,11 @@ class ProductAddEditScreen extends ConsumerStatefulWidget {
 
 class _ProductAddEditScreenState extends ConsumerState<ProductAddEditScreen> {
   final _formKey = GlobalKey<FormState>(); // 表单控制器
+  // 类别和单位输入控制器，声明时初始化避免未赋值错误
+  final TextEditingController _categoryController =
+      TextEditingController(); // 类别输入控制器
+  final TextEditingController _unitController =
+      TextEditingController(); // 单位输入控制器
   late TextEditingController _nameController;
   late TextEditingController _barcodeController;
   late TextEditingController _retailPriceController;
@@ -56,6 +63,7 @@ class _ProductAddEditScreenState extends ConsumerState<ProductAddEditScreen> {
 
   void _initializeControllers() {
     final product = widget.product;
+    // 其他文本控制器初始化
     _nameController = TextEditingController(text: product?.name ?? '');
     _barcodeController = TextEditingController(text: product?.barcode ?? '');
     _retailPriceController = TextEditingController(
@@ -75,9 +83,8 @@ class _ProductAddEditScreenState extends ConsumerState<ProductAddEditScreen> {
       text: product?.shelfLife?.toString() ?? '',
     );
     _remarksController = TextEditingController(text: product?.remarks ?? '');
-    _selectedCategoryId = product?.categoryId; // 初始化类别选择
-    // 初始化单位选择，如果是新产品或产品没有设置单位，默认为"个"
-    _selectedUnitId = product?.unitId ?? 'unit_piece'; // 默认为"个"
+    _selectedCategoryId = product?.categoryId; // 初始化类别选择    // 初始化单位选择
+    _selectedUnitId = product?.unitId; // 不设置默认值，允许为空
     _selectedImagePath = product?.image; // 初始化图片路径
     _shelfLifeUnit = product?.shelfLifeUnit ?? 'months'; // 正确初始化保质期单位
     _enableBatchManagement =
@@ -94,6 +101,8 @@ class _ProductAddEditScreenState extends ConsumerState<ProductAddEditScreen> {
     _stockWarningValueController.dispose();
     _shelfLifeController.dispose();
     _remarksController.dispose();
+    _categoryController.dispose(); // 释放类别控制器
+    _unitController.dispose(); // 释放单位控制器
     super.dispose();
   }
 
@@ -157,15 +166,6 @@ class _ProductAddEditScreenState extends ConsumerState<ProductAddEditScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    _buildTextField(
-                      controller: _nameController,
-                      label: '产品名称',
-                      hint: '请输入产品名称',
-                      required: true,
-                      icon: Icons.inventory_2,
-                    ),
-                    const SizedBox(height: 16),
-
                     // 产品图片选择器
                     Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -188,6 +188,15 @@ class _ProductAddEditScreenState extends ConsumerState<ProductAddEditScreen> {
                         ),
                         const SizedBox(width: 16),
                       ],
+                    ),
+                    const SizedBox(height: 16),
+
+                    _buildTextField(
+                      controller: _nameController,
+                      label: '产品名称',
+                      hint: '请输入产品名称',
+                      required: true,
+                      icon: Icons.inventory_2,
                     ),
                     const SizedBox(height: 16),
 
@@ -250,7 +259,7 @@ class _ProductAddEditScreenState extends ConsumerState<ProductAddEditScreen> {
                         });
                         return Row(
                           children: [
-                            Expanded(child: _buildUnitDropdown(units)),
+                            Expanded(child: _buildUnitTypeAhead(units)),
                             const SizedBox(width: 8),
                             IconButton(
                               onPressed: () =>
@@ -497,73 +506,234 @@ class _ProductAddEditScreenState extends ConsumerState<ProductAddEditScreen> {
     );
   }
 
-  /// 构建类别下拉选择器
+  /// 构建类别TypeAhead输入框
   Widget _buildCategoryDropdown(List<Category> categories) {
-    return DropdownButtonFormField<String>(
-      value: _selectedCategoryId,
-      decoration: InputDecoration(
-        labelText: '产品类别',
-        prefixIcon: const Icon(Icons.category),
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: Colors.grey.shade300),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: Theme.of(context).primaryColor),
-        ),
-      ),
-      hint: const Text('请选择产品类别'),
-      items: [
-        const DropdownMenuItem<String>(value: null, child: Text('未分类')),
-        ...categories.map((category) {
-          return DropdownMenuItem<String>(
-            value: category.id,
-            child: Text(category.name),
-          );
-        }),
-      ],
-      onChanged: (value) {
+    // 确保控制器在第一次构建时有正确的文本
+    if (_categoryController.text.isEmpty && _selectedCategoryId != null) {
+      final category = categories.firstWhere(
+        (cat) => cat.id == _selectedCategoryId,
+        orElse: () => const Category(id: '', name: ''),
+      );
+      if (category.id.isNotEmpty) {
+        _categoryController.text = category.name;
+      }
+    }
+
+    return TypeAheadField<Category>(
+      controller: _categoryController,
+      suggestionsCallback: (pattern) {
+        if (pattern.isEmpty) {
+          return Future.value([
+            const Category(id: 'null', name: '未分类'),
+            ...categories,
+          ]);
+        }
+
+        final filtered = categories
+            .where(
+              (category) =>
+                  category.name.toLowerCase().contains(pattern.toLowerCase()),
+            )
+            .toList();
+
+        // 如果输入的文本不匹配任何现有类别，添加"未分类"选项
+        if (filtered.isEmpty || pattern == '未分类') {
+          filtered.insert(0, const Category(id: 'null', name: '未分类'));
+        }
+
+        return Future.value(filtered);
+      },
+      itemBuilder: (context, Category suggestion) {
+        return ListTile(
+          leading: Icon(
+            suggestion.id == 'null'
+                ? Icons.not_listed_location
+                : Icons.category,
+            color: suggestion.id == 'null' ? Colors.grey : null,
+          ),
+          title: Text(suggestion.name),
+        );
+      },
+      onSelected: (Category suggestion) {
         setState(() {
-          _selectedCategoryId = value;
+          if (suggestion.id == 'null') {
+            _selectedCategoryId = null;
+            _categoryController.text = '未分类';
+          } else {
+            _selectedCategoryId = suggestion.id;
+            _categoryController.text = suggestion.name;
+          }
         });
       },
+      builder: (context, controller, focusNode) {
+        return TextField(
+          controller: controller,
+          focusNode: focusNode,
+          onChanged: (value) {
+            // 如果用户修改了文本，清除已选择的类别
+            if (_selectedCategoryId != null) {
+              final categories = ref.read(categoriesProvider);
+              final selectedCategory = categories.firstWhere(
+                (cat) => cat.id == _selectedCategoryId,
+                orElse: () => const Category(id: '', name: ''),
+              );
+              if (value != selectedCategory.name && value != '未分类') {
+                setState(() {
+                  _selectedCategoryId = null;
+                });
+              }
+            }
+            // 触发重建以更新suffixIcon的显示状态
+            setState(() {});
+          },
+          decoration: InputDecoration(
+            labelText: '产品类别',
+            hintText: '请输入或选择产品类别',
+            prefixIcon: const Icon(Icons.category),
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(color: Colors.grey.shade300),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(color: Theme.of(context).primaryColor),
+            ),
+            suffixIcon: _categoryController.text.isNotEmpty
+                ? IconButton(
+                    icon: const Icon(Icons.clear),
+                    onPressed: () {
+                      setState(() {
+                        _selectedCategoryId = null;
+                        _categoryController.clear();
+                      });
+                    },
+                  )
+                : const Icon(Icons.arrow_drop_down),
+          ),
+        );
+      },
+      emptyBuilder: (context) =>
+          const Padding(padding: EdgeInsets.all(16.0), child: Text('未找到匹配的类别')),
     );
   }
 
-  /// 构建单位下拉选择器
-  Widget _buildUnitDropdown(List<Unit> units) {
-    return DropdownButtonFormField<String>(
-      value: _selectedUnitId,
-      decoration: InputDecoration(
-        labelText: '计量单位 *',
-        prefixIcon: const Icon(Icons.straighten),
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: Colors.grey.shade300),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: Theme.of(context).primaryColor),
-        ),
-      ),
-      hint: const Text('请选择计量单位'),
-      items: units.map((unit) {
-        return DropdownMenuItem<String>(value: unit.id, child: Text(unit.name));
-      }).toList(),
-      validator: (value) {
-        if (value == null || value.isEmpty) {
-          return '请选择计量单位';
+  /// 构建单位TypeAhead输入框
+  Widget _buildUnitTypeAhead(List<Unit> units) {
+    // 确保控制器在第一次构建时有正确的文本
+    if (_unitController.text.isEmpty && _selectedUnitId != null) {
+      final unit = units.firstWhere(
+        (u) => u.id == _selectedUnitId,
+        orElse: () => Unit(id: '', name: ''),
+      );
+      if (unit.id.isNotEmpty) {
+        _unitController.text = unit.name;
+      }
+    }
+
+    return TypeAheadField<Unit>(
+      controller: _unitController,
+      suggestionsCallback: (pattern) {
+        if (pattern.isEmpty) {
+          return Future.value(units);
         }
-        return null;
+
+        final filtered = units
+            .where(
+              (unit) => unit.name.toLowerCase().contains(pattern.toLowerCase()),
+            )
+            .toList();
+
+        return Future.value(filtered);
       },
-      onChanged: (value) {
+      itemBuilder: (context, Unit suggestion) {
+        return ListTile(
+          leading: const Icon(Icons.straighten),
+          title: Text(suggestion.name),
+        );
+      },
+      onSelected: (Unit suggestion) {
         setState(() {
-          _selectedUnitId = value;
+          _selectedUnitId = suggestion.id;
+          _unitController.text = suggestion.name;
         });
       },
+      builder: (context, controller, focusNode) {
+        return TextField(
+          controller: controller,
+          focusNode: focusNode,
+          onChanged: (value) {
+            final trimmedValue = value.trim();
+
+            // 如果输入为空，清除选择
+            if (trimmedValue.isEmpty) {
+              if (_selectedUnitId != null) {
+                setState(() {
+                  _selectedUnitId = null;
+                });
+              }
+              return;
+            }
+            // 查找完全匹配的单位
+            final exactMatch = units.cast<Unit?>().firstWhere(
+              (unit) => unit!.name.toLowerCase() == trimmedValue.toLowerCase(),
+              orElse: () => null,
+            );
+
+            if (exactMatch != null) {
+              // 找到完全匹配的单位，自动选中
+              if (_selectedUnitId != exactMatch.id) {
+                setState(() {
+                  _selectedUnitId = exactMatch.id;
+                });
+              }
+            } else {
+              // 没有找到匹配的单位，清除选择（允许创建新单位）
+              if (_selectedUnitId != null) {
+                setState(() {
+                  _selectedUnitId = null;
+                });
+              }
+            }
+          },
+          decoration: InputDecoration(
+            labelText: '计量单位 *',
+            hintText: '请输入或选择计量单位',
+            prefixIcon: const Icon(Icons.straighten),
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(color: Colors.grey.shade300),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(color: Theme.of(context).primaryColor),
+            ),
+            errorBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(color: Colors.red),
+            ),
+            focusedErrorBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(color: Colors.red),
+            ),
+            errorText: _getUnitValidationError(units),
+            suffixIcon: _unitController.text.isNotEmpty
+                ? IconButton(
+                    icon: const Icon(Icons.clear),
+                    onPressed: () {
+                      setState(() {
+                        _selectedUnitId = null;
+                        _unitController.clear();
+                      });
+                    },
+                  )
+                : const Icon(Icons.arrow_drop_down),
+          ),
+        );
+      },
+      emptyBuilder: (context) =>
+          const Padding(padding: EdgeInsets.all(16.0), child: Text('未找到匹配的单位')),
     );
   }
 
@@ -619,6 +789,39 @@ class _ProductAddEditScreenState extends ConsumerState<ProductAddEditScreen> {
     if (!_formKey.currentState!.validate()) {
       return;
     }
+
+    // 处理并保存新类别
+    if (_selectedCategoryId == null &&
+        _categoryController.text.trim().isNotEmpty &&
+        _categoryController.text.trim() != '未分类') {
+      final categoryService = ref.read(categoryServiceProvider);
+      final newCategoryId = categoryService.generateCategoryId();
+      await categoryService.addCategory(
+        id: newCategoryId,
+        name: _categoryController.text.trim(),
+      );
+      _selectedCategoryId = newCategoryId;
+    }
+
+    // 验证并处理单位选择
+    if (_selectedUnitId == null || _selectedUnitId!.isEmpty) {
+      if (_unitController.text.trim().isNotEmpty) {
+        // 创建新单位
+        final unitController = ref.read(unitControllerProvider.notifier);
+        // 使用当前时间戳生成新单位ID
+        final newUnitId = 'unit_${DateTime.now().millisecondsSinceEpoch}';
+        final unitName = _unitController.text.trim();
+        final newUnit = Unit(id: newUnitId, name: unitName);
+        await unitController.addUnit(newUnit);
+        _selectedUnitId = newUnitId;
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('请选择计量单位'), backgroundColor: Colors.red),
+        );
+        return;
+      }
+    }
+
     final controller = ref.read(productControllerProvider.notifier);
     final product = Product(
       id:
@@ -907,18 +1110,50 @@ class _ProductAddEditScreenState extends ConsumerState<ProductAddEditScreen> {
 
   /// 验证并确保单位选择的有效性
   void _ensureValidUnitSelection(List<Unit> units) {
-    // 如果当前选择的单位ID不在单位列表中，设置为默认值"个"
+    // 如果当前选择的单位ID不在单位列表中，清除选择
     if (_selectedUnitId != null &&
         !units.any((unit) => unit.id == _selectedUnitId)) {
       setState(() {
-        _selectedUnitId = 'unit_piece'; // 默认为"个"
+        _selectedUnitId = null;
+        _unitController.clear();
       });
     }
-    // 如果还没有选择单位，也设置为默认值"个"
-    else if (_selectedUnitId == null) {
-      setState(() {
-        _selectedUnitId = 'unit_piece'; // 默认为"个"
-      });
+    // 允许用户不选择单位，不强制设置默认值
+  }
+
+  /// 获取单位输入框的验证错误信息
+  String? _getUnitValidationError(List<Unit> units) {
+    final inputText = _unitController.text.trim();
+
+    // 如果输入为空，不显示错误
+    if (inputText.isEmpty) {
+      return null;
     }
+
+    // 如果已选择有效单位，不显示错误
+    if (_selectedUnitId != null &&
+        units.any((unit) => unit.id == _selectedUnitId)) {
+      return null;
+    }
+    // 如果输入的文本与现有单位名称完全匹配，不显示错误（允许创建新单位）
+    final matchingUnit = units.cast<Unit?>().firstWhere(
+      (unit) => unit!.name.toLowerCase() == inputText.toLowerCase(),
+      orElse: () => null,
+    );
+
+    if (matchingUnit != null) {
+      // 找到匹配的单位，但没有选中，自动选中它
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted && _selectedUnitId != matchingUnit.id) {
+          setState(() {
+            _selectedUnitId = matchingUnit.id;
+          });
+        }
+      });
+      return null;
+    }
+
+    // 如果是新输入的单位名称，不显示错误（允许创建新单位）
+    return null;
   }
 }

@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
+import 'package:audioplayers/audioplayers.dart';
 
 /// 扫码结果回调类型定义
 typedef OnBarcodeScanned = void Function(String barcode);
@@ -16,6 +17,8 @@ class BarcodeScannerConfig {
   final bool enableFlashlight;
   final bool enableCameraSwitch;
   final bool enableScanSound;
+  final bool continuousMode; // 连续扫码模式
+  final int? continuousDelay; // 连续扫码延迟（毫秒）
   final List<Widget>? additionalActions;
   final Color? backgroundColor;
   final Color? foregroundColor;
@@ -28,6 +31,8 @@ class BarcodeScannerConfig {
     this.enableFlashlight = true,
     this.enableCameraSwitch = true,
     this.enableScanSound = true,
+    this.continuousMode = false,
+    this.continuousDelay = 1000, // 默认1秒延迟
     this.additionalActions,
     this.backgroundColor = Colors.black,
     this.foregroundColor = Colors.white,
@@ -58,17 +63,35 @@ class UniversalBarcodeScanner extends StatefulWidget {
 
 class _UniversalBarcodeScannerState extends State<UniversalBarcodeScanner> {
   late MobileScannerController _cameraController;
+  late AudioPlayer _audioPlayer;
   bool _isScanning = true;
-
   @override
   void initState() {
     super.initState();
     _cameraController = MobileScannerController();
+    _audioPlayer = AudioPlayer();
+    _initializeAudioPlayer();
+  }
+
+  /// 初始化音频播放器
+  void _initializeAudioPlayer() {
+    try {
+      // 设置音频播放器的模式，允许与其他音频混合
+      _audioPlayer.setPlayerMode(PlayerMode.lowLatency);
+      if (kDebugMode) {
+        print('AudioPlayer 初始化完成');
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        print('AudioPlayer 初始化失败: $e');
+      }
+    }
   }
 
   @override
   void dispose() {
     _cameraController.dispose();
+    _audioPlayer.dispose();
     super.dispose();
   }
 
@@ -158,7 +181,6 @@ class _UniversalBarcodeScannerState extends State<UniversalBarcodeScanner> {
         ),
       );
     }
-
     return MobileScanner(
       controller: _cameraController,
       onDetect: (capture) {
@@ -172,6 +194,20 @@ class _UniversalBarcodeScannerState extends State<UniversalBarcodeScanner> {
             });
             _playSuccessSound();
             widget.onBarcodeScanned(code);
+
+            // 连续扫码模式下，延迟后重新启用扫码
+            if (widget.config.continuousMode) {
+              Future.delayed(
+                Duration(milliseconds: widget.config.continuousDelay ?? 1000),
+                () {
+                  if (mounted) {
+                    setState(() {
+                      _isScanning = true;
+                    });
+                  }
+                },
+              );
+            }
           }
         }
       },
@@ -317,6 +353,22 @@ class _UniversalBarcodeScannerState extends State<UniversalBarcodeScanner> {
                 if (code.isNotEmpty) {
                   Navigator.of(context).pop();
                   widget.onBarcodeScanned(code);
+
+                  // 连续扫码模式下，延迟后重新启用扫码
+                  if (widget.config.continuousMode) {
+                    Future.delayed(
+                      Duration(
+                        milliseconds: widget.config.continuousDelay ?? 1000,
+                      ),
+                      () {
+                        if (mounted) {
+                          setState(() {
+                            _isScanning = true;
+                          });
+                        }
+                      },
+                    );
+                  }
                 }
               },
               style: ElevatedButton.styleFrom(
@@ -349,15 +401,65 @@ class _UniversalBarcodeScannerState extends State<UniversalBarcodeScanner> {
 
   /// 播放扫码成功提示音
   void _playSuccessSound() {
-    if (widget.config.enableScanSound) {
-      try {
-        SystemSound.play(SystemSoundType.click);
-      } catch (e) {
-        // 在某些平台上可能不支持，忽略错误
-        if (kDebugMode) {
-          print('播放提示音失败: $e');
-        }
+    if (!widget.config.enableScanSound) {
+      if (kDebugMode) {
+        print('扫码声音被禁用 (enableScanSound = false)');
       }
+      return;
+    }
+
+    if (kDebugMode) {
+      print('开始播放扫码成功音效...');
+    }
+
+    // 首先尝试播放音频文件
+    _playAudioFile()
+        .catchError((e) {
+          if (kDebugMode) {
+            print('播放音频文件失败: $e');
+          }
+          // 如果音频文件播放失败，回退到系统声音
+          return _playSystemSound();
+        })
+        .catchError((systemError) {
+          if (kDebugMode) {
+            print('播放系统声音也失败: $systemError');
+          }
+        });
+  }
+
+  /// 播放音频文件
+  Future<void> _playAudioFile() async {
+    try {
+      // 停止之前的播放
+      await _audioPlayer.stop();
+
+      // 播放扫码成功音效
+      await _audioPlayer.play(AssetSource('sounds/scan_success2.mp3'));
+
+      if (kDebugMode) {
+        print('✓ 成功播放扫码音效: sounds/scan_success2.mp3');
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        print('❌ 播放音频文件异常: $e');
+      }
+      rethrow;
+    }
+  }
+
+  /// 播放系统声音作为回退
+  Future<void> _playSystemSound() async {
+    try {
+      SystemSound.play(SystemSoundType.click);
+      if (kDebugMode) {
+        print('✓ 播放系统声音作为回退');
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        print('❌ 播放系统声音失败: $e');
+      }
+      rethrow;
     }
   }
 
@@ -366,6 +468,15 @@ class _UniversalBarcodeScannerState extends State<UniversalBarcodeScanner> {
     if (mounted) {
       setState(() {
         _isScanning = true;
+      });
+    }
+  }
+
+  /// 手动启用/禁用扫码
+  void setScanningEnabled(bool enabled) {
+    if (mounted) {
+      setState(() {
+        _isScanning = enabled;
       });
     }
   }

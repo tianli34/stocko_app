@@ -10,6 +10,7 @@ import '../../features/product/presentation/screens/category_selection_screen.da
 import '../../features/product/presentation/pages/category_test_page.dart';
 import '../../features/product/application/provider/product_providers.dart';
 import '../../features/database/presentation/screens/database_viewer_screen.dart';
+import '../../features/debug/screens/database_management_screen.dart';
 import '../../features/inbound/presentation/screens/screens.dart';
 import '../../features/inventory/presentation/screens/screens.dart';
 import '../../features/purchase/presentation/screens/screens.dart';
@@ -45,7 +46,7 @@ final routerProvider = Provider<GoRouter>((ref) {
                     SizedBox(
                       width: 200,
                       child: ElevatedButton(
-                        onPressed: () => context.go(AppRoutes.products),
+                        onPressed: () => context.push(AppRoutes.products),
                         child: const Text('产品管理'),
                       ),
                     ),
@@ -53,7 +54,7 @@ final routerProvider = Provider<GoRouter>((ref) {
                     SizedBox(
                       width: 200,
                       child: ElevatedButton(
-                        onPressed: () => context.go(AppRoutes.categories),
+                        onPressed: () => context.push(AppRoutes.categories),
                         child: const Text('类别管理'),
                       ),
                     ),
@@ -61,7 +62,7 @@ final routerProvider = Provider<GoRouter>((ref) {
                     SizedBox(
                       width: 200,
                       child: ElevatedButton(
-                        onPressed: () => context.go(AppRoutes.inventory),
+                        onPressed: () => context.push(AppRoutes.inventory),
                         child: const Text('库存管理'),
                       ),
                     ),
@@ -69,7 +70,7 @@ final routerProvider = Provider<GoRouter>((ref) {
                     SizedBox(
                       width: 200,
                       child: ElevatedButton(
-                        onPressed: () => context.go(AppRoutes.inboundCreate),
+                        onPressed: () => context.push(AppRoutes.inboundCreate),
                         child: const Text('新建入库单'),
                       ),
                     ),
@@ -77,7 +78,7 @@ final routerProvider = Provider<GoRouter>((ref) {
                     SizedBox(
                       width: 200,
                       child: ElevatedButton(
-                        onPressed: () => context.go(AppRoutes.purchaseCreate),
+                        onPressed: () => context.push(AppRoutes.purchaseCreate),
                         child: const Text('新建采购单'),
                       ),
                     ),
@@ -85,7 +86,7 @@ final routerProvider = Provider<GoRouter>((ref) {
                     SizedBox(
                       width: 200,
                       child: ElevatedButton(
-                        onPressed: () => context.go(AppRoutes.sales),
+                        onPressed: () => context.push(AppRoutes.sales),
                         child: const Text('销售管理'),
                       ),
                     ),
@@ -93,7 +94,7 @@ final routerProvider = Provider<GoRouter>((ref) {
                     SizedBox(
                       width: 200,
                       child: ElevatedButton(
-                        onPressed: () => context.go(AppRoutes.test),
+                        onPressed: () => context.push(AppRoutes.test),
                         child: const Text('数据库测试'),
                       ),
                     ),
@@ -101,7 +102,7 @@ final routerProvider = Provider<GoRouter>((ref) {
                     SizedBox(
                       width: 200,
                       child: ElevatedButton(
-                        onPressed: () => context.go(AppRoutes.categoryTest),
+                        onPressed: () => context.push(AppRoutes.categoryTest),
                         child: const Text('类别管理测试'),
                       ),
                     ),
@@ -109,8 +110,21 @@ final routerProvider = Provider<GoRouter>((ref) {
                     SizedBox(
                       width: 200,
                       child: ElevatedButton(
-                        onPressed: () => context.go(AppRoutes.databaseViewer),
+                        onPressed: () => context.push(AppRoutes.databaseViewer),
                         child: const Text('数据库查看器'),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    SizedBox(
+                      width: 200,
+                      child: ElevatedButton(
+                        onPressed: () =>
+                            context.push(AppRoutes.databaseManagement),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.orange.shade600,
+                          foregroundColor: Colors.white,
+                        ),
+                        child: const Text('数据库管理'),
                       ),
                     ),
                     const SizedBox(height: 20),
@@ -212,11 +226,8 @@ final routerProvider = Provider<GoRouter>((ref) {
                 SizedBox(
                   width: 200,
                   child: ElevatedButton(
-                    onPressed: () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('入库记录功能待实现')),
-                      );
-                    },
+                    onPressed: () =>
+                        context.go(AppRoutes.inventoryInboundRecords),
                     child: const Text('入库记录'),
                   ),
                 ),
@@ -254,6 +265,11 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => const InventoryQueryScreen(),
       ),
       GoRoute(
+        path: AppRoutes.inventoryInboundRecords,
+        name: 'inventory-inbound-records',
+        builder: (context, state) => const InboundRecordsScreen(),
+      ),
+      GoRoute(
         path: AppRoutes.sales,
         name: 'sales',
         builder: (context, state) => Scaffold(
@@ -282,6 +298,11 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: AppRoutes.databaseViewer,
         name: 'database-viewer',
         builder: (context, state) => const DatabaseViewerScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.databaseManagement,
+        name: 'database-management',
+        builder: (context, state) => const DatabaseManagementScreen(),
       ),
     ],
     errorBuilder: (context, state) => Scaffold(

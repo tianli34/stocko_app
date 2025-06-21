@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:stocko_app/features/product/presentation/widgets/async_value_widget.dart';
+import 'package:stocko_app/features/product/presentation/widgets/product_details_dialog.dart';
 import '../../application/provider/product_providers.dart';
 import '../../domain/model/product.dart';
 import '../../../../core/shared_widgets/error_widget.dart';
 import '../../../../core/shared_widgets/loading_widget.dart';
 import '../widgets/product_list_tile.dart';
-import '../../../../core/widgets/cached_image_widget.dart';
-import '../../../../core/widgets/full_screen_image_viewer.dart';
 import '../../../../core/constants/app_routes.dart';
 
 /// 产品列表页面
@@ -25,6 +25,8 @@ class ProductListScreen extends ConsumerWidget {
       previous,
       next,
     ) {
+      if (!context.mounted) return; // 在回调开始时检查
+
       if (next.isSuccess) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('操作成功'), backgroundColor: Colors.green),
@@ -38,21 +40,10 @@ class ProductListScreen extends ConsumerWidget {
         );
       }
     });
-
     return Scaffold(
       appBar: AppBar(
         title: const Text('产品列表'),
-        leading: IconButton(
-          onPressed: () {
-            if (context.canPop()) {
-              context.pop();
-            } else {
-              context.go(AppRoutes.home);
-            }
-          },
-          icon: const Icon(Icons.arrow_back),
-          tooltip: '返回',
-        ),
+        // go_router会自动显示返回按钮并支持手势导航
         actions: [
           IconButton(
             onPressed: () {
@@ -65,14 +56,15 @@ class ProductListScreen extends ConsumerWidget {
       ),
       body: Column(
         children: [
-          // 操作状态指示器
-          if (controllerState.isLoading) const LinearProgressIndicator(),
-
+          controllerState.isLoading
+              ? const LinearProgressIndicator()
+              : const SizedBox.shrink(), // 使用 SizedBox.shrink() 代替 if
           // 产品列表
           Expanded(
-            child: productsAsyncValue.when(
+            child: AsyncValueWidget<List<Product>>(
+              value: productsAsyncValue,
               data: (products) => _buildProductList(context, ref, products),
-              loading: () => const LoadingWidget(message: '加载产品列表中...'),
+              loading: const LoadingWidget(message: '加载产品列表中...'),
               error: (error, stackTrace) => CustomErrorWidget(
                 message: '加载产品列表失败',
                 onRetry: () => ref.invalidate(allProductsProvider),
@@ -138,6 +130,7 @@ class ProductListScreen extends ConsumerWidget {
   ) async {
     print('🖥️ UI层：开始删除产品 "${product.name}"，ID: ${product.id}');
 
+    if (!context.mounted) return; // 在异步操作前检查
     // 显示确认对话框
     final shouldDelete = await showDialog<bool>(
       context: context,
@@ -167,16 +160,6 @@ class ProductListScreen extends ConsumerWidget {
       await controller.deleteProduct(product.id);
 
       print('🖥️ UI层：删除操作完成，开始刷新列表');
-
-      // 强制刷新列表确保UI立即更新
-      ref.invalidate(allProductsProvider);
-
-      // 添加短暂延迟后再次刷新，确保数据完全同步
-      await Future.delayed(const Duration(milliseconds: 150));
-      print('🖥️ UI层：延迟后再次刷新列表');
-      ref.invalidate(allProductsProvider);
-
-      print('🖥️ UI层：删除流程完成');
     } else {
       print('🖥️ UI层：删除操作被取消或产品ID为空');
     }
@@ -184,189 +167,6 @@ class ProductListScreen extends ConsumerWidget {
 }
 
 /// 产品详情对话框
-class ProductDetailsDialog extends StatelessWidget {
-  final Product product;
-
-  const ProductDetailsDialog({super.key, required this.product});
-
-  @override
-  Widget build(BuildContext context) {
-    return Dialog(
-      child: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // 标题
-            Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    product.name,
-                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-                IconButton(
-                  onPressed: () => Navigator.of(context).pop(),
-                  icon: const Icon(Icons.close),
-                ),
-              ],
-            ),
-            const SizedBox(height: 16), // 产品图片
-            if (product.image != null && product.image!.isNotEmpty)
-              GestureDetector(
-                onTap: () {
-                  Navigator.of(context).push(
-                    PageRouteBuilder(
-                      pageBuilder: (context, animation, secondaryAnimation) =>
-                          FullScreenImageViewer(
-                            imagePath: product.image!,
-                            heroTag:
-                                'product_dialog_image_${product.id}_${product.image!}',
-                          ),
-                      transitionsBuilder:
-                          (context, animation, secondaryAnimation, child) {
-                            return FadeTransition(
-                              opacity: animation,
-                              child: child,
-                            );
-                          },
-                      transitionDuration: const Duration(milliseconds: 300),
-                      reverseTransitionDuration: const Duration(
-                        milliseconds: 200,
-                      ),
-                    ),
-                  );
-                },
-                child: Hero(
-                  tag: 'product_dialog_image_${product.id}_${product.image!}',
-                  child: ProductDialogImage(imagePath: product.image!),
-                ),
-              ),
-
-            // 产品详情
-            if (product.sku != null)
-              _buildDetailItem(context, 'SKU', product.sku!),
-
-            if (product.barcode != null)
-              _buildDetailItem(context, '条码', product.barcode!),
-
-            if (product.effectivePrice != null)
-              _buildDetailItem(
-                context,
-                '价格',
-                '￥${product.effectivePrice!.toStringAsFixed(2)}',
-              ),
-
-            if (product.stockWarningValue != null)
-              _buildDetailItem(
-                context,
-                '库存预警值',
-                '${product.stockWarningValue}',
-              ),
-            if (product.shelfLife != null)
-              _buildDetailItem(
-                context,
-                '保质期',
-                _formatShelfLife(
-                  product.shelfLife,
-                  _getProductShelfLifeUnit(product),
-                ),
-              ),
-
-            _buildDetailItem(
-              context,
-              '批次管理',
-              product.enableBatchManagement ? '已启用' : '未启用',
-            ),
-
-            if (product.remarks != null)
-              _buildDetailItem(context, '备注', product.remarks!),
-
-            if (product.lastUpdated != null)
-              _buildDetailItem(
-                context,
-                '最后更新',
-                _formatDateTime(product.lastUpdated!),
-              ),
-
-            const SizedBox(height: 24),
-
-            // 关闭按钮
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: () => Navigator.of(context).pop(),
-                child: const Text('关闭'),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildDetailItem(BuildContext context, String label, String value) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          SizedBox(
-            width: 80,
-            child: Text(
-              '$label:',
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                fontWeight: FontWeight.w600,
-                color: Colors.grey.shade700,
-              ),
-            ),
-          ),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Text(value, style: Theme.of(context).textTheme.bodyMedium),
-          ),
-        ],
-      ),
-    );
-  }
-
-  String _formatDateTime(DateTime dateTime) {
-    return '${dateTime.year}-${dateTime.month.toString().padLeft(2, '0')}-${dateTime.day.toString().padLeft(2, '0')} '
-        '${dateTime.hour.toString().padLeft(2, '0')}:${dateTime.minute.toString().padLeft(2, '0')}';
-  }
-
-  /// 格式化保质期显示
-  String _formatShelfLife(int? shelfLife, String? unit) {
-    if (shelfLife == null) return '';
-
-    final unitText = _getShelfLifeUnitDisplayName(unit ?? 'months');
-    return '$shelfLife$unitText';
-  }
-
-  /// 获取保质期单位显示名称
-  String _getShelfLifeUnitDisplayName(String unit) {
-    switch (unit) {
-      case 'days':
-        return '天';
-      case 'months':
-        return '个月';
-      case 'years':
-        return '年';
-      default:
-        return '个月';
-    }
-  }
-
-  /// 获取产品的保质期单位
-  String _getProductShelfLifeUnit(Product product) {
-    // 返回产品实际的保质期单位
-    return product.shelfLifeUnit;
-  }
-}
 
 /// 产品网格列表（可选的展示方式）
 class ProductGridPage extends ConsumerWidget {
@@ -378,31 +178,37 @@ class ProductGridPage extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(title: const Text('产品网格')),
-      body: productsAsyncValue.when(
-        data: (products) => products.isEmpty
-            ? const EmptyStateWidget(
-                message: '暂无产品数据',
-                icon: Icons.inventory_2_outlined,
-              )
-            : GridView.builder(
-                padding: const EdgeInsets.all(16),
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 2,
-                  crossAxisSpacing: 16,
-                  mainAxisSpacing: 16,
-                  childAspectRatio: 0.8,
-                ),
-                itemCount: products.length,
-                itemBuilder: (context, index) {
-                  final product = products[index];
-                  return SimpleProductListTile(
-                    product: product,
-                    onTap: () =>
-                        context.go(AppRoutes.productEditPath(product.id)),
-                  );
-                },
-              ),
-        loading: () => const LoadingWidget(message: '加载产品列表中...'),
+      body: AsyncValueWidget<List<Product>>(
+        value: productsAsyncValue,
+        data: (products) {
+          // 如果产品列表为空，显示空状态
+          if (products.isEmpty) {
+            return const EmptyStateWidget(
+              message: '暂无产品数据',
+              icon: Icons.inventory_2_outlined,
+            );
+          }
+
+          // 否则显示网格列表
+          return GridView.builder(
+            padding: const EdgeInsets.all(16),
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 2,
+              crossAxisSpacing: 16,
+              mainAxisSpacing: 16,
+              childAspectRatio: 0.8,
+            ),
+            itemCount: products.length,
+            itemBuilder: (context, index) {
+              final product = products[index];
+              return SimpleProductListTile(
+                product: product,
+                onTap: () => context.go(AppRoutes.productEditPath(product.id)),
+              );
+            },
+          );
+        },
+        loading: const LoadingWidget(message: '加载产品列表中...'),
         error: (error, stackTrace) => CustomErrorWidget(
           message: '加载产品列表失败',
           onRetry: () => ref.invalidate(allProductsProvider),

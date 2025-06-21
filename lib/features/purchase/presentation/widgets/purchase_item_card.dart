@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../screens/create_purchase_screen.dart';
+import '../../domain/model/purchase_item.dart';
 
 /// 采购单商品项卡片
 /// 显示商品信息、价格、数量和金额输入等
@@ -25,7 +25,6 @@ class _PurchaseItemCardState extends State<PurchaseItemCard> {
   late TextEditingController _amountController;
   DateTime? _selectedProductionDate;
   bool _isUpdatingFromAmount = false; // 标记是否从金额更新其他字段
-
   @override
   void initState() {
     super.initState();
@@ -39,6 +38,25 @@ class _PurchaseItemCardState extends State<PurchaseItemCard> {
       text: widget.item.amount.toStringAsFixed(2),
     );
     _selectedProductionDate = widget.item.productionDate;
+  }
+
+  @override
+  void didUpdateWidget(PurchaseItemCard oldWidget) {
+    super.didUpdateWidget(oldWidget);
+
+    // 当widget更新时，同步更新控制器的值
+    if (oldWidget.item.unitPrice != widget.item.unitPrice) {
+      _unitPriceController.text = widget.item.unitPrice.toStringAsFixed(2);
+    }
+    if (oldWidget.item.quantity != widget.item.quantity) {
+      _quantityController.text = widget.item.quantity.toStringAsFixed(0);
+    }
+    if (oldWidget.item.amount != widget.item.amount) {
+      _amountController.text = widget.item.amount.toStringAsFixed(2);
+    }
+    if (oldWidget.item.productionDate != widget.item.productionDate) {
+      _selectedProductionDate = widget.item.productionDate;
+    }
   }
 
   @override
@@ -103,7 +121,7 @@ class _PurchaseItemCardState extends State<PurchaseItemCard> {
       context: context,
       initialDate: _selectedProductionDate ?? DateTime.now(),
       firstDate: DateTime(2020),
-      lastDate: DateTime(2030),
+      lastDate: DateTime.now(), // 限制最晚选择日期为当前日期
       locale: const Locale('zh', 'CN'),
     );
 

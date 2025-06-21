@@ -8,9 +8,9 @@ class InventoryFilterState {
   final String selectedStatus;
 
   const InventoryFilterState({
-    this.selectedShop = '全部',
-    this.selectedCategory = '全部',
-    this.selectedStatus = '全部',
+    this.selectedShop = '所有仓库',
+    this.selectedCategory = '所有分类',
+    this.selectedStatus = '库存状态',
   });
 
   InventoryFilterState copyWith({
@@ -29,19 +29,20 @@ class InventoryFilterState {
 /// 库存筛选状态管理器
 class InventoryFilterNotifier extends StateNotifier<InventoryFilterState> {
   InventoryFilterNotifier() : super(const InventoryFilterState());
+
   void updateShop(String? shop) {
     if (shop == '所有仓库') shop = null;
-    state = state.copyWith(selectedShop: shop);
+    state = state.copyWith(selectedShop: shop ?? '所有仓库');
   }
 
   void updateCategory(String? category) {
-    if (category == '所有类别') category = null;
-    state = state.copyWith(selectedCategory: category);
+    if (category == '所有分类') category = null;
+    state = state.copyWith(selectedCategory: category ?? '所有分类');
   }
 
   void updateStatus(String? status) {
     if (status == '库存状态') status = null;
-    state = state.copyWith(selectedStatus: status);
+    state = state.copyWith(selectedStatus: status ?? '库存状态');
   }
 
   void reset() {
@@ -61,15 +62,14 @@ final inventoryQueryProvider = FutureProvider<List<Map<String, dynamic>>>((
 ) async {
   final filterState = ref.watch(inventoryFilterProvider);
   final queryService = ref.watch(inventoryQueryServiceProvider);
-
-  // 将"全部"转换为null传递给查询服务
-  final shopFilter = filterState.selectedShop == '全部'
+  // 将默认值转换为null传递给查询服务
+  final shopFilter = filterState.selectedShop == '所有仓库'
       ? null
       : filterState.selectedShop;
-  final categoryFilter = filterState.selectedCategory == '全部'
+  final categoryFilter = filterState.selectedCategory == '所有分类'
       ? null
       : filterState.selectedCategory;
-  final statusFilter = filterState.selectedStatus == '全部'
+  final statusFilter = filterState.selectedStatus == '库存状态'
       ? null
       : filterState.selectedStatus;
 

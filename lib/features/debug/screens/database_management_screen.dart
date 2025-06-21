@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import '../../../core/database/database_providers.dart';
 import '../../../core/database/database.dart';
+import '../../../core/constants/app_routes.dart';
 
 /// 数据库管理开发工具
 /// 仅在开发模式下使用
@@ -14,6 +16,11 @@ class DatabaseManagementScreen extends ConsumerWidget {
       appBar: AppBar(
         title: const Text('数据库管理'),
         backgroundColor: Colors.orange.shade400,
+        leading: IconButton(
+          onPressed: () => context.go(AppRoutes.home),
+          icon: const Icon(Icons.arrow_back),
+          tooltip: '返回首页',
+        ),
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -139,6 +146,24 @@ class DatabaseManagementScreen extends ConsumerWidget {
               child: OutlinedButton(
                 onPressed: () => _showProductsData(context, ref),
                 child: const Text('查看产品'),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        Row(
+          children: [
+            Expanded(
+              child: OutlinedButton(
+                onPressed: () => _showSuppliersData(context, ref),
+                child: const Text('查看供应商'),
+              ),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: OutlinedButton(
+                onPressed: () => _showPurchasesData(context, ref),
+                child: const Text('查看采购'),
               ),
             ),
           ],
@@ -325,6 +350,97 @@ class DatabaseManagementScreen extends ConsumerWidget {
                   title: Text(product.name),
                   subtitle: Text('状态: ${product.status}'),
                   trailing: Text(product.id),
+                );
+              },
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('关闭'),
+            ),
+          ],
+        ),
+      );
+    }
+  }
+
+  Future<void> _showSuppliersData(BuildContext context, WidgetRef ref) async {
+    final database = ref.read(appDatabaseProvider);
+    final suppliers = await database.select(database.suppliersTable).get();
+
+    if (context.mounted) {
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: Text('供应商数据 (${suppliers.length} 条)'),
+          content: SizedBox(
+            width: double.maxFinite,
+            child: ListView.builder(
+              shrinkWrap: true,
+              itemCount: suppliers.length,
+              itemBuilder: (context, index) {
+                final supplier = suppliers[index];
+                return ListTile(
+                  title: Text(supplier.name),
+                  subtitle: Text(
+                    '创建时间: ${supplier.createdAt.toString().substring(0, 16)}',
+                  ),
+                  trailing: Text(supplier.id),
+                );
+              },
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('关闭'),
+            ),
+          ],
+        ),
+      );
+    }
+  }
+
+  Future<void> _showPurchasesData(BuildContext context, WidgetRef ref) async {
+    final database = ref.read(appDatabaseProvider);
+    final purchases = await database.select(database.purchasesTable).get();
+
+    if (context.mounted) {
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: Text('采购数据 (${purchases.length} 条)'),
+          content: SizedBox(
+            width: double.maxFinite,
+            height: 400, // 设置固定高度以便滚动
+            child: ListView.builder(
+              shrinkWrap: true,
+              itemCount: purchases.length,
+              itemBuilder: (context, index) {
+                final purchase = purchases[index];
+                return Card(
+                  margin: const EdgeInsets.symmetric(vertical: 4),
+                  child: ListTile(
+                    title: Text('采购单号: ${purchase.purchaseNumber}'),
+                    subtitle: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text('产品ID: ${purchase.productId}'),
+                        Text('数量: ${purchase.quantity} (${purchase.unitId})'),
+                        Text('单价: ¥${purchase.unitPrice.toStringAsFixed(2)}'),
+                        Text(
+                          '采购日期: ${purchase.purchaseDate.toString().substring(0, 16)}',
+                        ),
+                        Text(
+                          '生产日期: ${purchase.productionDate.toString().substring(0, 10)}',
+                        ),
+                        Text('店铺: ${purchase.shopId}'),
+                        Text('供应商: ${purchase.supplierId}'),
+                      ],
+                    ),
+                    isThreeLine: true,
+                  ),
                 );
               },
             ),

@@ -39,14 +39,19 @@ class BarcodeScannerService {
   }
 
   /// 产品条码扫描（针对产品管理优化）
-  static Future<String?> scanForProduct(BuildContext context) async {
+  static Future<String?> scanForProduct(
+    BuildContext context, {
+    bool continuousMode = false,
+  }) async {
     return await scan(
       context,
-      config: const BarcodeScannerConfig(
+      config: BarcodeScannerConfig(
         title: '扫描产品条码',
         subtitle: '将产品条码对准扫描框',
         enableManualInput: true,
         enableGalleryPicker: true,
+        continuousMode: continuousMode,
+        continuousDelay: 1000,
       ),
     );
   }
