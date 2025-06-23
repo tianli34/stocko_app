@@ -18,9 +18,6 @@ class ProductUnitsTable extends Table {
   /// 换算率（相对于基础单位）
   RealColumn get conversionRate => real().named('conversion_rate')();
 
-  /// 条码（可选）- 该包装单位的专用条码
-  TextColumn get barcode => text().named('barcode').nullable()();
-
   /// 售价（可选）
   RealColumn get sellingPrice => real().named('selling_price').nullable()();
 

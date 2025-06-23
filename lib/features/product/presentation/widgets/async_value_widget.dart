@@ -4,12 +4,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 // 创建一个可复用的 Widget
 class AsyncValueWidget<T> extends StatelessWidget {
   const AsyncValueWidget({
-    Key? key,
+    super.key,
     required this.value,
     required this.data,
     this.loading,
     this.error,
-  }) : super(key: key);
+  });
 
   final AsyncValue<T> value;
   final Widget Function(T data) data;

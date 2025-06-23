@@ -168,6 +168,21 @@ class DatabaseManagementScreen extends ConsumerWidget {
             ),
           ],
         ),
+        const SizedBox(height: 8),
+        Row(
+          children: [
+            Expanded(
+              child: OutlinedButton(
+                onPressed: () => _showBarcodesData(context, ref),
+                child: const Text('查看条码'),
+              ),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Container(), // 占位符，保持布局对称
+            ),
+          ],
+        ),
       ],
     );
   }
@@ -437,6 +452,57 @@ class DatabaseManagementScreen extends ConsumerWidget {
                         ),
                         Text('店铺: ${purchase.shopId}'),
                         Text('供应商: ${purchase.supplierId}'),
+                      ],
+                    ),
+                    isThreeLine: true,
+                  ),
+                );
+              },
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('关闭'),
+            ),
+          ],
+        ),
+      );
+    }
+  }
+
+  Future<void> _showBarcodesData(BuildContext context, WidgetRef ref) async {
+    final database = ref.read(appDatabaseProvider);
+    final barcodes = await database.select(database.barcodesTable).get();
+
+    if (context.mounted) {
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: Text('条码数据 (${barcodes.length} 条)'),
+          content: SizedBox(
+            width: double.maxFinite,
+            height: 400, // 设置固定高度以便滚动
+            child: ListView.builder(
+              shrinkWrap: true,
+              itemCount: barcodes.length,
+              itemBuilder: (context, index) {
+                final barcode = barcodes[index];
+                return Card(
+                  margin: const EdgeInsets.symmetric(vertical: 4),
+                  child: ListTile(
+                    title: Text('条码: ${barcode.barcode}'),
+                    subtitle: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text('条码ID: ${barcode.id}'),
+                        Text('产品单位ID: ${barcode.productUnitId}'),
+                        Text(
+                          '创建时间: ${barcode.createdAt.toString().substring(0, 16)}',
+                        ),
+                        Text(
+                          '更新时间: ${barcode.updatedAt.toString().substring(0, 16)}',
+                        ),
                       ],
                     ),
                     isThreeLine: true,

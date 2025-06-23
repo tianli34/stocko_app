@@ -1,6 +1,7 @@
 /// 货品供应商关联表使用示例
 ///
 /// 此文件展示了如何使用ProductSupplierDao来管理商品和供应商之间的关联关系
+library;
 
 import 'package:drift/drift.dart';
 import '../core/database/database.dart';

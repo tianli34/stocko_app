@@ -48,6 +48,17 @@ class UnitController extends StateNotifier<UnitControllerState> {
     state = state.copyWith(status: UnitOperationStatus.loading);
 
     try {
+      // 检查单位名称是否为空
+      if (unit.name.trim().isEmpty) {
+        throw Exception('单位名称不能为空');
+      }
+
+      // 检查单位名称是否已存在
+      final existingUnit = await _repository.getUnitByName(unit.name.trim());
+      if (existingUnit != null) {
+        throw Exception('单位名称已存在');
+      }
+
       await _repository.addUnit(unit);
       state = state.copyWith(
         status: UnitOperationStatus.success,
@@ -62,6 +73,7 @@ class UnitController extends StateNotifier<UnitControllerState> {
         status: UnitOperationStatus.error,
         errorMessage: '添加单位失败: ${e.toString()}',
       );
+      rethrow; // 重新抛出异常，让调用方可以处理
     }
   }
 

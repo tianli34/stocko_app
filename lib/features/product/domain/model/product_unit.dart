@@ -10,7 +10,6 @@ abstract class ProductUnit with _$ProductUnit {
     required String productId, // 外键, 指向 Products 表
     required String unitId, // 外键, 指向 Units 表
     required double conversionRate, // 换算率
-    String? barcode, // 条码
     double? sellingPrice, // 售价
     DateTime? lastUpdated, // 最后更新日期
   }) = _ProductUnit;
@@ -31,9 +30,6 @@ abstract class ProductUnit with _$ProductUnit {
     if (conversionRate == 1.0) return '1:1';
     return '1:${conversionRate.toStringAsFixed(2)}';
   }
-
-  // 是否有条码
-  bool get hasBarcode => barcode != null && barcode!.isNotEmpty;
 
   // 是否有售价
   bool get hasSellingPrice => sellingPrice != null;

@@ -3,17 +3,27 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/services/barcode_scanner_service.dart';
 import '../../domain/model/unit.dart';
 import '../../domain/model/product_unit.dart';
+import '../../domain/model/barcode.dart';
 import '../../application/provider/unit_providers.dart';
 import '../../application/provider/unit_draft_providers.dart';
+import '../../application/provider/barcode_providers.dart';
+import '../../application/provider/product_unit_providers.dart';
 import 'unit_selection_screen.dart';
 
 /// 单位编辑屏幕
 /// 用于编辑产品的基本单位和辅单位配置
+/// 基本单位从产品编辑页面传入，辅单位从数据库获取
 class UnitEditScreen extends ConsumerStatefulWidget {
   final String? productId;
-  final List<ProductUnit>? initialProductUnits;
+  final String? baseUnitId; // 基本单位ID（从产品编辑页传入）
+  final String? baseUnitName; // 基本单位名称（从产品编辑页传入）
 
-  const UnitEditScreen({super.key, this.productId, this.initialProductUnits});
+  const UnitEditScreen({
+    super.key,
+    this.productId,
+    this.baseUnitId,
+    this.baseUnitName,
+  });
 
   @override
   ConsumerState<UnitEditScreen> createState() => _UnitEditScreenState();
@@ -34,9 +44,7 @@ class _UnitEditScreenState extends ConsumerState<UnitEditScreen> {
   @override
   void initState() {
     super.initState();
-    _baseUnitController = TextEditingController(text: '个'); // 默认单位为"个"
-    // 设置默认基本单位
-    _setDefaultBaseUnit();
+    _baseUnitController = TextEditingController();
     // 使用 WidgetsBinding.instance.addPostFrameCallback 来确保在 build 完成后初始化
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _initializeUnits();
@@ -52,128 +60,148 @@ class _UnitEditScreenState extends ConsumerState<UnitEditScreen> {
     super.dispose();
   }
 
-  /// 设置默认基本单位为"个"
-  void _setDefaultBaseUnit() async {
-    try {
-      final allUnits = await ref.read(allUnitsProvider.future);
-      final defaultUnit = allUnits.firstWhere(
-        (unit) => unit.name == '个',
-        orElse: () => Unit(id: 'default_unit_ge', name: '个'),
-      );
-
-      if (mounted) {
-        setState(() {
-          _baseUnit = defaultUnit;
-        });
-      }
-    } catch (e) {
-      // 如果无法获取单位数据，创建一个默认的"个"单位
-      final defaultUnit = Unit(id: 'default_unit_ge', name: '个');
-
-      if (mounted) {
-        setState(() {
-          _baseUnit = defaultUnit;
-        });
-      }
-    }
-  }
-
   /// 初始化单位数据
   void _initializeUnits() async {
     print('🔧 UnitEditScreen: 开始初始化单位数据');
-    print(
-      '🔧 UnitEditScreen: initialProductUnits = ${widget.initialProductUnits}',
-    );
+    print('🔧 UnitEditScreen: baseUnitId = ${widget.baseUnitId}');
+    print('🔧 UnitEditScreen: baseUnitName = ${widget.baseUnitName}');
 
-    // 首先检查是否有草稿数据
-    List<ProductUnit>? dataToLoad = widget.initialProductUnits;
+    // 1. 初始化基本单位（从产品编辑页传入）
+    await _initializeBaseUnit();
 
-    if (widget.productId != null) {
+    // 2. 初始化辅单位（从数据库获取）
+    await _initializeAuxiliaryUnits();
+  }
+
+  /// 初始化基本单位（从产品编辑页传入的参数）
+  Future<void> _initializeBaseUnit() async {
+    if (widget.baseUnitId != null && widget.baseUnitName != null) {
+      try {
+        // 从传入的参数创建基本单位
+        final baseUnit = Unit(
+          id: widget.baseUnitId!,
+          name: widget.baseUnitName!,
+        );
+
+        if (mounted) {
+          setState(() {
+            _baseUnit = baseUnit;
+            _baseUnitController.text = baseUnit.name;
+          });
+        }
+        print('🔧 UnitEditScreen: 基本单位初始化完成: ${baseUnit.name}');
+      } catch (e) {
+        print('🔧 UnitEditScreen: 基本单位初始化失败: $e');
+      }
+    } else {
+      print('🔧 UnitEditScreen: 没有传入基本单位信息');
+    }
+  }
+
+  /// 初始化辅单位（从数据库获取现有配置）
+  Future<void> _initializeAuxiliaryUnits() async {
+    if (widget.productId == null) {
+      print('🔧 UnitEditScreen: 新产品，跳过辅单位初始化');
+      return;
+    }
+
+    try {
+      // 首先检查是否有草稿数据
       final draftData = ref
           .read(unitEditDraftProvider.notifier)
           .getDraft(widget.productId!);
+
+      List<ProductUnit>? auxiliaryUnits;
+
       if (draftData != null && draftData.isNotEmpty) {
-        print('🔧 UnitEditScreen: 发现草稿数据，使用草稿数据加载');
-        dataToLoad = draftData;
+        print('🔧 UnitEditScreen: 发现草稿数据，使用草稿数据加载辅单位');
+        // 过滤出辅单位（换算率不为1.0的单位）
+        auxiliaryUnits = draftData
+            .where((pu) => pu.conversionRate != 1.0)
+            .toList();
+      } else {
+        print('🔧 UnitEditScreen: 从数据库获取辅单位配置');
+        // 从数据库获取产品的所有单位配置
+        final productUnitController = ref.read(
+          productUnitControllerProvider.notifier,
+        );
+        final allProductUnits = await productUnitController
+            .getProductUnitsByProductId(widget.productId!);
+        // 过滤出辅单位（换算率不为1.0的单位）
+        auxiliaryUnits = allProductUnits
+            .where((pu) => pu.conversionRate != 1.0)
+            .toList();
+      }
+
+      if (auxiliaryUnits.isNotEmpty) {
+        print('🔧 UnitEditScreen: 发现 ${auxiliaryUnits.length} 个辅单位配置');
+        await _loadAuxiliaryUnits(auxiliaryUnits);
+      } else {
+        print('🔧 UnitEditScreen: 没有辅单位配置');
+      }
+    } catch (e) {
+      print('🔧 UnitEditScreen: 初始化辅单位失败: $e');
+    }
+  }
+
+  /// 加载辅单位配置
+  Future<void> _loadAuxiliaryUnits(List<ProductUnit> auxiliaryUnits) async {
+    final List<_AuxiliaryUnit> tempAuxiliaryUnits = [];
+
+    for (final productUnit in auxiliaryUnits) {
+      print(
+        '🔧 UnitEditScreen: 处理辅单位 ${productUnit.unitId}, 换算率: ${productUnit.conversionRate}',
+      );
+
+      try {
+        // 获取单位信息
+        final allUnits = await ref.read(allUnitsProvider.future);
+        final unit = allUnits.firstWhere(
+          (u) => u.id == productUnit.unitId,
+          orElse: () =>
+              throw Exception('Unit not found: ${productUnit.unitId}'),
+        );
+
+        // 创建辅单位对象
+        final auxiliaryUnit = _AuxiliaryUnit(
+          id: _auxiliaryCounter,
+          unit: unit,
+          conversionRate: productUnit.conversionRate,
+          onDataChanged: _autoSaveDraft,
+        );
+
+        // 设置UI控制器的值
+        auxiliaryUnit.unitController.text = unit.name;
+
+        // 设置建议零售价
+        if (productUnit.sellingPrice != null) {
+          auxiliaryUnit.retailPriceController.text = productUnit.sellingPrice!
+              .toString();
+        }
+
+        // 获取条码信息
+        final barcodeController = ref.read(barcodeControllerProvider.notifier);
+        final barcodes = await barcodeController.getBarcodesByProductUnitId(
+          productUnit.productUnitId,
+        );
+        if (barcodes.isNotEmpty) {
+          auxiliaryUnit.barcodeController.text = barcodes.first.barcode;
+        }
+
+        tempAuxiliaryUnits.add(auxiliaryUnit);
+        _auxiliaryCounter++;
+      } catch (e) {
+        print('🔧 UnitEditScreen: 加载辅单位失败 ${productUnit.unitId}: $e');
       }
     }
 
-    if (dataToLoad != null && dataToLoad.isNotEmpty) {
-      print('🔧 UnitEditScreen: 发现 ${dataToLoad.length} 个单位数据');
-
-      // 临时存储要添加的辅单位
-      final List<_AuxiliaryUnit> tempAuxiliaryUnits = [];
-      Unit? tempBaseUnit;
-
-      for (final productUnit in dataToLoad) {
-        print(
-          '🔧 UnitEditScreen: 处理单位 ${productUnit.unitId}, 换算率: ${productUnit.conversionRate}',
-        );
-
-        try {
-          // 使用 ref.read 获取 Unit 对象
-          final allUnits = await ref.read(allUnitsProvider.future);
-          print('🔧 UnitEditScreen: 获取到 ${allUnits.length} 个可用单位');
-
-          final unit = allUnits.firstWhere(
-            (u) => u.id == productUnit.unitId,
-            orElse: () =>
-                throw Exception('Unit not found: ${productUnit.unitId}'),
-          );
-
-          if (productUnit.conversionRate == 1.0) {
-            // 基本单位
-            print('🔧 UnitEditScreen: 设置基本单位: ${unit.name}');
-            tempBaseUnit = unit;
-          } else {
-            // 辅单位
-            print(
-              '🔧 UnitEditScreen: 添加辅单位: ${unit.name}, 换算率: ${productUnit.conversionRate}',
-            );
-            final auxiliaryUnit = _AuxiliaryUnit(
-              id: _auxiliaryCounter,
-              unit: unit,
-              conversionRate: productUnit.conversionRate,
-              onDataChanged: _autoSaveDraft, // 传递自动保存回调
-            );
-
-            // 设置controller的text
-            auxiliaryUnit.unitController.text = unit.name;
-
-            // 设置条码和建议零售价
-            if (productUnit.barcode != null &&
-                productUnit.barcode!.isNotEmpty) {
-              auxiliaryUnit.barcodeController.text = productUnit.barcode!;
-            }
-            if (productUnit.sellingPrice != null) {
-              auxiliaryUnit.retailPriceController.text = productUnit
-                  .sellingPrice!
-                  .toString();
-            }
-
-            tempAuxiliaryUnits.add(auxiliaryUnit);
-            _auxiliaryCounter++;
-          }
-        } catch (e) {
-          print('🔧 UnitEditScreen: 加载单位失败 ${productUnit.unitId}: $e');
-        }
-      }
-
-      // 更新状态
-      if (mounted) {
-        print(
-          '🔧 UnitEditScreen: 更新UI状态 - 基本单位: ${tempBaseUnit?.name}, 辅单位数: ${tempAuxiliaryUnits.length}',
-        );
-        setState(() {
-          _baseUnit = tempBaseUnit;
-          _baseUnitController.text = tempBaseUnit?.name ?? '';
-          _auxiliaryUnits.clear();
-          _auxiliaryUnits.addAll(tempAuxiliaryUnits);
-        });
-        print('🔧 UnitEditScreen: UI状态更新完成');
-      }
-    } else {
-      print('🔧 UnitEditScreen: 没有初始单位数据');
+    // 更新UI状态
+    if (mounted && tempAuxiliaryUnits.isNotEmpty) {
+      setState(() {
+        _auxiliaryUnits.clear();
+        _auxiliaryUnits.addAll(tempAuxiliaryUnits);
+      });
+      print('🔧 UnitEditScreen: 辅单位UI状态更新完成，共 ${tempAuxiliaryUnits.length} 个');
     }
   }
 
@@ -229,7 +257,7 @@ class _UnitEditScreenState extends ConsumerState<UnitEditScreen> {
                 decoration: const InputDecoration(
                   hintText: '请输入基本单位名称',
                   border: OutlineInputBorder(),
-                  helperText: '默认为"个"，可直接输入其他单位名称',
+                  helperText: '可直接输入单位名称，如：个、箱、包、瓶等',
                 ),
                 controller: _baseUnitController,
                 validator: (value) {
@@ -250,7 +278,7 @@ class _UnitEditScreenState extends ConsumerState<UnitEditScreen> {
               style: IconButton.styleFrom(
                 backgroundColor: Theme.of(
                   context,
-                ).primaryColor.withOpacity(0.1),
+                ).primaryColor.withValues(alpha: 0.1),
                 foregroundColor: Theme.of(context).primaryColor,
               ),
               tooltip: '选择单位',
@@ -377,7 +405,7 @@ class _UnitEditScreenState extends ConsumerState<UnitEditScreen> {
                   style: IconButton.styleFrom(
                     backgroundColor: Theme.of(
                       context,
-                    ).primaryColor.withOpacity(0.1),
+                    ).primaryColor.withValues(alpha: 0.1),
                     foregroundColor: Theme.of(context).primaryColor,
                   ),
                   tooltip: '选择单位',
@@ -745,9 +773,6 @@ class _UnitEditScreenState extends ConsumerState<UnitEditScreen> {
             productId: widget.productId ?? 'new',
             unitId: aux.unit!.id,
             conversionRate: aux.conversionRate,
-            barcode: aux.barcodeController.text.trim().isNotEmpty
-                ? aux.barcodeController.text.trim()
-                : null,
             sellingPrice: aux.retailPriceController.text.trim().isNotEmpty
                 ? double.tryParse(aux.retailPriceController.text.trim())
                 : null,
@@ -772,6 +797,147 @@ class _UnitEditScreenState extends ConsumerState<UnitEditScreen> {
     }
   }
 
+  /// 保存辅单位条码
+  /// 为所有有条码输入的辅单位创建或更新条码记录
+  Future<void> _saveAuxiliaryUnitBarcodes(
+    List<ProductUnit> productUnits,
+  ) async {
+    try {
+      final barcodeController = ref.read(barcodeControllerProvider.notifier);
+      int savedCount = 0;
+      int skippedCount = 0;
+
+      // 遍历所有辅单位，处理条码数据
+      for (int i = 0; i < _auxiliaryUnits.length; i++) {
+        final auxiliaryUnit = _auxiliaryUnits[i];
+        final barcodeText = auxiliaryUnit.barcodeController.text.trim();
+
+        // 找到对应的ProductUnit
+        final productUnit = productUnits.firstWhere(
+          (pu) => pu.unitId == auxiliaryUnit.unit?.id,
+          orElse: () => ProductUnit(
+            productUnitId: '',
+            productId: '',
+            unitId: '',
+            conversionRate: 1.0,
+            lastUpdated: DateTime.now(),
+          ),
+        );
+
+        if (productUnit.productUnitId.isEmpty) {
+          print(
+            '🔧 UnitEditScreen: 未找到对应的ProductUnit，跳过处理单位: ${auxiliaryUnit.unit?.name}',
+          );
+          continue;
+        }
+
+        // 获取该产品单位现有的所有条码
+        final existingBarcodes = await barcodeController
+            .getBarcodesByProductUnitId(productUnit.productUnitId);
+
+        // 如果没有输入新条码
+        if (barcodeText.isEmpty) {
+          // 删除该产品单位的所有现有条码
+          if (existingBarcodes.isNotEmpty) {
+            for (final barcode in existingBarcodes) {
+              await barcodeController.deleteBarcode(barcode.id);
+            }
+            print('🔧 UnitEditScreen: 删除了 ${existingBarcodes.length} 个旧条码');
+          }
+          continue;
+        }
+
+        // 检查新条码是否与现有条码相同
+        final sameBarcode = existingBarcodes.firstWhere(
+          (barcode) => barcode.barcode == barcodeText,
+          orElse: () => Barcode(id: '', productUnitId: '', barcode: ''),
+        );
+
+        if (sameBarcode.id.isNotEmpty) {
+          // 条码没有变化，不需要更新
+          print('🔧 UnitEditScreen: 辅单位条码没有变化，跳过保存: $barcodeText');
+          skippedCount++;
+          continue;
+        }
+
+        // 检查新条码是否在全局范围内已存在
+        final globalExistingBarcode = await barcodeController.getBarcodeByValue(
+          barcodeText,
+        );
+        if (globalExistingBarcode != null) {
+          print('🔧 UnitEditScreen: 条码已被其他产品使用，跳过保存: $barcodeText');
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('条码 $barcodeText 已被其他产品使用'),
+                backgroundColor: Colors.orange,
+                duration: const Duration(seconds: 2),
+              ),
+            );
+          }
+          skippedCount++;
+          continue;
+        }
+
+        // 删除该产品单位的所有旧条码
+        for (final barcode in existingBarcodes) {
+          await barcodeController.deleteBarcode(barcode.id);
+        }
+
+        // 创建新的条码记录
+        final newBarcode = Barcode(
+          id: 'barcode_${DateTime.now().millisecondsSinceEpoch}_$i',
+          productUnitId: productUnit.productUnitId,
+          barcode: barcodeText,
+          createdAt: DateTime.now(),
+          updatedAt: DateTime.now(),
+        );
+
+        // 保存新条码
+        await barcodeController.addBarcode(newBarcode);
+        savedCount++;
+        print('🔧 UnitEditScreen: 辅单位条码保存成功: $barcodeText');
+      }
+
+      // 显示保存结果
+      if (mounted) {
+        if (savedCount > 0) {
+          final message = skippedCount > 0
+              ? '保存了 $savedCount 个条码，跳过 $skippedCount 个'
+              : '成功保存 $savedCount 个条码';
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(message),
+              backgroundColor: Colors.green,
+              duration: const Duration(seconds: 2),
+            ),
+          );
+        } else if (skippedCount > 0) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('所有条码都已是最新状态'),
+              backgroundColor: Colors.blue,
+              duration: Duration(seconds: 2),
+            ),
+          );
+        }
+      }
+
+      print('🔧 UnitEditScreen: 条码处理完成 - 保存: $savedCount, 跳过: $skippedCount');
+    } catch (e) {
+      print('🔧 UnitEditScreen: 辅单位条码处理失败: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('条码处理失败: $e'),
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 3),
+          ),
+        );
+      }
+    }
+  }
+
   /// 提交表单
   void _submitForm() async {
     if (!_formKey.currentState!.validate()) {
@@ -787,6 +953,9 @@ class _UnitEditScreenState extends ConsumerState<UnitEditScreen> {
           .read(unitEditDraftProvider.notifier)
           .saveDraft(widget.productId!, productUnits);
     }
+
+    // 保存辅单位条码（如果有条码输入）
+    await _saveAuxiliaryUnitBarcodes(productUnits);
 
     // 显示配置完成提示
     if (mounted) {

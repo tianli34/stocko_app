@@ -14,6 +14,8 @@ class DatabaseInitializer {
     await initializeDefaultCategories();
     await initializeDefaultUnits();
     await initializeDefaultProducts();
+    await initializeDefaultProductUnits();
+    await initializeDefaultBarcodes();
     // 可以继续添加其他初始化方法
   }
 
@@ -178,7 +180,6 @@ class DatabaseInitializer {
         ProductsTableCompanion.insert(
           id: 'prod_rice',
           name: '大米',
-          barcode: const Value('1234567890123'),
           categoryId: const Value('cat_food'),
           unitId: const Value('unit_kg'),
           retailPrice: const Value(2.5),
@@ -193,7 +194,6 @@ class DatabaseInitializer {
         ProductsTableCompanion.insert(
           id: 'prod_flour',
           name: '面粉',
-          barcode: const Value('1234567890124'),
           categoryId: const Value('cat_food'),
           unitId: const Value('unit_kg'),
           retailPrice: const Value(3.0),
@@ -208,7 +208,6 @@ class DatabaseInitializer {
         ProductsTableCompanion.insert(
           id: 'prod_cola',
           name: '可乐',
-          barcode: const Value('1234567890125'),
           categoryId: const Value('cat_beverage'),
           unitId: const Value('unit_bottle'),
           retailPrice: const Value(1.5),
@@ -223,7 +222,6 @@ class DatabaseInitializer {
         ProductsTableCompanion.insert(
           id: 'prod_water',
           name: '矿泉水',
-          barcode: const Value('1234567890126'),
           categoryId: const Value('cat_beverage'),
           unitId: const Value('unit_bottle'),
           retailPrice: const Value(1.0),
@@ -249,9 +247,121 @@ class DatabaseInitializer {
     }
   }
 
+  /// 初始化默认产品单位关联
+  Future<void> initializeDefaultProductUnits() async {
+    try {
+      final count = await (_database.select(
+        _database.productUnitsTable,
+      )..limit(1)).get();
+
+      if (count.isNotEmpty) {
+        print('📦 产品单位数据已存在，跳过初始化');
+        return;
+      }
+
+      final defaultProductUnits = [
+        ProductUnitsTableCompanion.insert(
+          productUnitId: 'pu_rice_kg',
+          productId: 'prod_rice',
+          unitId: 'unit_kg',
+          conversionRate: 1.0, // 基础单位
+          lastUpdated: Value(DateTime.now()),
+        ),
+        ProductUnitsTableCompanion.insert(
+          productUnitId: 'pu_flour_kg',
+          productId: 'prod_flour',
+          unitId: 'unit_kg',
+          conversionRate: 1.0, // 基础单位
+          lastUpdated: Value(DateTime.now()),
+        ),
+        ProductUnitsTableCompanion.insert(
+          productUnitId: 'pu_cola_bottle',
+          productId: 'prod_cola',
+          unitId: 'unit_bottle',
+          conversionRate: 1.0, // 基础单位
+          lastUpdated: Value(DateTime.now()),
+        ),
+        ProductUnitsTableCompanion.insert(
+          productUnitId: 'pu_water_bottle',
+          productId: 'prod_water',
+          unitId: 'unit_bottle',
+          conversionRate: 1.0, // 基础单位
+          lastUpdated: Value(DateTime.now()),
+        ),
+      ];
+
+      await _database.transaction(() async {
+        for (final productUnit in defaultProductUnits) {
+          await _database.into(_database.productUnitsTable).insert(productUnit);
+        }
+      });
+
+      print('✅ 成功初始化 ${defaultProductUnits.length} 个默认产品单位');
+    } catch (e) {
+      print('❌ 初始化默认产品单位失败: $e');
+    }
+  }
+
+  /// 初始化默认条码
+  Future<void> initializeDefaultBarcodes() async {
+    try {
+      final count = await (_database.select(
+        _database.barcodesTable,
+      )..limit(1)).get();
+
+      if (count.isNotEmpty) {
+        print('🏷️ 条码数据已存在，跳过初始化');
+        return;
+      }
+
+      final defaultBarcodes = [
+        BarcodesTableCompanion.insert(
+          id: 'bc_rice',
+          productUnitId: 'pu_rice_kg',
+          barcode: '1234567890123',
+          createdAt: Value(DateTime.now()),
+          updatedAt: Value(DateTime.now()),
+        ),
+        BarcodesTableCompanion.insert(
+          id: 'bc_flour',
+          productUnitId: 'pu_flour_kg',
+          barcode: '1234567890124',
+          createdAt: Value(DateTime.now()),
+          updatedAt: Value(DateTime.now()),
+        ),
+        BarcodesTableCompanion.insert(
+          id: 'bc_cola',
+          productUnitId: 'pu_cola_bottle',
+          barcode: '1234567890125',
+          createdAt: Value(DateTime.now()),
+          updatedAt: Value(DateTime.now()),
+        ),
+        BarcodesTableCompanion.insert(
+          id: 'bc_water',
+          productUnitId: 'pu_water_bottle',
+          barcode: '1234567890126',
+          createdAt: Value(DateTime.now()),
+          updatedAt: Value(DateTime.now()),
+        ),
+      ];
+
+      await _database.transaction(() async {
+        for (final barcode in defaultBarcodes) {
+          await _database.into(_database.barcodesTable).insert(barcode);
+        }
+      });
+
+      print('✅ 成功初始化 ${defaultBarcodes.length} 个默认条码');
+    } catch (e) {
+      print('❌ 初始化默认条码失败: $e');
+    }
+  }
+
   /// 重置所有数据（仅用于开发/测试）
   Future<void> resetAllData() async {
     await _database.transaction(() async {
+      await _database.delete(_database.barcodesTable).go();
+      await _database.delete(_database.productUnitsTable).go();
       await _database.delete(_database.productsTable).go();
       await _database.delete(_database.shopsTable).go();
       await _database.delete(_database.categoriesTable).go();

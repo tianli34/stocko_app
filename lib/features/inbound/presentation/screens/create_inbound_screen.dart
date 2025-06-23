@@ -4,12 +4,14 @@ import 'package:drift/drift.dart' as drift;
 import 'package:go_router/go_router.dart';
 import '../../../../core/constants/app_routes.dart';
 import '../../../../core/widgets/home_button.dart';
+import '../../../../core/widgets/universal_barcode_scanner.dart';
 import '../../domain/model/inbound_item.dart';
 import '../widgets/inbound_item_card.dart';
-import 'inbound_barcode_scanner_screen.dart';
 import '../../../inventory/application/provider/shop_providers.dart';
 import '../../../inventory/application/inventory_service.dart';
 import '../../../inventory/domain/model/batch.dart';
+import '../../../product/application/provider/product_providers.dart';
+import '../../../product/domain/model/product.dart';
 import '../../../../core/database/database.dart';
 
 /// 新建入库单页面
@@ -85,32 +87,246 @@ class _CreateInboundScreenState extends ConsumerState<CreateInboundScreen> {
 
   void _scanToAddProduct() async {
     try {
-      final result = await Navigator.of(context).push<InboundItem>(
+      Navigator.of(context).push(
         MaterialPageRoute(
-          builder: (context) => const InboundBarcodeScannerScreen(),
+          builder: (context) => UniversalBarcodeScanner(
+            config: const BarcodeScannerConfig(
+              title: '扫码添加商品',
+              subtitle: '将条码对准扫描框',
+              enableManualInput: true,
+              enableGalleryPicker: true,
+              enableScanSound: true,
+            ),
+            onBarcodeScanned: (barcode) => _handleBarcodeScanned(barcode),
+            onScanError: (error) => _handleScanError(error),
+          ),
         ),
       );
-
-      if (result != null) {
-        setState(() {
-          _inboundItems.add(result);
-        });
-
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('已添加商品: ${result.productName}'),
-            backgroundColor: Colors.green,
-          ),
-        );
-      }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('扫码添加商品失败: ${e.toString()}'),
+          content: Text('打开扫码页面失败: ${e.toString()}'),
           backgroundColor: Colors.red,
         ),
       );
     }
+  }
+
+  /// 处理扫码结果
+  void _handleBarcodeScanned(String barcode) async {
+    try {
+      final product = await ref.read(productByBarcodeProvider(barcode).future);
+
+      if (product != null) {
+        _showProductFoundDialog(product, barcode);
+      } else {
+        _showProductNotFoundDialog(barcode);
+      }
+    } catch (e) {
+      _handleScanError('搜索商品时发生错误: ${e.toString()}');
+    }
+  }
+
+  /// 处理扫码错误
+  void _handleScanError(String error) {
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(error), backgroundColor: Colors.red));
+  }
+
+  /// 显示找到商品的对话框
+  void _showProductFoundDialog(Product product, String barcode) {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          title: Row(
+            children: [
+              Icon(Icons.check_circle, color: Colors.green, size: 28),
+              const SizedBox(width: 12),
+              const Text('找到商品'),
+            ],
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade50,
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: Colors.grey.shade300),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      product.name,
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    if (product.specification != null) ...[
+                      const SizedBox(height: 4),
+                      Text(
+                        '规格: ${product.specification}',
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: Colors.grey.shade600,
+                        ),
+                      ),
+                    ],
+                    const SizedBox(height: 4),
+                    Text(
+                      '条码: $barcode',
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: Colors.grey.shade600,
+                        fontFamily: 'monospace',
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+                Navigator.of(context).pop(); // 关闭扫码页面
+              },
+              child: const Text('取消'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+                Navigator.of(context).pop(); // 关闭扫码页面
+
+                // 创建入库项目
+                final now = DateTime.now();
+                final inboundItem = InboundItem(
+                  id: DateTime.now().millisecondsSinceEpoch.toString(),
+                  receiptId: '', // 稍后由入库单设置
+                  productId: product.id,
+                  productName: product.name,
+                  productSpec: product.specification ?? '',
+                  productImage: product.image,
+                  quantity: 1.0, // 默认入库数量为1
+                  unitId: product.unitId ?? 'default_unit',
+                  productionDate: product.enableBatchManagement
+                      ? DateTime.now()
+                      : null,
+                  locationId: null,
+                  locationName: null,
+                  purchaseQuantity: 0.0,
+                  createdAt: now,
+                  updatedAt: now,
+                );
+
+                setState(() {
+                  _inboundItems.add(inboundItem);
+                });
+
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('已添加商品: ${product.name}'),
+                    backgroundColor: Colors.green,
+                  ),
+                );
+              },
+              style: ElevatedButton.styleFrom(
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+              child: const Text('添加到入库单'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  /// 显示未找到商品的对话框
+  void _showProductNotFoundDialog(String barcode) {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          title: Row(
+            children: [
+              Icon(Icons.warning, color: Colors.orange, size: 28),
+              const SizedBox(width: 12),
+              const Text('未找到商品'),
+            ],
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text('系统中没有找到对应的商品信息：'),
+              const SizedBox(height: 8),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade100,
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: Colors.grey.shade300),
+                ),
+                child: Text(
+                  barcode,
+                  style: const TextStyle(
+                    fontFamily: 'monospace',
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
+              const Text(
+                '您可以：\n1. 重新扫描确认条码正确\n2. 先添加该商品到系统中\n3. 手动输入正确的条码',
+                style: TextStyle(fontSize: 14),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+                Navigator.of(context).pop(); // 关闭扫码页面
+              },
+              child: const Text('取消'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+                Navigator.of(context).pop(); // 关闭扫码页面
+                // TODO: 可以跳转到新增商品页面
+              },
+              style: ElevatedButton.styleFrom(
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+              child: const Text('添加新商品'),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   void _saveDraft() {

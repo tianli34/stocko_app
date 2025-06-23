@@ -20,6 +20,7 @@ import 'locations_table.dart';
 import 'inbound_receipts_table.dart';
 import 'inbound_receipt_items_table.dart';
 import 'purchases_table.dart'; // 新增采购表
+import 'barcodes_table.dart'; // 新增条码表
 import '../../features/product/data/dao/product_dao.dart';
 import '../../features/product/data/dao/category_dao.dart';
 import '../../features/product/data/dao/unit_dao.dart';
@@ -34,6 +35,7 @@ import '../../features/inbound/data/dao/location_dao.dart';
 import '../../features/inbound/data/dao/inbound_receipt_dao.dart';
 import '../../features/inbound/data/dao/inbound_item_dao.dart';
 import '../../features/purchase/data/dao/purchase_dao.dart';
+import '../../features/product/data/dao/barcode_dao.dart';
 
 part 'database.g.dart';
 
@@ -53,6 +55,7 @@ part 'database.g.dart';
     InboundReceiptsTable,
     InboundReceiptItemsTable,
     PurchasesTable, // 新增采购表
+    BarcodesTable, // 新增条码表
   ],
   daos: [
     ProductDao,
@@ -69,20 +72,40 @@ part 'database.g.dart';
     InboundReceiptDao,
     InboundItemDao,
     PurchaseDao,
+    BarcodeDao, // 新增条码DAO
   ],
 )
 class AppDatabase extends _$AppDatabase {
   AppDatabase(super.e);
   @override
-  int get schemaVersion => 10; // 提升版本以应用新的迁移
+  int get schemaVersion => 11; // 提升版本以应用新的迁移
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
     onCreate: (Migrator m) async {
       await m.createAll();
+      // 创建条码表的条码值索引以提高查询性能
+      await customStatement(
+        'CREATE INDEX IF NOT EXISTS idx_barcodes_barcode ON barcodes(barcode);',
+      );
+      // 创建条码表的产品单位ID索引
+      await customStatement(
+        'CREATE INDEX IF NOT EXISTS idx_barcodes_product_unit_id ON barcodes(product_unit_id);',
+      );
     },
     onUpgrade: (Migrator m, int from, int to) async {
-      if (from < 10 && to == 10) {
+      if (from < 11 && to >= 11) {
+        // 添加条码表
+        await m.createTable(barcodesTable);
+        // 创建条码表的索引
+        await customStatement(
+          'CREATE INDEX IF NOT EXISTS idx_barcodes_barcode ON barcodes(barcode);',
+        );
+        await customStatement(
+          'CREATE INDEX IF NOT EXISTS idx_barcodes_product_unit_id ON barcodes(product_unit_id);',
+        );
+      }
+      if (from < 10 && to >= 10) {
         // 删除旧的product_suppliers表并重新创建（因为结构有重大变更）
         await m.drop(productSuppliersTable);
         await m.createTable(productSuppliersTable);
@@ -174,6 +197,11 @@ class AppDatabase extends _$AppDatabase {
         await m.createTable(unitsTable);
         await m.createTable(productUnitsTable);
       }
+      // 在任何版本升级后都确保条码表索引存在（移除了产品表条码索引，因为产品表已无条码字段）
+      // 注释掉：产品表已无条码字段
+      // await customStatement(
+      //   'CREATE INDEX IF NOT EXISTS idx_products_barcode ON products(barcode);',
+      // );
     },
   );
 }

@@ -42,7 +42,8 @@ class ProductUnitRepository implements IProductUnitRepository {
   Future<ProductUnit?> getProductUnitById(String productUnitId) async {
     try {
       final data = await _productUnitDao.getProductUnitById(productUnitId);
-      return data != null ? _dataToProductUnit(data) : null;    } catch (e) {
+      return data != null ? _dataToProductUnit(data) : null;
+    } catch (e) {
       print('🗃️ 仓储层：根据ID获取产品单位失败: $e');
       rethrow;
     }
@@ -209,9 +210,6 @@ class ProductUnitRepository implements IProductUnitRepository {
       productId: Value(productUnit.productId),
       unitId: Value(productUnit.unitId),
       conversionRate: Value(productUnit.conversionRate),
-      barcode: productUnit.barcode != null
-          ? Value(productUnit.barcode!)
-          : const Value.absent(),
       sellingPrice: productUnit.sellingPrice != null
           ? Value(productUnit.sellingPrice!)
           : const Value.absent(),
@@ -226,7 +224,6 @@ class ProductUnitRepository implements IProductUnitRepository {
       productId: data.productId,
       unitId: data.unitId,
       conversionRate: data.conversionRate,
-      barcode: data.barcode,
       sellingPrice: data.sellingPrice,
       lastUpdated: data.lastUpdated,
     );

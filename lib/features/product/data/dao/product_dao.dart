@@ -1,12 +1,14 @@
 import 'package:drift/drift.dart';
 import '../../../../core/database/database.dart';
 import '../../../../core/database/products_table.dart';
+import '../../../../core/database/barcodes_table.dart';
+import '../../../../core/database/product_units_table.dart';
 
 part 'product_dao.g.dart';
 
 /// 产品数据访问对象 (DAO)
 /// 专门负责产品相关的数据库操作
-@DriftAccessor(tables: [ProductsTable])
+@DriftAccessor(tables: [ProductsTable, BarcodesTable, ProductUnitsTable])
 class ProductDao extends DatabaseAccessor<AppDatabase> with _$ProductDaoMixin {
   ProductDao(super.db);
 
@@ -65,12 +67,11 @@ class ProductDao extends DatabaseAccessor<AppDatabase> with _$ProductDaoMixin {
     if (status != null) {
       query.where((tbl) => tbl.status.equals(status));
     }
-
     if (keyword != null && keyword.isNotEmpty) {
       query.where(
         (tbl) =>
             tbl.name.contains(keyword) |
-            tbl.barcode.contains(keyword) |
+            // 条码搜索已移除，现在条码存储在独立的条码表中
             tbl.sku.contains(keyword),
       );
     }
@@ -135,9 +136,31 @@ class ProductDao extends DatabaseAccessor<AppDatabase> with _$ProductDaoMixin {
   }
 
   /// 根据条码获取产品
+  /// 通过条码表和产品单位表联查获取产品
   Future<ProductsTableData?> getProductByBarcode(String barcode) async {
-    return await (select(
-      db.productsTable,
+    // 首先在条码表中找到对应的产品单位ID
+    final barcodeResult = await (select(
+      db.barcodesTable,
     )..where((tbl) => tbl.barcode.equals(barcode))).getSingleOrNull();
+
+    if (barcodeResult == null) {
+      return null; // 条码不存在
+    }
+
+    // 然后在产品单位表中找到对应的产品ID
+    final productUnitResult =
+        await (select(db.productUnitsTable)..where(
+              (tbl) => tbl.productUnitId.equals(barcodeResult.productUnitId),
+            ))
+            .getSingleOrNull();
+
+    if (productUnitResult == null) {
+      return null; // 产品单位不存在
+    }
+
+    // 最后获取产品信息
+    return await (select(db.productsTable)
+          ..where((tbl) => tbl.id.equals(productUnitResult.productId)))
+        .getSingleOrNull();
   }
 }

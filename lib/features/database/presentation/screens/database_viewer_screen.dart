@@ -128,8 +128,7 @@ class _DatabaseViewerScreenState extends ConsumerState<DatabaseViewerScreen>
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text('ID: ${product.id}'),
-                        if (product.barcode != null)
-                          Text('条码: ${product.barcode}'),
+                        // 条码信息已移除，现在条码存储在独立的条码表中
                         if (product.sku != null) Text('SKU: ${product.sku}'),
                         if (product.categoryId != null)
                           Text('类别ID: ${product.categoryId}'),
@@ -389,8 +388,6 @@ class _DatabaseViewerScreenState extends ConsumerState<DatabaseViewerScreen>
                         Text('产品ID: ${productUnit.productId}'),
                         Text('单位ID: ${productUnit.unitId}'),
                         Text('换算率: ${productUnit.conversionRate}'),
-                        if (productUnit.barcode != null)
-                          Text('条码: ${productUnit.barcode}'),
                         if (productUnit.sellingPrice != null)
                           Text('售价: ¥${productUnit.sellingPrice}'),
                       ],

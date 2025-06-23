@@ -5,7 +5,6 @@ class ProductsTable extends Table {
   String get tableName => 'products';
   TextColumn get id => text()(); // 改为不可为空的主键
   TextColumn get name => text()(); // 名称必须
-  TextColumn get barcode => text().nullable()(); // 主条码（通常对应基础单位）
   TextColumn get sku => text().nullable()();
   TextColumn get image => text().nullable()(); // 图片
   TextColumn get categoryId => text().nullable()(); // 类别ID

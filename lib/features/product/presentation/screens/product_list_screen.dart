@@ -14,31 +14,40 @@ import '../../../../core/constants/app_routes.dart';
 /// 展示如何使用 ProductListTile 组件
 class ProductListScreen extends ConsumerWidget {
   const ProductListScreen({super.key});
-
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final productsAsyncValue = ref.watch(allProductsProvider);
-    final controllerState = ref.watch(productControllerProvider);
+    final operationsState = ref.watch(productOperationsProvider);
 
     // 监听操作结果
-    ref.listen<ProductControllerState>(productControllerProvider, (
-      previous,
-      next,
-    ) {
+    ref.listen<AsyncValue<void>>(productOperationsProvider, (previous, next) {
       if (!context.mounted) return; // 在回调开始时检查
 
-      if (next.isSuccess) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('操作成功'), backgroundColor: Colors.green),
-        );
-      } else if (next.isError) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(next.errorMessage ?? '操作失败'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
+      next.when(
+        data: (data) {
+          // 操作成功
+          if (previous?.isLoading == true) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('操作成功'),
+                backgroundColor: Colors.green,
+              ),
+            );
+          }
+        },
+        loading: () {
+          // 加载中状态，不需要特殊处理
+        },
+        error: (error, stackTrace) {
+          // 操作失败
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(error.toString()),
+              backgroundColor: Colors.red,
+            ),
+          );
+        },
+      );
     });
     return Scaffold(
       appBar: AppBar(
@@ -47,7 +56,7 @@ class ProductListScreen extends ConsumerWidget {
         actions: [
           IconButton(
             onPressed: () {
-              context.go(AppRoutes.productNew);
+              context.push(AppRoutes.productNew);
             },
             icon: const Icon(Icons.add),
             tooltip: '添加产品',
@@ -56,7 +65,7 @@ class ProductListScreen extends ConsumerWidget {
       ),
       body: Column(
         children: [
-          controllerState.isLoading
+          operationsState.isLoading
               ? const LinearProgressIndicator()
               : const SizedBox.shrink(), // 使用 SizedBox.shrink() 代替 if
           // 产品列表
@@ -119,7 +128,7 @@ class ProductListScreen extends ConsumerWidget {
 
   /// 编辑产品
   void _editProduct(BuildContext context, Product product) {
-    context.go(AppRoutes.productEditPath(product.id));
+    context.push(AppRoutes.productEditPath(product.id));
   }
 
   /// 删除产品
@@ -150,14 +159,13 @@ class ProductListScreen extends ConsumerWidget {
         ],
       ),
     );
-
     print('🖥️ UI层：用户确认结果: $shouldDelete');
     if (shouldDelete == true) {
       print('🖥️ UI层：开始执行删除操作...');
-      final controller = ref.read(productControllerProvider.notifier);
+      final operationsNotifier = ref.read(productOperationsProvider.notifier);
 
       // 执行删除操作
-      await controller.deleteProduct(product.id);
+      await operationsNotifier.deleteProduct(product.id);
 
       print('🖥️ UI层：删除操作完成，开始刷新列表');
     } else {
@@ -203,7 +211,8 @@ class ProductGridPage extends ConsumerWidget {
               final product = products[index];
               return SimpleProductListTile(
                 product: product,
-                onTap: () => context.go(AppRoutes.productEditPath(product.id)),
+                onTap: () =>
+                    context.push(AppRoutes.productEditPath(product.id)),
               );
             },
           );

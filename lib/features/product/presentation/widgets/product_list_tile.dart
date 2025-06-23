@@ -24,10 +24,9 @@ class ProductListTile extends ConsumerWidget {
     this.showActions = true,
     this.showPrice = true,
   });
-
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final controllerState = ref.watch(productControllerProvider);
+    final operationsState = ref.watch(productOperationsProvider);
 
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
@@ -77,12 +76,10 @@ class ProductListTile extends ConsumerWidget {
               if (showPrice && _hasPrice()) ...[
                 const SizedBox(height: 8),
                 _buildPriceInfo(context),
-              ],
-
-              // 操作按钮
+              ], // 操作按钮
               if (showActions) ...[
                 const SizedBox(height: 12),
-                _buildActionButtons(context, ref, controllerState),
+                _buildActionButtons(context, ref, operationsState),
               ],
             ],
           ),
@@ -98,12 +95,8 @@ class ProductListTile extends ConsumerWidget {
       infoItems.add(_buildInfoItem(context, label: 'SKU', value: product.sku!));
     }
 
-    // 条码信息
-    if (product.barcode != null) {
-      infoItems.add(
-        _buildInfoItem(context, label: '条码', value: product.barcode!),
-      );
-    }
+    // 条码信息 - 已移除，现在条码存储在独立的条码表中
+    // 如果需要显示条码，需要单独查询条码表
 
     // 品牌信息
     if (product.brand != null) {
@@ -224,7 +217,7 @@ class ProductListTile extends ConsumerWidget {
   Widget _buildActionButtons(
     BuildContext context,
     WidgetRef ref,
-    ProductControllerState controllerState,
+    AsyncValue<void> operationsState,
   ) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.end,
@@ -232,7 +225,7 @@ class ProductListTile extends ConsumerWidget {
         // 编辑按钮
         if (onEdit != null)
           TextButton.icon(
-            onPressed: controllerState.isLoading ? null : onEdit,
+            onPressed: operationsState.isLoading ? null : onEdit,
             icon: const Icon(Icons.edit, size: 18),
             label: const Text('编辑'),
             style: TextButton.styleFrom(
@@ -243,7 +236,7 @@ class ProductListTile extends ConsumerWidget {
         const SizedBox(width: 8), // 删除按钮
         if (onDelete != null)
           TextButton.icon(
-            onPressed: controllerState.isLoading ? null : onDelete,
+            onPressed: operationsState.isLoading ? null : onDelete,
             icon: const Icon(Icons.delete, size: 18),
             label: const Text('删除'),
             style: TextButton.styleFrom(foregroundColor: Colors.red.shade600),

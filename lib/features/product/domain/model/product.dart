@@ -8,7 +8,6 @@ abstract class Product with _$Product {
   const factory Product({
     required String id, // ID现在是必需的
     required String name, // 名称必须
-    String? barcode, // 条码
     String? sku,
     String? image, // 图片
     String? categoryId, // 类别ID (关联分类表)

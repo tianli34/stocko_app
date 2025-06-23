@@ -175,7 +175,6 @@ class ProductRepository implements IProductRepository {
     return ProductsTableCompanion(
       id: Value(product.id),
       name: Value(product.name),
-      barcode: Value(product.barcode), // 添加条码字段
       sku: Value(product.sku),
       image: Value(product.image),
       categoryId: Value(product.categoryId),
@@ -200,7 +199,6 @@ class ProductRepository implements IProductRepository {
     return Product(
       id: data.id, // ID现在是必需的，不需要null检查
       name: data.name,
-      barcode: data.barcode, // 添加条码字段
       sku: data.sku,
       image: data.image,
       categoryId: data.categoryId,

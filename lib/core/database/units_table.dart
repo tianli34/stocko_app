@@ -10,7 +10,8 @@ class UnitsTable extends Table {
   TextColumn get id => text().named('id')();
 
   /// 单位名称 (如: 个, 箱, 包, 公斤等)
-  TextColumn get name => text().named('name')();
+  /// 添加唯一约束防止重复单位
+  TextColumn get name => text().named('name').unique()();
 
   /// 创建时间
   DateTimeColumn get createdAt =>

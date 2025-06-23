@@ -66,13 +66,11 @@ class ProductDetailsDialog extends StatelessWidget {
                 ),
               ),
 
-            // 产品详情
-            if (product.sku != null)
-              _buildDetailItem(context, 'SKU', product.sku!),
+            // 产品详情            if (product.sku != null)
+            _buildDetailItem(context, 'SKU', product.sku!),
 
-            if (product.barcode != null)
-              _buildDetailItem(context, '条码', product.barcode!),
-
+            // 条码信息 - 已移除，现在条码存储在独立的条码表中
+            // 如果需要显示条码，需要单独查询条码表
             if (product.effectivePrice != null)
               _buildDetailItem(
                 context,

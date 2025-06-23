@@ -129,7 +129,7 @@ class CategoryService {
         final updatedProduct = Product(
           id: product.id,
           name: product.name,
-          barcode: product.barcode,
+          // barcode 字段已移除，条码现在由独立的条码表管理
           sku: product.sku,
           image: product.image,
           categoryId: category.parentId, // 转移到父类别或设为null

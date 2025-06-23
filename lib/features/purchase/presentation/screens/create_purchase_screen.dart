@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_typeahead/flutter_typeahead.dart';
 import 'package:go_router/go_router.dart';
-import 'package:flutter/services.dart';
 import 'dart:async';
 import '../../../../core/constants/app_routes.dart';
 import '../../domain/model/supplier.dart';
@@ -191,14 +190,7 @@ class _CreatePurchaseScreenState extends ConsumerState<CreatePurchaseScreen> {
 
   /// 处理单次扫码添加商品
   void _handleSingleProductScan(String barcode) async {
-    // 延迟关闭扫码页面，让音效播放完毕
-    Future.delayed(const Duration(milliseconds: 500), () {
-      if (mounted) {
-        Navigator.of(context).pop(); // 关闭扫码页面
-      }
-    });
-
-    // 显示加载提示
+    // 先显示加载提示（不要立即关闭扫码页面）
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
         content: Row(
@@ -213,26 +205,49 @@ class _CreatePurchaseScreenState extends ConsumerState<CreatePurchaseScreen> {
     );
 
     try {
-      // 使用真实的产品查询
-      final productController = ref.read(productControllerProvider.notifier);
-      final product = await productController.getProductByBarcode(barcode);
+      // 使用重构后的产品查询
+      final productOperations = ref.read(productOperationsProvider.notifier);
+      final product = await productOperations.getProductByBarcode(barcode);
+
+      // 查询完成后，延迟关闭扫码页面，让音效播放完毕
+      Future.delayed(const Duration(milliseconds: 500), () {
+        if (mounted) {
+          Navigator.of(context).pop(); // 关闭扫码页面
+        }
+      });
 
       if (!mounted) return;
       if (product != null) {
         _addOrUpdatePurchaseItem(product);
       } else {
-        // 商品未找到，显示手动添加对话框
-        _showProductNotFoundDialog(barcode);
+        // 商品未找到，在扫码页面关闭后稍微延迟显示对话框
+        Future.delayed(const Duration(milliseconds: 600), () {
+          if (mounted) {
+            _showProductNotFoundDialog(barcode);
+          }
+        });
       }
     } catch (e) {
+      // 出错时也要关闭扫码页面
+      Future.delayed(const Duration(milliseconds: 500), () {
+        if (mounted) {
+          Navigator.of(context).pop(); // 关闭扫码页面
+        }
+      });
+
       if (!mounted) return;
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('❌ 查询商品失败: ${_getErrorMessage(e)}'),
-          backgroundColor: Colors.red,
-        ),
-      );
+      // 延迟显示错误信息，确保扫码页面已关闭
+      Future.delayed(const Duration(milliseconds: 600), () {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('❌ 查询商品失败: ${_getErrorMessage(e)}'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      });
     }
   }
 
@@ -1177,13 +1192,12 @@ class _SimpleContinuousScanPageState extends State<_SimpleContinuousScanPage> {
     setState(() {
       _isLoading = true;
     });
-
     try {
-      // 使用真实的产品查询
-      final productController = widget.ref.read(
-        productControllerProvider.notifier,
+      // 使用重构后的产品查询
+      final productOperations = widget.ref.read(
+        productOperationsProvider.notifier,
       );
-      final product = await productController.getProductByBarcode(barcode);
+      final product = await productOperations.getProductByBarcode(barcode);
 
       if (!mounted) return;
 
