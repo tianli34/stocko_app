@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_typeahead/flutter_typeahead.dart';
@@ -7,16 +8,16 @@ import '../../domain/model/product.dart';
 import '../../domain/model/category.dart';
 import '../../domain/model/unit.dart';
 import '../../domain/model/product_unit.dart';
-import '../../domain/model/barcode.dart';
 import '../../application/provider/product_providers.dart';
 import '../../application/category_notifier.dart';
 import '../../application/provider/unit_providers.dart';
 import '../../application/provider/product_unit_providers.dart';
 import '../../application/provider/barcode_providers.dart';
+import '../../application/provider/unit_edit_form_providers.dart';
 import 'category_selection_screen.dart';
 import 'unit_edit_screen.dart';
 import '../widgets/product_image_picker.dart';
-import '../../application/category_service.dart';
+import '../controllers/product_add_edit_controller.dart';
 
 /// 产品添加/编辑页面
 /// 表单页面，提交时调用 ref.read(productOperationsProvider.notifier).addProduct(...)
@@ -53,9 +54,23 @@ class _ProductAddEditScreenState extends ConsumerState<ProductAddEditScreen> {
   List<ProductUnit>? _productUnits; // 存储单位配置数据
   // 保质期单位相关
   String _shelfLifeUnit = 'months'; // 保质期单位：days, months, years
-  final List<String> _shelfLifeUnitOptions = ['days', 'months', 'years'];
-  // 批次管理开关
+  final List<String> _shelfLifeUnitOptions = [
+    'days',
+    'months',
+    'years',
+  ]; // 批次管理开关
   bool _enableBatchManagement = false;
+
+  bool _isInitialized = false;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (!_isInitialized) {
+      ref.invalidate(unitEditFormProvider);
+      _isInitialized = true;
+    }
+  }
 
   @override
   void initState() {
@@ -138,6 +153,16 @@ class _ProductAddEditScreenState extends ConsumerState<ProductAddEditScreen> {
 
   @override
   void dispose() {
+    // 在 dispose 之前清除辅单位数据
+    try {
+      // 使用 mounted 检查确保 widget 仍然可用
+      if (mounted) {
+        ref.invalidate(unitEditFormProvider);
+      }
+    } catch (e) {
+      print('🔧 ProductAddEditScreen: 清除辅单位数据失败: $e');
+    }
+
     _nameController.dispose();
     _barcodeController.dispose();
     _retailPriceController.dispose();
@@ -151,39 +176,23 @@ class _ProductAddEditScreenState extends ConsumerState<ProductAddEditScreen> {
     super.dispose();
   }
 
+  /// 在页面即将销毁时清除辅单位数据
+  void clearAuxiliaryUnitDataBeforeDispose() {
+    try {
+      // 在dispose之前调用，此时ref仍然可用
+      ref.read(unitEditFormProvider.notifier).resetUnitEditForm();
+      print('🔧 ProductAddEditScreen: 已清除保存的辅单位数据');
+    } catch (e) {
+      print('🔧 ProductAddEditScreen: 清除辅单位数据失败: $e');
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final operationsState = ref.watch(productOperationsProvider);
     final categories = ref.watch(categoriesProvider); // 获取类别列表
     final unitsAsyncValue = ref.watch(allUnitsProvider); // 获取单位列表
     final isEdit = widget.product != null;
-
-    // 监听操作结果
-    ref.listen<AsyncValue<void>>(productOperationsProvider, (previous, next) {
-      next.when(
-        data: (_) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(isEdit ? '产品更新成功' : '产品添加成功'),
-              backgroundColor: Colors.green,
-            ),
-          );
-          context.pop(); // 操作成功后返回
-        },
-        error: (error, stackTrace) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('操作失败: $error'),
-              backgroundColor: Colors.red,
-            ),
-          );
-        },
-        loading: () {
-          // 可以选择性处理加载状态
-        },
-      );
-    });
-
     return Scaffold(
       appBar: AppBar(
         title: Text(isEdit ? '编辑产品' : '添加产品'),
@@ -243,7 +252,7 @@ class _ProductAddEditScreenState extends ConsumerState<ProductAddEditScreen> {
                       label: '产品名称',
                       hint: '请输入产品名称',
                       required: true,
-                      icon: Icons.inventory_2,
+                      // icon: Icons.inventory_2,
                     ),
                     const SizedBox(height: 16),
 
@@ -254,7 +263,7 @@ class _ProductAddEditScreenState extends ConsumerState<ProductAddEditScreen> {
                             controller: _barcodeController,
                             label: '条码',
                             hint: '请输入产品条码',
-                            icon: Icons.qr_code,
+                            // icon: Icons.qr_code,
                           ),
                         ),
                         const SizedBox(width: 8),
@@ -308,16 +317,19 @@ class _ProductAddEditScreenState extends ConsumerState<ProductAddEditScreen> {
                           children: [
                             Expanded(child: _buildUnitTypeAhead(units)),
                             const SizedBox(width: 8),
-                            IconButton(
+                            TextButton.icon(
                               onPressed: () =>
                                   _navigateToUnitSelection(context),
-                              icon: const Icon(Icons.settings),
-                              tooltip: '管理单位',
-                              style: IconButton.styleFrom(
+                              icon: const Icon(Icons.add),
+                              label: const Text('添加辅单位'),
+                              style: TextButton.styleFrom(
                                 backgroundColor: Theme.of(
                                   context,
                                 ).primaryColor.withOpacity(0.1),
                                 foregroundColor: Theme.of(context).primaryColor,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
                               ),
                             ),
                           ],
@@ -336,15 +348,18 @@ class _ProductAddEditScreenState extends ConsumerState<ProductAddEditScreen> {
                             ),
                           ),
                           const SizedBox(width: 8),
-                          IconButton(
+                          TextButton.icon(
                             onPressed: () => _navigateToUnitSelection(context),
-                            icon: const Icon(Icons.settings),
-                            tooltip: '管理单位',
-                            style: IconButton.styleFrom(
+                            icon: const Icon(Icons.add),
+                            label: const Text('添加辅单位'),
+                            style: TextButton.styleFrom(
                               backgroundColor: Theme.of(
                                 context,
                               ).primaryColor.withOpacity(0.1),
                               foregroundColor: Theme.of(context).primaryColor,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
                             ),
                           ),
                         ],
@@ -367,15 +382,18 @@ class _ProductAddEditScreenState extends ConsumerState<ProductAddEditScreen> {
                             ),
                           ),
                           const SizedBox(width: 8),
-                          IconButton(
+                          TextButton.icon(
                             onPressed: () => _navigateToUnitSelection(context),
-                            icon: const Icon(Icons.settings),
-                            tooltip: '管理单位',
-                            style: IconButton.styleFrom(
+                            icon: const Icon(Icons.add),
+                            label: const Text('添加辅单位'),
+                            style: TextButton.styleFrom(
                               backgroundColor: Theme.of(
                                 context,
                               ).primaryColor.withOpacity(0.1),
                               foregroundColor: Theme.of(context).primaryColor,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
                             ),
                           ),
                         ],
@@ -388,7 +406,7 @@ class _ProductAddEditScreenState extends ConsumerState<ProductAddEditScreen> {
                       label: '零售价',
                       hint: '请输入零售价',
                       keyboardType: TextInputType.number,
-                      icon: Icons.attach_money,
+                      // icon: Icons.attach_money,
                       prefixText: '¥ ',
                     ),
                     const SizedBox(height: 16),
@@ -401,7 +419,7 @@ class _ProductAddEditScreenState extends ConsumerState<ProductAddEditScreen> {
                             label: '促销价',
                             hint: '请输入促销价',
                             keyboardType: TextInputType.number,
-                            icon: Icons.local_offer,
+                            // icon: Icons.local_offer,
                             prefixText: '¥ ',
                           ),
                         ),
@@ -412,7 +430,7 @@ class _ProductAddEditScreenState extends ConsumerState<ProductAddEditScreen> {
                             label: '建议零售价',
                             hint: '请输入建议零售价',
                             keyboardType: TextInputType.number,
-                            icon: Icons.sell,
+                            // icon: Icons.sell,
                             prefixText: '¥ ',
                           ),
                         ),
@@ -425,7 +443,7 @@ class _ProductAddEditScreenState extends ConsumerState<ProductAddEditScreen> {
                       label: '库存预警值',
                       hint: '请输入库存预警值',
                       keyboardType: TextInputType.number,
-                      icon: Icons.warning_amber,
+                      // icon: Icons.warning_amber,
                     ),
                     const SizedBox(height: 16),
 
@@ -458,7 +476,7 @@ class _ProductAddEditScreenState extends ConsumerState<ProductAddEditScreen> {
                             _enableBatchManagement = value;
                           });
                         },
-                        secondary: const Icon(Icons.inventory_2),
+                        // secondary: const Icon(Icons.inventory_2),
                       ),
                     ),
                     const SizedBox(height: 16),
@@ -468,7 +486,7 @@ class _ProductAddEditScreenState extends ConsumerState<ProductAddEditScreen> {
                       controller: _remarksController,
                       label: '备注',
                       hint: '请输入备注信息',
-                      icon: Icons.note,
+                      // icon: Icons.note,
                       maxLines: 1,
                     ),
                     const SizedBox(height: 80), // 为底部按钮留出空间
@@ -562,13 +580,15 @@ class _ProductAddEditScreenState extends ConsumerState<ProductAddEditScreen> {
         orElse: () => const Category(id: '', name: ''),
       );
       if (category.id.isNotEmpty) {
-        _categoryController.text = category.name;
+        // 只需要在从外部数据源赋值时处理一次即可
+        _categoryController.text = category.name.replaceAll(' ', '');
       }
     }
 
     return TypeAheadField<Category>(
       controller: _categoryController,
       suggestionsCallback: (pattern) {
+        // pattern 来自控制器，已经被 formatter 处理过，所以不含空格
         if (pattern.isEmpty) {
           return Future.value([
             const Category(id: 'null', name: '未分类'),
@@ -579,11 +599,14 @@ class _ProductAddEditScreenState extends ConsumerState<ProductAddEditScreen> {
         final filtered = categories
             .where(
               (category) =>
-                  category.name.toLowerCase().contains(pattern.toLowerCase()),
+                  // 为了匹配更准确，建议对数据源的 name 也做处理
+                  category.name
+                      .replaceAll(' ', '')
+                      .toLowerCase()
+                      .contains(pattern.toLowerCase()),
             )
             .toList();
 
-        // 如果输入的文本不匹配任何现有类别，添加"未分类"选项
         if (filtered.isEmpty || pattern == '未分类') {
           filtered.insert(0, const Category(id: 'null', name: '未分类'));
         }
@@ -592,12 +615,12 @@ class _ProductAddEditScreenState extends ConsumerState<ProductAddEditScreen> {
       },
       itemBuilder: (context, Category suggestion) {
         return ListTile(
-          leading: Icon(
-            suggestion.id == 'null'
-                ? Icons.not_listed_location
-                : Icons.category,
-            color: suggestion.id == 'null' ? Colors.grey : null,
-          ),
+          // leading: Icon(
+          //   suggestion.id == 'null'
+          //       ? Icons.not_listed_location
+          //       : Icons.category,
+          //   color: suggestion.id == 'null' ? Colors.grey : null,
+          // ),
           title: Text(suggestion.name),
         );
       },
@@ -608,7 +631,8 @@ class _ProductAddEditScreenState extends ConsumerState<ProductAddEditScreen> {
             _categoryController.text = '未分类';
           } else {
             _selectedCategoryId = suggestion.id;
-            _categoryController.text = suggestion.name;
+            // 从建议赋值时，处理一次，以防数据源本身含空格
+            _categoryController.text = suggestion.name.replaceAll(' ', '');
           }
         });
       },
@@ -616,27 +640,33 @@ class _ProductAddEditScreenState extends ConsumerState<ProductAddEditScreen> {
         return TextField(
           controller: controller,
           focusNode: focusNode,
+          // ⭐ 核心修改点在这里！⭐
+          inputFormatters: [
+            // 使用内置的 formatter，禁止输入任何空白字符
+            FilteringTextInputFormatter.deny(RegExp(r'\s')),
+          ],
           onChanged: (value) {
-            // 如果用户修改了文本，清除已选择的类别
+            // 此处的 value 已经不包含空格了
             if (_selectedCategoryId != null) {
               final categories = ref.read(categoriesProvider);
               final selectedCategory = categories.firstWhere(
                 (cat) => cat.id == _selectedCategoryId,
                 orElse: () => const Category(id: '', name: ''),
               );
-              if (value != selectedCategory.name && value != '未分类') {
+              // 比较时，只需处理数据源的空格即可
+              if (value != selectedCategory.name.replaceAll(' ', '') &&
+                  value != '未分类') {
                 setState(() {
                   _selectedCategoryId = null;
                 });
               }
             }
-            // 触发重建以更新suffixIcon的显示状态
             setState(() {});
           },
           decoration: InputDecoration(
             labelText: '产品类别',
             hintText: '请输入或选择产品类别（可直接输入新类别）',
-            prefixIcon: const Icon(Icons.category),
+            // prefixIcon: const Icon(Icons.category),
             border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
@@ -646,6 +676,7 @@ class _ProductAddEditScreenState extends ConsumerState<ProductAddEditScreen> {
               borderRadius: BorderRadius.circular(12),
               borderSide: BorderSide(color: Theme.of(context).primaryColor),
             ),
+            // 现在可以非常干净地直接使用 .text
             suffixIcon: _categoryController.text.isNotEmpty
                 ? IconButton(
                     icon: const Icon(Icons.clear),
@@ -659,9 +690,9 @@ class _ProductAddEditScreenState extends ConsumerState<ProductAddEditScreen> {
                 : null,
             helperText:
                 _selectedCategoryId == null &&
-                    _categoryController.text.trim().isNotEmpty &&
-                    _categoryController.text.trim() != '未分类'
-                ? '将创建新类别: "${_categoryController.text.trim()}"'
+                    _categoryController.text.isNotEmpty && // .trim() 也不需要了
+                    _categoryController.text != '未分类'
+                ? '将创建新类别: "${_categoryController.text}"'
                 : null,
             helperStyle: TextStyle(color: Colors.green.shade600, fontSize: 12),
           ),
@@ -673,6 +704,7 @@ class _ProductAddEditScreenState extends ConsumerState<ProductAddEditScreen> {
   }
 
   /// 构建单位TypeAhead输入框
+
   Widget _buildUnitTypeAhead(List<Unit> units) {
     // 确保控制器在第一次构建时有正确的文本
     if (_unitController.text.isEmpty && _selectedUnitId != null) {
@@ -681,20 +713,27 @@ class _ProductAddEditScreenState extends ConsumerState<ProductAddEditScreen> {
         orElse: () => Unit(id: '', name: ''),
       );
       if (unit.id.isNotEmpty) {
-        _unitController.text = unit.name;
+        // 在从外部数据源赋值时，处理一次空格
+        _unitController.text = unit.name.replaceAll(' ', '');
       }
     }
 
     return TypeAheadField<Unit>(
       controller: _unitController,
       suggestionsCallback: (pattern) {
+        // pattern 来自控制器，已经被 formatter 处理过，所以不含空格
         if (pattern.isEmpty) {
           return Future.value(units);
         }
 
         final filtered = units
             .where(
-              (unit) => unit.name.toLowerCase().contains(pattern.toLowerCase()),
+              (unit) =>
+                  // 对数据源的 name 也做去空格处理，以实现更可靠的匹配
+                  unit.name
+                      .replaceAll(' ', '')
+                      .toLowerCase()
+                      .contains(pattern.toLowerCase()),
             )
             .toList();
 
@@ -702,25 +741,28 @@ class _ProductAddEditScreenState extends ConsumerState<ProductAddEditScreen> {
       },
       itemBuilder: (context, Unit suggestion) {
         return ListTile(
-          leading: const Icon(Icons.straighten),
+          // leading: const Icon(Icons.straighten),
           title: Text(suggestion.name),
         );
       },
       onSelected: (Unit suggestion) {
         setState(() {
           _selectedUnitId = suggestion.id;
-          _unitController.text = suggestion.name;
+          // 从建议列表赋值时，处理一次，以防数据源本身含空格
+          _unitController.text = suggestion.name.replaceAll(' ', '');
         });
       },
       builder: (context, controller, focusNode) {
         return TextField(
           controller: controller,
           focusNode: focusNode,
+          // ⭐ 核心优化：使用 Formatter 从源头禁止输入空格 ⭐
+          inputFormatters: [FilteringTextInputFormatter.deny(RegExp(r'\s'))],
           onChanged: (value) {
-            final trimmedValue = value.trim();
+            // 此处的 value 已经不包含空格了，之前的 .trim() 不再需要
 
             // 如果输入为空，清除选择
-            if (trimmedValue.isEmpty) {
+            if (value.isEmpty) {
               if (_selectedUnitId != null) {
                 setState(() {
                   _selectedUnitId = null;
@@ -728,9 +770,13 @@ class _ProductAddEditScreenState extends ConsumerState<ProductAddEditScreen> {
               }
               return;
             }
+
             // 查找完全匹配的单位
             final exactMatch = units.cast<Unit?>().firstWhere(
-              (unit) => unit!.name.toLowerCase() == trimmedValue.toLowerCase(),
+              // 比较时，对数据源也去空格，保证比较的公平性
+              (unit) =>
+                  unit!.name.replaceAll(' ', '').toLowerCase() ==
+                  value.toLowerCase(),
               orElse: () => null,
             );
 
@@ -749,11 +795,13 @@ class _ProductAddEditScreenState extends ConsumerState<ProductAddEditScreen> {
                 });
               }
             }
+            // 触发UI更新（如helperText），无论逻辑如何，都调用一次setState
+            setState(() {});
           },
           decoration: InputDecoration(
             labelText: '计量单位 *',
             hintText: '请输入或选择计量单位（可直接输入新单位）',
-            prefixIcon: const Icon(Icons.straighten),
+            // prefixIcon: const Icon(Icons.straighten),
             border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
@@ -771,13 +819,15 @@ class _ProductAddEditScreenState extends ConsumerState<ProductAddEditScreen> {
               borderRadius: BorderRadius.circular(12),
               borderSide: const BorderSide(color: Colors.red),
             ),
+            // 注意：_getUnitValidationError 现在会接收一个不含空格的文本
             errorText: _getUnitValidationError(units),
+            // helperText 的逻辑也变得更简洁
             helperText:
-                _selectedUnitId == null &&
-                    _unitController.text.trim().isNotEmpty
-                ? '将创建新单位: "${_unitController.text.trim()}"'
+                _selectedUnitId == null && _unitController.text.isNotEmpty
+                ? '将创建新单位: "${_unitController.text}"'
                 : null,
             helperStyle: TextStyle(color: Colors.green.shade600, fontSize: 12),
+            // suffixIcon 的判断也更直接
             suffixIcon: _unitController.text.isNotEmpty
                 ? IconButton(
                     icon: const Icon(Icons.clear),
@@ -795,6 +845,11 @@ class _ProductAddEditScreenState extends ConsumerState<ProductAddEditScreen> {
       emptyBuilder: (context) =>
           const Padding(padding: EdgeInsets.all(16.0), child: Text('未找到匹配的单位')),
     );
+  } // 单位验证函数 - 只在表单提交时验证，不在输入时显示错误
+
+  String? _getUnitValidationError(List<Unit> units) {
+    // 不在输入时显示错误，只在表单提交时验证
+    return null;
   }
 
   /// 构建保质期单位下拉选择器
@@ -841,499 +896,6 @@ class _ProductAddEditScreenState extends ConsumerState<ProductAddEditScreen> {
         return '年';
       default:
         return unit;
-    }
-  }
-
-  /// 提交表单
-  void _submitForm() async {
-    if (!_formKey.currentState!.validate()) {
-      return;
-    } // 处理并保存新类别
-    if (_selectedCategoryId == null &&
-        _categoryController.text.trim().isNotEmpty &&
-        _categoryController.text.trim() != '未分类') {
-      try {
-        final categoryService = ref.read(categoryServiceProvider);
-        final categoryName = _categoryController.text.trim();
-
-        // 首先检查是否已存在同名类别
-        final categories = ref.read(categoriesProvider);
-        final existingCategory = categories.cast<Category?>().firstWhere(
-          (cat) => cat!.name.toLowerCase() == categoryName.toLowerCase(),
-          orElse: () => null,
-        );
-
-        if (existingCategory != null) {
-          // 类别已存在，直接使用现有类别
-          _selectedCategoryId = existingCategory.id;
-          print(
-            '🔧 ProductAddEditScreen: 使用现有类别: $categoryName (ID: ${existingCategory.id})',
-          );
-
-          if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text('使用现有类别 "$categoryName"'),
-                backgroundColor: Colors.blue,
-                duration: const Duration(seconds: 2),
-              ),
-            );
-          }
-        } else {
-          // 类别不存在，创建新类别
-          final newCategoryId = categoryService.generateCategoryId();
-          await categoryService.addCategory(
-            id: newCategoryId,
-            name: categoryName,
-          );
-          _selectedCategoryId = newCategoryId;
-          print('🔧 ProductAddEditScreen: 新类别已创建: $categoryName');
-
-          // 显示成功提示
-          if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text('新类别 "$categoryName" 已创建'),
-                backgroundColor: Colors.green,
-                duration: const Duration(seconds: 2),
-              ),
-            );
-          }
-        }
-      } catch (e) {
-        final errorMessage = e.toString();
-        print('🔧 ProductAddEditScreen: 处理类别失败: $errorMessage');
-
-        // 检查是否是重复名称错误
-        if (errorMessage.contains('类别名称已存在') ||
-            errorMessage.contains('already exists')) {
-          // 尝试查找现有的同名类别
-          final categories = ref.read(categoriesProvider);
-          final categoryName = _categoryController.text.trim();
-          final existingCategory = categories.cast<Category?>().firstWhere(
-            (cat) => cat!.name.toLowerCase() == categoryName.toLowerCase(),
-            orElse: () => null,
-          );
-
-          if (existingCategory != null) {
-            _selectedCategoryId = existingCategory.id;
-            print('🔧 ProductAddEditScreen: 发现重复后使用现有类别: $categoryName');
-
-            if (mounted) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text('类别 "$categoryName" 已存在，使用现有类别'),
-                  backgroundColor: Colors.blue,
-                  duration: const Duration(seconds: 2),
-                ),
-              );
-            }
-          } else {
-            // 无法找到现有类别，显示错误
-            if (mounted) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text('类别处理失败: $errorMessage'),
-                  backgroundColor: Colors.red,
-                  duration: const Duration(seconds: 3),
-                ),
-              );
-            }
-            return; // 类别处理失败时停止继续保存
-          }
-        } else {
-          // 其他错误
-          if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text('创建新类别失败: $errorMessage'),
-                backgroundColor: Colors.red,
-                duration: const Duration(seconds: 3),
-              ),
-            );
-          }
-          return; // 类别创建失败时停止继续保存
-        }
-      }
-    } // 验证并处理单位选择
-    if (_selectedUnitId == null || _selectedUnitId!.isEmpty) {
-      if (_unitController.text.trim().isNotEmpty) {
-        try {
-          final unitName = _unitController.text.trim();
-
-          // 首先检查是否已存在同名单位
-          final unitsAsyncValue = ref.read(allUnitsProvider);
-          final units = unitsAsyncValue.maybeWhen(
-            data: (units) => units,
-            orElse: () => <Unit>[],
-          );
-
-          final existingUnit = units.cast<Unit?>().firstWhere(
-            (unit) => unit!.name.toLowerCase() == unitName.toLowerCase(),
-            orElse: () => null,
-          );
-
-          if (existingUnit != null) {
-            // 单位已存在，直接使用现有单位
-            _selectedUnitId = existingUnit.id;
-            print(
-              '🔧 ProductAddEditScreen: 使用现有单位: $unitName (ID: ${existingUnit.id})',
-            );
-
-            if (mounted) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text('使用现有单位 "$unitName"'),
-                  backgroundColor: Colors.blue,
-                  duration: const Duration(seconds: 2),
-                ),
-              );
-            }
-          } else {
-            // 单位不存在，创建新单位
-            final unitController = ref.read(unitControllerProvider.notifier);
-            // 使用当前时间戳生成新单位ID
-            final newUnitId = 'unit_${DateTime.now().millisecondsSinceEpoch}';
-            final newUnit = Unit(id: newUnitId, name: unitName);
-            await unitController.addUnit(newUnit);
-            _selectedUnitId = newUnitId;
-            print('🔧 ProductAddEditScreen: 新单位已创建: $unitName');
-
-            // 显示成功提示
-            if (mounted) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text('新单位 "$unitName" 已创建'),
-                  backgroundColor: Colors.green,
-                  duration: const Duration(seconds: 2),
-                ),
-              );
-            }
-          }
-        } catch (e) {
-          final errorMessage = e.toString();
-          print('🔧 ProductAddEditScreen: 处理单位失败: $errorMessage');
-
-          // 检查是否是重复名称相关的错误
-          if (errorMessage.contains('UNIQUE constraint failed') ||
-              errorMessage.contains('单位名称已存在') ||
-              errorMessage.contains('already exists')) {
-            // 尝试查找现有的同名单位
-            final unitsAsyncValue = ref.read(allUnitsProvider);
-            final units = unitsAsyncValue.maybeWhen(
-              data: (units) => units,
-              orElse: () => <Unit>[],
-            );
-            final unitName = _unitController.text.trim();
-            final existingUnit = units.cast<Unit?>().firstWhere(
-              (unit) => unit!.name.toLowerCase() == unitName.toLowerCase(),
-              orElse: () => null,
-            );
-
-            if (existingUnit != null) {
-              _selectedUnitId = existingUnit.id;
-              print('🔧 ProductAddEditScreen: 发现重复后使用现有单位: $unitName');
-
-              if (mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text('单位 "$unitName" 已存在，使用现有单位'),
-                    backgroundColor: Colors.blue,
-                    duration: const Duration(seconds: 2),
-                  ),
-                );
-              }
-            } else {
-              // 无法找到现有单位，显示错误
-              if (mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text('单位处理失败: $errorMessage'),
-                    backgroundColor: Colors.red,
-                    duration: const Duration(seconds: 3),
-                  ),
-                );
-              }
-              return; // 单位处理失败时停止继续保存
-            }
-          } else {
-            // 其他错误
-            if (mounted) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text('创建新单位失败: $errorMessage'),
-                  backgroundColor: Colors.red,
-                  duration: const Duration(seconds: 3),
-                ),
-              );
-            }
-            return; // 单位创建失败时停止继续保存
-          }
-        }
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('请选择计量单位'), backgroundColor: Colors.red),
-        );
-        return;
-      }
-    }
-
-    // 解析保质期值
-    final shelfLifeValue = _shelfLifeController.text.trim().isNotEmpty
-        ? int.tryParse(_shelfLifeController.text.trim())
-        : null;
-
-    // 当保质期不为空时，强制启用批次管理
-    bool finalEnableBatchManagement = _enableBatchManagement;
-    if (shelfLifeValue != null && shelfLifeValue > 0) {
-      finalEnableBatchManagement = true;
-      print(
-        '🔧 ProductAddEditScreen: 检测到保质期($shelfLifeValue ${_getShelfLifeUnitDisplayName(_shelfLifeUnit)})，自动启用批次管理',
-      );
-    }
-
-    final operations = ref.read(productOperationsProvider.notifier);
-    final product = Product(
-      id:
-          widget.product?.id ??
-          DateTime.now().millisecondsSinceEpoch.toString(), // 为新产品生成ID
-      name: _nameController.text.trim(),
-      // barcode 字段已移除，条码现在由独立的条码表管理
-      sku: null,
-      image: _selectedImagePath, // 添加图片路径
-      specification: null,
-      brand: null,
-      categoryId: _selectedCategoryId, // 添加类别ID
-      unitId: _selectedUnitId, // 添加单位ID
-      retailPrice: _retailPriceController.text.trim().isNotEmpty
-          ? double.tryParse(_retailPriceController.text.trim())
-          : null,
-      promotionalPrice: _promotionalPriceController.text.trim().isNotEmpty
-          ? double.tryParse(_promotionalPriceController.text.trim())
-          : null,
-      suggestedRetailPrice:
-          _suggestedRetailPriceController.text.trim().isNotEmpty
-          ? double.tryParse(_suggestedRetailPriceController.text.trim())
-          : null,
-      // 添加缺失的字段
-      stockWarningValue: _stockWarningValueController.text.trim().isNotEmpty
-          ? int.tryParse(_stockWarningValueController.text.trim())
-          : null,
-      shelfLife: shelfLifeValue,
-      shelfLifeUnit: _shelfLifeUnit, // 添加保质期单位
-      enableBatchManagement: finalEnableBatchManagement, // 根据保质期自动决定是否启用批次管理
-      status: 'active', // 默认状态为active
-      remarks: _remarksController.text.trim().isNotEmpty
-          ? _remarksController.text.trim()
-          : null,
-      lastUpdated: DateTime.now(),
-    );
-    try {
-      if (widget.product == null) {
-        // 新增模式 - 调用 addProduct
-        await operations.addProduct(product);
-      } else {
-        // 编辑模式 - 调用 updateProduct
-        await operations.updateProduct(product);
-      }
-
-      // 如果自动启用了批次管理，提示用户
-      if (shelfLifeValue != null &&
-          shelfLifeValue > 0 &&
-          !_enableBatchManagement) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('由于设置了保质期，已自动启用批次管理功能'),
-              backgroundColor: Colors.blue,
-              duration: const Duration(seconds: 3),
-            ),
-          );
-        }
-      }
-
-      // 产品保存成功后，保存单位配置
-      await _saveProductUnits(product);
-    } catch (e) {
-      // 产品保存失败的处理由 ProductController 的监听器处理
-      print('🔧 ProductAddEditScreen: 产品保存失败: $e');
-    }
-  }
-
-  /// 保存产品单位配置
-  /// 如果有单位配置数据则使用，否则为选中的单位创建基础配置
-  Future<void> _saveProductUnits(Product product) async {
-    try {
-      final productUnitController = ref.read(
-        productUnitControllerProvider.notifier,
-      );
-
-      List<ProductUnit> unitsToSave = [];
-
-      if (_productUnits != null && _productUnits!.isNotEmpty) {
-        // 如果有通过单位编辑屏幕配置的单位数据，使用这些数据
-        print('🔧 ProductAddEditScreen: 使用已配置的单位数据');
-        unitsToSave = _productUnits!
-            .map(
-              (unit) => ProductUnit(
-                productUnitId: '${product.id}_${unit.unitId}',
-                productId: product.id,
-                unitId: unit.unitId,
-                conversionRate: unit.conversionRate,
-                sellingPrice: unit.sellingPrice, // 保留建议零售价信息
-                lastUpdated: DateTime.now(),
-              ),
-            )
-            .toList();
-      } else if (_selectedUnitId != null) {
-        // 如果没有配置单位数据，但选择了单位，为选中的单位创建基础配置
-        print('🔧 ProductAddEditScreen: 为选中单位创建基础配置');
-        unitsToSave = [
-          ProductUnit(
-            productUnitId: '${product.id}_$_selectedUnitId',
-            productId: product.id,
-            unitId: _selectedUnitId!,
-            conversionRate: 1.0, // 基础单位换算率为1.0
-            sellingPrice: null,
-            lastUpdated: DateTime.now(),
-          ),
-        ];
-      }
-
-      if (unitsToSave.isNotEmpty) {
-        print('🔧 ProductAddEditScreen: 开始保存 ${unitsToSave.length} 个单位配置');
-        await productUnitController.replaceProductUnits(
-          product.id,
-          unitsToSave,
-        );
-        print('🔧 ProductAddEditScreen: 单位配置保存成功');
-
-        // 保存主条码到条码表
-        await _saveMainBarcode(product, unitsToSave);
-      } else {
-        print('🔧 ProductAddEditScreen: 没有单位配置需要保存');
-      }
-    } catch (e) {
-      print('🔧 ProductAddEditScreen: 单位配置保存失败: $e');
-      // 单位配置保存失败不应该影响产品保存的成功状态
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('产品保存成功，但单位配置保存失败: $e'),
-            backgroundColor: Colors.orange,
-            duration: const Duration(seconds: 3),
-          ),
-        );
-      }
-    }
-  }
-
-  /// 保存产品主条码到条码表
-  /// 将主条码关联到基础单位（换算率为1.0的单位）
-  Future<void> _saveMainBarcode(
-    Product product,
-    List<ProductUnit> productUnits,
-  ) async {
-    final barcodeText = _barcodeController.text.trim();
-
-    try {
-      final barcodeController = ref.read(barcodeControllerProvider.notifier);
-
-      // 查找基础单位（换算率为1.0的单位）
-      final baseProductUnit = productUnits.firstWhere(
-        (unit) => unit.conversionRate == 1.0,
-        orElse: () => productUnits.first, // 如果没有基础单位，使用第一个单位
-      );
-
-      // 获取该产品单位现有的所有条码
-      final existingBarcodes = await barcodeController
-          .getBarcodesByProductUnitId(baseProductUnit.productUnitId);
-
-      // 如果没有输入新的主条码
-      if (barcodeText.isEmpty) {
-        // 如果之前有主条码，需要删除
-        if (existingBarcodes.isNotEmpty) {
-          for (final barcode in existingBarcodes) {
-            await barcodeController.deleteBarcode(barcode.id);
-          }
-          print(
-            '🔧 ProductAddEditScreen: 删除了 ${existingBarcodes.length} 个旧的主条码',
-          );
-        }
-        return;
-      }
-
-      // 检查新条码是否与现有条码相同
-      final sameBarcode = existingBarcodes.firstWhere(
-        (barcode) => barcode.barcode == barcodeText,
-        orElse: () => Barcode(id: '', productUnitId: '', barcode: ''),
-      );
-
-      if (sameBarcode.id.isNotEmpty) {
-        // 条码没有变化，不需要更新
-        print('🔧 ProductAddEditScreen: 主条码没有变化，跳过保存: $barcodeText');
-        return;
-      }
-
-      // 检查新条码是否在全局范围内已存在
-      final globalExistingBarcode = await barcodeController.getBarcodeByValue(
-        barcodeText,
-      );
-      if (globalExistingBarcode != null) {
-        print('🔧 ProductAddEditScreen: 主条码已存在于其他产品，跳过保存: $barcodeText');
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('条码 $barcodeText 已被其他产品使用'),
-              backgroundColor: Colors.orange,
-              duration: const Duration(seconds: 2),
-            ),
-          );
-        }
-        return;
-      }
-
-      // 删除旧的主条码
-      for (final barcode in existingBarcodes) {
-        await barcodeController.deleteBarcode(barcode.id);
-      }
-
-      // 创建新的主条码记录
-      final mainBarcode = Barcode(
-        id: 'barcode_${product.id}_main_${DateTime.now().millisecondsSinceEpoch}',
-        productUnitId: baseProductUnit.productUnitId,
-        barcode: barcodeText,
-        createdAt: DateTime.now(),
-        updatedAt: DateTime.now(),
-      );
-
-      // 保存新的主条码
-      await barcodeController.addBarcode(mainBarcode);
-      print('🔧 ProductAddEditScreen: 主条码保存成功: $barcodeText');
-
-      if (mounted) {
-        final message = existingBarcodes.isNotEmpty
-            ? '主条码已更新: $barcodeText'
-            : '主条码保存成功: $barcodeText';
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(message),
-            backgroundColor: Colors.green,
-            duration: const Duration(seconds: 2),
-          ),
-        );
-      }
-    } catch (e) {
-      print('🔧 ProductAddEditScreen: 主条码保存失败: $e');
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('主条码保存失败: $e'),
-            backgroundColor: Colors.orange,
-            duration: const Duration(seconds: 3),
-          ),
-        );
-      }
     }
   }
 
@@ -1398,22 +960,22 @@ class _ProductAddEditScreenState extends ConsumerState<ProductAddEditScreen> {
     print('🔧 ProductAddEditScreen: 开始导航到单位编辑屏幕');
     print('🔧 ProductAddEditScreen: 产品ID = ${widget.product?.id}');
     print('🔧 ProductAddEditScreen: 当前选中的单位ID = $_selectedUnitId');
-    print('🔧 ProductAddEditScreen: 当前单位控制器文本 = ${_unitController.text}');
-
-    // 获取基本单位信息（从前端输入框获取）
+    print(
+      '🔧 ProductAddEditScreen: 当前单位控制器文本 = ${_unitController.text}',
+    ); // 获取基本单位信息（从前端输入框获取）
     String? baseUnitId = _selectedUnitId;
-    String? baseUnitName = _unitController.text.trim();
+    String baseUnitName = _unitController.text.trim(); // 修改为非null类型
 
     // 如果没有选择单位，但输入了单位名称，需要先创建或查找单位
     if (baseUnitId == null && baseUnitName.isNotEmpty) {
       try {
         final allUnits = await ref.read(allUnitsProvider.future);
-        final existingUnit = allUnits.cast<Unit?>().firstWhere(
-          (unit) => unit!.name.toLowerCase() == baseUnitName.toLowerCase(),
-          orElse: () => null,
+        final existingUnit = allUnits.firstWhere(
+          (unit) => unit.name.toLowerCase() == baseUnitName.toLowerCase(),
+          orElse: () => Unit(id: '', name: ''),
         );
 
-        if (existingUnit != null) {
+        if (existingUnit.id.isNotEmpty) {
           baseUnitId = existingUnit.id;
           print('🔧 ProductAddEditScreen: 找到现有单位: ${existingUnit.name}');
         } else {
@@ -1424,17 +986,12 @@ class _ProductAddEditScreenState extends ConsumerState<ProductAddEditScreen> {
       } catch (e) {
         print('🔧 ProductAddEditScreen: 处理单位信息失败: $e');
       }
-    }
-
-    // 检查是否有基本单位信息
-    if (baseUnitId == null || baseUnitName.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('请先选择或输入基本单位'),
-          backgroundColor: Colors.orange,
-        ),
-      );
-      return;
+    } // 如果没有输入单位名称，使用空的基础单位信息进入单位管理
+    // 用户可以在单位管理页面中创建和配置单位
+    if (baseUnitName.isEmpty) {
+      baseUnitName = ''; // 空的基础单位名称，允许用户在单位管理页面中创建
+      baseUnitId = null; // 没有预设的单位ID
+      print('🔧 ProductAddEditScreen: 没有预设单位，进入单位管理页面创建');
     }
 
     print('🔧 ProductAddEditScreen: 传递给UnitEditScreen的基本单位信息:');
@@ -1513,6 +1070,84 @@ class _ProductAddEditScreenState extends ConsumerState<ProductAddEditScreen> {
     }
   }
 
+  /// 提交表单
+  void _submitForm() async {
+    if (!_formKey.currentState!.validate()) {
+      return; // 表单验证失败
+    }
+
+    // 单位验证 - 只在提交时验证
+    if (_unitController.text.trim().isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('计量单位不能为空'), backgroundColor: Colors.red),
+      );
+      return;
+    }
+
+    try {
+      // 构建表单数据
+      final formData = ProductFormData(
+        productId: widget.product?.id,
+        name: _nameController.text.trim(),
+        selectedCategoryId: _selectedCategoryId,
+        newCategoryName: _categoryController.text.trim(),
+        selectedUnitId: _selectedUnitId,
+        newUnitName: _unitController.text.trim(),
+        imagePath: _selectedImagePath,
+        barcode: _barcodeController.text.trim(),
+        retailPrice: double.tryParse(_retailPriceController.text.trim()),
+        promotionalPrice: double.tryParse(
+          _promotionalPriceController.text.trim(),
+        ),
+        suggestedRetailPrice: double.tryParse(
+          _suggestedRetailPriceController.text.trim(),
+        ),
+        stockWarningValue: int.tryParse(
+          _stockWarningValueController.text.trim(),
+        ),
+        shelfLife: int.tryParse(_shelfLifeController.text.trim()),
+        shelfLifeUnit: _shelfLifeUnit,
+        enableBatchManagement: _enableBatchManagement,
+        remarks: _remarksController.text.trim().isNotEmpty
+            ? _remarksController.text.trim()
+            : null,
+        productUnits: _productUnits,
+      );
+
+      // 使用控制器提交表单
+      final controller = ref.read(productAddEditControllerProvider);
+      final result = await controller.submitForm(formData);
+
+      if (mounted) {
+        if (result.success) {
+          // 显示成功消息
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(result.message ?? '操作成功'),
+              backgroundColor: Colors.green,
+            ),
+          );
+          // 返回上一页
+          context.pop();
+        } else {
+          // 显示错误消息
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(result.message ?? '操作失败'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('操作失败: $e'), backgroundColor: Colors.red),
+        );
+      }
+    }
+  }
+
   /// 验证并确保单位选择的有效性
   void _ensureValidUnitSelection(List<Unit> units) {
     // 如果当前选择的单位ID不在单位列表中，清除选择
@@ -1524,41 +1159,5 @@ class _ProductAddEditScreenState extends ConsumerState<ProductAddEditScreen> {
       });
     }
     // 允许用户不选择单位，不强制设置默认值
-  }
-
-  /// 获取单位输入框的验证错误信息
-  String? _getUnitValidationError(List<Unit> units) {
-    final inputText = _unitController.text.trim();
-
-    // 如果输入为空，不显示错误
-    if (inputText.isEmpty) {
-      return null;
-    }
-
-    // 如果已选择有效单位，不显示错误
-    if (_selectedUnitId != null &&
-        units.any((unit) => unit.id == _selectedUnitId)) {
-      return null;
-    }
-    // 如果输入的文本与现有单位名称完全匹配，不显示错误（允许创建新单位）
-    final matchingUnit = units.cast<Unit?>().firstWhere(
-      (unit) => unit!.name.toLowerCase() == inputText.toLowerCase(),
-      orElse: () => null,
-    );
-
-    if (matchingUnit != null) {
-      // 找到匹配的单位，但没有选中，自动选中它
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted && _selectedUnitId != matchingUnit.id) {
-          setState(() {
-            _selectedUnitId = matchingUnit.id;
-          });
-        }
-      });
-      return null;
-    }
-
-    // 如果是新输入的单位名称，不显示错误（允许创建新单位）
-    return null;
   }
 }

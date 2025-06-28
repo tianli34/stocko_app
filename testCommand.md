@@ -2,13 +2,15 @@
 
 
 git add .
-git commit -m "ProductController 重构前85 0 385"
+git commit -m "重构product_add_edit_screen.dart前 10 3 512"
 git push
 
 
 
 
-cd E:\stocko_app
+cd E:\stocko_app\
+cd E:\stocko_app\lib
+gemini
 
 dart run build_runner build --delete-conflicting-outputs
 
