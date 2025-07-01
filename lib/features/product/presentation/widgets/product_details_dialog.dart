@@ -10,6 +10,17 @@ class ProductDetailsDialog extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    print('ProductDetailsDialog: Building for product: ${product.name}');
+    print('Product ID: ${product.id}');
+    print('Product Image: ${product.image}');
+    print('Product SKU: ${product.sku}');
+    print('Product Effective Price: ${product.effectivePrice}');
+    print('Product Stock Warning Value: ${product.stockWarningValue}');
+    print('Product Shelf Life: ${product.shelfLife}');
+    print('Product Shelf Life Unit: ${product.shelfLifeUnit}');
+    print('Product Remarks: ${product.remarks}');
+    print('Product Last Updated: ${product.lastUpdated}');
+
     return Dialog(
       child: Padding(
         padding: const EdgeInsets.all(24),
@@ -66,7 +77,8 @@ class ProductDetailsDialog extends StatelessWidget {
                 ),
               ),
 
-            // 产品详情            if (product.sku != null)
+            // 产品详情
+            if (product.sku != null)
             _buildDetailItem(context, 'SKU', product.sku!),
 
             // 条码信息 - 已移除，现在条码存储在独立的条码表中

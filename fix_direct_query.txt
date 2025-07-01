@@ -1,0 +1,4 @@
+    // 添加辅单位 - 直接从数据库获取最新单位数据
+    final unitCtrl = ref.read(unitControllerProvider.notifier);
+    final allUnits = await unitCtrl.getAllUnits();
+    print('🔍 [DEBUG] 从数据库获取的单位总数: ${allUnits.length}');

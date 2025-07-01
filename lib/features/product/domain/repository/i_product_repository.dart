@@ -52,4 +52,9 @@ abstract class IProductRepository {
   /// [barcode] 条码
   /// 返回匹配的产品，如果不存在则返回null
   Future<Product?> getProductByBarcode(String barcode);
+
+  /// 根据条码获取产品及其单位信息
+  /// [barcode] 条码
+  /// 返回包含产品和单位名称的结果，如果不存在则返回null
+  Future<({Product product, String unitName})?> getProductWithUnitByBarcode(String barcode);
 }

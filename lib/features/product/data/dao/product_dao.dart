@@ -3,12 +3,13 @@ import '../../../../core/database/database.dart';
 import '../../../../core/database/products_table.dart';
 import '../../../../core/database/barcodes_table.dart';
 import '../../../../core/database/product_units_table.dart';
+import '../../../../core/database/units_table.dart';
 
 part 'product_dao.g.dart';
 
 /// 产品数据访问对象 (DAO)
 /// 专门负责产品相关的数据库操作
-@DriftAccessor(tables: [ProductsTable, BarcodesTable, ProductUnitsTable])
+@DriftAccessor(tables: [ProductsTable, BarcodesTable, ProductUnitsTable, UnitsTable])
 class ProductDao extends DatabaseAccessor<AppDatabase> with _$ProductDaoMixin {
   ProductDao(super.db);
 
@@ -162,5 +163,36 @@ class ProductDao extends DatabaseAccessor<AppDatabase> with _$ProductDaoMixin {
     return await (select(db.productsTable)
           ..where((tbl) => tbl.id.equals(productUnitResult.productId)))
         .getSingleOrNull();
+  }
+
+  /// 根据条码获取产品及其单位信息
+  /// 返回包含产品信息和单位名称的结果
+  Future<({ProductsTableData product, String unitName})?> getProductWithUnitByBarcode(String barcode) async {
+    // 首先在条码表中找到对应的产品单位ID
+    final barcodeResult = await (select(
+      db.barcodesTable,
+    )..where((tbl) => tbl.barcode.equals(barcode))).getSingleOrNull();
+
+    if (barcodeResult == null) {
+      return null; // 条码不存在
+    }
+
+    // 联合查询产品单位表、产品表和单位表
+    final query = select(db.productUnitsTable)
+        .join([
+          innerJoin(db.productsTable, db.productsTable.id.equalsExp(db.productUnitsTable.productId)),
+          innerJoin(db.unitsTable, db.unitsTable.id.equalsExp(db.productUnitsTable.unitId)),
+        ])
+        ..where(db.productUnitsTable.productUnitId.equals(barcodeResult.productUnitId));
+
+    final result = await query.getSingleOrNull();
+    if (result == null) {
+      return null;
+    }
+
+    final product = result.readTable(db.productsTable);
+    final unit = result.readTable(db.unitsTable);
+
+    return (product: product, unitName: unit.name);
   }
 }

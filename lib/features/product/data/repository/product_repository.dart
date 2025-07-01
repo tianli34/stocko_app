@@ -122,6 +122,22 @@ class ProductRepository implements IProductRepository {
     }
   }
 
+  /// 根据条码获取产品及其单位信息
+  @override
+  Future<({Product product, String unitName})?> getProductWithUnitByBarcode(String barcode) async {
+    try {
+      final result = await _productDao.getProductWithUnitByBarcode(barcode);
+      if (result == null) return null;
+      
+      return (
+        product: _dataToProduct(result.product),
+        unitName: result.unitName,
+      );
+    } catch (e) {
+      throw Exception('根据条码查询产品及单位失败: $e');
+    }
+  }
+
   /// 获取库存预警产品
   Future<List<Product>> getStockWarningProducts() async {
     try {

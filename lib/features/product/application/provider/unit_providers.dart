@@ -45,21 +45,29 @@ class UnitController extends StateNotifier<UnitControllerState> {
 
   /// 添加单位
   Future<void> addUnit(Unit unit) async {
+    print('🎯 UnitController.addUnit - 开始添加单位: ID=${unit.id}, 名称="${unit.name}"');
     state = state.copyWith(status: UnitOperationStatus.loading);
 
     try {
       // 检查单位名称是否为空
       if (unit.name.trim().isEmpty) {
+        print('❌ 单位名称为空');
         throw Exception('单位名称不能为空');
       }
 
       // 检查单位名称是否已存在
+      print('🔍 检查单位名称是否已存在: "${unit.name.trim()}"');
       final existingUnit = await _repository.getUnitByName(unit.name.trim());
       if (existingUnit != null) {
+        print('❌ 单位名称已存在: ${existingUnit.id}');
         throw Exception('单位名称已存在');
       }
+      print('✅ 单位名称检查通过');
 
+      print('💾 调用仓储层添加单位...');
       await _repository.addUnit(unit);
+      print('✅ 仓储层添加单位成功');
+      
       state = state.copyWith(
         status: UnitOperationStatus.success,
         lastOperatedUnit: unit,
@@ -67,8 +75,11 @@ class UnitController extends StateNotifier<UnitControllerState> {
       );
 
       // 刷新单位列表 - Stream会自动更新，但我们也可以主动刷新
+      print('🔄 刷新单位列表...');
       _ref.invalidate(allUnitsProvider);
+      print('✅ UnitController.addUnit - 添加单位完成');
     } catch (e) {
+      print('❌ UnitController.addUnit - 添加单位失败: $e');
       state = state.copyWith(
         status: UnitOperationStatus.error,
         errorMessage: '添加单位失败: ${e.toString()}',
@@ -237,8 +248,6 @@ class UnitController extends StateNotifier<UnitControllerState> {
 /// 监听单位数据的实时变化，当数据库中的单位发生变化时会自动更新UI
 final allUnitsProvider = StreamProvider<List<Unit>>((ref) {
   final repository = ref.watch(unitRepositoryProvider);
-
-  // 创建一个更可靠的Stream，结合定时刷新和数据库监听
   return repository.watchAllUnits().asBroadcastStream();
 });
 

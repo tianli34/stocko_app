@@ -2,13 +2,15 @@
 
 
 git add .
-git commit -m "重构product_add_edit_screen.dart前 10 3 512"
+git commit -m "删除编辑单位页基本单位前 0 1 456"
 git push
 
 
 
 
 cd E:\stocko_app\
+flutter run
+
 cd E:\stocko_app\lib
 gemini
 

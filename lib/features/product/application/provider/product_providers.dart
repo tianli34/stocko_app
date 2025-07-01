@@ -103,6 +103,20 @@ class ProductOperationsNotifier extends AsyncNotifier<void> {
       return null;
     }
   }
+
+  /// 根据条码获取产品及其单位信息
+  Future<({Product product, String unitName})?> getProductWithUnitByBarcode(String barcode) async {
+    try {
+      final repository = ref.read(productRepositoryProvider);
+      return await repository.getProductWithUnitByBarcode(barcode);
+    } catch (e) {
+      state = AsyncValue.error(
+        Exception('根据条码查询产品及单位失败: ${e.toString()}'),
+        StackTrace.current,
+      );
+      return null;
+    }
+  }
 }
 
 /// 产品列表 StreamNotifier

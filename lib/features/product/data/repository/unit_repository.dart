@@ -9,7 +9,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 /// 基于本地数据库的单位数据访问层实现
 class UnitRepository implements IUnitRepository {
   final UnitDao _unitDao;
-
   UnitRepository(AppDatabase database) : _unitDao = database.unitDao;
 
   @override

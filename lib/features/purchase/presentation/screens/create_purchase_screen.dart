@@ -205,9 +205,9 @@ class _CreatePurchaseScreenState extends ConsumerState<CreatePurchaseScreen> {
     );
 
     try {
-      // 使用重构后的产品查询
+      // 使用新的方法获取商品及其单位信息
       final productOperations = ref.read(productOperationsProvider.notifier);
-      final product = await productOperations.getProductByBarcode(barcode);
+      final result = await productOperations.getProductWithUnitByBarcode(barcode);
 
       // 查询完成后，延迟关闭扫码页面，让音效播放完毕
       Future.delayed(const Duration(milliseconds: 500), () {
@@ -217,8 +217,8 @@ class _CreatePurchaseScreenState extends ConsumerState<CreatePurchaseScreen> {
       });
 
       if (!mounted) return;
-      if (product != null) {
-        _addOrUpdatePurchaseItem(product);
+      if (result != null) {
+        _addOrUpdatePurchaseItem(result.product, unitName: result.unitName, barcode: barcode);
       } else {
         // 商品未找到，在扫码页面关闭后稍微延迟显示对话框
         Future.delayed(const Duration(milliseconds: 600), () {
@@ -972,11 +972,14 @@ class _CreatePurchaseScreenState extends ConsumerState<CreatePurchaseScreen> {
   }
 
   /// 添加或更新商品到采购列表（共用逻辑）
-  void _addOrUpdatePurchaseItem(dynamic product) {
-    // 检查是否已存在相同商品
-    final existingItemIndex = _purchaseItems.indexWhere(
-      (item) => item.productId == product.id,
-    );
+  void _addOrUpdatePurchaseItem(dynamic product, {String? unitName, String? barcode}) {
+    // 根据条码检查是否已存在相同的商品规格（优先使用条码，其次使用商品ID+单位名称）
+    final existingItemIndex = _purchaseItems.indexWhere((item) {
+      if (barcode != null && item.id.contains(barcode)) {
+        return true; // 根据条码匹配
+      }
+      return item.productId == product.id && item.unitName == (unitName ?? _kDefaultUnitName);
+    });
 
     if (existingItemIndex != -1) {
       // 如果商品已存在，增加数量
@@ -992,19 +995,25 @@ class _CreatePurchaseScreenState extends ConsumerState<CreatePurchaseScreen> {
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('✓ ${product.name} 数量+1 (共${updatedItem.quantity}件)'),
+          content: Text('✓ ${product.name} 数量+1 (共${updatedItem.quantity}${updatedItem.unitName})'),
           backgroundColor: Colors.green,
         ),
       );
     } else {
       // 如果是新商品，创建新的采购项
       final unitPrice = product.retailPrice ?? 0.0;
-      final purchaseItem = PurchaseItem.create(
+      final actualUnitName = unitName ?? _kDefaultUnitName;
+      // 使用条码作为唯一标识符，如果没有条码则使用时间戳
+      final itemId = barcode != null ? 'item_${barcode}_${DateTime.now().millisecondsSinceEpoch}' : 'item_${DateTime.now().millisecondsSinceEpoch}';
+      
+      final purchaseItem = PurchaseItem(
+        id: itemId,
         productId: product.id,
         productName: product.name,
-        unitName: _kDefaultUnitName,
+        unitName: actualUnitName,
         unitPrice: unitPrice,
         quantity: 1,
+        amount: unitPrice * 1,
         productionDate: DateTime.now(),
       );
 
@@ -1193,17 +1202,17 @@ class _SimpleContinuousScanPageState extends State<_SimpleContinuousScanPage> {
       _isLoading = true;
     });
     try {
-      // 使用重构后的产品查询
+      // 使用新的方法获取商品及其单位信息
       final productOperations = widget.ref.read(
         productOperationsProvider.notifier,
       );
-      final product = await productOperations.getProductByBarcode(barcode);
+      final result = await productOperations.getProductWithUnitByBarcode(barcode);
 
       if (!mounted) return;
 
-      if (product != null) {
-        _addOrUpdateProduct(product);
-        _showSuccessMessage('✓ 已添加: ${product.name}');
+      if (result != null) {
+        _addOrUpdateProduct(result.product, unitName: result.unitName, barcode: barcode);
+        _showSuccessMessage('✓ 已添加: ${result.product.name}');
       } else {
         _showProductNotFoundDialog(barcode);
       }
@@ -1219,11 +1228,14 @@ class _SimpleContinuousScanPageState extends State<_SimpleContinuousScanPage> {
     }
   }
 
-  void _addOrUpdateProduct(dynamic product) {
-    // 检查是否已存在相同商品
-    final existingItemIndex = _scannedItems.indexWhere(
-      (item) => item.productId == product.id,
-    );
+  void _addOrUpdateProduct(dynamic product, {String? unitName, String? barcode}) {
+    // 根据条码检查是否已存在相同的商品规格
+    final existingItemIndex = _scannedItems.indexWhere((item) {
+      if (barcode != null && item.id.contains(barcode)) {
+        return true;
+      }
+      return item.productId == product.id && item.unitName == (unitName ?? _kDefaultUnitName);
+    });
 
     if (existingItemIndex != -1) {
       // 如果商品已存在，增加数量
@@ -1237,15 +1249,20 @@ class _SimpleContinuousScanPageState extends State<_SimpleContinuousScanPage> {
         _scannedItems[existingItemIndex] = updatedItem;
       });
 
-      _showSuccessMessage('✓ ${product.name} 数量+1 (共${updatedItem.quantity}件)');
+      _showSuccessMessage('✓ ${product.name} 数量+1 (共${updatedItem.quantity}${updatedItem.unitName})');
     } else {
       // 如果是新商品，创建新的采购项
-      final purchaseItem = PurchaseItem.create(
+      final actualUnitName = unitName ?? _kDefaultUnitName;
+      final itemId = barcode != null ? 'item_${barcode}_${DateTime.now().millisecondsSinceEpoch}' : 'item_${DateTime.now().millisecondsSinceEpoch}';
+      
+      final purchaseItem = PurchaseItem(
+        id: itemId,
         productId: product.id,
         productName: product.name,
-        unitName: _kDefaultUnitName,
+        unitName: actualUnitName,
         unitPrice: product.retailPrice ?? 0.0,
         quantity: 1,
+        amount: (product.retailPrice ?? 0.0) * 1,
         productionDate: DateTime.now(),
       );
 

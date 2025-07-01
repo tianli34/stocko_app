@@ -116,7 +116,7 @@ class UnitEditPersistenceTestUtil {
 
 /// 测试页面 Widget - 可以用于单独测试持久化功能
 class UnitEditPersistenceTestPage extends ConsumerWidget {
-  const UnitEditPersistenceTestPage({Key? key}) : super(key: key);
+  const UnitEditPersistenceTestPage({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {

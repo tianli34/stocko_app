@@ -155,10 +155,21 @@ class ProductUnitController extends StateNotifier<ProductUnitControllerState> {
     String productId,
     List<ProductUnit> productUnits,
   ) async {
+    print('🎯 ProductUnitController.replaceProductUnits - 开始替换产品单位配置');
+    print('🎯 产品ID: $productId');
+    print('🎯 单位数量: ${productUnits.length}');
+    for (int i = 0; i < productUnits.length; i++) {
+      final unit = productUnits[i];
+      print('🎯   [$i] 单位ID: ${unit.unitId}, 换算率: ${unit.conversionRate}');
+    }
+    
     state = state.copyWith(status: ProductUnitOperationStatus.loading);
 
     try {
+      print('💾 调用仓储层替换方法...');
       await _repository.replaceProductUnits(productId, productUnits);
+      print('✅ 仓储层替换成功');
+      
       state = state.copyWith(
         status: ProductUnitOperationStatus.success,
         lastOperatedProductUnits: productUnits,
@@ -166,12 +177,16 @@ class ProductUnitController extends StateNotifier<ProductUnitControllerState> {
       );
 
       // 刷新相关的Provider
+      print('🔄 刷新产品单位列表...');
       _ref.invalidate(productUnitsProvider(productId));
+      print('✅ ProductUnitController.replaceProductUnits - 替换产品单位配置完成');
     } catch (e) {
+      print('❌ ProductUnitController.replaceProductUnits - 替换失败: $e');
       state = state.copyWith(
         status: ProductUnitOperationStatus.error,
         errorMessage: '替换产品单位配置失败: ${e.toString()}',
       );
+      rethrow;
     }
   }
 

@@ -14,7 +14,7 @@ import '../../application/provider/unit_providers.dart';
 import '../../application/provider/product_unit_providers.dart';
 import '../../application/provider/barcode_providers.dart';
 import 'category_selection_screen.dart';
-import 'unit_edit_screen.dart';
+import 'add_auxiliary_unit_screen.dart';
 import '../widgets/product_image_picker.dart';
 import '../../application/category_service.dart';
 

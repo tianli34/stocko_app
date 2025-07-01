@@ -15,7 +15,8 @@ import '../../application/provider/product_unit_providers.dart';
 import '../../application/provider/barcode_providers.dart';
 import '../../application/provider/unit_edit_form_providers.dart';
 import 'category_selection_screen.dart';
-import 'unit_edit_screen.dart';
+import 'add_auxiliary_unit_screen.dart';
+import 'unit_selection_screen.dart';
 import '../widgets/product_image_picker.dart';
 import '../controllers/product_add_edit_controller.dart';
 
@@ -52,6 +53,7 @@ class _ProductAddEditScreenState extends ConsumerState<ProductAddEditScreen> {
   String? _selectedUnitId; // 添加单位选择状态
   String? _selectedImagePath; // 添加图片路径状态
   List<ProductUnit>? _productUnits; // 存储单位配置数据
+  List<Map<String, String>>? _auxiliaryUnitBarcodes; // 存储辅单位条码数据
   // 保质期单位相关
   String _shelfLifeUnit = 'months'; // 保质期单位：days, months, years
   final List<String> _shelfLifeUnitOptions = [
@@ -317,20 +319,25 @@ class _ProductAddEditScreenState extends ConsumerState<ProductAddEditScreen> {
                           children: [
                             Expanded(child: _buildUnitTypeAhead(units)),
                             const SizedBox(width: 8),
-                            TextButton.icon(
+                            IconButton(
                               onPressed: () =>
                                   _navigateToUnitSelection(context),
                               icon: const Icon(Icons.add),
-                              label: const Text('添加辅单位'),
-                              style: TextButton.styleFrom(
+                              tooltip: '添加辅单位',
+                              style: IconButton.styleFrom(
                                 backgroundColor: Theme.of(
                                   context,
                                 ).primaryColor.withOpacity(0.1),
                                 foregroundColor: Theme.of(context).primaryColor,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
                               ),
+                            ),
+                            IconButton(
+                              onPressed: () => _navigateToUnitList(),
+                              icon: const Icon(
+                                Icons.arrow_forward_ios,
+                                size: 20,
+                              ),
+                              tooltip: '选择单位',
                             ),
                           ],
                         );
@@ -348,18 +355,15 @@ class _ProductAddEditScreenState extends ConsumerState<ProductAddEditScreen> {
                             ),
                           ),
                           const SizedBox(width: 8),
-                          TextButton.icon(
+                          IconButton(
                             onPressed: () => _navigateToUnitSelection(context),
                             icon: const Icon(Icons.add),
-                            label: const Text('添加辅单位'),
-                            style: TextButton.styleFrom(
+                            tooltip: '添加辅单位',
+                            style: IconButton.styleFrom(
                               backgroundColor: Theme.of(
                                 context,
                               ).primaryColor.withOpacity(0.1),
                               foregroundColor: Theme.of(context).primaryColor,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
                             ),
                           ),
                         ],
@@ -382,18 +386,15 @@ class _ProductAddEditScreenState extends ConsumerState<ProductAddEditScreen> {
                             ),
                           ),
                           const SizedBox(width: 8),
-                          TextButton.icon(
+                          IconButton(
                             onPressed: () => _navigateToUnitSelection(context),
                             icon: const Icon(Icons.add),
-                            label: const Text('添加辅单位'),
-                            style: TextButton.styleFrom(
+                            tooltip: '添加辅单位',
+                            style: IconButton.styleFrom(
                               backgroundColor: Theme.of(
                                 context,
                               ).primaryColor.withOpacity(0.1),
                               foregroundColor: Theme.of(context).primaryColor,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
                             ),
                           ),
                         ],
@@ -955,6 +956,25 @@ class _ProductAddEditScreenState extends ConsumerState<ProductAddEditScreen> {
     }
   }
 
+  /// 导航到单位列表页
+  void _navigateToUnitList() async {
+    final Unit? selectedUnit = await Navigator.of(context).push<Unit>(
+      MaterialPageRoute(
+        builder: (context) => UnitSelectionScreen(
+          selectedUnitId: _selectedUnitId,
+          isSelectionMode: true,
+        ),
+      ),
+    );
+
+    if (selectedUnit != null) {
+      setState(() {
+        _selectedUnitId = selectedUnit.id;
+        _unitController.text = selectedUnit.name;
+      });
+    }
+  }
+
   /// 导航到单位编辑屏幕
   void _navigateToUnitSelection(BuildContext context) async {
     print('🔧 ProductAddEditScreen: 开始导航到单位编辑屏幕');
@@ -998,41 +1018,66 @@ class _ProductAddEditScreenState extends ConsumerState<ProductAddEditScreen> {
     print('🔧 ProductAddEditScreen: - 单位ID: $baseUnitId');
     print('🔧 ProductAddEditScreen: - 单位名称: $baseUnitName');
 
-    final List<ProductUnit>? result = await Navigator.of(context)
-        .push<List<ProductUnit>>(
-          MaterialPageRoute(
-            builder: (context) => UnitEditScreen(
-              productId: widget.product?.id,
-              baseUnitId: baseUnitId,
-              baseUnitName: baseUnitName,
-            ),
-          ),
+    final dynamic result = await Navigator.of(context).push<dynamic>(
+      MaterialPageRoute(
+        builder: (context) => UnitEditScreen(
+          productId: widget.product?.id,
+          baseUnitId: baseUnitId,
+          baseUnitName: baseUnitName,
+        ),
+      ),
+    );
+
+    print('🔧 ProductAddEditScreen: 从UnitEditScreen返回的结果: $result');
+
+    // 处理返回的单位配置结果
+    if (result != null) {
+      List<ProductUnit>? productUnits;
+      List<Map<String, String>>? auxiliaryBarcodes;
+
+      if (result is Map<String, dynamic>) {
+        // 新格式：包含产品单位和条码信息
+        productUnits = result['productUnits'] as List<ProductUnit>?;
+        auxiliaryBarcodes =
+            result['auxiliaryBarcodes'] as List<Map<String, String>>?;
+      } else if (result is List<ProductUnit>) {
+        // 旧格式：只有产品单位
+        productUnits = result;
+      }
+
+      if (productUnits != null && productUnits.isNotEmpty) {
+        print('🔧 ProductAddEditScreen: 接收到产品单位配置数据');
+        
+        // 保存单位配置数据到内存，等待提交时统一处理
+        _productUnits = productUnits;
+        _auxiliaryUnitBarcodes = auxiliaryBarcodes;
+
+        // 找到基础单位（换算率为1.0的单位）
+        final baseProductUnit = productUnits.firstWhere(
+          (unit) => unit.conversionRate == 1.0,
+          orElse: () => productUnits!.first, // 如果没有基础单位，使用第一个单位
         );
 
-    print(
-      '🔧 ProductAddEditScreen: 从UnitEditScreen返回的结果: $result',
-    ); // 处理返回的单位配置结果
-    if (result != null && result.isNotEmpty) {
-      // 保存单位配置数据
-      _productUnits = result;
+        print(
+          '🔧 ProductAddEditScreen: 更新表单中的单位选择为: ${baseProductUnit.unitId}',
+        );
+        print(
+          '🔧 ProductAddEditScreen: 辅单位条码数量: ${auxiliaryBarcodes?.length ?? 0}',
+        );
 
-      // 找到基础单位（换算率为1.0的单位）
-      final baseProductUnit = result.firstWhere(
-        (unit) => unit.conversionRate == 1.0,
-        orElse: () => result.first, // 如果没有基础单位，使用第一个单位
-      );
+        // 更新产品表单中的单位选择
+        setState(() {
+          _selectedUnitId = baseProductUnit.unitId;
+        });
 
-      print('🔧 ProductAddEditScreen: 更新表单中的单位选择为: ${baseProductUnit.unitId}');
-
-      // 更新产品表单中的单位选择
-      setState(() {
-        _selectedUnitId = baseProductUnit.unitId;
-      });
-
-      // 显示成功提示
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('单位配置完成'), backgroundColor: Colors.green),
-      );
+        // 显示成功提示
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('单位配置完成'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
     }
   }
 
@@ -1084,7 +1129,39 @@ class _ProductAddEditScreenState extends ConsumerState<ProductAddEditScreen> {
       return;
     }
 
+    // 辅单位换算率验证 - 检查用户在辅单位编辑页面中输入的原始数据
+    final formState = ref.read(unitEditFormProvider);
+    if (formState.auxiliaryUnits.isNotEmpty) {
+      for (final auxUnit in formState.auxiliaryUnits) {
+        // 检查辅单位名称不为空但换算率为空或无效的情况
+        // 默认换算率为0
+        if (auxUnit.unitName.trim().isNotEmpty && auxUnit.conversionRate <= 0) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('辅单位换算率不能为空'),
+              backgroundColor: Colors.red,
+            ),
+          );
+          return;
+        }
+      }
+    }
+
     try {
+      // 构建辅单位条码数据
+      List<AuxiliaryUnitBarcodeData>? auxiliaryBarcodeData;
+      if (_auxiliaryUnitBarcodes != null &&
+          _auxiliaryUnitBarcodes!.isNotEmpty) {
+        auxiliaryBarcodeData = _auxiliaryUnitBarcodes!
+            .map(
+              (item) => AuxiliaryUnitBarcodeData(
+                productUnitId: item['productUnitId']!,
+                barcode: item['barcode']!,
+              ),
+            )
+            .toList();
+      }
+
       // 构建表单数据
       final formData = ProductFormData(
         productId: widget.product?.id,
@@ -1112,6 +1189,7 @@ class _ProductAddEditScreenState extends ConsumerState<ProductAddEditScreen> {
             ? _remarksController.text.trim()
             : null,
         productUnits: _productUnits,
+        auxiliaryUnitBarcodes: auxiliaryBarcodeData,
       );
 
       // 使用控制器提交表单
