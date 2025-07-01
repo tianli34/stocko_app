@@ -11,6 +11,7 @@ import '../../../inventory/domain/model/shop.dart';
 import '../../../inventory/application/provider/shop_providers.dart';
 import '../widgets/purchase_item_card.dart';
 import '../../../../core/widgets/universal_barcode_scanner.dart';
+import '../../../../core/widgets/product_selector.dart';
 import '../../application/service/purchase_service.dart';
 import '../../../product/application/provider/product_providers.dart';
 
@@ -65,8 +66,51 @@ class _CreatePurchaseScreenState extends ConsumerState<CreatePurchaseScreen> {
   }
 
   void _addManualProduct() {
-    // 显示手动添加商品对话框，不需要条码
-    _showManualAddProductDialog('');
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => ProductSelector(
+          title: '选择货品',
+          onProductsSelected: (results) {
+            for (final result in results) {
+              _addProductWithQuantity(
+                result.product,
+                unitName: result.unitName,
+                barcode: result.barcode,
+                quantity: result.quantity,
+              );
+            }
+          },
+        ),
+      ),
+    );
+  }
+
+  /// 添加指定数量的商品到采购列表
+  void _addProductWithQuantity(dynamic product, {String? unitName, String? barcode, double quantity = 1.0}) {
+    final actualUnitName = unitName ?? _kDefaultUnitName;
+    final itemId = barcode != null ? 'item_${barcode}_${DateTime.now().millisecondsSinceEpoch}' : 'item_${DateTime.now().millisecondsSinceEpoch}';
+    
+    final purchaseItem = PurchaseItem(
+      id: itemId,
+      productId: product.id,
+      productName: product.name,
+      unitName: actualUnitName,
+      unitPrice: 0.0,
+      quantity: quantity,
+      amount: 0.0,
+      productionDate: DateTime.now(),
+    );
+
+    setState(() {
+      _purchaseItems.add(purchaseItem);
+    });
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('✓ 已添加: ${product.name} x${quantity.toInt()}'),
+        backgroundColor: Colors.green,
+      ),
+    );
   }
 
   void _scanToAddProduct() {
@@ -1001,7 +1045,6 @@ class _CreatePurchaseScreenState extends ConsumerState<CreatePurchaseScreen> {
       );
     } else {
       // 如果是新商品，创建新的采购项
-      final unitPrice = product.retailPrice ?? 0.0;
       final actualUnitName = unitName ?? _kDefaultUnitName;
       // 使用条码作为唯一标识符，如果没有条码则使用时间戳
       final itemId = barcode != null ? 'item_${barcode}_${DateTime.now().millisecondsSinceEpoch}' : 'item_${DateTime.now().millisecondsSinceEpoch}';
@@ -1011,9 +1054,9 @@ class _CreatePurchaseScreenState extends ConsumerState<CreatePurchaseScreen> {
         productId: product.id,
         productName: product.name,
         unitName: actualUnitName,
-        unitPrice: unitPrice,
+        unitPrice: 0.0,
         quantity: 1,
-        amount: unitPrice * 1,
+        amount: 0.0,
         productionDate: DateTime.now(),
       );
 
@@ -1260,9 +1303,9 @@ class _SimpleContinuousScanPageState extends State<_SimpleContinuousScanPage> {
         productId: product.id,
         productName: product.name,
         unitName: actualUnitName,
-        unitPrice: product.retailPrice ?? 0.0,
+        unitPrice: 0.0,
         quantity: 1,
-        amount: (product.retailPrice ?? 0.0) * 1,
+        amount: 0.0,
         productionDate: DateTime.now(),
       );
 

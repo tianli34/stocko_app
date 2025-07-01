@@ -467,21 +467,6 @@ class _ProductAddEditScreenState extends ConsumerState<ProductAddEditScreen> {
                     ),
                     const SizedBox(height: 16),
 
-                    // 批次管理开关
-                    Card(
-                      child: SwitchListTile(
-                        title: const Text('启用批次管理'),
-                        value: _enableBatchManagement,
-                        onChanged: (bool value) {
-                          setState(() {
-                            _enableBatchManagement = value;
-                          });
-                        },
-                        // secondary: const Icon(Icons.inventory_2),
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-
                     // 备注
                     _buildTextField(
                       controller: _remarksController,
@@ -1148,6 +1133,14 @@ class _ProductAddEditScreenState extends ConsumerState<ProductAddEditScreen> {
     }
 
     try {
+      // 根据保质期控制批次管理开关
+      final shelfLife = int.tryParse(_shelfLifeController.text.trim());
+      if (shelfLife != null && shelfLife > 0) {
+        _enableBatchManagement = true;
+      } else {
+        _enableBatchManagement = false;
+      }
+
       // 构建辅单位条码数据
       List<AuxiliaryUnitBarcodeData>? auxiliaryBarcodeData;
       if (_auxiliaryUnitBarcodes != null &&

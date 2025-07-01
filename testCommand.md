@@ -2,7 +2,7 @@
 
 
 git add .
-git commit -m "删除编辑单位页基本单位前 0 1 456"
+git commit -m "单位表、产品单位关联表、条码表写入正常"
 git push
 
 

@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../domain/model/purchase_item.dart';
+import '../../../product/application/provider/product_providers.dart';
 
 /// 采购单商品项卡片
 /// 显示商品信息、价格、数量和金额输入等
-class PurchaseItemCard extends StatefulWidget {
+class PurchaseItemCard extends ConsumerStatefulWidget {
   final PurchaseItem item;
   final ValueChanged<PurchaseItem> onUpdate;
   final VoidCallback onRemove;
@@ -16,10 +18,10 @@ class PurchaseItemCard extends StatefulWidget {
   });
 
   @override
-  State<PurchaseItemCard> createState() => _PurchaseItemCardState();
+  ConsumerState<PurchaseItemCard> createState() => _PurchaseItemCardState();
 }
 
-class _PurchaseItemCardState extends State<PurchaseItemCard> {
+class _PurchaseItemCardState extends ConsumerState<PurchaseItemCard> {
   late TextEditingController _unitPriceController;
   late TextEditingController _quantityController;
   late TextEditingController _amountController;
@@ -29,13 +31,13 @@ class _PurchaseItemCardState extends State<PurchaseItemCard> {
   void initState() {
     super.initState();
     _unitPriceController = TextEditingController(
-      text: widget.item.unitPrice.toStringAsFixed(2),
+      // text: widget.item.unitPrice.toStringAsFixed(2),
     );
     _quantityController = TextEditingController(
       text: widget.item.quantity.toStringAsFixed(0),
     );
     _amountController = TextEditingController(
-      text: widget.item.amount.toStringAsFixed(2),
+      // text: widget.item.amount.toStringAsFixed(2),
     );
     _selectedProductionDate = widget.item.productionDate;
   }
@@ -46,13 +48,13 @@ class _PurchaseItemCardState extends State<PurchaseItemCard> {
 
     // 当widget更新时，同步更新控制器的值
     if (oldWidget.item.unitPrice != widget.item.unitPrice) {
-      _unitPriceController.text = widget.item.unitPrice.toStringAsFixed(2);
+      // _unitPriceController.text = widget.item.unitPrice.toStringAsFixed(2);
     }
     if (oldWidget.item.quantity != widget.item.quantity) {
       _quantityController.text = widget.item.quantity.toStringAsFixed(0);
     }
     if (oldWidget.item.amount != widget.item.amount) {
-      _amountController.text = widget.item.amount.toStringAsFixed(2);
+      // _amountController.text = widget.item.amount.toStringAsFixed(2);
     }
     if (oldWidget.item.productionDate != widget.item.productionDate) {
       _selectedProductionDate = widget.item.productionDate;
@@ -198,6 +200,9 @@ class _PurchaseItemCardState extends State<PurchaseItemCard> {
                       ),
                       prefixText: '¥',
                     ),
+                    onTap: () {
+                      _unitPriceController.clear();
+                    },
                     onChanged: (value) => _updateItem(),
                   ),
                 ),
@@ -235,6 +240,9 @@ class _PurchaseItemCardState extends State<PurchaseItemCard> {
                       ),
                       prefixText: '¥',
                     ),
+                    onTap: () {
+                      _amountController.clear();
+                    },
                     onChanged: (value) => _updateFromAmount(),
                     style: const TextStyle(fontWeight: FontWeight.w500),
                   ),
@@ -244,42 +252,56 @@ class _PurchaseItemCardState extends State<PurchaseItemCard> {
 
             const SizedBox(height: 16),
 
-            // 第三行：生产日期选择
-            Row(
-              children: [
-                const Text('生产日期', style: TextStyle(fontSize: 14)),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: InkWell(
-                    onTap: _selectProductionDate,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 8,
-                      ),
-                      decoration: BoxDecoration(
-                        border: Border.all(color: Colors.grey.shade300),
-                        borderRadius: BorderRadius.circular(4),
-                      ),
-                      child: Row(
+            // 第三行：生产日期选择（根据enableBatchManagement决定是否显示）
+            Consumer(
+              builder: (context, ref, child) {
+                final productAsync = ref.watch(productByIdProvider(widget.item.productId));
+                return productAsync.when(
+                  data: (product) {
+                    if (product?.enableBatchManagement == true) {
+                      return Row(
                         children: [
-                          Text(
-                            _formatDate(_selectedProductionDate),
-                            style: TextStyle(
-                              fontSize: 14,
-                              color: _selectedProductionDate == null
-                                  ? Colors.grey[600]
-                                  : Colors.black,
+                          const Text('生产日期', style: TextStyle(fontSize: 14)),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: InkWell(
+                              onTap: _selectProductionDate,
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 8,
+                                ),
+                                decoration: BoxDecoration(
+                                  border: Border.all(color: Colors.grey.shade300),
+                                  borderRadius: BorderRadius.circular(4),
+                                ),
+                                child: Row(
+                                  children: [
+                                    Text(
+                                      _formatDate(_selectedProductionDate),
+                                      style: TextStyle(
+                                        fontSize: 14,
+                                        color: _selectedProductionDate == null
+                                            ? Colors.grey[600]
+                                            : Colors.black,
+                                      ),
+                                    ),
+                                    const Spacer(),
+                                    const Icon(Icons.arrow_drop_down),
+                                  ],
+                                ),
+                              ),
                             ),
                           ),
-                          const Spacer(),
-                          const Icon(Icons.arrow_drop_down),
                         ],
-                      ),
-                    ),
-                  ),
-                ),
-              ],
+                      );
+                    }
+                    return const SizedBox.shrink(); // 不显示生产日期选择器
+                  },
+                  loading: () => const SizedBox.shrink(),
+                  error: (_, __) => const SizedBox.shrink(),
+                );
+              },
             ),
           ],
         ),
