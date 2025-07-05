@@ -1,151 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:stocko_app/features/product/presentation/widgets/async_value_widget.dart';
-import 'package:stocko_app/features/product/presentation/widgets/product_details_dialog.dart';
 import '../../application/provider/product_providers.dart';
 import '../../domain/model/product.dart';
-import '../../../../core/shared_widgets/error_widget.dart';
-import '../../../../core/shared_widgets/loading_widget.dart';
-import '../widgets/product_list_tile.dart';
+import '../../../../core/widgets/product_list/product_list.dart';
 import '../../../../core/constants/app_routes.dart';
 
-/// 产品列表页面
-/// 展示如何使用 ProductListTile 组件
 class ProductListScreen extends ConsumerWidget {
   const ProductListScreen({super.key});
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final productsAsyncValue = ref.watch(allProductsProvider);
-    final operationsState = ref.watch(productOperationsProvider);
 
-    // 监听操作结果
-    ref.listen<AsyncValue<void>>(productOperationsProvider, (previous, next) {
-      if (!context.mounted) return; // 在回调开始时检查
-
-      next.when(
-        data: (data) {
-          // 操作成功
-          if (previous?.isLoading == true) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('操作成功'),
-                backgroundColor: Colors.green,
-              ),
-            );
-          }
-        },
-        loading: () {
-          // 加载中状态，不需要特殊处理
-        },
-        error: (error, stackTrace) {
-          // 操作失败
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(error.toString()),
-              backgroundColor: Colors.red,
-            ),
-          );
-        },
-      );
-    });
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('产品列表'),
-        // go_router会自动显示返回按钮并支持手势导航
-        actions: [
-          IconButton(
-            onPressed: () {
-              context.push(AppRoutes.productNew);
-            },
-            icon: const Icon(Icons.add),
-            tooltip: '添加产品',
-          ),
-        ],
-      ),
-      body: Column(
-        children: [
-          operationsState.isLoading
-              ? const LinearProgressIndicator()
-              : const SizedBox.shrink(), // 使用 SizedBox.shrink() 代替 if
-          // 产品列表
-          Expanded(
-            child: AsyncValueWidget<List<Product>>(
-              value: productsAsyncValue,
-              data: (products) => _buildProductList(context, ref, products),
-              loading: const LoadingWidget(message: '加载产品列表中...'),
-              error: (error, stackTrace) => CustomErrorWidget(
-                message: '加载产品列表失败',
-                onRetry: () => ref.invalidate(allProductsProvider),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  /// 构建产品列表
-  Widget _buildProductList(
-    BuildContext context,
-    WidgetRef ref,
-    List<Product> products,
-  ) {
-    if (products.isEmpty) {
-      return const EmptyStateWidget(
-        message: '暂无产品数据',
-        icon: Icons.inventory_2_outlined,
-      );
-    }
-
-    return RefreshIndicator(
-      onRefresh: () async {
-        ref.invalidate(allProductsProvider);
-      },
-      child: ListView.builder(
-        padding: const EdgeInsets.symmetric(vertical: 8),
-        itemCount: products.length,
-        itemBuilder: (context, index) {
-          final product = products[index];
-          return ProductListTile(
-            product: product,
-            onTap: () => _showProductDetails(context, product),
-            onEdit: () => _editProduct(context, product),
-            onDelete: () => _deleteProduct(context, ref, product),
-          );
-        },
-      ),
-    );
-  }
-
-  /// 显示产品详情
-  void _showProductDetails(BuildContext context, Product product) {
-    showDialog(
-      context: context,
-      builder: (context) => ProductDetailsDialog(product: product),
-    );
-  }
-
-  /// 编辑产品
-  void _editProduct(BuildContext context, Product product) {
-    context.push(AppRoutes.productEditPath(product.id));
-  }
-
-  /// 删除产品
-  void _deleteProduct(
-    BuildContext context,
-    WidgetRef ref,
-    Product product,
-  ) async {
-    print('🖥️ UI层：开始删除产品 "${product.name}"，ID: ${product.id}');
-
-    if (!context.mounted) return; // 在异步操作前检查
-    // 显示确认对话框
-    final shouldDelete = await showDialog<bool>(
+  Future<void> _showDeleteConfirmDialog(BuildContext context, WidgetRef ref, Product product) async {
+    final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('确认删除'),
-        content: Text('确定要删除产品 "${product.name}" 吗？此操作不可恢复。'),
+        content: Text('确定要删除货品「${product.name}」吗？'),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
@@ -153,74 +22,58 @@ class ProductListScreen extends ConsumerWidget {
           ),
           TextButton(
             onPressed: () => Navigator.of(context).pop(true),
-            style: TextButton.styleFrom(foregroundColor: Colors.red),
-            child: const Text('删除'),
+            child: const Text('删除', style: TextStyle(color: Colors.red)),
           ),
         ],
       ),
     );
-    print('🖥️ UI层：用户确认结果: $shouldDelete');
-    if (shouldDelete == true) {
-      print('🖥️ UI层：开始执行删除操作...');
-      final operationsNotifier = ref.read(productOperationsProvider.notifier);
-
-      // 执行删除操作
-      await operationsNotifier.deleteProduct(product.id);
-
-      print('🖥️ UI层：删除操作完成，开始刷新列表');
-    } else {
-      print('🖥️ UI层：删除操作被取消或产品ID为空');
+    
+    if (confirmed == true) {
+      await ref.read(productOperationsProvider.notifier).deleteProduct(product.id);
     }
   }
-}
-
-/// 产品详情对话框
-
-/// 产品网格列表（可选的展示方式）
-class ProductGridPage extends ConsumerWidget {
-  const ProductGridPage({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final productsAsyncValue = ref.watch(allProductsProvider);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('产品网格')),
-      body: AsyncValueWidget<List<Product>>(
-        value: productsAsyncValue,
+      appBar: AppBar(
+        title: const Text('货品列表'),
+        actions: [
+          IconButton(
+            onPressed: () => context.push(AppRoutes.productNew),
+            icon: const Icon(Icons.add),
+          ),
+        ],
+      ),
+      body: productsAsyncValue.when(
         data: (products) {
-          // 如果产品列表为空，显示空状态
-          if (products.isEmpty) {
-            return const EmptyStateWidget(
-              message: '暂无产品数据',
-              icon: Icons.inventory_2_outlined,
-            );
+          print('📊 产品列表数据:');
+          for (final product in products) {
+            print('  - ${product.name}: unitId=${product.unitId}');
           }
-
-          // 否则显示网格列表
-          return GridView.builder(
-            padding: const EdgeInsets.all(16),
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 2,
-              crossAxisSpacing: 16,
-              mainAxisSpacing: 16,
-              childAspectRatio: 0.8,
-            ),
-            itemCount: products.length,
-            itemBuilder: (context, index) {
-              final product = products[index];
-              return SimpleProductListTile(
-                product: product,
-                onTap: () =>
-                    context.push(AppRoutes.productEditPath(product.id)),
-              );
-            },
+          final sortedProducts = [...products]..sort((a, b) => 
+            (b.lastUpdated ?? DateTime.fromMillisecondsSinceEpoch(int.tryParse(b.id) ?? 0))
+            .compareTo(a.lastUpdated ?? DateTime.fromMillisecondsSinceEpoch(int.tryParse(a.id) ?? 0)));
+          return ProductList(
+            data: sortedProducts,
+            onEdit: (product) => context.push(AppRoutes.productEditPath(product.id)),
+            onDelete: (product) => _showDeleteConfirmDialog(context, ref, product),
           );
         },
-        loading: const LoadingWidget(message: '加载产品列表中...'),
-        error: (error, stackTrace) => CustomErrorWidget(
-          message: '加载产品列表失败',
-          onRetry: () => ref.invalidate(allProductsProvider),
+        loading: () => const Center(child: CircularProgressIndicator()),
+        error: (error, stack) => Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text('加载失败: $error'),
+              ElevatedButton(
+                onPressed: () => ref.invalidate(allProductsProvider),
+                child: const Text('重试'),
+              ),
+            ],
+          ),
         ),
       ),
     );

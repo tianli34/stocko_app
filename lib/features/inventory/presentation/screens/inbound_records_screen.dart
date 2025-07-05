@@ -17,11 +17,7 @@ class InboundRecordsScreen extends ConsumerWidget {
       appBar: AppBar(
         title: const Text('入库记录'),
         centerTitle: true,
-        leading: IconButton(
-          onPressed: () => context.go(AppRoutes.inventory),
-          icon: const Icon(Icons.arrow_back),
-          tooltip: '返回',
-        ),
+
         backgroundColor: Theme.of(context).colorScheme.surface,
         foregroundColor: Theme.of(context).colorScheme.onSurface,
         elevation: 0,
@@ -92,7 +88,7 @@ class InboundRecordsScreen extends ConsumerWidget {
       ),
       // 悬浮操作按钮 - 查询库存
       floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => context.go(AppRoutes.inventoryQuery),
+        onPressed: () => context.push(AppRoutes.inventoryQuery),
         icon: const Icon(Icons.search),
         label: const Text('查询库存'),
         backgroundColor: Theme.of(context).colorScheme.primary,

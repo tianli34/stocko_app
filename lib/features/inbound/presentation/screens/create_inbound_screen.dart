@@ -3,8 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:drift/drift.dart' as drift;
 import 'package:go_router/go_router.dart';
 import '../../../../core/constants/app_routes.dart';
-import '../../../../core/widgets/home_button.dart';
 import '../../../../core/widgets/universal_barcode_scanner.dart';
+import '../../../../core/widgets/product_list/index.dart';
 import '../../domain/model/inbound_item.dart';
 import '../widgets/inbound_item_card.dart';
 import '../../../inventory/application/provider/shop_providers.dart';
@@ -27,35 +27,7 @@ class _CreateInboundScreenState extends ConsumerState<CreateInboundScreen> {
   final _remarksController = TextEditingController();
   bool _continuousScanMode = false; // 连续扫码模式开关，默认关闭
 
-  // 模拟入库项目数据
-  final List<InboundItem> _inboundItems = [
-    InboundItem.create(
-      receiptId: 'receipt_001',
-      productId: 'prod_001',
-      productName: '商品A',
-      productSpec: '红色S码',
-      productImage: null,
-      quantity: 98.0,
-      unitId: 'unit_001',
-      productionDate: DateTime(2023, 1, 1),
-      locationId: 'loc_001',
-      locationName: 'A-01-01',
-      purchaseQuantity: 100.0,
-    ),
-    InboundItem.create(
-      receiptId: 'receipt_001',
-      productId: 'prod_002',
-      productName: '商品B',
-      productSpec: '蓝色M码',
-      productImage: null,
-      quantity: 50.0,
-      unitId: 'unit_002',
-      productionDate: null,
-      locationId: null,
-      locationName: null,
-      purchaseQuantity: null, // 无采购数量显示为 --
-    ),
-  ];
+  final List<InboundItem> _inboundItems = [];
 
   @override
   void dispose() {
@@ -78,11 +50,85 @@ class _CreateInboundScreenState extends ConsumerState<CreateInboundScreen> {
     });
   }
 
-  void _addManualProduct() {
-    // TODO: 实现手动添加商品功能
-    ScaffoldMessenger.of(
+  void _addManualProduct() async {
+    final products = await ref.read(allProductsProvider.future);
+    List<dynamic> selectedIds = [];
+
+    Navigator.push(
       context,
-    ).showSnackBar(const SnackBar(content: Text('手动添加商品功能待实现')));
+      MaterialPageRoute(
+        builder: (context) => StatefulBuilder(
+          builder: (context, setState) => Scaffold(
+            appBar: AppBar(
+              title: Text(
+                '选择商品${selectedIds.isNotEmpty ? ' (${selectedIds.length})' : ''}',
+              ),
+              leading: IconButton(
+                icon: const Icon(Icons.arrow_back),
+                onPressed: () => Navigator.pop(context),
+              ),
+              actions: selectedIds.isNotEmpty
+                  ? [
+                      TextButton(
+                        onPressed: () {
+                          Navigator.pop(context);
+                          for (final id in selectedIds) {
+                            final product = products.firstWhere(
+                              (p) => p.id == id,
+                            );
+                            _addProductToInbound(product);
+                          }
+                        },
+                        child: const Text('确认'),
+                      ),
+                    ]
+                  : null,
+            ),
+            body: ProductList(
+              data: products,
+              mode: 'select',
+              selectedIds: selectedIds,
+              onSelectionChange: (newSelectedIds) {
+                setState(() {
+                  selectedIds = newSelectedIds;
+                });
+              },
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _addProductToInbound(Product product) {
+    final now = DateTime.now();
+    final inboundItem = InboundItem(
+      id: DateTime.now().millisecondsSinceEpoch.toString(),
+      receiptId: '',
+      productId: product.id,
+      productName: product.name,
+      productSpec: product.specification ?? '',
+      productImage: product.image,
+      quantity: 1.0,
+      unitId: product.unitId ?? 'default_unit',
+      productionDate: product.enableBatchManagement ? DateTime.now() : null,
+      locationId: null,
+      locationName: null,
+      purchaseQuantity: 0.0,
+      createdAt: now,
+      updatedAt: now,
+    );
+
+    setState(() {
+      _inboundItems.add(inboundItem);
+    });
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('已添加商品: ${product.name}'),
+        backgroundColor: Colors.green,
+      ),
+    );
   }
 
   void _scanToAddProduct() async {
@@ -527,17 +573,54 @@ class _CreateInboundScreenState extends ConsumerState<CreateInboundScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   // 入库项目列表
-                  ..._inboundItems.map(
-                    (item) => Padding(
-                      padding: const EdgeInsets.only(bottom: 16),
-                      child: InboundItemCard(
-                        item: item,
-                        onUpdate: (updatedItem) =>
-                            _updateInboundItem(item.id, updatedItem),
-                        onRemove: () => _removeInboundItem(item.id),
+                  if (_inboundItems.isEmpty)
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(32),
+                      margin: const EdgeInsets.only(bottom: 16),
+                      decoration: BoxDecoration(
+                        border: Border.all(color: Colors.grey.shade300),
+                        borderRadius: BorderRadius.circular(8),
+                        color: Colors.grey.shade50,
                       ),
-                    ),
-                  ), // 添加商品按钮区域
+                      child: Column(
+                        children: [
+                          Icon(
+                            Icons.inventory_2_outlined,
+                            size: 48,
+                            color: Colors.grey.shade400,
+                          ),
+                          const SizedBox(height: 12),
+                          Text(
+                            '暂无货品',
+                            style: TextStyle(
+                              fontSize: 16,
+                              color: Colors.grey.shade600,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            '请使用下方按钮添加商品',
+                            style: TextStyle(
+                              fontSize: 14,
+                              color: Colors.grey.shade500,
+                            ),
+                          ),
+                        ],
+                      ),
+                    )
+                  else
+                    ..._inboundItems.map(
+                      (item) => Padding(
+                        padding: const EdgeInsets.only(bottom: 16),
+                        child: InboundItemCard(
+                          item: item,
+                          onUpdate: (updatedItem) =>
+                              _updateInboundItem(item.id, updatedItem),
+                          onRemove: () => _removeInboundItem(item.id),
+                        ),
+                      ),
+                    ), // 添加商品按钮区域
                   Container(
                     width: double.infinity,
                     padding: const EdgeInsets.all(16),
@@ -701,7 +784,7 @@ class _CreateInboundScreenState extends ConsumerState<CreateInboundScreen> {
                       Expanded(
                         child: TextField(
                           controller: _remarksController,
-                          maxLines: 3,
+                          maxLines: 1,
                           decoration: const InputDecoration(
                             hintText: '可输入特殊情况说明...',
                             border: OutlineInputBorder(),
@@ -772,14 +855,6 @@ class _CreateInboundScreenState extends ConsumerState<CreateInboundScreen> {
                     ),
                     child: const Text('提 交 入 库'),
                   ),
-                ),
-
-                const SizedBox(height: 16),
-
-                // 主页按钮
-                const HomeButton.compact(
-                  width: double.infinity,
-                  customLabel: '返回主页',
                 ),
               ],
             ),

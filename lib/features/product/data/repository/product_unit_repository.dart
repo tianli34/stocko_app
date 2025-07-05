@@ -205,6 +205,10 @@ class ProductUnitRepository implements IProductUnitRepository {
 
   /// 将ProductUnit模型转换为数据库Companion
   ProductUnitsTableCompanion _productUnitToCompanion(ProductUnit productUnit) {
+    print('=== 保存售价数据 ===');
+    print('ProductUnit ID: ${productUnit.productUnitId}');
+    print('SELLING PRICE: ${productUnit.sellingPrice}');
+    print('==================');
     return ProductUnitsTableCompanion(
       productUnitId: Value(productUnit.productUnitId),
       productId: Value(productUnit.productId),

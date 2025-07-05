@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../../core/shared_widgets/shared_widgets.dart';
 import '../../application/category_sample_data_service.dart';
 import '../screens/category_selection_screen.dart';
 
@@ -24,32 +25,16 @@ class DeleteCategoryExamplePage extends ConsumerWidget {
               if (value == 'create_sample') {
                 try {
                   await sampleDataService.createSampleCategories();
-                  if (context.mounted) {
-                    ScaffoldMessenger.of(
-                      context,
-                    ).showSnackBar(const SnackBar(content: Text('示例数据创建成功')));
-                  }
+                  ToastService.success('✅ 示例数据创建成功');
                 } catch (e) {
-                  if (context.mounted) {
-                    ScaffoldMessenger.of(
-                      context,
-                    ).showSnackBar(SnackBar(content: Text('创建示例数据失败: $e')));
-                  }
+                  ToastService.error('❌ 创建示例数据失败: $e');
                 }
               } else if (value == 'clear_all') {
                 try {
                   await sampleDataService.clearAllCategories();
-                  if (context.mounted) {
-                    ScaffoldMessenger.of(
-                      context,
-                    ).showSnackBar(const SnackBar(content: Text('所有数据已清除')));
-                  }
+                  ToastService.success('✅ 所有数据已清除');
                 } catch (e) {
-                  if (context.mounted) {
-                    ScaffoldMessenger.of(
-                      context,
-                    ).showSnackBar(SnackBar(content: Text('清除数据失败: $e')));
-                  }
+                  ToastService.error('❌ 清除数据失败: $e');
                 }
               }
             },

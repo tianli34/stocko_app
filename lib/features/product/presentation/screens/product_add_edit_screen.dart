@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_typeahead/flutter_typeahead.dart';
 import '../../../../core/services/barcode_scanner_service.dart';
+import '../../../../core/shared_widgets/shared_widgets.dart';
 import '../../domain/model/product.dart';
 import '../../domain/model/category.dart';
 import '../../domain/model/unit.dart';
@@ -20,10 +21,10 @@ import 'unit_selection_screen.dart';
 import '../widgets/product_image_picker.dart';
 import '../controllers/product_add_edit_controller.dart';
 
-/// 产品添加/编辑页面
+/// 货品添加/编辑页面
 /// 表单页面，提交时调用 ref.read(productOperationsProvider.notifier).addProduct(...)
 class ProductAddEditScreen extends ConsumerStatefulWidget {
-  final Product? product; // 如果传入产品则为编辑模式，否则为新增模式
+  final Product? product; // 如果传入货品则为编辑模式，否则为新增模式
 
   const ProductAddEditScreen({super.key, this.product});
 
@@ -114,12 +115,12 @@ class _ProductAddEditScreenState extends ConsumerState<ProductAddEditScreen> {
         product?.enableBatchManagement ?? false; // 初始化批次管理开关
   }
 
-  /// 加载现有产品的主条码
+  /// 加载现有货品的主条码
   void _loadExistingMainBarcode() async {
     if (widget.product?.id == null) return;
 
     try {
-      // 获取产品的所有单位配置
+      // 获取货品的所有单位配置
       final productUnitController = ref.read(
         productUnitControllerProvider.notifier,
       );
@@ -197,16 +198,19 @@ class _ProductAddEditScreenState extends ConsumerState<ProductAddEditScreen> {
     final isEdit = widget.product != null;
     return Scaffold(
       appBar: AppBar(
-        title: Text(isEdit ? '编辑产品' : '添加产品'),
+        title: Text(isEdit ? '编辑货品' : '添加货品'),
         elevation: 0,
         actions: [
           if (isEdit)
             IconButton(
-              icon: const Icon(Icons.delete, color: Colors.red),
+              icon: const Icon(
+                Icons.delete,
+                color: Color.fromARGB(255, 95, 54, 244),
+              ),
               onPressed: operationsState.isLoading
                   ? null
                   : _showDeleteConfirmation,
-              tooltip: '删除产品',
+              tooltip: '删除货品',
             ),
         ],
       ),
@@ -224,7 +228,7 @@ class _ProductAddEditScreenState extends ConsumerState<ProductAddEditScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // 产品图片选择器
+                    // 货品图片选择器
                     Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -251,10 +255,9 @@ class _ProductAddEditScreenState extends ConsumerState<ProductAddEditScreen> {
 
                     _buildTextField(
                       controller: _nameController,
-                      label: '产品名称',
-                      hint: '请输入产品名称',
+                      label: '名称',
+                      hint: '请输入货品名称',
                       required: true,
-                      // icon: Icons.inventory_2,
                     ),
                     const SizedBox(height: 16),
 
@@ -264,8 +267,7 @@ class _ProductAddEditScreenState extends ConsumerState<ProductAddEditScreen> {
                           child: _buildTextField(
                             controller: _barcodeController,
                             label: '条码',
-                            hint: '请输入产品条码',
-                            // icon: Icons.qr_code,
+                            hint: '请输入货品条码',
                           ),
                         ),
                         const SizedBox(width: 8),
@@ -297,7 +299,7 @@ class _ProductAddEditScreenState extends ConsumerState<ProductAddEditScreen> {
                         IconButton(
                           onPressed: () =>
                               _navigateToCategorySelection(context),
-                          icon: const Icon(Icons.settings),
+                          icon: const Icon(Icons.arrow_forward_ios),
                           tooltip: '管理类别',
                           style: IconButton.styleFrom(
                             backgroundColor: Theme.of(
@@ -407,7 +409,6 @@ class _ProductAddEditScreenState extends ConsumerState<ProductAddEditScreen> {
                       label: '零售价',
                       hint: '请输入零售价',
                       keyboardType: TextInputType.number,
-                      // icon: Icons.attach_money,
                       prefixText: '¥ ',
                     ),
                     const SizedBox(height: 16),
@@ -420,7 +421,6 @@ class _ProductAddEditScreenState extends ConsumerState<ProductAddEditScreen> {
                             label: '促销价',
                             hint: '请输入促销价',
                             keyboardType: TextInputType.number,
-                            // icon: Icons.local_offer,
                             prefixText: '¥ ',
                           ),
                         ),
@@ -431,7 +431,6 @@ class _ProductAddEditScreenState extends ConsumerState<ProductAddEditScreen> {
                             label: '建议零售价',
                             hint: '请输入建议零售价',
                             keyboardType: TextInputType.number,
-                            // icon: Icons.sell,
                             prefixText: '¥ ',
                           ),
                         ),
@@ -444,7 +443,6 @@ class _ProductAddEditScreenState extends ConsumerState<ProductAddEditScreen> {
                       label: '库存预警值',
                       hint: '请输入库存预警值',
                       keyboardType: TextInputType.number,
-                      // icon: Icons.warning_amber,
                     ),
                     const SizedBox(height: 16),
 
@@ -472,7 +470,6 @@ class _ProductAddEditScreenState extends ConsumerState<ProductAddEditScreen> {
                       controller: _remarksController,
                       label: '备注',
                       hint: '请输入备注信息',
-                      // icon: Icons.note,
                       maxLines: 1,
                     ),
                     const SizedBox(height: 80), // 为底部按钮留出空间
@@ -506,7 +503,7 @@ class _ProductAddEditScreenState extends ConsumerState<ProductAddEditScreen> {
                       child: CircularProgressIndicator(strokeWidth: 2),
                     )
                   : Text(
-                      isEdit ? '更新产品' : '添加产品',
+                      isEdit ? '更新货品' : '添加货品',
                       style: const TextStyle(fontSize: 16),
                     ),
             ),
@@ -600,15 +597,7 @@ class _ProductAddEditScreenState extends ConsumerState<ProductAddEditScreen> {
         return Future.value(filtered);
       },
       itemBuilder: (context, Category suggestion) {
-        return ListTile(
-          // leading: Icon(
-          //   suggestion.id == 'null'
-          //       ? Icons.not_listed_location
-          //       : Icons.category,
-          //   color: suggestion.id == 'null' ? Colors.grey : null,
-          // ),
-          title: Text(suggestion.name),
-        );
+        return ListTile(title: Text(suggestion.name));
       },
       onSelected: (Category suggestion) {
         setState(() {
@@ -650,9 +639,8 @@ class _ProductAddEditScreenState extends ConsumerState<ProductAddEditScreen> {
             setState(() {});
           },
           decoration: InputDecoration(
-            labelText: '产品类别',
-            hintText: '请输入或选择产品类别（可直接输入新类别）',
-            // prefixIcon: const Icon(Icons.category),
+            labelText: '类别',
+            hintText: '请输入或选择货品类别（可直接输入新类别）',
             border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
@@ -726,10 +714,7 @@ class _ProductAddEditScreenState extends ConsumerState<ProductAddEditScreen> {
         return Future.value(filtered);
       },
       itemBuilder: (context, Unit suggestion) {
-        return ListTile(
-          // leading: const Icon(Icons.straighten),
-          title: Text(suggestion.name),
-        );
+        return ListTile(title: Text(suggestion.name));
       },
       onSelected: (Unit suggestion) {
         setState(() {
@@ -785,9 +770,8 @@ class _ProductAddEditScreenState extends ConsumerState<ProductAddEditScreen> {
             setState(() {});
           },
           decoration: InputDecoration(
-            labelText: '计量单位 *',
-            hintText: '请输入或选择计量单位（可直接输入新单位）',
-            // prefixIcon: const Icon(Icons.straighten),
+            labelText: '基本单位 *',
+            hintText: '请输入或选择基本单位（可直接输入新单位）',
             border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
@@ -893,7 +877,7 @@ class _ProductAddEditScreenState extends ConsumerState<ProductAddEditScreen> {
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('确认删除'),
-        content: Text('确定要删除产品 "${widget.product!.name}" 吗？此操作不可恢复。'),
+        content: Text('确定要删除货品 "${widget.product!.name}" 吗？此操作不可恢复。'),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
@@ -924,6 +908,9 @@ class _ProductAddEditScreenState extends ConsumerState<ProductAddEditScreen> {
 
   /// 导航到类别选择屏幕
   void _navigateToCategorySelection(BuildContext context) async {
+    // 在导航前刷新类别数据，确保显示最新的类别列表
+    await ref.read(categoryListProvider.notifier).loadCategories();
+
     final Category? selectedCategory = await Navigator.of(context)
         .push<Category>(
           MaterialPageRoute(
@@ -963,7 +950,7 @@ class _ProductAddEditScreenState extends ConsumerState<ProductAddEditScreen> {
   /// 导航到单位编辑屏幕
   void _navigateToUnitSelection(BuildContext context) async {
     print('🔧 ProductAddEditScreen: 开始导航到单位编辑屏幕');
-    print('🔧 ProductAddEditScreen: 产品ID = ${widget.product?.id}');
+    print('🔧 ProductAddEditScreen: 货品ID = ${widget.product?.id}');
     print('🔧 ProductAddEditScreen: 当前选中的单位ID = $_selectedUnitId');
     print(
       '🔧 ProductAddEditScreen: 当前单位控制器文本 = ${_unitController.text}',
@@ -1021,18 +1008,18 @@ class _ProductAddEditScreenState extends ConsumerState<ProductAddEditScreen> {
       List<Map<String, String>>? auxiliaryBarcodes;
 
       if (result is Map<String, dynamic>) {
-        // 新格式：包含产品单位和条码信息
+        // 新格式：包含货品单位和条码信息
         productUnits = result['productUnits'] as List<ProductUnit>?;
         auxiliaryBarcodes =
             result['auxiliaryBarcodes'] as List<Map<String, String>>?;
       } else if (result is List<ProductUnit>) {
-        // 旧格式：只有产品单位
+        // 旧格式：只有货品单位
         productUnits = result;
       }
 
       if (productUnits != null && productUnits.isNotEmpty) {
-        print('🔧 ProductAddEditScreen: 接收到产品单位配置数据');
-        
+        print('🔧 ProductAddEditScreen: 接收到货品单位配置数据');
+
         // 保存单位配置数据到内存，等待提交时统一处理
         _productUnits = productUnits;
         _auxiliaryUnitBarcodes = auxiliaryBarcodes;
@@ -1050,18 +1037,13 @@ class _ProductAddEditScreenState extends ConsumerState<ProductAddEditScreen> {
           '🔧 ProductAddEditScreen: 辅单位条码数量: ${auxiliaryBarcodes?.length ?? 0}',
         );
 
-        // 更新产品表单中的单位选择
+        // 更新货品表单中的单位选择
         setState(() {
           _selectedUnitId = baseProductUnit.unitId;
         });
 
         // 显示成功提示
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('单位配置完成'),
-            backgroundColor: Colors.green,
-          ),
-        );
+        ToastService.success('✅ 单位配置完成');
       }
     }
   }
@@ -1080,23 +1062,11 @@ class _ProductAddEditScreenState extends ConsumerState<ProductAddEditScreen> {
         });
 
         // 显示成功提示
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('条码扫描成功: $barcode'),
-            backgroundColor: Colors.green,
-            duration: const Duration(seconds: 2),
-          ),
-        );
+        ToastService.success('✅ 条码扫描成功: $barcode');
       }
     } catch (e) {
       // 显示错误提示
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('扫码失败: $e'),
-          backgroundColor: Colors.red,
-          duration: const Duration(seconds: 3),
-        ),
-      );
+      ToastService.error('❌ 扫码失败: $e');
     }
   }
 
@@ -1108,9 +1078,7 @@ class _ProductAddEditScreenState extends ConsumerState<ProductAddEditScreen> {
 
     // 单位验证 - 只在提交时验证
     if (_unitController.text.trim().isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('计量单位不能为空'), backgroundColor: Colors.red),
-      );
+      ToastService.error('❌ 基本单位不能为空');
       return;
     }
 
@@ -1121,12 +1089,7 @@ class _ProductAddEditScreenState extends ConsumerState<ProductAddEditScreen> {
         // 检查辅单位名称不为空但换算率为空或无效的情况
         // 默认换算率为0
         if (auxUnit.unitName.trim().isNotEmpty && auxUnit.conversionRate <= 0) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('辅单位换算率不能为空'),
-              backgroundColor: Colors.red,
-            ),
-          );
+          ToastService.error('❌ 辅单位换算率不能为空');
           return;
         }
       }
@@ -1192,29 +1155,17 @@ class _ProductAddEditScreenState extends ConsumerState<ProductAddEditScreen> {
       if (mounted) {
         if (result.success) {
           // 显示成功消息
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(result.message ?? '操作成功'),
-              backgroundColor: Colors.green,
-            ),
-          );
+          ToastService.success('✅ ${result.message ?? '操作成功'}');
           // 返回上一页
           context.pop();
         } else {
           // 显示错误消息
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(result.message ?? '操作失败'),
-              backgroundColor: Colors.red,
-            ),
-          );
+          ToastService.error('❌ ${result.message ?? '操作失败'}');
         }
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('操作失败: $e'), backgroundColor: Colors.red),
-        );
+        ToastService.error('❌ 操作失败: $e');
       }
     }
   }

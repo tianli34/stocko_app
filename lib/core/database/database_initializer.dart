@@ -360,13 +360,22 @@ class DatabaseInitializer {
   /// 重置所有数据（仅用于开发/测试）
   Future<void> resetAllData() async {
     await _database.transaction(() async {
+      // 删除业务数据表
+      await _database.delete(_database.inboundReceiptItemsTable).go();
+      await _database.delete(_database.inboundReceiptsTable).go();
+      await _database.delete(_database.purchasesTable).go();
+      await _database.delete(_database.inventoryTransactionsTable).go();
+      await _database.delete(_database.inventoryTable).go();
+      await _database.delete(_database.batchesTable).go();
+      await _database.delete(_database.suppliersTable).go();
+      
+      // 删除基础数据表
       await _database.delete(_database.barcodesTable).go();
       await _database.delete(_database.productUnitsTable).go();
       await _database.delete(_database.productsTable).go();
       await _database.delete(_database.shopsTable).go();
       await _database.delete(_database.categoriesTable).go();
       await _database.delete(_database.unitsTable).go();
-      // 继续删除其他表的数据
     });
 
     await initializeAllDefaults();

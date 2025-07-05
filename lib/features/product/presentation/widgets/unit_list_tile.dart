@@ -41,20 +41,9 @@ class UnitListTile extends ConsumerWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // 头部信息：名称和图标
+              // 头部信息：名称
               Row(
                 children: [
-                  CircleAvatar(
-                    backgroundColor: isSelected
-                        ? Theme.of(context).primaryColor
-                        : Colors.grey.shade300,
-                    child: Icon(
-                      Icons.straighten,
-                      color: isSelected ? Colors.white : Colors.grey.shade600,
-                      size: 20,
-                    ),
-                  ),
-                  const SizedBox(width: 12),
                   Expanded(
                     child: Text(
                       unit.name,
@@ -95,18 +84,7 @@ class UnitListTile extends ConsumerWidget {
 
   /// 构建单位信息
   Widget _buildUnitInfo(BuildContext context) {
-    return Row(
-      children: [
-        Icon(Icons.tag, size: 16, color: Colors.grey.shade600),
-        const SizedBox(width: 4),
-        Text(
-          'ID: ${unit.id}',
-          style: Theme.of(
-            context,
-          ).textTheme.bodySmall?.copyWith(color: Colors.grey.shade600),
-        ),
-      ],
-    );
+    return const SizedBox.shrink();
   }
 
   /// 构建操作按钮
@@ -195,25 +173,12 @@ class SimpleUnitListTile extends StatelessWidget {
   Widget build(BuildContext context) {
     return ListTile(
       onTap: onTap,
-      leading: CircleAvatar(
-        backgroundColor: isSelected
-            ? Theme.of(context).primaryColor.withOpacity(0.2)
-            : Colors.grey.shade200,
-        child: Icon(
-          Icons.straighten,
-          color: isSelected
-              ? Theme.of(context).primaryColor
-              : Colors.grey.shade600,
-          size: 20,
-        ),
-      ),
       title: Text(
         unit.name,
         style: TextStyle(
           fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
         ),
       ),
-      subtitle: Text('ID: ${unit.id}', style: const TextStyle(fontSize: 12)),
       trailing: isSelected
           ? Icon(Icons.check_circle, color: Theme.of(context).primaryColor)
           : null,

@@ -123,10 +123,15 @@ class _UniversalBarcodeScannerState extends State<UniversalBarcodeScanner> {
           // 底部操作区域
           Expanded(
             flex: 1,
-            child: Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(24.0),
-              child: _buildBottomContent(),
+            child: SingleChildScrollView(
+              child: Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24.0,
+                  vertical: 12.0,
+                ),
+                child: _buildBottomContent(),
+              ),
             ),
           ),
         ],
@@ -292,30 +297,41 @@ class _UniversalBarcodeScannerState extends State<UniversalBarcodeScanner> {
     required String label,
     required VoidCallback onPressed,
   }) {
-    return GestureDetector(
-      onTap: onPressed,
-      child: Column(
-        children: [
-          Container(
-            decoration: BoxDecoration(
-              color: widget.config.foregroundColor?.withOpacity(0.2),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: IconButton(
-              onPressed: onPressed,
-              icon: Icon(icon, color: widget.config.foregroundColor),
-              iconSize: 28,
-            ),
+    return Flexible(
+      child: GestureDetector(
+        onTap: onPressed,
+        child: Container(
+          constraints: const BoxConstraints(maxWidth: 80),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 32,
+                height: 32,
+                decoration: BoxDecoration(
+                  color: widget.config.foregroundColor?.withOpacity(0.2),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Icon(
+                  icon,
+                  color: widget.config.foregroundColor,
+                  size: 20,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                label,
+                style: TextStyle(
+                  color: widget.config.foregroundColor,
+                  fontSize: 10,
+                ),
+                textAlign: TextAlign.center,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ],
           ),
-          const SizedBox(height: 8),
-          Text(
-            label,
-            style: TextStyle(
-              color: widget.config.foregroundColor,
-              fontSize: 12,
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }

@@ -56,7 +56,7 @@ class _CategorySelectionScreenState
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.category_outlined, size: 64, color: Colors.grey),
+                  // Icon(Icons.category_outlined, size: 64, color: Colors.grey),
                   SizedBox(height: 16),
                   Text(
                     '暂无类别',
@@ -146,18 +146,6 @@ class _CategorySelectionScreenState
             ? Theme.of(context).primaryColor.withOpacity(0.1)
             : null,
         child: ListTile(
-          leading: CircleAvatar(
-            backgroundColor: isSelected
-                ? Theme.of(context).primaryColor
-                : isSubCategory
-                ? Colors.grey.shade400
-                : Colors.grey.shade300,
-            child: Icon(
-              isSubCategory ? Icons.subdirectory_arrow_right : Icons.category,
-              color: isSelected ? Colors.white : Colors.grey.shade600,
-              size: isSubCategory ? 18 : 20,
-            ),
-          ),
           title: Row(
             children: [
               // 展开/收起图标（只对有子类别的类别显示）
@@ -232,9 +220,18 @@ class _CategorySelectionScreenState
                     value: 'delete',
                     child: Row(
                       children: [
-                        Icon(Icons.delete, size: 20, color: Colors.red),
+                        Icon(
+                          Icons.delete,
+                          size: 20,
+                          color: Color.fromARGB(255, 78, 6, 138),
+                        ),
                         SizedBox(width: 8),
-                        Text('删除', style: TextStyle(color: Colors.red)),
+                        Text(
+                          '删除',
+                          style: TextStyle(
+                            color: Color.fromARGB(255, 85, 0, 141),
+                          ),
+                        ),
                       ],
                     ),
                   ),
@@ -804,13 +801,17 @@ class _DeleteCategoryDialogState extends State<_DeleteCategoryDialog> {
                     if (widget.hasSubCategories) ...[
                       Row(
                         children: [
-                          Icon(Icons.delete, size: 14, color: Colors.red),
+                          Icon(
+                            Icons.delete,
+                            size: 14,
+                            color: const Color.fromARGB(255, 136, 54, 244),
+                          ),
                           const SizedBox(width: 4),
                           Text(
                             '删除所有子类别（${widget.subCategoriesCount} 个）',
                             style: TextStyle(
                               fontSize: 12,
-                              color: Colors.red.shade700,
+                              color: const Color.fromARGB(255, 178, 47, 211),
                             ),
                           ),
                         ],
@@ -821,7 +822,11 @@ class _DeleteCategoryDialogState extends State<_DeleteCategoryDialog> {
                     if (widget.relatedProductsCount > 0) ...[
                       Row(
                         children: [
-                          Icon(Icons.delete, size: 14, color: Colors.red),
+                          Icon(
+                            Icons.delete,
+                            size: 14,
+                            color: const Color.fromARGB(255, 152, 54, 244),
+                          ),
                           const SizedBox(width: 4),
                           Text(
                             '删除所有关联产品（${widget.relatedProductsCount} 个）',

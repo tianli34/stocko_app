@@ -14,6 +14,8 @@ class AppRoutes {
   static const String inboundCreate = '/inbound/create';
   static const String purchase = '/purchase';
   static const String purchaseCreate = '/purchase/create';
+  static const String purchaseRecords = '/purchase/records';
+  static const String purchaseDetail = '/purchase/detail/:purchaseNumber';
   static const String sales = '/sales';
   static const String test = '/test';
   static const String databaseViewer = '/database-viewer';
@@ -22,4 +24,5 @@ class AppRoutes {
   // 辅助方法，用于生成带参数的路由
   static String productDetailPath(String id) => '/products/$id';
   static String productEditPath(String id) => '/products/$id/edit';
+  static String purchaseDetailPath(String purchaseNumber) => '/purchase/detail/$purchaseNumber';
 }

@@ -78,8 +78,8 @@ final routerProvider = Provider<GoRouter>((ref) {
                     SizedBox(
                       width: 200,
                       child: ElevatedButton(
-                        onPressed: () => context.push(AppRoutes.purchaseCreate),
-                        child: const Text('新建采购单'),
+                        onPressed: () => context.push(AppRoutes.purchase),
+                        child: const Text('采购管理'),
                       ),
                     ),
                     const SizedBox(height: 16),
@@ -227,7 +227,7 @@ final routerProvider = Provider<GoRouter>((ref) {
                   width: 200,
                   child: ElevatedButton(
                     onPressed: () =>
-                        context.go(AppRoutes.inventoryInboundRecords),
+                        context.push(AppRoutes.inventoryInboundRecords),
                     child: const Text('入库记录'),
                   ),
                 ),
@@ -255,9 +255,58 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => const CreateInboundScreen(),
       ),
       GoRoute(
+        path: AppRoutes.purchase,
+        name: 'purchase',
+        builder: (context, state) => Scaffold(
+          appBar: AppBar(title: const Text('采购管理')),
+          body: Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Text('采购管理功能', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
+                const SizedBox(height: 40),
+                SizedBox(
+                  width: 200,
+                  child: ElevatedButton(
+                    onPressed: () => context.push(AppRoutes.purchaseCreate),
+                    child: const Text('新建采购单'),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                SizedBox(
+                  width: 200,
+                  child: ElevatedButton(
+                    onPressed: () => context.push(AppRoutes.purchaseRecords),
+                    child: const Text('采购记录'),
+                  ),
+                ),
+                const SizedBox(height: 20),
+                ElevatedButton(
+                  onPressed: () => context.go(AppRoutes.home),
+                  child: const Text('返回首页'),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+      GoRoute(
         path: AppRoutes.purchaseCreate,
         name: 'purchase-create',
         builder: (context, state) => const CreatePurchaseScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.purchaseRecords,
+        name: 'purchase-records',
+        builder: (context, state) => const PurchaseRecordsScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.purchaseDetail,
+        name: 'purchase-detail',
+        builder: (context, state) {
+          final purchaseNumber = state.pathParameters['purchaseNumber']!;
+          return PurchaseDetailScreen(purchaseNumber: purchaseNumber);
+        },
       ),
       GoRoute(
         path: AppRoutes.inventoryQuery,

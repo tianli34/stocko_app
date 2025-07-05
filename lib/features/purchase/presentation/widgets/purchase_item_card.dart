@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../domain/model/purchase_item.dart';
 import '../../../product/application/provider/product_providers.dart';
+import '../../../../core/widgets/custom_date_picker.dart';
 
 /// 采购单商品项卡片
 /// 显示商品信息、价格、数量和金额输入等
@@ -119,12 +120,12 @@ class _PurchaseItemCardState extends ConsumerState<PurchaseItemCard> {
   }
 
   void _selectProductionDate() async {
-    final DateTime? picked = await showDatePicker(
+    final DateTime? picked = await CustomDatePicker.show(
       context: context,
       initialDate: _selectedProductionDate ?? DateTime.now(),
       firstDate: DateTime(2020),
-      lastDate: DateTime.now(), // 限制最晚选择日期为当前日期
-      locale: const Locale('zh', 'CN'),
+      lastDate: DateTime.now(),
+      title: '选择生产日期',
     );
 
     if (picked != null && picked != _selectedProductionDate) {
@@ -221,6 +222,9 @@ class _PurchaseItemCardState extends ConsumerState<PurchaseItemCard> {
                         vertical: 8,
                       ),
                     ),
+                    onTap: () {
+                      _quantityController.clear();
+                    },
                     onChanged: (value) => _updateItem(),
                   ),
                 ),

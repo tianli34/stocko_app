@@ -1,25 +1,29 @@
 
 
-
+cd E:\stocko_app\
 git add .
-git commit -m "单位表、产品单位关联表、条码表写入正常"
+git commit -m "采购修改 0 1 618"
 git push
 
 
 
 
 cd E:\stocko_app\
-flutter run
+adb connect 192.168.5.83:37141 
+flutter run -v
 
 cd E:\stocko_app\lib
 gemini
 
 dart run build_runner build --delete-conflicting-outputs
 
+cd E:\stocko_app\
 flutter run
 
 flutter test
 
+cd E:\stocko_app\
+flutter devices
 
 
 

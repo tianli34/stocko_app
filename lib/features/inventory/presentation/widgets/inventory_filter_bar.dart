@@ -2,6 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/inventory_query_providers.dart';
 import '../../application/provider/shop_providers.dart';
+import '../../../product/application/category_service.dart';
+
+/// 分类流提供者
+final categoriesStreamProvider = StreamProvider((ref) {
+  final categoryService = ref.watch(categoryServiceProvider);
+  return categoryService.watchAllCategories();
+});
 
 /// 库存筛选栏
 /// 提供仓库、分类、库存状态等筛选选项
@@ -12,6 +19,7 @@ class InventoryFilterBar extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final filterState = ref.watch(inventoryFilterProvider);
     final shopsAsync = ref.watch(allShopsProvider);
+    final categoriesAsync = ref.watch(categoriesStreamProvider);
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -58,15 +66,32 @@ class InventoryFilterBar extends ConsumerWidget {
 
           // 所有分类筛选
           Expanded(
-            child: _buildFilterDropdown(
-              context: context,
-              value: filterState.selectedCategory,
-              items: const ['所有分类', '服装', '鞋靴', '配饰'],
-              onChanged: (value) {
-                ref
-                    .read(inventoryFilterProvider.notifier)
-                    .updateCategory(value);
+            child: categoriesAsync.when(
+              data: (categories) {
+                final categoryItems = ['所有分类', ...categories.map((cat) => cat.name)];
+                return _buildFilterDropdown(
+                  context: context,
+                  value: filterState.selectedCategory,
+                  items: categoryItems,
+                  onChanged: (value) {
+                    ref
+                        .read(inventoryFilterProvider.notifier)
+                        .updateCategory(value);
+                  },
+                );
               },
+              loading: () => _buildFilterDropdown(
+                context: context,
+                value: '所有分类',
+                items: const ['所有分类'],
+                onChanged: (_) {},
+              ),
+              error: (error, stackTrace) => _buildFilterDropdown(
+                context: context,
+                value: '所有分类',
+                items: const ['所有分类'],
+                onChanged: (_) {},
+              ),
             ),
           ),
           const SizedBox(width: 12),

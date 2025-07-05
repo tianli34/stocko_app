@@ -49,26 +49,42 @@ class _UnitEditScreenState extends ConsumerState<UnitEditScreen> {
   }
 
   void _initializeUnits() async {
+    print('🔍 _initializeUnits: productId=${widget.productId}');
+    // 如果是编辑模式（有productId），优先从数据库加载现有数据
+    if (widget.productId != null) {
+      print('🔍 编辑模式，调用_initializeAuxiliaryUnits');
+      await _initializeAuxiliaryUnits();
+      return;
+    }
+    
+    // 如果是新增模式，检查是否有持久化数据
     final formState = ref.read(unitEditFormProvider);
     final hasPersistedData = formState.auxiliaryUnits.isNotEmpty;
+    print('🔍 新增模式，hasPersistedData=$hasPersistedData');
 
     if (hasPersistedData) {
+      print('🔍 加载持久化数据');
       _loadFromFormProvider();
       return;
     }
 
+    print('🔍 无持久化数据，调用_initializeAuxiliaryUnits');
     await _initializeAuxiliaryUnits();
   }
 
   Future<void> _initializeAuxiliaryUnits() async {
+    print('🔍 _initializeAuxiliaryUnits 开始');
     try {
       final formState = ref.read(unitEditFormProvider);
+      print('🔍 formState.auxiliaryUnits.length=${formState.auxiliaryUnits.length}');
       if (formState.auxiliaryUnits.isNotEmpty) {
+        print('🔍 从表单数据加载');
         await _loadAuxiliaryUnitsFromFormData(formState.auxiliaryUnits);
         _auxiliaryCounter = formState.auxiliaryCounter;
         return;
       }
       if (widget.productId != null) {
+        print('🔍 从数据库加载辅单位');
         final productUnitController = ref.read(
           productUnitControllerProvider.notifier,
         );
@@ -102,18 +118,16 @@ class _UnitEditScreenState extends ConsumerState<UnitEditScreen> {
           orElse: () =>
               throw Exception('Unit not found: ${productUnit.unitId}'),
         );
+        print('🔍 ProductUnit售价: ${productUnit.sellingPrice}');
         final auxiliaryUnit = _AuxiliaryUnit(
           id: _auxiliaryCounter,
           unit: unit,
           conversionRate: productUnit.conversionRate,
+          initialSellingPrice: productUnit.sellingPrice,
         );
+        print('🔍 控制器初始化后售价: ${auxiliaryUnit.retailPriceController.text}');
 
         auxiliaryUnit.unitController.text = unit.name;
-
-        if (productUnit.sellingPrice != null) {
-          auxiliaryUnit.retailPriceController.text = productUnit.sellingPrice!
-              .toString();
-        }
 
         final barcodeController = ref.read(barcodeControllerProvider.notifier);
         final barcodes = await barcodeController.getBarcodesByProductUnitId(
@@ -139,34 +153,18 @@ class _UnitEditScreenState extends ConsumerState<UnitEditScreen> {
   @override
   Widget build(BuildContext context) {
     return PopScope(
-      canPop: true,
+      canPop: false,
       onPopInvokedWithResult: (didPop, result) {
-        if (didPop) {}
+        if (!didPop) {
+          _handleReturn();
+        }
       },
       child: Scaffold(
         appBar: AppBar(
           title: const Text('添加辅单位'),
           leading: IconButton(
             icon: const Icon(Icons.arrow_back),
-            onPressed: () {
-              print('🔍 返回按钮被点击，开始构建数据...');
-              final productUnits = _buildProductUnits();
-              final auxiliaryBarcodes = _buildAuxiliaryUnitBarcodes();
-              
-              if (productUnits.isNotEmpty && widget.baseUnitId != null) {
-                print('🔍 数据有效，返回产品单位数据');
-                ref.read(unitEditFormProvider.notifier).resetUnitEditForm();
-                
-                // 返回包含产品单位和条码信息的数据
-                Navigator.of(context).pop({
-                  'productUnits': productUnits,
-                  'auxiliaryBarcodes': auxiliaryBarcodes,
-                });
-              } else {
-                print('🔍 数据无效或缺少基本单位，直接返回');
-                Navigator.of(context).pop();
-              }
-            },
+            onPressed: _handleReturn,
           ),
         ),
         body: Form(
@@ -185,7 +183,9 @@ class _UnitEditScreenState extends ConsumerState<UnitEditScreen> {
                           child: Text(
                             '基本单位: ${widget.baseUnitName}',
                             style: const TextStyle(
-                                fontSize: 16, fontWeight: FontWeight.bold),
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
                         ),
                       const SizedBox(height: 8),
@@ -262,7 +262,10 @@ class _UnitEditScreenState extends ConsumerState<UnitEditScreen> {
                 const Spacer(),
                 IconButton(
                   onPressed: () => _removeAuxiliaryUnit(index),
-                  icon: const Icon(Icons.delete, color: Colors.red),
+                  icon: const Icon(
+                    Icons.delete,
+                    color: Color.fromARGB(255, 78, 4, 138),
+                  ),
                   iconSize: 20,
                 ),
               ],
@@ -275,7 +278,6 @@ class _UnitEditScreenState extends ConsumerState<UnitEditScreen> {
                     decoration: const InputDecoration(
                       hintText: '请输入单位名称',
                       border: OutlineInputBorder(),
-                      helperText: '可直接输入单位名称，如：箱、包、瓶等',
                     ),
                     controller: auxiliaryUnit.unitController,
                     validator: (value) {
@@ -383,8 +385,9 @@ class _UnitEditScreenState extends ConsumerState<UnitEditScreen> {
                 border: OutlineInputBorder(),
                 prefixText: '¥ ',
               ),
-              keyboardType:
-                  const TextInputType.numberWithOptions(decimal: true),
+              keyboardType: const TextInputType.numberWithOptions(
+                decimal: true,
+              ),
               validator: (value) {
                 if (value != null && value.trim().isNotEmpty) {
                   final price = double.tryParse(value.trim());
@@ -424,7 +427,7 @@ class _UnitEditScreenState extends ConsumerState<UnitEditScreen> {
       print('🔍 查找现有单位: "$trimmedName"');
       final allUnits = await ref.read(allUnitsProvider.future);
       print('🔍 数据库中共有 ${allUnits.length} 个单位');
-      
+
       Unit? existingUnit = allUnits.firstWhere(
         (unit) => unit.name == trimmedName,
         orElse: () => Unit(id: '', name: ''),
@@ -473,8 +476,12 @@ class _UnitEditScreenState extends ConsumerState<UnitEditScreen> {
         _auxiliaryUnits[index].unit = existingUnit;
       });
 
-      print('🔍 更新表单状态: 辅单位ID=${_auxiliaryUnits[index].id}, 单位ID=${existingUnit.id}');
-      ref.read(unitEditFormProvider.notifier).updateAuxiliaryUnitName(
+      print(
+        '🔍 更新表单状态: 辅单位ID=${_auxiliaryUnits[index].id}, 单位ID=${existingUnit.id}',
+      );
+      ref
+          .read(unitEditFormProvider.notifier)
+          .updateAuxiliaryUnitName(
             _auxiliaryUnits[index].id,
             trimmedName,
             unitId: existingUnit.id,
@@ -553,7 +560,9 @@ class _UnitEditScreenState extends ConsumerState<UnitEditScreen> {
           _auxiliaryUnits[index].unitController.text = selectedUnit.name;
         });
 
-        ref.read(unitEditFormProvider.notifier).updateAuxiliaryUnitName(
+        ref
+            .read(unitEditFormProvider.notifier)
+            .updateAuxiliaryUnitName(
               _auxiliaryUnits[index].id,
               selectedUnit.name,
               unitId: selectedUnit.id,
@@ -606,7 +615,7 @@ class _UnitEditScreenState extends ConsumerState<UnitEditScreen> {
     print('🔍 [DEBUG] 基本单位ID: ${widget.baseUnitId}');
     print('🔍 [DEBUG] 基本单位名称: ${widget.baseUnitName}');
     print('🔍 [DEBUG] 辅单位数量: ${_auxiliaryUnits.length}');
-    
+
     final List<ProductUnit> productUnits = [];
 
     // 添加基本单位
@@ -634,16 +643,22 @@ class _UnitEditScreenState extends ConsumerState<UnitEditScreen> {
       print('🔍 [DEBUG]   输入框文本: "${aux.unitController.text}"');
       print('🔍 [DEBUG]   条码: "${aux.barcodeController.text}"');
       print('🔍 [DEBUG]   零售价: "${aux.retailPriceController.text}"');
-      
+
       if (aux.unit != null && aux.conversionRate > 0) {
+        print('=== 构建辅单位ProductUnit ===');
+        print('retailPriceController.text: "${aux.retailPriceController.text}"');
+        final sellingPrice = aux.retailPriceController.text.trim().isNotEmpty
+            ? double.tryParse(aux.retailPriceController.text.trim())
+            : null;
+        print('解析后的sellingPrice: $sellingPrice');
+        print('========================');
+        
         final auxUnit = ProductUnit(
           productUnitId: '${widget.productId ?? 'new'}_${aux.unit!.id}',
           productId: widget.productId ?? 'new',
           unitId: aux.unit!.id,
           conversionRate: aux.conversionRate,
-          sellingPrice: aux.retailPriceController.text.trim().isNotEmpty
-              ? double.tryParse(aux.retailPriceController.text.trim())
-              : null,
+          sellingPrice: sellingPrice,
           lastUpdated: DateTime.now(),
         );
         productUnits.add(auxUnit);
@@ -658,22 +673,24 @@ class _UnitEditScreenState extends ConsumerState<UnitEditScreen> {
         }
       }
     }
-    
+
     print('🔍 [DEBUG] ==================== 构建结果 ====================');
     print('🔍 [DEBUG] 总计产品单位数量: ${productUnits.length}');
     for (int i = 0; i < productUnits.length; i++) {
       final pu = productUnits[i];
-      print('🔍 [DEBUG] 产品单位 ${i + 1}: ${pu.productUnitId} (换算率: ${pu.conversionRate})');
+      print(
+        '🔍 [DEBUG] 产品单位 ${i + 1}: ${pu.productUnitId} (换算率: ${pu.conversionRate})',
+      );
     }
     print('🔍 [DEBUG] ==================== 构建完成 ====================');
-    
+
     return productUnits;
   }
-  
+
   /// 构建辅单位条码数据
   List<Map<String, String>> _buildAuxiliaryUnitBarcodes() {
     final List<Map<String, String>> barcodes = [];
-    
+
     for (final aux in _auxiliaryUnits) {
       if (aux.unit != null && aux.barcodeController.text.trim().isNotEmpty) {
         barcodes.add({
@@ -682,8 +699,28 @@ class _UnitEditScreenState extends ConsumerState<UnitEditScreen> {
         });
       }
     }
-    
+
     return barcodes;
+  }
+
+  void _handleReturn() {
+    print('🔍 处理返回，开始构建数据...');
+    final productUnits = _buildProductUnits();
+    final auxiliaryBarcodes = _buildAuxiliaryUnitBarcodes();
+
+    if (productUnits.isNotEmpty && widget.baseUnitId != null) {
+      print('🔍 数据有效，返回产品单位数据');
+      ref.read(unitEditFormProvider.notifier).resetUnitEditForm();
+
+      // 返回包含产品单位和条码信息的数据
+      Navigator.of(context).pop({
+        'productUnits': productUnits,
+        'auxiliaryBarcodes': auxiliaryBarcodes,
+      });
+    } else {
+      print('🔍 数据无效或缺少基本单位，直接返回');
+      Navigator.of(context).pop();
+    }
   }
 
   void _loadFromFormProvider() {
@@ -732,6 +769,10 @@ class _UnitEditScreenState extends ConsumerState<UnitEditScreen> {
         auxiliaryUnit.unitController.text = auxData.unitName;
         auxiliaryUnit.barcodeController.text = auxData.barcode;
         auxiliaryUnit.retailPriceController.text = auxData.retailPrice;
+        print('=== 从表单数据加载售价 ===');
+        print('auxData.retailPrice: "${auxData.retailPrice}"');
+        print('retailPriceController.text: "${auxiliaryUnit.retailPriceController.text}"');
+        print('=======================');
 
         tempAuxiliaryUnits.add(auxiliaryUnit);
       }
@@ -754,10 +795,19 @@ class _AuxiliaryUnit {
   late TextEditingController barcodeController;
   late TextEditingController retailPriceController;
 
-  _AuxiliaryUnit({required this.id, this.unit, required this.conversionRate}) {
+  _AuxiliaryUnit({
+    required this.id, 
+    this.unit, 
+    required this.conversionRate,
+    double? initialSellingPrice,
+  }) {
+    print('🔍 构造_AuxiliaryUnit: initialSellingPrice=$initialSellingPrice');
     unitController = TextEditingController(text: unit?.name ?? '');
     barcodeController = TextEditingController();
-    retailPriceController = TextEditingController();
+    retailPriceController = TextEditingController(
+      text: initialSellingPrice?.toString() ?? ''
+    );
+    print('🔍 retailPriceController.text=${retailPriceController.text}');
   }
 
   void dispose() {

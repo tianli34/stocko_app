@@ -117,6 +117,8 @@ class ProductAddEditController {
             id: categoryId,
             name: data.newCategoryName.trim(),
           );
+          // 立即刷新类别缓存，确保新类别在编辑时可见
+          await ref.read(categoryListProvider.notifier).loadCategories();
         }
       }
 
@@ -281,6 +283,9 @@ class ProductAddEditController {
             productId: product.id,
             unitId: unit.id,
             conversionRate: auxUnit.conversionRate,
+            sellingPrice: auxUnit.retailPrice.trim().isNotEmpty
+                ? double.tryParse(auxUnit.retailPrice.trim())
+                : null,
           ),
         );
         print(

@@ -56,11 +56,6 @@ class _UnitSelectionScreenState extends ConsumerState<UnitSelectionScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text(widget.isSelectionMode ? '选择单位' : '单位管理'),
-        leading: IconButton(
-          onPressed: () => Navigator.of(context).pop(),
-          icon: const Icon(Icons.arrow_back),
-          tooltip: '返回',
-        ),
         actions: [
           IconButton(
             onPressed: () => _showAddUnitDialog(context),
@@ -137,37 +132,12 @@ class _UnitSelectionScreenState extends ConsumerState<UnitSelectionScreen> {
             ? Theme.of(context).primaryColor.withOpacity(0.1)
             : null,
         child: ListTile(
-          leading: CircleAvatar(
-            backgroundColor: isSelected
-                ? Theme.of(context).primaryColor
-                : Colors.grey.shade300,
-            child: Icon(
-              Icons.straighten,
-              color: isSelected ? Colors.white : Colors.grey.shade600,
-              size: 20,
-            ),
-          ),
           title: Text(
             unit.name,
             style: TextStyle(
               fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
               fontSize: 16,
             ),
-          ),
-          subtitle: Text(
-            '单位ID: ${unit.id}',
-            style: const TextStyle(fontSize: 12, color: Colors.grey),
-          ),
-          trailing: Radio<String>(
-            value: unit.id,
-            groupValue: _selectedUnitId,
-            onChanged: (value) {
-              setState(() {
-                _selectedUnitId = value;
-              });
-              // 直接确认选择并返回
-              _confirmSelection();
-            },
           ),
           onTap: () {
             setState(() {
