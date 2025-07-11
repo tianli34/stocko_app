@@ -235,7 +235,7 @@ final routerProvider = Provider<GoRouter>((ref) {
                 SizedBox(
                   width: 200,
                   child: ElevatedButton(
-                    onPressed: () => context.go(AppRoutes.inventoryQuery),
+                    onPressed: () => context.push(AppRoutes.inventoryQuery),
                     child: const Text('库存查询'),
                   ),
                 ),

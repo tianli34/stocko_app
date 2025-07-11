@@ -56,7 +56,7 @@ class _UnitEditScreenState extends ConsumerState<UnitEditScreen> {
       await _initializeAuxiliaryUnits();
       return;
     }
-    
+
     // 如果是新增模式，检查是否有持久化数据
     final formState = ref.read(unitEditFormProvider);
     final hasPersistedData = formState.auxiliaryUnits.isNotEmpty;
@@ -76,7 +76,9 @@ class _UnitEditScreenState extends ConsumerState<UnitEditScreen> {
     print('🔍 _initializeAuxiliaryUnits 开始');
     try {
       final formState = ref.read(unitEditFormProvider);
-      print('🔍 formState.auxiliaryUnits.length=${formState.auxiliaryUnits.length}');
+      print(
+        '🔍 formState.auxiliaryUnits.length=${formState.auxiliaryUnits.length}',
+      );
       if (formState.auxiliaryUnits.isNotEmpty) {
         print('🔍 从表单数据加载');
         await _loadAuxiliaryUnitsFromFormData(formState.auxiliaryUnits);
@@ -276,10 +278,13 @@ class _UnitEditScreenState extends ConsumerState<UnitEditScreen> {
                 Expanded(
                   child: TextFormField(
                     decoration: const InputDecoration(
-                      hintText: '请输入单位名称',
+                      labelText: '辅单位名称',
                       border: OutlineInputBorder(),
                     ),
                     controller: auxiliaryUnit.unitController,
+                    focusNode: auxiliaryUnit.unitFocusNode,
+                    onFieldSubmitted: (_) =>
+                        auxiliaryUnit.conversionRateFocusNode.requestFocus(),
                     validator: (value) {
                       if (value == null || value.trim().isEmpty) {
                         return '请输入单位名称';
@@ -309,11 +314,13 @@ class _UnitEditScreenState extends ConsumerState<UnitEditScreen> {
             TextFormField(
               decoration: InputDecoration(
                 labelText: '换算率',
-                hintText: '请输入换算率',
                 border: const OutlineInputBorder(),
                 suffixText: '(相对于${widget.baseUnitName ?? '基本单位'})',
               ),
               keyboardType: TextInputType.number,
+              focusNode: auxiliaryUnit.conversionRateFocusNode,
+              onFieldSubmitted: (_) =>
+                  auxiliaryUnit.retailPriceFocusNode.requestFocus(),
               initialValue: auxiliaryUnit.conversionRate > 0
                   ? auxiliaryUnit.conversionRate.toString()
                   : '',
@@ -351,7 +358,6 @@ class _UnitEditScreenState extends ConsumerState<UnitEditScreen> {
                     controller: auxiliaryUnit.barcodeController,
                     decoration: const InputDecoration(
                       labelText: '条码',
-                      hintText: '请输入或扫描条码',
                       border: OutlineInputBorder(),
                     ),
                     keyboardType: TextInputType.text,
@@ -379,9 +385,9 @@ class _UnitEditScreenState extends ConsumerState<UnitEditScreen> {
             const SizedBox(height: 12),
             TextFormField(
               controller: auxiliaryUnit.retailPriceController,
+              focusNode: auxiliaryUnit.retailPriceFocusNode,
               decoration: const InputDecoration(
                 labelText: '建议零售价',
-                hintText: '请输入建议零售价',
                 border: OutlineInputBorder(),
                 prefixText: '¥ ',
               ),
@@ -402,6 +408,7 @@ class _UnitEditScreenState extends ConsumerState<UnitEditScreen> {
                     .read(unitEditFormProvider.notifier)
                     .updateAuxiliaryUnitRetailPrice(auxiliaryUnit.id, value);
               },
+              onFieldSubmitted: (_) => _handleReturn(),
             ),
           ],
         ),
@@ -591,6 +598,9 @@ class _UnitEditScreenState extends ConsumerState<UnitEditScreen> {
             .read(unitEditFormProvider.notifier)
             .updateAuxiliaryUnitBarcode(_auxiliaryUnits[index].id, barcode);
 
+        // 扫码成功后转移焦点到辅单位名称输入框
+        _auxiliaryUnits[index].unitFocusNode.requestFocus();
+
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
@@ -646,13 +656,15 @@ class _UnitEditScreenState extends ConsumerState<UnitEditScreen> {
 
       if (aux.unit != null && aux.conversionRate > 0) {
         print('=== 构建辅单位ProductUnit ===');
-        print('retailPriceController.text: "${aux.retailPriceController.text}"');
+        print(
+          'retailPriceController.text: "${aux.retailPriceController.text}"',
+        );
         final sellingPrice = aux.retailPriceController.text.trim().isNotEmpty
             ? double.tryParse(aux.retailPriceController.text.trim())
             : null;
         print('解析后的sellingPrice: $sellingPrice');
         print('========================');
-        
+
         final auxUnit = ProductUnit(
           productUnitId: '${widget.productId ?? 'new'}_${aux.unit!.id}',
           productId: widget.productId ?? 'new',
@@ -771,7 +783,9 @@ class _UnitEditScreenState extends ConsumerState<UnitEditScreen> {
         auxiliaryUnit.retailPriceController.text = auxData.retailPrice;
         print('=== 从表单数据加载售价 ===');
         print('auxData.retailPrice: "${auxData.retailPrice}"');
-        print('retailPriceController.text: "${auxiliaryUnit.retailPriceController.text}"');
+        print(
+          'retailPriceController.text: "${auxiliaryUnit.retailPriceController.text}"',
+        );
         print('=======================');
 
         tempAuxiliaryUnits.add(auxiliaryUnit);
@@ -795,9 +809,14 @@ class _AuxiliaryUnit {
   late TextEditingController barcodeController;
   late TextEditingController retailPriceController;
 
+  // 焦点节点
+  final FocusNode unitFocusNode = FocusNode();
+  final FocusNode conversionRateFocusNode = FocusNode();
+  final FocusNode retailPriceFocusNode = FocusNode();
+
   _AuxiliaryUnit({
-    required this.id, 
-    this.unit, 
+    required this.id,
+    this.unit,
     required this.conversionRate,
     double? initialSellingPrice,
   }) {
@@ -805,7 +824,7 @@ class _AuxiliaryUnit {
     unitController = TextEditingController(text: unit?.name ?? '');
     barcodeController = TextEditingController();
     retailPriceController = TextEditingController(
-      text: initialSellingPrice?.toString() ?? ''
+      text: initialSellingPrice?.toString() ?? '',
     );
     print('🔍 retailPriceController.text=${retailPriceController.text}');
   }
@@ -814,5 +833,8 @@ class _AuxiliaryUnit {
     unitController.dispose();
     barcodeController.dispose();
     retailPriceController.dispose();
+    unitFocusNode.dispose();
+    conversionRateFocusNode.dispose();
+    retailPriceFocusNode.dispose();
   }
 }

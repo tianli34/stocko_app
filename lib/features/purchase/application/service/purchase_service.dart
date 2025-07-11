@@ -119,7 +119,7 @@ class PurchaseService {
 
       // 为每个商品项创建采购记录
       final companion = PurchasesTableCompanion.insert(
-        purchaseNumber: '${purchaseNumber}_${item.id}', // 每个商品项单独的采购单号
+        purchaseNumber: purchaseNumber, // 所有商品项共享同一个采购单号
         productId: item.productId,
         unitId: unitId,
         unitPrice: item.unitPrice,
@@ -290,7 +290,7 @@ class PurchaseService {
         productionDate: drift.Value(item.productionDate),
         locationId: const drift.Value.absent(), // 采购入库暂不指定货位
         purchaseQuantity: drift.Value(item.quantity),
-        purchaseOrderId: drift.Value('${purchaseNumber}_${item.id}'),
+        purchaseOrderId: drift.Value(purchaseNumber),
         batchNumber:
             item.productionDate != null &&
                 product?.enableBatchManagement == true

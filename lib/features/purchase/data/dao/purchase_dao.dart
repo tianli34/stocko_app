@@ -4,6 +4,17 @@ import '../../../../core/database/purchases_table.dart';
 
 part 'purchase_dao.g.dart';
 
+/// 采购记录包含货品名称的数据类
+class PurchaseWithProductName {
+  final PurchasesTableData purchase;
+  final String productName;
+
+  PurchaseWithProductName({
+    required this.purchase,
+    required this.productName,
+  });
+}
+
 /// 采购数据访问对象 (DAO)
 /// 专门负责采购表相关的数据库操作
 @DriftAccessor(tables: [PurchasesTable])
@@ -65,6 +76,24 @@ class PurchaseDao extends DatabaseAccessor<AppDatabase>
   /// 监听所有采购记录变化
   Stream<List<PurchasesTableData>> watchAllPurchases() {
     return select(db.purchasesTable).watch();
+  }
+
+  /// 监听所有采购记录变化（包含货品名称）
+  Stream<List<PurchaseWithProductName>> watchAllPurchasesWithProductName() {
+    final query = select(db.purchasesTable).join([
+      leftOuterJoin(db.productsTable, db.productsTable.id.equalsExp(db.purchasesTable.productId)),
+    ]);
+    
+    return query.watch().map((rows) {
+      return rows.map((row) {
+        final purchase = row.readTable(db.purchasesTable);
+        final product = row.readTableOrNull(db.productsTable);
+        return PurchaseWithProductName(
+          purchase: purchase,
+          productName: product?.name ?? '未知货品',
+        );
+      }).toList();
+    });
   }
 
   /// 更新采购记录

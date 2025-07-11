@@ -48,7 +48,7 @@ class _InboundItemCardState extends State<InboundItemCard> {
     final selectedDate = await showDatePicker(
       context: context,
       initialDate: _selectedProductionDate ?? DateTime.now(),
-      firstDate: DateTime(2020),
+      firstDate: DateTime(2023),
       lastDate: DateTime.now(), // 限制最晚选择日期为当前日期
     );
 

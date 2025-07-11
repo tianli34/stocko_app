@@ -9,7 +9,9 @@ part 'product_dao.g.dart';
 
 /// 产品数据访问对象 (DAO)
 /// 专门负责产品相关的数据库操作
-@DriftAccessor(tables: [ProductsTable, BarcodesTable, ProductUnitsTable, UnitsTable])
+@DriftAccessor(
+  tables: [ProductsTable, BarcodesTable, ProductUnitsTable, UnitsTable],
+)
 class ProductDao extends DatabaseAccessor<AppDatabase> with _$ProductDaoMixin {
   ProductDao(super.db);
 
@@ -33,6 +35,25 @@ class ProductDao extends DatabaseAccessor<AppDatabase> with _$ProductDaoMixin {
   /// 监听所有产品变化
   Stream<List<ProductsTableData>> watchAllProducts() {
     return select(db.productsTable).watch();
+  }
+
+  /// 监听所有产品及其主单位的名称
+  Stream<List<({ProductsTableData product, String unitName})>>
+  watchAllProductsWithUnit() {
+    final query = select(db.productsTable).join([
+      leftOuterJoin(
+        db.unitsTable,
+        db.unitsTable.id.equalsExp(db.productsTable.unitId),
+      ),
+    ]);
+
+    return query.watch().map((rows) {
+      return rows.map((row) {
+        final product = row.readTable(db.productsTable);
+        final unit = row.readTableOrNull(db.unitsTable);
+        return (product: product, unitName: unit?.name ?? '未知单位');
+      }).toList();
+    });
   }
 
   /// 更新产品
@@ -167,7 +188,8 @@ class ProductDao extends DatabaseAccessor<AppDatabase> with _$ProductDaoMixin {
 
   /// 根据条码获取产品及其单位信息
   /// 返回包含产品信息和单位名称的结果
-  Future<({ProductsTableData product, String unitName})?> getProductWithUnitByBarcode(String barcode) async {
+  Future<({ProductsTableData product, String unitName})?>
+  getProductWithUnitByBarcode(String barcode) async {
     // 首先在条码表中找到对应的产品单位ID
     final barcodeResult = await (select(
       db.barcodesTable,
@@ -178,12 +200,21 @@ class ProductDao extends DatabaseAccessor<AppDatabase> with _$ProductDaoMixin {
     }
 
     // 联合查询产品单位表、产品表和单位表
-    final query = select(db.productUnitsTable)
-        .join([
-          innerJoin(db.productsTable, db.productsTable.id.equalsExp(db.productUnitsTable.productId)),
-          innerJoin(db.unitsTable, db.unitsTable.id.equalsExp(db.productUnitsTable.unitId)),
-        ])
-        ..where(db.productUnitsTable.productUnitId.equals(barcodeResult.productUnitId));
+    final query =
+        select(db.productUnitsTable).join([
+          innerJoin(
+            db.productsTable,
+            db.productsTable.id.equalsExp(db.productUnitsTable.productId),
+          ),
+          innerJoin(
+            db.unitsTable,
+            db.unitsTable.id.equalsExp(db.productUnitsTable.unitId),
+          ),
+        ])..where(
+          db.productUnitsTable.productUnitId.equals(
+            barcodeResult.productUnitId,
+          ),
+        );
 
     final result = await query.getSingleOrNull();
     if (result == null) {

@@ -28,6 +28,9 @@ abstract class IProductRepository {
   /// 返回产品列表的数据流
   Stream<List<Product>> watchAllProducts();
 
+  /// 监听所有产品及其单位名称
+  Stream<List<({Product product, String unitName})>> watchAllProductsWithUnit();
+
   /// 获取所有产品
   /// 返回当前所有产品的列表
   Future<List<Product>> getAllProducts();
@@ -56,5 +59,7 @@ abstract class IProductRepository {
   /// 根据条码获取产品及其单位信息
   /// [barcode] 条码
   /// 返回包含产品和单位名称的结果，如果不存在则返回null
-  Future<({Product product, String unitName})?> getProductWithUnitByBarcode(String barcode);
+  Future<({Product product, String unitName})?> getProductWithUnitByBarcode(
+    String barcode,
+  );
 }

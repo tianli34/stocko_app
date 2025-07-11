@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_typeahead/flutter_typeahead.dart';
+import 'package:dropdown_button2/dropdown_button2.dart';
 import '../../../../core/services/barcode_scanner_service.dart';
 import '../../../../core/shared_widgets/shared_widgets.dart';
 import '../../domain/model/product.dart';
@@ -48,6 +49,13 @@ class _ProductAddEditScreenState extends ConsumerState<ProductAddEditScreen> {
   late TextEditingController _stockWarningValueController;
   late TextEditingController _shelfLifeController;
   late TextEditingController _remarksController;
+
+  // 焦点节点
+  final FocusNode _nameFocusNode = FocusNode();
+  final FocusNode _unitFocusNode = FocusNode();
+  final FocusNode _categoryFocusNode = FocusNode();
+  final FocusNode _retailPriceFocusNode = FocusNode();
+  final FocusNode _shelfLifeFocusNode = FocusNode();
 
   // 表单状态
   String? _selectedCategoryId; // 添加类别选择状态
@@ -101,7 +109,7 @@ class _ProductAddEditScreenState extends ConsumerState<ProductAddEditScreen> {
     );
     // 初始化新增的控制器
     _stockWarningValueController = TextEditingController(
-      text: product?.stockWarningValue?.toString() ?? '',
+      text: product?.stockWarningValue?.toString() ?? '5',
     );
     _shelfLifeController = TextEditingController(
       text: product?.shelfLife?.toString() ?? '',
@@ -176,6 +184,14 @@ class _ProductAddEditScreenState extends ConsumerState<ProductAddEditScreen> {
     _remarksController.dispose();
     _categoryController.dispose(); // 释放类别控制器
     _unitController.dispose(); // 释放单位控制器
+
+    // 释放焦点节点
+    _nameFocusNode.dispose();
+    _unitFocusNode.dispose();
+    _categoryFocusNode.dispose();
+    _retailPriceFocusNode.dispose();
+    _shelfLifeFocusNode.dispose();
+
     super.dispose();
   }
 
@@ -256,8 +272,9 @@ class _ProductAddEditScreenState extends ConsumerState<ProductAddEditScreen> {
                     _buildTextField(
                       controller: _nameController,
                       label: '名称',
-                      hint: '请输入货品名称',
                       required: true,
+                      focusNode: _nameFocusNode,
+                      onFieldSubmitted: (_) => _unitFocusNode.requestFocus(),
                     ),
                     const SizedBox(height: 16),
 
@@ -267,7 +284,7 @@ class _ProductAddEditScreenState extends ConsumerState<ProductAddEditScreen> {
                           child: _buildTextField(
                             controller: _barcodeController,
                             label: '条码',
-                            hint: '请输入货品条码',
+                            hint: '建议最先扫码',
                           ),
                         ),
                         const SizedBox(width: 8),
@@ -290,27 +307,7 @@ class _ProductAddEditScreenState extends ConsumerState<ProductAddEditScreen> {
                       ],
                     ),
                     const SizedBox(height: 16),
-
-                    // 类别选择
-                    Row(
-                      children: [
-                        Expanded(child: _buildCategoryDropdown(categories)),
-                        const SizedBox(width: 8),
-                        IconButton(
-                          onPressed: () =>
-                              _navigateToCategorySelection(context),
-                          icon: const Icon(Icons.arrow_forward_ios),
-                          tooltip: '管理类别',
-                          style: IconButton.styleFrom(
-                            backgroundColor: Theme.of(
-                              context,
-                            ).primaryColor.withOpacity(0.1),
-                            foregroundColor: Theme.of(context).primaryColor,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 16), // 单位选择
+                    // 单位选择
                     unitsAsyncValue.when(
                       data: (units) {
                         // 确保单位选择有效性
@@ -403,13 +400,35 @@ class _ProductAddEditScreenState extends ConsumerState<ProductAddEditScreen> {
                       ),
                     ),
                     const SizedBox(height: 24),
+                    // 类别选择
+                    Row(
+                      children: [
+                        Expanded(child: _buildCategoryDropdown(categories)),
+                        const SizedBox(width: 8),
+                        IconButton(
+                          onPressed: () =>
+                              _navigateToCategorySelection(context),
+                          icon: const Icon(Icons.arrow_forward_ios),
+                          tooltip: '管理类别',
+                          style: IconButton.styleFrom(
+                            backgroundColor: Theme.of(
+                              context,
+                            ).primaryColor.withOpacity(0.1),
+                            foregroundColor: Theme.of(context).primaryColor,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
 
                     _buildTextField(
                       controller: _retailPriceController,
                       label: '零售价',
-                      hint: '请输入零售价',
                       keyboardType: TextInputType.number,
                       prefixText: '¥ ',
+                      focusNode: _retailPriceFocusNode,
+                      onFieldSubmitted: (_) =>
+                          _shelfLifeFocusNode.requestFocus(),
                     ),
                     const SizedBox(height: 16),
 
@@ -419,7 +438,6 @@ class _ProductAddEditScreenState extends ConsumerState<ProductAddEditScreen> {
                           child: _buildTextField(
                             controller: _promotionalPriceController,
                             label: '促销价',
-                            hint: '请输入促销价',
                             keyboardType: TextInputType.number,
                             prefixText: '¥ ',
                           ),
@@ -429,7 +447,6 @@ class _ProductAddEditScreenState extends ConsumerState<ProductAddEditScreen> {
                           child: _buildTextField(
                             controller: _suggestedRetailPriceController,
                             label: '建议零售价',
-                            hint: '请输入建议零售价',
                             keyboardType: TextInputType.number,
                             prefixText: '¥ ',
                           ),
@@ -441,7 +458,6 @@ class _ProductAddEditScreenState extends ConsumerState<ProductAddEditScreen> {
                     _buildTextField(
                       controller: _stockWarningValueController,
                       label: '库存预警值',
-                      hint: '请输入库存预警值',
                       keyboardType: TextInputType.number,
                     ),
                     const SizedBox(height: 16),
@@ -454,9 +470,10 @@ class _ProductAddEditScreenState extends ConsumerState<ProductAddEditScreen> {
                           child: _buildTextField(
                             controller: _shelfLifeController,
                             label: '保质期',
-                            hint: '请输入保质期',
                             keyboardType: TextInputType.number,
                             icon: Icons.schedule,
+                            focusNode: _shelfLifeFocusNode,
+                            onFieldSubmitted: (_) => _submitForm(),
                           ),
                         ),
                         const SizedBox(width: 8),
@@ -469,7 +486,6 @@ class _ProductAddEditScreenState extends ConsumerState<ProductAddEditScreen> {
                     _buildTextField(
                       controller: _remarksController,
                       label: '备注',
-                      hint: '请输入备注信息',
                       maxLines: 1,
                     ),
                     const SizedBox(height: 80), // 为底部按钮留出空间
@@ -523,11 +539,15 @@ class _ProductAddEditScreenState extends ConsumerState<ProductAddEditScreen> {
     TextInputType? keyboardType,
     String? prefixText,
     int maxLines = 1,
+    FocusNode? focusNode,
+    void Function(String)? onFieldSubmitted,
   }) {
     return TextFormField(
       controller: controller,
+      focusNode: focusNode,
       keyboardType: keyboardType,
       maxLines: maxLines,
+      onFieldSubmitted: onFieldSubmitted,
       decoration: InputDecoration(
         labelText: required ? '$label *' : label,
         hintText: hint,
@@ -614,7 +634,8 @@ class _ProductAddEditScreenState extends ConsumerState<ProductAddEditScreen> {
       builder: (context, controller, focusNode) {
         return TextField(
           controller: controller,
-          focusNode: focusNode,
+          focusNode: _categoryFocusNode,
+          onSubmitted: (_) => _retailPriceFocusNode.requestFocus(),
           // ⭐ 核心修改点在这里！⭐
           inputFormatters: [
             // 使用内置的 formatter，禁止输入任何空白字符
@@ -640,7 +661,7 @@ class _ProductAddEditScreenState extends ConsumerState<ProductAddEditScreen> {
           },
           decoration: InputDecoration(
             labelText: '类别',
-            hintText: '请输入或选择货品类别（可直接输入新类别）',
+            hintText: '请输入或选择类别',
             border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
@@ -662,13 +683,6 @@ class _ProductAddEditScreenState extends ConsumerState<ProductAddEditScreen> {
                     },
                   )
                 : null,
-            helperText:
-                _selectedCategoryId == null &&
-                    _categoryController.text.isNotEmpty && // .trim() 也不需要了
-                    _categoryController.text != '未分类'
-                ? '将创建新类别: "${_categoryController.text}"'
-                : null,
-            helperStyle: TextStyle(color: Colors.green.shade600, fontSize: 12),
           ),
         );
       },
@@ -726,7 +740,8 @@ class _ProductAddEditScreenState extends ConsumerState<ProductAddEditScreen> {
       builder: (context, controller, focusNode) {
         return TextField(
           controller: controller,
-          focusNode: focusNode,
+          focusNode: _unitFocusNode,
+          onSubmitted: (_) => _categoryFocusNode.requestFocus(),
           // ⭐ 核心优化：使用 Formatter 从源头禁止输入空格 ⭐
           inputFormatters: [FilteringTextInputFormatter.deny(RegExp(r'\s'))],
           onChanged: (value) {
@@ -771,7 +786,7 @@ class _ProductAddEditScreenState extends ConsumerState<ProductAddEditScreen> {
           },
           decoration: InputDecoration(
             labelText: '基本单位 *',
-            hintText: '请输入或选择基本单位（可直接输入新单位）',
+            hintText: '请输入或选择单位',
             border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
@@ -824,33 +839,43 @@ class _ProductAddEditScreenState extends ConsumerState<ProductAddEditScreen> {
 
   /// 构建保质期单位下拉选择器
   Widget _buildShelfLifeUnitDropdown() {
-    return DropdownButtonFormField<String>(
-      value: _shelfLifeUnit,
-      decoration: InputDecoration(
-        labelText: '单位',
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: Colors.grey.shade300),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: Theme.of(context).primaryColor),
-        ),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      ),
-      items: _shelfLifeUnitOptions.map((unit) {
-        return DropdownMenuItem(
-          value: unit,
-          child: Text(_getShelfLifeUnitDisplayName(unit)),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        return DropdownButtonFormField2<String>(
+          value: _shelfLifeUnit,
+          decoration: InputDecoration(
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(color: Colors.grey.shade300),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(color: Theme.of(context).primaryColor),
+            ),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 12,
+              vertical: 8,
+            ),
+          ),
+          items: _shelfLifeUnitOptions.map((unit) {
+            return DropdownMenuItem(
+              value: unit,
+              child: Text(_getShelfLifeUnitDisplayName(unit)),
+            );
+          }).toList(),
+          onChanged: (value) {
+            if (value != null) {
+              setState(() {
+                _shelfLifeUnit = value;
+              });
+            }
+          },
+          dropdownStyleData: DropdownStyleData(
+            width: constraints.maxWidth * 0.75,
+            decoration: BoxDecoration(borderRadius: BorderRadius.circular(12)),
+          ),
         );
-      }).toList(),
-      onChanged: (value) {
-        if (value != null) {
-          setState(() {
-            _shelfLifeUnit = value;
-          });
-        }
       },
     );
   }
@@ -1063,10 +1088,14 @@ class _ProductAddEditScreenState extends ConsumerState<ProductAddEditScreen> {
 
         // 显示成功提示
         ToastService.success('✅ 条码扫描成功: $barcode');
+
+        // 扫码成功后转移焦点到名称输入框
+        _nameFocusNode.requestFocus();
       }
     } catch (e) {
       // 显示错误提示
       ToastService.error('❌ 扫码失败: $e');
+      // 扫码失败时焦点保持在扫码按钮上
     }
   }
 

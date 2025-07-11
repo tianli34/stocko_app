@@ -105,16 +105,15 @@ class ProductOperationsNotifier extends AsyncNotifier<void> {
   }
 
   /// 根据条码获取产品及其单位信息
-  Future<({Product product, String unitName})?> getProductWithUnitByBarcode(String barcode) async {
+  Future<({Product product, String unitName})?> getProductWithUnitByBarcode(
+    String barcode,
+  ) async {
     try {
       final repository = ref.read(productRepositoryProvider);
       return await repository.getProductWithUnitByBarcode(barcode);
-    } catch (e) {
-      state = AsyncValue.error(
-        Exception('根据条码查询产品及单位失败: ${e.toString()}'),
-        StackTrace.current,
-      );
-      return null;
+    } catch (e, st) {
+      state = AsyncValue.error(Exception('根据条码查询产品及单位失败: ${e.toString()}'), st);
+      rethrow;
     }
   }
 }
@@ -164,3 +163,10 @@ final productByBarcodeProvider = FutureProvider.family<Product?, String>((
 
 /// 为了兼容现有代码，保留原有的 provider 名称
 final allProductsProvider = productListStreamProvider;
+
+/// 提供所有产品及其单位名称的流
+final allProductsWithUnitProvider =
+    StreamProvider<List<({Product product, String unitName})>>((ref) {
+      final repository = ref.watch(productRepositoryProvider);
+      return repository.watchAllProductsWithUnit();
+    });

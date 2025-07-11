@@ -14,17 +14,12 @@ class InventoryQueryScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final inventoryAsyncValue = ref.watch(inventoryQueryProvider);
 
-    return WillPopScope(
-      onWillPop: () async {
-        context.go(AppRoutes.inventory);
-        return false;
-      },
-      child: Scaffold(
+    return Scaffold(
       appBar: AppBar(
         title: const Text('库存查询'),
         centerTitle: true,
         leading: IconButton(
-          onPressed: () => context.go(AppRoutes.inventory),
+          onPressed: () => context.pop(),
           icon: const Icon(Icons.arrow_back),
           tooltip: '返回',
         ),
@@ -107,7 +102,6 @@ class InventoryQueryScreen extends ConsumerWidget {
             ),
           ),
         ],
-      ),
       ),
     );
   }

@@ -2,7 +2,7 @@
 
 cd E:\stocko_app\
 git add .
-git commit -m "采购修改 0 1 618"
+git commit -m "0705 0 4 588"
 git push
 
 
