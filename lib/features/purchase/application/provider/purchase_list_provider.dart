@@ -75,7 +75,9 @@ class PurchaseListNotifier extends StateNotifier<List<PurchaseItem>> {
         unitPrice: 0.0, // 初始单价为0
         quantity: 1, // 初始数量为1
         amount: 0.0, // 初始金额为0
-        productionDate: DateTime.now(),
+        productionDate: product.enableBatchManagement
+            ? DateTime.now().subtract(const Duration(days: 90))
+            : null,
       );
       addItem(newItem);
     }

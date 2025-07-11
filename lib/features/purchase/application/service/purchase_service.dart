@@ -118,16 +118,16 @@ class PurchaseService {
       final unitId = await _getUnitIdFromUnitName(item.unitName);
 
       // 为每个商品项创建采购记录
-      final companion = PurchasesTableCompanion.insert(
-        purchaseNumber: purchaseNumber, // 所有商品项共享同一个采购单号
-        productId: item.productId,
-        unitId: unitId,
-        unitPrice: item.unitPrice,
-        quantity: item.quantity,
-        productionDate: item.productionDate ?? purchaseDate,
-        shopId: shopId,
-        supplierId: supplierId,
-        purchaseDate: purchaseDate,
+      final companion = PurchasesTableCompanion(
+        purchaseNumber: drift.Value(purchaseNumber),
+        productId: drift.Value(item.productId),
+        unitId: drift.Value(unitId),
+        unitPrice: drift.Value(item.unitPrice),
+        quantity: drift.Value(item.quantity),
+        productionDate: drift.Value(item.productionDate),
+        shopId: drift.Value(shopId),
+        supplierId: drift.Value(supplierId),
+        purchaseDate: drift.Value(purchaseDate),
       );
       companions.add(companion);
     }

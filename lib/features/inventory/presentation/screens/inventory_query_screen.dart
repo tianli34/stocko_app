@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import '../../../../core/constants/app_routes.dart';
 import '../providers/inventory_query_providers.dart';
 import '../widgets/inventory_item_card.dart';
 import '../widgets/inventory_filter_bar.dart';

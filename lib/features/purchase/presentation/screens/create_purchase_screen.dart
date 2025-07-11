@@ -12,6 +12,8 @@ import '../../domain/model/purchase_item.dart';
 import '../../domain/model/supplier.dart';
 import '../../../inventory/application/provider/shop_providers.dart';
 import '../../../inventory/domain/model/shop.dart';
+import '../../../inventory/presentation/providers/inbound_records_provider.dart';
+import '../../../inventory/presentation/providers/inventory_query_providers.dart';
 import '../../../product/application/provider/product_providers.dart';
 import '../../../product/presentation/screens/product_selection_screen.dart';
 import '../widgets/purchase_item_card.dart';
@@ -118,24 +120,35 @@ class _CreatePurchaseScreenState extends ConsumerState<CreatePurchaseScreen> {
   }
 
   void _addManualProduct() async {
-    final result = await Navigator.of(context).push(
+    final result = await Navigator.of(context).push<List<dynamic>>(
       MaterialPageRoute(builder: (context) => const ProductSelectionScreen()),
     );
 
-    if (result != null && result is List) {
-      final productsWithUnitAsync = ref.read(allProductsWithUnitProvider);
-      productsWithUnitAsync.whenData((productsWithUnit) async {
-        final selectedProducts = productsWithUnit
-            .where((p) => result.contains(p.product.id))
-            .toList();
+    // 如果没有返回结果或结果为空，则直接返回
+    if (result == null || result.isEmpty) return;
 
-        for (final p in selectedProducts) {
-          // 这里我们直接调用provider的方法，单位逻辑已封装
-          ref
-              .read(purchaseListProvider.notifier)
-              .addOrUpdateItem(product: p.product, unitName: p.unitName);
-        }
-      });
+    try {
+      // 核心修复：
+      // 使用 `ref.read(provider.future)` 来异步等待数据加载完成。
+      // 这可以确保无论 `allProductsWithUnitProvider` 是否已缓存数据，
+      // 我们都能在获取到数据后再执行后续逻辑，从而修复首次加载时数据未就绪的bug。
+      final productsWithUnit = await ref.read(
+        allProductsWithUnitProvider.future,
+      );
+
+      final selectedProducts = productsWithUnit
+          .where((p) => result.contains(p.product.id))
+          .toList();
+
+      for (final p in selectedProducts) {
+        ref
+            .read(purchaseListProvider.notifier)
+            .addOrUpdateItem(product: p.product, unitName: p.unitName);
+      }
+    } catch (e) {
+      // 捕获并处理可能的异常
+      if (!mounted) return;
+      _showErrorMessage('添加货品失败: ${e.toString()}');
     }
   }
 
@@ -216,8 +229,14 @@ class _CreatePurchaseScreenState extends ConsumerState<CreatePurchaseScreen> {
 
       Navigator.of(context).pop();
       _showSuccessMessage('✅ 一键入库成功！入库单号：$receiptNumber');
+
+      // 核心修复：使入库记录和库存查询的Provider失效，以便在导航后刷新数据
+      ref.invalidate(inboundRecordsProvider);
+      ref.invalidate(inventoryQueryProvider);
+
       Future.delayed(const Duration(seconds: 1), () {
         if (mounted) {
+          // 使用 go 而不是 push, 以替换当前页面，而不是堆叠
           context.go(AppRoutes.inventoryInboundRecords);
         }
       });
@@ -440,7 +459,7 @@ class _CreatePurchaseScreenState extends ConsumerState<CreatePurchaseScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 48, horizontal: 24),
       decoration: BoxDecoration(
-        color: theme.colorScheme.surfaceVariant.withOpacity(0.3),
+        color: theme.colorScheme.surfaceContainerHighest.withOpacity(0.3),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: theme.colorScheme.outline.withOpacity(0.2)),
       ),
@@ -520,7 +539,7 @@ class _CreatePurchaseScreenState extends ConsumerState<CreatePurchaseScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 12),
       decoration: BoxDecoration(
-        color: theme.colorScheme.surfaceVariant.withOpacity(0.5),
+        color: theme.colorScheme.surfaceContainerHighest.withOpacity(0.5),
         border: Border(
           top: BorderSide(color: theme.colorScheme.outline.withOpacity(0.3)),
         ),

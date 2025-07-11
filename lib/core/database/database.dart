@@ -78,7 +78,7 @@ part 'database.g.dart';
 class AppDatabase extends _$AppDatabase {
   AppDatabase(super.e);
   @override
-  int get schemaVersion => 11; // 提升版本以应用新的迁移
+  int get schemaVersion => 12; // 提升版本以应用新的迁移
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -94,6 +94,11 @@ class AppDatabase extends _$AppDatabase {
       );
     },
     onUpgrade: (Migrator m, int from, int to) async {
+      if (from < 12 && to >= 12) {
+        // 重建采购表以使 production_date 列可为空
+        await m.drop(purchasesTable);
+        await m.createTable(purchasesTable);
+      }
       if (from < 11 && to >= 11) {
         // 添加条码表
         await m.createTable(barcodesTable);

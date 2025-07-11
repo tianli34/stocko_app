@@ -22,7 +22,8 @@ class PurchasesTable extends Table {
   RealColumn get quantity => real().named('quantity')();
 
   /// 生产日期
-  DateTimeColumn get productionDate => dateTime().named('production_date')();
+  DateTimeColumn get productionDate =>
+      dateTime().named('production_date').nullable()();
 
   /// 外键 - 店铺ID
   TextColumn get shopId => text().named('shop_id')();

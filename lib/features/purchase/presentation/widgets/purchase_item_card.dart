@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../domain/model/purchase_item.dart';
 import '../../../product/application/provider/product_providers.dart';
 import '../../../../core/widgets/custom_date_picker.dart';
+import '../../../../core/widgets/cached_image_widget.dart';
 
 /// 采购单商品项卡片
 /// 显示商品信息、价格、数量和金额输入等
@@ -162,143 +163,9 @@ class _PurchaseItemCardState extends ConsumerState<PurchaseItemCard> {
       elevation: 2,
       child: Padding(
         padding: const EdgeInsets.all(3),
-        child: Column(
+        child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // 第一行：商品名称 + 单位 + 删除按钮
-            Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    item.productName,
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Text(
-                  item.unitName,
-                  style: TextStyle(fontSize: 12, color: Colors.grey[600]),
-                ),
-                const SizedBox(width: 8),
-                IconButton(
-                  onPressed: () => ref
-                      .read(purchaseListProvider.notifier)
-                      .removeItem(widget.itemId),
-                  icon: const Icon(Icons.close, size: 18),
-                  style: IconButton.styleFrom(
-                    backgroundColor: Colors.red.shade50,
-                    foregroundColor: Colors.red,
-                    minimumSize: const Size(24, 24),
-                  ),
-                  tooltip: '删除',
-                ),
-              ],
-            ),
-
-            const SizedBox(height: 3),
-
-            // 第二行：单价、数量、金额输入框
-            Row(
-              children: [
-                Expanded(
-                  child: SizedBox(
-                    height: 27, // 设置固定高度
-                    child: TextFormField(
-                      controller: _unitPriceController,
-                      focusNode: _unitPriceFocusNode, // 关联FocusNode
-                      keyboardType: const TextInputType.numberWithOptions(
-                        decimal: true,
-                      ),
-                      decoration: const InputDecoration(
-                        labelText: '单价',
-                        border: OutlineInputBorder(),
-                        contentPadding: EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 7, // 增加垂直内边距
-                        ),
-                        prefixText: '¥',
-                      ),
-                      onTap: () {
-                        _unitPriceController.clear();
-                      },
-                      onChanged: (value) => _updateItem(item),
-                    ),
-                  ),
-                ),
-                const SizedBox.square(dimension: 12.0),
-                Expanded(
-                  child: SizedBox(
-                    height: 27, // 设置固定高度
-                    child: TextFormField(
-                      controller: _quantityController,
-                      focusNode: widget.quantityFocusNode,
-                      keyboardType: const TextInputType.numberWithOptions(
-                        decimal: true,
-                      ),
-                      textInputAction: TextInputAction.next,
-                      decoration: const InputDecoration(
-                        labelText: '数量',
-                        border: OutlineInputBorder(),
-                        contentPadding: EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 7, // 增加垂直内边距
-                        ),
-                      ),
-                      onTap: () {
-                        _quantityController.clear();
-                      },
-                      onChanged: (value) => _updateItem(item),
-                      onFieldSubmitted: (value) {
-                        if (widget.amountFocusNode != null) {
-                          widget.amountFocusNode!.requestFocus();
-                          WidgetsBinding.instance.addPostFrameCallback((_) {
-                            _amountController.clear();
-                          });
-                        }
-                      },
-                    ),
-                  ),
-                ),
-                const SizedBox.square(dimension: 12.0),
-                Expanded(
-                  child: SizedBox(
-                    height: 27, // 设置固定高度
-                    child: TextFormField(
-                      controller: _amountController,
-                      focusNode: widget.amountFocusNode,
-                      keyboardType: const TextInputType.numberWithOptions(
-                        decimal: true,
-                      ),
-                      textInputAction: TextInputAction.done,
-                      decoration: const InputDecoration(
-                        labelText: '金额',
-                        border: OutlineInputBorder(),
-                        contentPadding: EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 7, // 增加垂直内边距
-                        ),
-                        prefixText: '¥',
-                      ),
-                      onTap: () {
-                        _amountController.clear();
-                      },
-                      onChanged: (value) => _updateFromAmount(item),
-                      onFieldSubmitted: (value) {
-                        widget.onAmountSubmitted?.call();
-                      },
-                      style: const TextStyle(fontWeight: FontWeight.w500),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-
-            const SizedBox(height: 6),
-
-            // 第三行：生产日期选择（根据enableBatchManagement决定是否显示）
             Consumer(
               builder: (context, ref, child) {
                 final productAsync = ref.watch(
@@ -306,52 +173,243 @@ class _PurchaseItemCardState extends ConsumerState<PurchaseItemCard> {
                 );
                 return productAsync.when(
                   data: (product) {
-                    if (product?.enableBatchManagement == true) {
-                      return Row(
-                        children: [
-                          const Text('生产日期', style: TextStyle(fontSize: 12)),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: InkWell(
-                              onTap: () => _selectProductionDate(item),
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 12,
-                                  vertical: 4,
-                                ),
-                                decoration: BoxDecoration(
-                                  border: Border.all(
-                                    color: Colors.grey.shade300,
-                                  ),
-                                  borderRadius: BorderRadius.circular(4),
-                                ),
-                                child: Row(
-                                  children: [
-                                    Text(
-                                      _formatDate(item.productionDate),
-                                      style: TextStyle(
-                                        fontSize: 12,
-                                        color: item.productionDate == null
-                                            ? Colors.grey[600]
-                                            : Colors.black,
-                                      ),
-                                    ),
-                                    const Spacer(),
-                                    const Icon(Icons.arrow_drop_down),
-                                  ],
-                                ),
-                              ),
-                            ),
-                          ),
-                        ],
+                    if (product?.image?.isNotEmpty == true) {
+                      return SizedBox(
+                        width: 60,
+                        height: 80,
+                        child: CachedImageWidget(
+                          imagePath: product!.image!,
+                          fit: BoxFit.cover,
+                        ),
                       );
                     }
-                    return const SizedBox.shrink(); // 不显示生产日期选择器
+                    return const SizedBox(
+                      width: 60,
+                      height: 80,
+                      child: Center(
+                        child: Icon(
+                          Icons.image_not_supported,
+                          color: Colors.grey,
+                          size: 30,
+                        ),
+                      ),
+                    );
                   },
-                  loading: () => const SizedBox.shrink(),
-                  error: (_, __) => const SizedBox.shrink(),
+                  error: (e, st) => const SizedBox(
+                    width: 60,
+                    height: 80,
+                    child: Center(
+                      child: Icon(Icons.error, color: Colors.red, size: 30),
+                    ),
+                  ),
+                  loading: () => const SizedBox(
+                    width: 60,
+                    height: 80,
+                    child: Center(child: CircularProgressIndicator()),
+                  ),
                 );
               },
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // 第一行：商品名称 + 单位 + 删除按钮
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          item.productName,
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        item.unitName,
+                        style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                      ),
+                      const SizedBox(width: 8),
+                      IconButton(
+                        onPressed: () => ref
+                            .read(purchaseListProvider.notifier)
+                            .removeItem(widget.itemId),
+                        icon: const Icon(Icons.close, size: 18),
+                        style: IconButton.styleFrom(
+                          backgroundColor: Colors.red.shade50,
+                          foregroundColor: Colors.red,
+                          minimumSize: const Size(24, 24),
+                        ),
+                        tooltip: '删除',
+                      ),
+                    ],
+                  ),
+
+                  const SizedBox(height: 3),
+
+                  // 第二行：单价、数量、金额输入框
+                  Row(
+                    children: [
+                      Expanded(
+                        child: SizedBox(
+                          height: 27, // 设置固定高度
+                          child: TextFormField(
+                            controller: _unitPriceController,
+                            focusNode: _unitPriceFocusNode, // 关联FocusNode
+                            keyboardType: const TextInputType.numberWithOptions(
+                              decimal: true,
+                            ),
+                            decoration: const InputDecoration(
+                              labelText: '单价',
+                              border: OutlineInputBorder(),
+                              contentPadding: EdgeInsets.symmetric(
+                                horizontal: 12,
+                                vertical: 7, // 增加垂直内边距
+                              ),
+                              prefixText: '¥',
+                            ),
+                            onTap: () {
+                              _unitPriceController.clear();
+                            },
+                            onChanged: (value) => _updateItem(item),
+                          ),
+                        ),
+                      ),
+                      const SizedBox.square(dimension: 12.0),
+                      Expanded(
+                        child: SizedBox(
+                          height: 27, // 设置固定高度
+                          child: TextFormField(
+                            controller: _quantityController,
+                            focusNode: widget.quantityFocusNode,
+                            keyboardType: const TextInputType.numberWithOptions(
+                              decimal: true,
+                            ),
+                            textInputAction: TextInputAction.next,
+                            decoration: const InputDecoration(
+                              labelText: '数量',
+                              border: OutlineInputBorder(),
+                              contentPadding: EdgeInsets.symmetric(
+                                horizontal: 12,
+                                vertical: 7, // 增加垂直内边距
+                              ),
+                            ),
+                            onTap: () {
+                              _quantityController.clear();
+                            },
+                            onChanged: (value) => _updateItem(item),
+                            onFieldSubmitted: (value) {
+                              if (widget.amountFocusNode != null) {
+                                widget.amountFocusNode!.requestFocus();
+                                WidgetsBinding.instance.addPostFrameCallback((
+                                  _,
+                                ) {
+                                  _amountController.clear();
+                                });
+                              }
+                            },
+                          ),
+                        ),
+                      ),
+                      const SizedBox.square(dimension: 12.0),
+                      Expanded(
+                        child: SizedBox(
+                          height: 27, // 设置固定高度
+                          child: TextFormField(
+                            controller: _amountController,
+                            focusNode: widget.amountFocusNode,
+                            keyboardType: const TextInputType.numberWithOptions(
+                              decimal: true,
+                            ),
+                            textInputAction: TextInputAction.done,
+                            decoration: const InputDecoration(
+                              labelText: '金额',
+                              border: OutlineInputBorder(),
+                              contentPadding: EdgeInsets.symmetric(
+                                horizontal: 12,
+                                vertical: 7, // 增加垂直内边距
+                              ),
+                              prefixText: '¥',
+                            ),
+                            onTap: () {
+                              _amountController.clear();
+                            },
+                            onChanged: (value) => _updateFromAmount(item),
+                            onFieldSubmitted: (value) {
+                              widget.onAmountSubmitted?.call();
+                            },
+                            style: const TextStyle(fontWeight: FontWeight.w500),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+
+                  const SizedBox(height: 6),
+
+                  // 第三行：生产日期选择（根据enableBatchManagement决定是否显示）
+                  Consumer(
+                    builder: (context, ref, child) {
+                      final productAsync = ref.watch(
+                        productByIdProvider(item.productId),
+                      );
+                      return productAsync.when(
+                        data: (product) {
+                          if (product?.enableBatchManagement == true) {
+                            return Row(
+                              children: [
+                                const Text(
+                                  '生产日期',
+                                  style: TextStyle(fontSize: 12),
+                                ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: InkWell(
+                                    onTap: () => _selectProductionDate(item),
+                                    child: Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 12,
+                                        vertical: 4,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        border: Border.all(
+                                          color: Colors.grey.shade300,
+                                        ),
+                                        borderRadius: BorderRadius.circular(4),
+                                      ),
+                                      child: Row(
+                                        children: [
+                                          Text(
+                                            _formatDate(item.productionDate),
+                                            style: TextStyle(
+                                              fontSize: 12,
+                                              color: item.productionDate == null
+                                                  ? Colors.grey[600]
+                                                  : Colors.black,
+                                            ),
+                                          ),
+                                          const Spacer(),
+                                          const Icon(Icons.arrow_drop_down),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            );
+                          }
+                          return const SizedBox.shrink(); // 不显示生产日期选择器
+                        },
+                        loading: () => const SizedBox.shrink(),
+                        error: (_, __) => const SizedBox.shrink(),
+                      );
+                    },
+                  ),
+                ],
+              ),
             ),
           ],
         ),
