@@ -123,7 +123,27 @@ class ProductListNotifier extends StreamNotifier<List<Product>> {
   @override
   Stream<List<Product>> build() {
     final repository = ref.watch(productRepositoryProvider);
-    return repository.watchAllProducts();
+    return repository.watchAllProducts().map((products) {
+      final sortedProducts = List.of(products);
+
+      // 按 lastUpdated 降序排序，最新的产品在最前面
+      sortedProducts.sort((a, b) {
+        final aDate = a.lastUpdated;
+        final bDate = b.lastUpdated;
+        if (aDate == null && bDate == null) return 0;
+        if (aDate == null) return 1;
+        if (bDate == null) return -1;
+        return bDate.compareTo(aDate);
+      });
+
+      // 如果列表长度大于3，将最新的产品移动到第4位
+      if (sortedProducts.length > 3) {
+        final latestProduct = sortedProducts.removeAt(0);
+        sortedProducts.insert(3, latestProduct);
+      }
+
+      return sortedProducts;
+    });
   }
 
   /// 刷新产品列表

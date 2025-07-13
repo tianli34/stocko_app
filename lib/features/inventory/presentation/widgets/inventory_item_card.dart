@@ -30,7 +30,7 @@ class InventoryItemCard extends StatelessWidget {
             // 商品图片
             Container(
               width: 60,
-              height: 80,
+              height: 60,
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(8),
                 color: Colors.grey[200],
@@ -41,7 +41,7 @@ class InventoryItemCard extends StatelessWidget {
                     ? CachedImageWidget(
                         imagePath: productImage,
                         width: 60,
-                        height: 80,
+                        height: 60,
                         fit: BoxFit.cover,
                       )
                     : Icon(

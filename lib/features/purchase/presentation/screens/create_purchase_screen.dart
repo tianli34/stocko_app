@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter_typeahead/flutter_typeahead.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:collection/collection.dart'; // 导入 collection 包
@@ -171,8 +172,23 @@ class _CreatePurchaseScreenState extends ConsumerState<CreatePurchaseScreen> {
   }
 
   void _continuousScan() {
-    // 连续扫码逻辑可以保持，但需要更新其内部实现以使用Provider
-    // 此处暂时保留入口
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => Scaffold(
+          body: SafeArea(
+            child: UniversalBarcodeScanner(
+              config: const BarcodeScannerConfig(
+                title: '连续扫码',
+                subtitle: '将条码对准扫描框，自动连续添加',
+                continuousMode: true, // 启用连续扫码模式
+                continuousDelay: 1500, // 设置扫码间隔
+              ),
+              onBarcodeScanned: _handleContinuousProductScan,
+            ),
+          ),
+        ),
+      ),
+    );
   }
 
   void _saveDraft() {
@@ -300,6 +316,72 @@ class _CreatePurchaseScreenState extends ConsumerState<CreatePurchaseScreen> {
       Navigator.of(context).pop();
       // 显示错误信息
       _showErrorMessage('❌ 查询货品失败: $e');
+    }
+  }
+
+  void _handleContinuousProductScan(String barcode) async {
+    // 在连续扫码模式下，不显示全局的加载提示，而是快速反馈
+    HapticFeedback.lightImpact();
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Row(
+          children: [
+            const SizedBox(
+              width: 16,
+              height: 16,
+              child: CircularProgressIndicator(strokeWidth: 2),
+            ),
+            const SizedBox(width: 16),
+            Expanded(child: Text('条码: $barcode...')),
+          ],
+        ),
+        duration: _kShortSnackBarDuration,
+      ),
+    );
+
+    try {
+      final productOperations = ref.read(productOperationsProvider.notifier);
+      final result = await productOperations.getProductWithUnitByBarcode(
+        barcode,
+      );
+
+      if (!mounted) return;
+
+      if (result != null) {
+        ref
+            .read(purchaseListProvider.notifier)
+            .addOrUpdateItem(
+              product: result.product,
+              unitName: result.unitName,
+              barcode: barcode,
+            );
+        // 成功添加后给予一个更明确的提示
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('✅ ${result.product.name} 已添加'),
+            backgroundColor: Colors.green[600],
+            duration: _kShortSnackBarDuration,
+          ),
+        );
+      } else {
+        // 未找到货品时给予一个失败提示
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('❌ 未找到条码对应的货品: $barcode'),
+            backgroundColor: Theme.of(context).colorScheme.error,
+            duration: _kShortSnackBarDuration,
+          ),
+        );
+      }
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('❌ 查询失败: $e'),
+          backgroundColor: Theme.of(context).colorScheme.error,
+          duration: _kShortSnackBarDuration,
+        ),
+      );
     }
   }
 

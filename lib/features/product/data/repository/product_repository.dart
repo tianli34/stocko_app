@@ -15,7 +15,9 @@ class ProductRepository implements IProductRepository {
   Future<int> addProduct(Product product) async {
     try {
       print('🗃️ 仓储层：添加产品，ID: ${product.id}, 名称: ${product.name}');
-      await _productDao.insertProduct(_productToCompanion(product));
+      await _productDao.insertProduct(
+        _productToCompanion(product.updateTimestamp()),
+      );
       // 由于我们使用的是String ID，返回一个表示成功的值
       return 1;
     } catch (e) {

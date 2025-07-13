@@ -34,11 +34,7 @@ class ProductDao extends DatabaseAccessor<AppDatabase> with _$ProductDaoMixin {
 
   /// 监听所有产品变化
   Stream<List<ProductsTableData>> watchAllProducts() {
-    return (select(db.productsTable)..orderBy([
-          (t) =>
-              OrderingTerm(expression: t.lastUpdated, mode: OrderingMode.desc),
-        ]))
-        .watch();
+    return select(db.productsTable).watch();
   }
 
   /// 监听所有产品及其主单位的名称

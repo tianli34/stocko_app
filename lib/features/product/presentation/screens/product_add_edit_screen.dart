@@ -949,7 +949,10 @@ class _ProductAddEditScreenState extends ConsumerState<ProductAddEditScreen> {
     if (selectedCategory != null) {
       setState(() {
         _selectedCategoryId = selectedCategory.id;
+        _categoryController.text = selectedCategory.name.replaceAll(' ', '');
       });
+      // 从“选择类别页”返回后，将焦点转移到零售价字段
+      _retailPriceFocusNode.requestFocus();
     }
   }
 
@@ -969,6 +972,8 @@ class _ProductAddEditScreenState extends ConsumerState<ProductAddEditScreen> {
         _selectedUnitId = selectedUnit.id;
         _unitController.text = selectedUnit.name;
       });
+      // 从“选择单位页”返回后，将焦点转移到类别字段
+      _categoryFocusNode.requestFocus();
     }
   }
 
