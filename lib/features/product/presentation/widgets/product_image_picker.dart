@@ -107,33 +107,6 @@ class _ProductImagePickerState extends State<ProductImagePicker> {
     );
   }
 
-  // Widget _buildActionButtons() {
-  //   return Row(
-  //     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-  //     children: [
-  //       if (_currentImagePath != null && _currentImagePath!.isNotEmpty)
-  //         TextButton.icon(
-  //           onPressed: _removeImage,
-  //           icon: const Icon(Icons.delete, size: 16),
-  //           label: const Text('删除'),
-  //           style: TextButton.styleFrom(
-  //             foregroundColor: Colors.red,
-  //             padding: const EdgeInsets.symmetric(horizontal: 8),
-  //           ),
-  //         ),
-  //       // TextButton.icon(
-  //       //   onPressed: _showImagePickerOptions,
-  //       //   icon: const Icon(Icons.photo, size: 16),
-  //       //   label: Text(_currentImagePath != null ? '更换' : '选择'),
-  //       //   style: TextButton.styleFrom(
-  //       //     foregroundColor: Theme.of(context).primaryColor,
-  //       //     padding: const EdgeInsets.symmetric(horizontal: 8),
-  //       //   ),
-  //       // ),
-  //     ],
-  //   );
-  // }
-
   void _showImagePickerOptions() {
     showModalBottomSheet(
       context: context,

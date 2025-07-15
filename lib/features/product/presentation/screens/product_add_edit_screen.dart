@@ -488,7 +488,7 @@ class _ProductAddEditScreenState extends ConsumerState<ProductAddEditScreen> {
                       label: '备注',
                       maxLines: 1,
                     ),
-                    const SizedBox(height: 80), // 为底部按钮留出空间
+                    const SizedBox(height: 70), // 为底部按钮留出空间
                   ],
                 ),
               ),

@@ -27,7 +27,7 @@ class CachedImageWidget extends StatefulWidget {
     this.errorWidget,
     this.borderRadius,
     this.enableCache = true,
-    this.quality = 85,
+    this.quality = 100,
   });
 
   @override
@@ -298,17 +298,29 @@ class ProductThumbnailImage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // 根据设备像素密度请求更高分辨率的缓存，以提高清晰度
+    final pixelRatio = MediaQuery.of(context).devicePixelRatio;
+
+    final cacheWidth = (60 * pixelRatio).round();
+    final cacheHeight = (80 * pixelRatio).round();
+
     return GestureDetector(
       onTap: onTap,
-      child: CachedImageWidget(
-        imagePath: imagePath,
+      child: SizedBox(
         width: 60,
-        height: 60,
-        fit: BoxFit.cover,
-        borderRadius: BorderRadius.circular(6),
-        quality: 75, // 缩略图可以使用较低质量
-        placeholder: _buildPlaceholder(),
-        errorWidget: _buildErrorWidget(),
+        height: 80,
+        child: CachedImageWidget(
+          imagePath: imagePath,
+          // 请求更高分辨率的缓存
+          width: cacheWidth.toDouble(),
+          height: cacheHeight.toDouble(),
+          fit: BoxFit.cover,
+          borderRadius: BorderRadius.circular(6),
+          // 分辨率提高后，可适当降低质量以平衡文件大小
+          quality: 100,
+          placeholder: _buildPlaceholder(),
+          errorWidget: _buildErrorWidget(),
+        ),
       ),
     );
   }

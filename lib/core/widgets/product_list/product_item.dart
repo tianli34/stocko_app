@@ -51,7 +51,9 @@ class _ProductItemState extends ConsumerState<ProductItem> {
     if (widget.item.unitId != null && !_unitLoaded) {
       try {
         print('🔍 正在获取单位信息，unitId: ${widget.item.unitId}');
-        final unit = await ref.read(unitControllerProvider.notifier).getUnitById(widget.item.unitId!);
+        final unit = await ref
+            .read(unitControllerProvider.notifier)
+            .getUnitById(widget.item.unitId!);
         print('🔍 获取到的单位: ${unit?.name}');
         if (mounted) {
           setState(() {
@@ -82,8 +84,6 @@ class _ProductItemState extends ConsumerState<ProductItem> {
     _activeItem?.hideActions();
     _activeItem = null;
   }
-
-
 
   @override
   void dispose() {
@@ -132,28 +132,21 @@ class _ProductItemState extends ConsumerState<ProductItem> {
               children: [
                 const SizedBox(width: 12),
                 if (widget.item.image != null && widget.item.image!.isNotEmpty)
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(4),
-                    child: widget.item.image != null && widget.item.image!.isNotEmpty
-                        ? CachedImageWidget(
-                            imagePath: widget.item.image!,
-                            width: 60,
-                            height: 80,
-                            fit: BoxFit.cover,
-                          )
-                        : Container(
-                            width: 60,
-                            height: 80,
-                            decoration: BoxDecoration(
-                              color: Colors.grey.shade100,
-                              borderRadius: BorderRadius.circular(4),
-                            ),
-                            child: Icon(
-                              Icons.image_outlined,
-                              color: Colors.grey.shade400,
-                              size: 24,
-                            ),
-                          ),
+                  ProductThumbnailImage(imagePath: widget.item.image!)
+                else
+                  // 当没有图片时，显示一个占位符，以保持布局一致
+                  Container(
+                    width: 60,
+                    height: 80,
+                    decoration: BoxDecoration(
+                      color: Colors.grey.shade100,
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: Icon(
+                      Icons.image_outlined,
+                      color: Colors.grey.shade400,
+                      size: 30,
+                    ),
                   ),
                 const SizedBox(width: 12),
                 Expanded(
@@ -193,8 +186,15 @@ class _ProductItemState extends ConsumerState<ProductItem> {
                       ),
                       TextButton.icon(
                         onPressed: () => widget.onDelete?.call(widget.item),
-                        icon: const Icon(Icons.delete, size: 16, color: Colors.red),
-                        label: const Text('删除', style: TextStyle(color: Colors.red)),
+                        icon: const Icon(
+                          Icons.delete,
+                          size: 16,
+                          color: Colors.red,
+                        ),
+                        label: const Text(
+                          '删除',
+                          style: TextStyle(color: Colors.red),
+                        ),
                       ),
                     ],
                   ),

@@ -50,7 +50,7 @@ class ImageCacheService {
     String imagePath, {
     int? width,
     int? height,
-    int quality = 85,
+    int quality = 100,
   }) async {
     try {
       // 生成缓存键
@@ -128,7 +128,7 @@ class ImageCacheService {
     try {
       // 预加载常用尺寸的缩略图
       await Future.wait([
-        getOptimizedImage(imagePath, width: 60, height: 60), // 列表缩略图
+        getOptimizedImage(imagePath, width: 60, height: 80), // 列表缩略图
         getOptimizedImage(imagePath, width: 120, height: 120), // 对话框图片
         getOptimizedImage(imagePath, width: 200, height: 200), // 详情页图片
       ]);
@@ -222,7 +222,7 @@ class ImageCacheService {
     String imagePath, {
     int? width,
     int? height,
-    int quality = 85,
+    int quality = 100,
   }) async {
     try {
       final file = File(imagePath);

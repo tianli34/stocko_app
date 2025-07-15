@@ -794,7 +794,7 @@ class _CreateInboundScreenState extends ConsumerState<CreateInboundScreen> {
                     ],
                   ),
 
-                  const SizedBox(height: 80), // 为底部统计区域预留空间
+                  const SizedBox(height: 70), // 为底部统计区域预留空间
                 ],
               ),
             ),
