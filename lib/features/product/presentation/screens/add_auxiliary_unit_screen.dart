@@ -114,20 +114,29 @@ class _UnitEditScreenState extends ConsumerState<UnitEditScreen> {
 
     for (final productUnit in auxiliaryUnits) {
       try {
+        print('=================【仓储层调试】=================');
+        print('ProductUnit ID: ${productUnit.productUnitId}');
+        print('SELLING PRICE: ${productUnit.sellingPrice}');
+        print('WHOLESALE PRICE: ${productUnit.wholesalePrice}');
+        print(
+          'productId: ${productUnit.productId}, unitId: ${productUnit.unitId}, conversionRate: ${productUnit.conversionRate}',
+        );
+        print('==============================================');
         final allUnits = await ref.read(allUnitsProvider.future);
         final unit = allUnits.firstWhere(
           (u) => u.id == productUnit.unitId,
           orElse: () =>
               throw Exception('Unit not found: ${productUnit.unitId}'),
         );
-        print('🔍 ProductUnit售价: ${productUnit.sellingPrice}');
         final auxiliaryUnit = _AuxiliaryUnit(
           id: _auxiliaryCounter,
           unit: unit,
           conversionRate: productUnit.conversionRate,
           initialSellingPrice: productUnit.sellingPrice,
+          initialWholesalePrice: productUnit.wholesalePrice,
         );
         print('🔍 控制器初始化后售价: ${auxiliaryUnit.retailPriceController.text}');
+        print('🔍 控制器初始化后批发价: ${auxiliaryUnit.wholesalePriceController.text}');
 
         auxiliaryUnit.unitController.text = unit.name;
 
@@ -408,6 +417,35 @@ class _UnitEditScreenState extends ConsumerState<UnitEditScreen> {
                     .read(unitEditFormProvider.notifier)
                     .updateAuxiliaryUnitRetailPrice(auxiliaryUnit.id, value);
               },
+              onFieldSubmitted: (_) =>
+                  auxiliaryUnit.wholesalePriceFocusNode.requestFocus(),
+            ),
+            const SizedBox(height: 12),
+            TextFormField(
+              controller: auxiliaryUnit.wholesalePriceController,
+              focusNode: auxiliaryUnit.wholesalePriceFocusNode,
+              decoration: const InputDecoration(
+                labelText: '批发价',
+                border: OutlineInputBorder(),
+                prefixText: '¥ ',
+              ),
+              keyboardType: const TextInputType.numberWithOptions(
+                decimal: true,
+              ),
+              validator: (value) {
+                if (value != null && value.trim().isNotEmpty) {
+                  final price = double.tryParse(value.trim());
+                  if (price == null || price < 0) {
+                    return '请输入有效的价格';
+                  }
+                }
+                return null;
+              },
+              onChanged: (value) {
+                ref
+                    .read(unitEditFormProvider.notifier)
+                    .updateAuxiliaryUnitWholesalePrice(auxiliaryUnit.id, value);
+              },
               onFieldSubmitted: (_) => _handleReturn(),
             ),
           ],
@@ -653,16 +691,25 @@ class _UnitEditScreenState extends ConsumerState<UnitEditScreen> {
       print('🔍 [DEBUG]   输入框文本: "${aux.unitController.text}"');
       print('🔍 [DEBUG]   条码: "${aux.barcodeController.text}"');
       print('🔍 [DEBUG]   零售价: "${aux.retailPriceController.text}"');
+      print('🔍 [DEBUG]   批发价输入框: "${aux.wholesalePriceController.text}"');
 
       if (aux.unit != null && aux.conversionRate > 0) {
         print('=== 构建辅单位ProductUnit ===');
         print(
           'retailPriceController.text: "${aux.retailPriceController.text}"',
         );
+        print(
+          'wholesalePriceController.text: "${aux.wholesalePriceController.text}"',
+        );
         final sellingPrice = aux.retailPriceController.text.trim().isNotEmpty
             ? double.tryParse(aux.retailPriceController.text.trim())
             : null;
+        final wholesalePrice =
+            aux.wholesalePriceController.text.trim().isNotEmpty
+            ? double.tryParse(aux.wholesalePriceController.text.trim())
+            : null;
         print('解析后的sellingPrice: $sellingPrice');
+        print('解析后的wholesalePrice: $wholesalePrice');
         print('========================');
 
         final auxUnit = ProductUnit(
@@ -671,10 +718,13 @@ class _UnitEditScreenState extends ConsumerState<UnitEditScreen> {
           unitId: aux.unit!.id,
           conversionRate: aux.conversionRate,
           sellingPrice: sellingPrice,
+          wholesalePrice: wholesalePrice,
           lastUpdated: DateTime.now(),
         );
         productUnits.add(auxUnit);
-        print('🔍 [DEBUG]   ✅ 添加辅单位: ${auxUnit.productUnitId}');
+        print(
+          '🔍 [DEBUG]   ✅ 添加辅单位: ${auxUnit.productUnitId} 批发价: ${auxUnit.wholesalePrice}',
+        );
       } else {
         print('🔍 [DEBUG]   ❌ 跳过无效辅单位:');
         if (aux.unit == null) {
@@ -722,7 +772,6 @@ class _UnitEditScreenState extends ConsumerState<UnitEditScreen> {
 
     if (productUnits.isNotEmpty && widget.baseUnitId != null) {
       print('🔍 数据有效，返回产品单位数据');
-      ref.read(unitEditFormProvider.notifier).resetUnitEditForm();
 
       // 返回包含产品单位和条码信息的数据
       Navigator.of(context).pop({
@@ -754,6 +803,14 @@ class _UnitEditScreenState extends ConsumerState<UnitEditScreen> {
       final allUnits = await ref.read(allUnitsProvider.future);
 
       for (final auxData in auxiliaryUnitsData) {
+        print('=================【Provider调试】=================');
+        print('AuxiliaryUnitData ID: ${auxData.id}');
+        print('unitName: ${auxData.unitName}, unitId: ${auxData.unitId}');
+        print('conversionRate: ${auxData.conversionRate}');
+        print('retailPrice: ${auxData.retailPrice}');
+        print('wholesalePrice: ${auxData.wholesalePrice}');
+        print('barcode: ${auxData.barcode}');
+        print('===============================================');
         Unit? unit;
 
         if (auxData.unitName.trim().isNotEmpty) {
@@ -776,15 +833,19 @@ class _UnitEditScreenState extends ConsumerState<UnitEditScreen> {
           id: auxData.id,
           unit: unit,
           conversionRate: auxData.conversionRate,
+          initialSellingPrice: double.tryParse(auxData.retailPrice),
+          initialWholesalePrice: double.tryParse(auxData.wholesalePrice),
         );
 
         auxiliaryUnit.unitController.text = auxData.unitName;
         auxiliaryUnit.barcodeController.text = auxData.barcode;
-        auxiliaryUnit.retailPriceController.text = auxData.retailPrice;
-        print('=== 从表单数据加载售价 ===');
-        print('auxData.retailPrice: "${auxData.retailPrice}"');
+        // retailPriceController 和 wholesalePriceController 已在构造函数初始化，无需重复赋值
+        print('=== Provider控件初始化 ===');
         print(
           'retailPriceController.text: "${auxiliaryUnit.retailPriceController.text}"',
+        );
+        print(
+          'wholesalePriceController.text: "${auxiliaryUnit.wholesalePriceController.text}"',
         );
         print('=======================');
 
@@ -808,23 +869,29 @@ class _AuxiliaryUnit {
   late TextEditingController unitController;
   late TextEditingController barcodeController;
   late TextEditingController retailPriceController;
+  late TextEditingController wholesalePriceController;
 
   // 焦点节点
   final FocusNode unitFocusNode = FocusNode();
   final FocusNode conversionRateFocusNode = FocusNode();
   final FocusNode retailPriceFocusNode = FocusNode();
+  final FocusNode wholesalePriceFocusNode = FocusNode();
 
   _AuxiliaryUnit({
     required this.id,
     this.unit,
     required this.conversionRate,
     double? initialSellingPrice,
+    double? initialWholesalePrice,
   }) {
     print('🔍 构造_AuxiliaryUnit: initialSellingPrice=$initialSellingPrice');
     unitController = TextEditingController(text: unit?.name ?? '');
     barcodeController = TextEditingController();
     retailPriceController = TextEditingController(
       text: initialSellingPrice?.toString() ?? '',
+    );
+    wholesalePriceController = TextEditingController(
+      text: initialWholesalePrice?.toString() ?? '',
     );
     print('🔍 retailPriceController.text=${retailPriceController.text}');
   }
@@ -833,8 +900,10 @@ class _AuxiliaryUnit {
     unitController.dispose();
     barcodeController.dispose();
     retailPriceController.dispose();
+    wholesalePriceController.dispose();
     unitFocusNode.dispose();
     conversionRateFocusNode.dispose();
     retailPriceFocusNode.dispose();
+    wholesalePriceFocusNode.dispose();
   }
 }

@@ -1066,14 +1066,6 @@ class _ProductAddEditScreenState extends ConsumerState<ProductAddEditScreen> {
         print(
           '🔧 ProductAddEditScreen: 辅单位条码数量: ${auxiliaryBarcodes?.length ?? 0}',
         );
-
-        // 更新货品表单中的单位选择
-        setState(() {
-          _selectedUnitId = baseProductUnit.unitId;
-        });
-
-        // 显示成功提示
-        ToastService.success('✅ 单位配置完成');
       }
     }
   }

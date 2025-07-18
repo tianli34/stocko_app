@@ -205,10 +205,14 @@ class ProductUnitRepository implements IProductUnitRepository {
 
   /// 将ProductUnit模型转换为数据库Companion
   ProductUnitsTableCompanion _productUnitToCompanion(ProductUnit productUnit) {
-    print('=== 保存售价数据 ===');
+    print('==================【批发价调试】==================');
     print('ProductUnit ID: ${productUnit.productUnitId}');
     print('SELLING PRICE: ${productUnit.sellingPrice}');
-    print('==================');
+    print('WHOLESALE PRICE: ${productUnit.wholesalePrice}');
+    print(
+      'productId: ${productUnit.productId}, unitId: ${productUnit.unitId}, conversionRate: ${productUnit.conversionRate}',
+    );
+    print('=================================================');
     return ProductUnitsTableCompanion(
       productUnitId: Value(productUnit.productUnitId),
       productId: Value(productUnit.productId),
@@ -217,18 +221,30 @@ class ProductUnitRepository implements IProductUnitRepository {
       sellingPrice: productUnit.sellingPrice != null
           ? Value(productUnit.sellingPrice!)
           : const Value.absent(),
+      wholesalePrice: productUnit.wholesalePrice != null
+          ? Value(productUnit.wholesalePrice!)
+          : const Value.absent(),
       lastUpdated: Value(productUnit.lastUpdated ?? DateTime.now()),
     );
   }
 
   /// 将数据库数据转换为ProductUnit模型
   ProductUnit _dataToProductUnit(ProductUnitsTableData data) {
+    print('==================【批发价回显调试】==================');
+    print('ProductUnit ID: ${data.productUnitId}');
+    print('SELLING PRICE: ${data.sellingPrice}');
+    print('WHOLESALE PRICE: ${data.wholesalePrice}');
+    print(
+      'productId: ${data.productId}, unitId: ${data.unitId}, conversionRate: ${data.conversionRate}',
+    );
+    print('=====================================================');
     return ProductUnit(
       productUnitId: data.productUnitId,
       productId: data.productId,
       unitId: data.unitId,
       conversionRate: data.conversionRate,
       sellingPrice: data.sellingPrice,
+      wholesalePrice: data.wholesalePrice,
       lastUpdated: data.lastUpdated,
     );
   }

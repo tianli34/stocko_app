@@ -53,6 +53,7 @@ dependencies:
   flutter_typeahead: ^5.2.0
   fluttertoast: ^8.2.12
   dropdown_button2: ^2.3.9
+  file_picker: ^10.2.0
 
 dev_dependencies:
   flutter_test:
@@ -85,6 +86,7 @@ flutter:
 
   assets:
     - assets/sounds/ # 声明整个文件夹
+    - assets/data/   # 声明数据文件夹
 
   # To add assets to your application, add an assets section, like this:
   # assets:

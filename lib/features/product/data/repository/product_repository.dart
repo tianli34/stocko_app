@@ -44,8 +44,29 @@ class ProductRepository implements IProductRepository {
   Future<int> deleteProduct(String id) async {
     print('🗃️ 仓储层：删除产品，ID: $id');
     try {
+      final productUnitDao = (_productDao.db).productUnitDao;
+      final barcodeDao = (_productDao.db).barcodeDao;
+
+      // 1. 先获取该产品关联的所有产品单位
+      final productUnits = await productUnitDao.getProductUnitsByProductId(id);
+
+      // 2. 删除所有关联的条码
+      int barcodeTotal = 0;
+      for (final unit in productUnits) {
+        final barcodeResult = await barcodeDao.deleteBarcodesByProductUnitId(
+          unit.productUnitId,
+        );
+        barcodeTotal += barcodeResult;
+      }
+      print('🗃️ 仓储层：删除条码，影响行数: $barcodeTotal');
+
+      // 3. 删除产品单位关联表
+      final unitResult = await productUnitDao.deleteProductUnitsByProductId(id);
+      print('🗃️ 仓储层：删除产品单位，影响行数: $unitResult');
+
+      // 4. 最后删除产品本身
       final result = await _productDao.deleteProduct(id);
-      print('🗃️ 仓储层：删除结果，影响行数: $result');
+      print('🗃️ 仓储层：删除产品，影响行数: $result');
       return result;
     } catch (e) {
       print('🗃️ 仓储层：删除时发生异常: $e');

@@ -22,6 +22,9 @@ class AuxiliaryUnitData {
   /// 建议零售价
   final String retailPrice;
 
+  /// 批发价
+  final String wholesalePrice;
+
   const AuxiliaryUnitData({
     required this.id,
     this.unitId,
@@ -29,6 +32,7 @@ class AuxiliaryUnitData {
     this.conversionRate = 0.0,
     this.barcode = '',
     this.retailPrice = '',
+    this.wholesalePrice = '',
   });
 
   /// 创建空的辅单位数据
@@ -37,7 +41,8 @@ class AuxiliaryUnitData {
       unitName = '',
       conversionRate = 0.0,
       barcode = '',
-      retailPrice = '';
+      retailPrice = '',
+      wholesalePrice = '';
 
   /// 复制并更新指定字段
   AuxiliaryUnitData copyWith({
@@ -47,6 +52,7 @@ class AuxiliaryUnitData {
     double? conversionRate,
     String? barcode,
     String? retailPrice,
+    String? wholesalePrice,
   }) {
     return AuxiliaryUnitData(
       id: id ?? this.id,
@@ -55,6 +61,7 @@ class AuxiliaryUnitData {
       conversionRate: conversionRate ?? this.conversionRate,
       barcode: barcode ?? this.barcode,
       retailPrice: retailPrice ?? this.retailPrice,
+      wholesalePrice: wholesalePrice ?? this.wholesalePrice,
     );
   }
 
@@ -67,6 +74,7 @@ class AuxiliaryUnitData {
       'conversionRate': conversionRate,
       'barcode': barcode,
       'retailPrice': retailPrice,
+      'wholesalePrice': wholesalePrice,
     };
   }
 
@@ -79,6 +87,7 @@ class AuxiliaryUnitData {
       conversionRate: (json['conversionRate'] as num?)?.toDouble() ?? 0.0,
       barcode: json['barcode'] as String? ?? '',
       retailPrice: json['retailPrice'] as String? ?? '',
+      wholesalePrice: json['wholesalePrice'] as String? ?? '',
     );
   }
 
@@ -98,7 +107,8 @@ class AuxiliaryUnitData {
         other.unitName == unitName &&
         other.conversionRate == conversionRate &&
         other.barcode == barcode &&
-        other.retailPrice == retailPrice;
+        other.retailPrice == retailPrice &&
+        other.wholesalePrice == wholesalePrice;
   }
 
   @override
@@ -110,12 +120,14 @@ class AuxiliaryUnitData {
       conversionRate,
       barcode,
       retailPrice,
+      wholesalePrice,
     );
   }
 
   @override
   String toString() {
     return 'AuxiliaryUnitData(id: $id, unitId: $unitId, unitName: $unitName, '
-        'conversionRate: $conversionRate, barcode: $barcode, retailPrice: $retailPrice)';
+        'conversionRate: $conversionRate, barcode: $barcode, retailPrice: $retailPrice, '
+        'wholesalePrice: $wholesalePrice)';
   }
 }

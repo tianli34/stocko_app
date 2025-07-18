@@ -2,7 +2,7 @@
 
 cd E:\stocko_app\
 git add .
-git commit -m "0714 1 595图片测试前"
+git commit -m "0718 1 604 从文件导入货品"
 git push
 
 

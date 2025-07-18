@@ -387,7 +387,7 @@ class DatabaseInitializer {
     }
   }
 
-  /// 初始化默认产品单位关联
+  /// 初始化默认商品单位关联
   Future<void> initializeDefaultProductUnits() async {
     try {
       final count = await (_database.select(

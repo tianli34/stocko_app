@@ -11,6 +11,7 @@ abstract class ProductUnit with _$ProductUnit {
     required String unitId, // 外键, 指向 Units 表
     required double conversionRate, // 换算率
     double? sellingPrice, // 售价
+    double? wholesalePrice, // 批发价
     DateTime? lastUpdated, // 最后更新日期
   }) = _ProductUnit;
 

@@ -125,6 +125,17 @@ class UnitEditFormNotifier extends Notifier<UnitEditFormState> {
     state = state.copyWith(auxiliaryUnits: updatedUnits);
   }
 
+  /// 更新辅单位的批发价
+  void updateAuxiliaryUnitWholesalePrice(int id, String wholesalePrice) {
+    final updatedUnits = state.auxiliaryUnits.map((unit) {
+      if (unit.id == id) {
+        return unit.copyWith(wholesalePrice: wholesalePrice);
+      }
+      return unit;
+    }).toList();
+    state = state.copyWith(auxiliaryUnits: updatedUnits);
+  }
+
   /// 批量设置辅单位数据（用于初始化）
   void setAuxiliaryUnits(List<AuxiliaryUnitData> units, {int? counter}) {
     state = state.copyWith(
@@ -162,6 +173,8 @@ class UnitEditFormNotifier extends Notifier<UnitEditFormState> {
             conversionRate: auxUnit.conversionRate as double? ?? 0.0,
             barcode: auxUnit.barcodeController?.text as String? ?? '',
             retailPrice: auxUnit.retailPriceController?.text as String? ?? '',
+            wholesalePrice:
+                auxUnit.wholesalePriceController?.text as String? ?? '',
           ),
         );
       }

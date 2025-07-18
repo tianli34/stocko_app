@@ -390,6 +390,8 @@ class _DatabaseViewerScreenState extends ConsumerState<DatabaseViewerScreen>
                         Text('换算率: ${productUnit.conversionRate}'),
                         if (productUnit.sellingPrice != null)
                           Text('售价: ¥${productUnit.sellingPrice}'),
+                        // if (productUnit.wholesalePrice != null)
+                        Text('批发价: ¥${productUnit.wholesalePrice}'),
                       ],
                     ),
                     trailing: const Icon(Icons.link),

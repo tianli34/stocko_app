@@ -14,6 +14,7 @@ import '../../features/debug/screens/database_management_screen.dart';
 import '../../features/inbound/presentation/screens/screens.dart';
 import '../../features/inventory/presentation/screens/screens.dart';
 import '../../features/purchase/presentation/screens/screens.dart';
+import '../../features/settings/presentation/screens/settings_screen.dart';
 
 // GoRouter Provider
 final routerProvider = Provider<GoRouter>((ref) {
@@ -125,6 +126,18 @@ final routerProvider = Provider<GoRouter>((ref) {
                           foregroundColor: Colors.white,
                         ),
                         child: const Text('数据库管理'),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    SizedBox(
+                      width: 200,
+                      child: ElevatedButton(
+                        onPressed: () => context.push(AppRoutes.settings),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.grey.shade600,
+                          foregroundColor: Colors.white,
+                        ),
+                        child: const Text('设置'),
                       ),
                     ),
                     const SizedBox(height: 20),
@@ -263,7 +276,10 @@ final routerProvider = Provider<GoRouter>((ref) {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const Text('采购管理功能', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
+                const Text(
+                  '采购管理功能',
+                  style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                ),
                 const SizedBox(height: 40),
                 SizedBox(
                   width: 200,
@@ -352,6 +368,11 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: AppRoutes.databaseManagement,
         name: 'database-management',
         builder: (context, state) => const DatabaseManagementScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.settings,
+        name: 'settings',
+        builder: (context, state) => const SettingsScreen(),
       ),
     ],
     errorBuilder: (context, state) => Scaffold(

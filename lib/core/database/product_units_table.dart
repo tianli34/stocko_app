@@ -21,6 +21,9 @@ class ProductUnitsTable extends Table {
   /// 售价（可选）
   RealColumn get sellingPrice => real().named('selling_price').nullable()();
 
+  /// 批发价（可选）
+  RealColumn get wholesalePrice => real().named('wholesale_price').nullable()();
+
   /// 最后更新时间
   DateTimeColumn get lastUpdated =>
       dateTime().named('last_updated').withDefault(currentDateAndTime)();
