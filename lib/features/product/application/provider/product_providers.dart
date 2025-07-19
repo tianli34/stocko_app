@@ -184,6 +184,83 @@ final productByBarcodeProvider = FutureProvider.family<Product?, String>((
 /// 为了兼容现有代码，保留原有的 provider 名称
 final allProductsProvider = productListStreamProvider;
 
+/// 用于存储当前选中的分类ID
+final selectedCategoryIdProvider = StateProvider<String?>((ref) => null);
+
+/// 用于存储当前的搜索关键字
+final searchQueryProvider = StateProvider<String>((ref) => '');
+
+/// 提供根据分类筛选和关键字搜索后的产品列表
+final filteredProductsProvider = Provider<AsyncValue<List<Product>>>((ref) {
+  final selectedCategoryId = ref.watch(selectedCategoryIdProvider);
+  final searchQuery = ref.watch(searchQueryProvider);
+  final productsAsyncValue = ref.watch(allProductsProvider);
+
+  print('#################################################################');
+  print('##### 🔄 filteredProductsProvider 开始执行 🔄 #####');
+  print('#################################################################');
+  print('  - 🔍 搜索关键字: "$searchQuery"');
+  print('  - 🗂️  分类ID: "$selectedCategoryId"');
+
+  return productsAsyncValue.when(
+    data: (products) {
+      print('  -> ✅ [数据分支] 成功获取原始产品列表，数量: ${products.length}');
+      var filteredList = products;
+
+      // 按分类筛选
+      if (selectedCategoryId != null && selectedCategoryId.isNotEmpty) {
+        final initialCount = filteredList.length;
+        filteredList = filteredList
+            .where((p) => p.categoryId == selectedCategoryId)
+            .toList();
+        print(
+          '  ->  lọc 按分类筛选: ID="$selectedCategoryId", 数量从 $initialCount -> ${filteredList.length}',
+        );
+      } else {
+        print('  -> ℹ️  无需按分类筛选');
+      }
+
+      // 按关键字搜索
+      if (searchQuery.isNotEmpty) {
+        final initialCount = filteredList.length;
+        final lowerCaseQuery = searchQuery.toLowerCase();
+        filteredList = filteredList
+            .where((p) => p.name.toLowerCase().contains(lowerCaseQuery))
+            .toList();
+        print(
+          '  -> 🔎 按关键字筛选: 关键字="$searchQuery", 数量从 $initialCount -> ${filteredList.length}',
+        );
+      } else {
+        print('  -> ℹ️  无需按关键字筛选');
+      }
+
+      if (filteredList.isEmpty) {
+        print('  -> ⚠️  最终列表为空');
+      } else {
+        print('  -> ✅ 最终产品列表数量: ${filteredList.length}');
+      }
+      print(
+        '#################################################################',
+      );
+      return AsyncValue.data(filteredList);
+    },
+    loading: () {
+      print('  -> ⏳ [加载中分支]');
+      print(
+        '#################################################################',
+      );
+      return const AsyncValue.loading();
+    },
+    error: (error, stack) {
+      print('  -> ❌ [错误分支] 错误: $error');
+      print(
+        '#################################################################',
+      );
+      return AsyncValue.error(error, stack);
+    },
+  );
+});
+
 /// 提供所有产品及其单位名称的流
 final allProductsWithUnitProvider =
     StreamProvider<List<({Product product, String unitName})>>((ref) {
