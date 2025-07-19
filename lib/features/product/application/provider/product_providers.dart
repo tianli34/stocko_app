@@ -105,9 +105,8 @@ class ProductOperationsNotifier extends AsyncNotifier<void> {
   }
 
   /// 根据条码获取产品及其单位信息
-  Future<({Product product, String unitName})?> getProductWithUnitByBarcode(
-    String barcode,
-  ) async {
+  Future<({Product product, String unitName, double? wholesalePrice})?>
+  getProductWithUnitByBarcode(String barcode) async {
     try {
       final repository = ref.read(productRepositoryProvider);
       return await repository.getProductWithUnitByBarcode(barcode);
@@ -263,7 +262,9 @@ final filteredProductsProvider = Provider<AsyncValue<List<Product>>>((ref) {
 
 /// 提供所有产品及其单位名称的流
 final allProductsWithUnitProvider =
-    StreamProvider<List<({Product product, String unitName})>>((ref) {
+    StreamProvider<
+      List<({Product product, String unitName, double? wholesalePrice})>
+    >((ref) {
       final repository = ref.watch(productRepositoryProvider);
       return repository.watchAllProductsWithUnit();
     });

@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:collection/collection.dart'; // 导入 collection 包
+import '../../../product/domain/model/product.dart';
 import '../../../../core/constants/app_routes.dart';
 import '../../application/provider/purchase_list_provider.dart';
 import '../../application/provider/supplier_providers.dart';
@@ -134,9 +135,8 @@ class _CreatePurchaseScreenState extends ConsumerState<CreatePurchaseScreen> {
       // 使用 `ref.read(provider.future)` 来异步等待数据加载完成。
       // 这可以确保无论 `allProductsWithUnitProvider` 是否已缓存数据，
       // 我们都能在获取到数据后再执行后续逻辑，从而修复首次加载时数据未就绪的bug。
-      final productsWithUnit = await ref.read(
-        allProductsWithUnitProvider.future,
-      );
+      final List<({Product product, String unitName, double? wholesalePrice})>
+      productsWithUnit = await ref.read(allProductsWithUnitProvider.future);
 
       final selectedProducts = productsWithUnit
           .where((p) => result.contains(p.product.id))
@@ -145,7 +145,11 @@ class _CreatePurchaseScreenState extends ConsumerState<CreatePurchaseScreen> {
       for (final p in selectedProducts) {
         ref
             .read(purchaseListProvider.notifier)
-            .addOrUpdateItem(product: p.product, unitName: p.unitName);
+            .addOrUpdateItem(
+              product: p.product,
+              unitName: p.unitName,
+              wholesalePrice: p.wholesalePrice,
+            );
       }
     } catch (e) {
       // 捕获并处理可能的异常
@@ -307,6 +311,7 @@ class _CreatePurchaseScreenState extends ConsumerState<CreatePurchaseScreen> {
               product: result.product,
               unitName: result.unitName,
               barcode: barcode,
+              wholesalePrice: result.wholesalePrice,
             );
       } else {
         // 如果没有找到产品，显示对话框
@@ -361,6 +366,7 @@ class _CreatePurchaseScreenState extends ConsumerState<CreatePurchaseScreen> {
               product: result.product,
               unitName: result.unitName,
               barcode: barcode,
+              wholesalePrice: result.wholesalePrice,
             );
         _lastScannedBarcode = barcode; // 仅在成功时更新上一个条码
         // 成功添加后给予一个更明确的提示

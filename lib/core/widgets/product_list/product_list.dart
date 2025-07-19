@@ -5,11 +5,11 @@ import 'product_item.dart';
 // 全局变量来管理活跃的商品项
 class ProductItemManager {
   static void Function()? _hideAllActions;
-  
+
   static void setHideAllActions(void Function() callback) {
     _hideAllActions = callback;
   }
-  
+
   static void hideAllActions() {
     _hideAllActions?.call();
   }
@@ -38,7 +38,6 @@ class ProductList extends StatefulWidget {
 }
 
 class _ProductListState extends State<ProductList> {
-
   void _handleToggleSelect(dynamic id) {
     final newSelectedIds = List<dynamic>.from(widget.selectedIds);
     if (newSelectedIds.contains(id)) {
@@ -66,42 +65,52 @@ class _ProductListState extends State<ProductList> {
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: _hideAllActions,
-      child: Column(
-        children: [
+      child: CustomScrollView(
+        slivers: [
           if (widget.mode == 'select')
-          Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: Row(
-              children: [
-                ElevatedButton(
-                  onPressed: _handleSelectAll,
-                  child: const Text('全选'),
+            SliverToBoxAdapter(
+              child: SizedBox(
+                height: 40,
+                child: Padding(
+                  padding: const EdgeInsets.only(top: 9.0),
+                  child: Row(
+                    children: [
+                      ElevatedButton(
+                        onPressed: _handleSelectAll,
+                        style: ElevatedButton.styleFrom(
+                          padding: EdgeInsets.zero,
+                        ),
+                        child: const Text('全选'),
+                      ),
+                      const SizedBox(width: 8),
+                      ElevatedButton(
+                        onPressed: _handleClearAll,
+                        style: ElevatedButton.styleFrom(
+                          padding: EdgeInsets.zero,
+                        ),
+                        child: const Text('清空'),
+                      ),
+                    ],
+                  ),
                 ),
-                const SizedBox(width: 8),
-                ElevatedButton(
-                  onPressed: _handleClearAll,
-                  child: const Text('清空'),
-                ),
-              ],
+              ),
             ),
-          ),
-          Expanded(
-            child: ListView.builder(
-              itemCount: widget.data.length,
-              itemBuilder: (context, index) {
-                final item = widget.data[index];
-                return ProductItem(
-                  key: ValueKey(item.id),
-                  item: item,
-                  mode: widget.mode,
-                  isSelected: widget.selectedIds.contains(item.id),
-                  onToggleSelect: widget.mode == 'select' ? _handleToggleSelect : null,
-                  onEdit: widget.onEdit,
-                  onDelete: widget.onDelete,
-                  onHideActions: _hideAllActions,
-                );
-              },
-            ),
+          SliverList(
+            delegate: SliverChildBuilderDelegate((context, index) {
+              final item = widget.data[index];
+              return ProductItem(
+                key: ValueKey(item.id),
+                item: item,
+                mode: widget.mode,
+                isSelected: widget.selectedIds.contains(item.id),
+                onToggleSelect: widget.mode == 'select'
+                    ? _handleToggleSelect
+                    : null,
+                onEdit: widget.onEdit,
+                onDelete: widget.onDelete,
+                onHideActions: _hideAllActions,
+              );
+            }, childCount: widget.data.length),
           ),
         ],
       ),

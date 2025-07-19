@@ -179,7 +179,10 @@ class DatabaseManagementScreen extends ConsumerWidget {
             ),
             const SizedBox(width: 8),
             Expanded(
-              child: Container(), // 占位符，保持布局对称
+              child: OutlinedButton(
+                onPressed: () => _showBatchesData(context, ref),
+                child: const Text('查看批次'),
+              ),
             ),
           ],
         ),
@@ -506,6 +509,54 @@ class DatabaseManagementScreen extends ConsumerWidget {
                       ],
                     ),
                     isThreeLine: true,
+                  ),
+                );
+              },
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('关闭'),
+            ),
+          ],
+        ),
+      );
+    }
+  }
+
+  Future<void> _showBatchesData(BuildContext context, WidgetRef ref) async {
+    final database = ref.read(appDatabaseProvider);
+    final batches = await database.select(database.batchesTable).get();
+
+    if (context.mounted) {
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: Text('批次数据 (${batches.length} 条)'),
+          content: SizedBox(
+            width: double.maxFinite,
+            height: 400,
+            child: ListView.builder(
+              shrinkWrap: true,
+              itemCount: batches.length,
+              itemBuilder: (context, index) {
+                final batch = batches[index];
+                return Card(
+                  margin: const EdgeInsets.symmetric(vertical: 4),
+                  child: ListTile(
+                    title: Text('批次号: ${batch.batchNumber}'),
+                    subtitle: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text('产品ID: ${batch.productId}'),
+                        Text('初始数量: ${batch.initialQuantity}'),
+                        Text(
+                          '生产日期: ${batch.productionDate.toString().substring(0, 10)}',
+                        ),
+                        Text('店铺ID: ${batch.shopId}'),
+                      ],
+                    ),
                   ),
                 );
               },

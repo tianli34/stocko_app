@@ -38,9 +38,16 @@ class ProductDao extends DatabaseAccessor<AppDatabase> with _$ProductDaoMixin {
   }
 
   /// 监听所有产品及其主单位的名称
-  Stream<List<({ProductsTableData product, String unitName})>>
+  Stream<
+    List<({ProductsTableData product, String unitName, double? wholesalePrice})>
+  >
   watchAllProductsWithUnit() {
     final query = select(db.productsTable).join([
+      leftOuterJoin(
+        db.productUnitsTable,
+        db.productUnitsTable.productId.equalsExp(db.productsTable.id) &
+            db.productUnitsTable.conversionRate.equals(1.0),
+      ),
       leftOuterJoin(
         db.unitsTable,
         db.unitsTable.id.equalsExp(db.productsTable.unitId),
@@ -51,7 +58,12 @@ class ProductDao extends DatabaseAccessor<AppDatabase> with _$ProductDaoMixin {
       return rows.map((row) {
         final product = row.readTable(db.productsTable);
         final unit = row.readTableOrNull(db.unitsTable);
-        return (product: product, unitName: unit?.name ?? '未知单位');
+        final productUnit = row.readTableOrNull(db.productUnitsTable);
+        return (
+          product: product,
+          unitName: unit?.name ?? '未知单位',
+          wholesalePrice: productUnit?.wholesalePrice,
+        );
       }).toList();
     });
   }
@@ -188,7 +200,9 @@ class ProductDao extends DatabaseAccessor<AppDatabase> with _$ProductDaoMixin {
 
   /// 根据条码获取产品及其单位信息
   /// 返回包含产品信息和单位名称的结果
-  Future<({ProductsTableData product, String unitName})?>
+  Future<
+    ({ProductsTableData product, String unitName, double? wholesalePrice})?
+  >
   getProductWithUnitByBarcode(String barcode) async {
     // 首先在条码表中找到对应的产品单位ID
     final barcodeResult = await (select(
@@ -223,7 +237,12 @@ class ProductDao extends DatabaseAccessor<AppDatabase> with _$ProductDaoMixin {
 
     final product = result.readTable(db.productsTable);
     final unit = result.readTable(db.unitsTable);
+    final productUnit = result.readTable(db.productUnitsTable);
 
-    return (product: product, unitName: unit.name);
+    return (
+      product: product,
+      unitName: unit.name,
+      wholesalePrice: productUnit.wholesalePrice,
+    );
   }
 }

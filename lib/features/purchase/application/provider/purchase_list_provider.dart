@@ -41,6 +41,7 @@ class PurchaseListNotifier extends StateNotifier<List<PurchaseItem>> {
     required Product product,
     String? unitName,
     String? barcode,
+    double? wholesalePrice,
   }) {
     final actualUnitName = unitName ?? '未知单位';
     // 优先通过条码匹配，其次通过货品ID和单位匹配
@@ -72,9 +73,9 @@ class PurchaseListNotifier extends StateNotifier<List<PurchaseItem>> {
         productId: product.id,
         productName: product.name,
         unitName: actualUnitName,
-        unitPrice: 0.0, // 初始单价为0
-        quantity: 1, // 初始数量为1
-        amount: 0.0, // 初始金额为0
+        unitPrice: wholesalePrice ?? 0.0,
+        quantity: 1,
+        amount: wholesalePrice ?? 0.0,
         productionDate: product.enableBatchManagement
             ? DateTime.now().subtract(const Duration(days: 90))
             : null,

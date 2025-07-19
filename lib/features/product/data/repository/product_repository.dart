@@ -95,15 +95,18 @@ class ProductRepository implements IProductRepository {
   }
 
   @override
-  Stream<List<({Product product, String unitName})>>
+  Stream<List<({Product product, String unitName, double? wholesalePrice})>>
   watchAllProductsWithUnit() {
     return _productDao
         .watchAllProductsWithUnit()
         .map(
           (data) => data
               .map(
-                (e) =>
-                    (product: _dataToProduct(e.product), unitName: e.unitName),
+                (e) => (
+                  product: _dataToProduct(e.product),
+                  unitName: e.unitName,
+                  wholesalePrice: e.wholesalePrice,
+                ),
               )
               .toList(),
         )
@@ -165,9 +168,8 @@ class ProductRepository implements IProductRepository {
 
   /// 根据条码获取产品及其单位信息
   @override
-  Future<({Product product, String unitName})?> getProductWithUnitByBarcode(
-    String barcode,
-  ) async {
+  Future<({Product product, String unitName, double? wholesalePrice})?>
+  getProductWithUnitByBarcode(String barcode) async {
     try {
       final result = await _productDao.getProductWithUnitByBarcode(barcode);
       if (result == null) return null;
@@ -175,6 +177,7 @@ class ProductRepository implements IProductRepository {
       return (
         product: _dataToProduct(result.product),
         unitName: result.unitName,
+        wholesalePrice: result.wholesalePrice,
       );
     } catch (e) {
       throw Exception('根据条码查询产品及单位失败: $e');
