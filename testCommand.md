@@ -2,7 +2,7 @@
 
 cd E:\stocko_app\
 git add .
-git commit -m "0719 1 635 分类筛选、搜索"
+git commit -m "0720 1 635 采购拆分前"
 git push
 
 

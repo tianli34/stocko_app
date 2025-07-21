@@ -16,6 +16,9 @@ class InboundReceiptsTable extends Table {
   TextColumn get status =>
       text().named('status').withDefault(const Constant('draft'))();
 
+  /// 来源
+  TextColumn get source => text().named('source').nullable()();
+
   /// 备注
   TextColumn get remarks => text().named('remarks').nullable()();
 

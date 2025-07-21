@@ -5,26 +5,42 @@ import '../../../../core/constants/app_routes.dart';
 import '../../application/provider/supplier_providers.dart';
 import '../../data/dao/purchase_dao.dart';
 import '../../../../core/database/database.dart';
+import '../../../product/data/repository/product_repository.dart';
 
+// Provider for PurchaseDao
 final purchaseDaoProvider = Provider<PurchaseDao>((ref) {
   final database = ref.watch(appDatabaseProvider);
   return database.purchaseDao;
 });
 
-final purchaseRecordsProvider = StreamProvider<List<PurchaseWithProductName>>((
+// Provider to watch all purchase orders
+final purchaseOrdersProvider = StreamProvider<List<PurchaseOrdersTableData>>((
   ref,
 ) {
   final dao = ref.watch(purchaseDaoProvider);
-  return dao.watchAllPurchasesWithProductName();
+  // Sort by purchase date descending
+  return dao.watchAllPurchaseOrders().map(
+    (orders) =>
+        orders..sort((a, b) => b.purchaseDate.compareTo(a.purchaseDate)),
+  );
 });
+
+// Provider to get items for a specific order
+final purchaseOrderItemsProvider =
+    FutureProvider.family<List<PurchaseOrderItemsTableData>, int>((
+      ref,
+      orderId,
+    ) {
+      final dao = ref.watch(purchaseDaoProvider);
+      return dao.getPurchaseOrderItems(orderId);
+    });
 
 class PurchaseRecordsScreen extends ConsumerWidget {
   const PurchaseRecordsScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final recordsAsync = ref.watch(purchaseRecordsProvider);
-    final suppliersAsync = ref.watch(allSuppliersProvider);
+    final ordersAsync = ref.watch(purchaseOrdersProvider);
 
     return Scaffold(
       appBar: AppBar(
@@ -37,9 +53,9 @@ class PurchaseRecordsScreen extends ConsumerWidget {
           ),
         ],
       ),
-      body: recordsAsync.when(
-        data: (records) {
-          if (records.isEmpty) {
+      body: ordersAsync.when(
+        data: (orders) {
+          if (orders.isEmpty) {
             return const Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -47,151 +63,154 @@ class PurchaseRecordsScreen extends ConsumerWidget {
                   Icon(Icons.receipt_long, size: 64, color: Colors.grey),
                   SizedBox(height: 16),
                   Text(
-                    '暂无采购记录',
+                    '暂无采购订单',
                     style: TextStyle(fontSize: 18, color: Colors.grey),
                   ),
                 ],
               ),
             );
           }
-
-          // 按采购单号分组
-          final groupedRecords = <String, List<PurchaseWithProductName>>{};
-          for (final record in records) {
-            groupedRecords
-                .putIfAbsent(record.purchase.purchaseNumber, () => [])
-                .add(record);
-          }
-
-          // 按采购日期降序排列（新的在前）
-          final sortedPurchaseNumbers = groupedRecords.keys.toList()
-            ..sort(
-              (a, b) => groupedRecords[b]!.first.purchase.purchaseDate
-                  .compareTo(groupedRecords[a]!.first.purchase.purchaseDate),
-            );
-
           return ListView.builder(
             padding: const EdgeInsets.all(16),
-            itemCount: sortedPurchaseNumbers.length,
+            itemCount: orders.length,
             itemBuilder: (context, index) {
-              final purchaseNumber = sortedPurchaseNumbers[index];
-              final purchaseItems = groupedRecords[purchaseNumber]!;
-              final totalAmount = purchaseItems.fold<double>(
-                0,
-                (sum, item) =>
-                    sum + (item.purchase.unitPrice * item.purchase.quantity),
-              );
-              final totalQuantity = purchaseItems.fold<double>(
-                0,
-                (sum, item) => sum + item.purchase.quantity,
-              );
-
-              return Card(
-                margin: const EdgeInsets.only(bottom: 12),
-                child: InkWell(
-                  onTap: () => context.push(
-                    AppRoutes.purchaseDetailPath(purchaseNumber),
-                  ),
-                  child: ExpansionTile(
-                    title: Text(
-                      '采购单: $purchaseNumber',
-                      style: const TextStyle(fontWeight: FontWeight.bold),
-                    ),
-                    subtitle: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          '日期: ${purchaseItems.first.purchase.purchaseDate.toString().substring(0, 10)}',
-                        ),
-                        suppliersAsync.when(
-                          data: (suppliers) {
-                            final supplier = suppliers
-                                .where(
-                                  (s) =>
-                                      s.id ==
-                                      purchaseItems.first.purchase.supplierId,
-                                )
-                                .firstOrNull;
-                            return Text('供应商: ${supplier?.name ?? '未知'}');
-                          },
-                          loading: () => const Text('供应商: 加载中...'),
-                          error: (_, __) => const Text('供应商: 加载失败'),
-                        ),
-                      ],
-                    ),
-                    trailing: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      crossAxisAlignment: CrossAxisAlignment.end,
-                      children: [
-                        Text(
-                          '￥${totalAmount.toStringAsFixed(2)}',
-                          style: const TextStyle(
-                            fontWeight: FontWeight.bold,
-                            color: Colors.green,
-                          ),
-                        ),
-                        Text(
-                          '${totalQuantity.toInt()}件',
-                          style: const TextStyle(
-                            fontSize: 12,
-                            color: Colors.grey,
-                          ),
-                        ),
-                      ],
-                    ),
-                    children: purchaseItems
-                        .map(
-                          (item) => ListTile(
-                            contentPadding: const EdgeInsets.symmetric(
-                              horizontal: 32,
-                              vertical: 4,
-                            ),
-                            title: Text(item.productName),
-                            subtitle: item.purchase.productionDate != null
-                                ? Text(
-                                    '生产日期: ${item.purchase.productionDate!.toString().substring(0, 10)}',
-                                  )
-                                : null,
-                            trailing: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              crossAxisAlignment: CrossAxisAlignment.end,
-                              children: [
-                                Text(
-                                  '￥${item.purchase.unitPrice.toStringAsFixed(2)} × ${item.purchase.quantity.toInt()}',
-                                ),
-                                Text(
-                                  '￥${(item.purchase.unitPrice * item.purchase.quantity).toStringAsFixed(2)}',
-                                  style: const TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        )
-                        .toList(),
-                  ),
-                ),
-              );
+              final order = orders[index];
+              return PurchaseOrderCard(order: order);
             },
           );
         },
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (error, stack) => Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
+        error: (error, stack) => Center(child: Text('加载失败: $error')),
+      ),
+    );
+  }
+}
+
+class PurchaseOrderCard extends ConsumerWidget {
+  final PurchaseOrdersTableData order;
+
+  const PurchaseOrderCard({super.key, required this.order});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final suppliersAsync = ref.watch(allSuppliersProvider);
+    final itemsAsync = ref.watch(purchaseOrderItemsProvider(order.id));
+
+    return Card(
+      margin: const EdgeInsets.only(bottom: 12),
+      child: InkWell(
+        child: ExpansionTile(
+          title: Text(
+            '订单号: ${order.purchaseOrderNumber}',
+            style: const TextStyle(fontWeight: FontWeight.bold),
+          ),
+          subtitle: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Icon(Icons.error, size: 64, color: Colors.red),
-              const SizedBox(height: 16),
-              Text('加载失败: $error'),
-              const SizedBox(height: 16),
-              ElevatedButton(
-                onPressed: () => ref.refresh(purchaseRecordsProvider),
-                child: const Text('重试'),
+              Text('日期: ${order.purchaseDate.toString().substring(0, 10)}'),
+              suppliersAsync.when(
+                data: (suppliers) {
+                  final supplier = suppliers
+                      .where((s) => s.id == order.supplierId)
+                      .firstOrNull;
+                  return Text('供应商: ${supplier?.name ?? '未知'}');
+                },
+                loading: () => const Text('供应商: 加载中...'),
+                error: (_, __) => const Text('供应商: 加载失败'),
               ),
             ],
           ),
+          trailing: itemsAsync.when(
+            data: (items) {
+              final totalAmount = items.fold<double>(
+                0,
+                (sum, item) => sum + (item.unitPrice * item.quantity),
+              );
+              final totalQuantity = items.fold<double>(
+                0,
+                (sum, item) => sum + item.quantity,
+              );
+              return Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Text(
+                    '￥${totalAmount.toStringAsFixed(2)}',
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: Colors.green,
+                    ),
+                  ),
+                  Text(
+                    '${totalQuantity.toInt()}件',
+                    style: const TextStyle(fontSize: 12, color: Colors.grey),
+                  ),
+                ],
+              );
+            },
+            loading: () => const SizedBox(
+              width: 20,
+              height: 20,
+              child: CircularProgressIndicator(strokeWidth: 2),
+            ),
+            error: (_, __) => const Icon(Icons.error, color: Colors.red),
+          ),
+          children: [
+            itemsAsync.when(
+              data: (items) => Column(
+                children: items
+                    .map((item) => PurchaseOrderItemTile(item: item))
+                    .toList(),
+              ),
+              loading: () => const Padding(
+                padding: EdgeInsets.all(16.0),
+                child: Center(child: CircularProgressIndicator()),
+              ),
+              error: (e, s) => Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Center(child: Text('加载明细失败: $e')),
+              ),
+            ),
+          ],
         ),
+      ),
+    );
+  }
+}
+
+class PurchaseOrderItemTile extends ConsumerWidget {
+  final PurchaseOrderItemsTableData item;
+
+  const PurchaseOrderItemTile({super.key, required this.item});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final productAsync = ref.watch(productByIdProvider(item.productId));
+    return ListTile(
+      contentPadding: const EdgeInsets.symmetric(horizontal: 32, vertical: 4),
+      title: productAsync.when(
+        data: (product) => Text(product?.name ?? '货品ID: ${item.productId}'),
+        loading: () => const Text('加载中...'),
+        error: (err, stack) => Text(
+          '加载货品失败',
+          style: TextStyle(color: Theme.of(context).colorScheme.error),
+        ),
+      ),
+      subtitle: item.productionDate != null
+          ? Text('生产日期: ${item.productionDate!.toString().substring(0, 10)}')
+          : null,
+      trailing: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.end,
+        children: [
+          Text(
+            '￥${item.unitPrice.toStringAsFixed(2)} × ${item.quantity.toInt()}',
+          ),
+          Text(
+            '￥${(item.unitPrice * item.quantity).toStringAsFixed(2)}',
+            style: const TextStyle(fontWeight: FontWeight.bold),
+          ),
+        ],
       ),
     );
   }

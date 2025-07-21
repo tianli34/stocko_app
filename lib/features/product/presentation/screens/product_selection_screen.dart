@@ -21,15 +21,66 @@ class _ProductSelectionScreenState
   @override
   void initState() {
     super.initState();
-    // Entering the page, clearing the category selection
-    Future.microtask(
-      () => ref.read(selectedCategoryIdProvider.notifier).state = null,
+    // Entering the page, clearing the category selection and search
+    Future.microtask(() {
+      ref.read(selectedCategoryIdProvider.notifier).state = null;
+      ref.read(searchQueryProvider.notifier).state = '';
+    });
+  }
+
+  Future<void> _showSearchDialog(BuildContext context, WidgetRef ref) async {
+    final searchController = TextEditingController();
+    final searchQuery = ref.read(searchQueryProvider);
+    searchController.text = searchQuery;
+
+    final newQuery = await showDialog<String>(
+      context: context,
+      builder: (context) => Transform.translate(
+        offset: const Offset(0, 150),
+        child: Dialog(
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          insetPadding: const EdgeInsets.symmetric(horizontal: 9.0),
+          child: TextField(
+            controller: searchController,
+            autofocus: true,
+            onSubmitted: (value) => Navigator.of(context).pop(value),
+            decoration: InputDecoration(
+              // hintText: '输入关键字...',
+              filled: true,
+              fillColor: Theme.of(context).scaffoldBackgroundColor,
+              border: OutlineInputBorder(
+                // borderRadius: BorderRadius.circular(22.0),
+                borderSide: BorderSide.none,
+              ),
+              contentPadding: const EdgeInsets.symmetric(
+                vertical: 15.0,
+                horizontal: 10.0,
+              ),
+              suffixIcon: Padding(
+                padding: const EdgeInsets.only(right: 4.0),
+                child: TextButton(
+                  onPressed: () =>
+                      Navigator.of(context).pop(searchController.text),
+                  child: const Text('搜索'),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
     );
+
+    if (newQuery != null) {
+      ref.read(searchQueryProvider.notifier).state = newQuery;
+    }
   }
 
   @override
   Widget build(BuildContext context) {
+    final productsAsync = ref.watch(filteredProductsProvider);
     final selectedCategoryId = ref.watch(selectedCategoryIdProvider);
+    final searchQuery = ref.watch(searchQueryProvider);
     final allCategories = ref.watch(categoriesProvider);
 
     String? categoryName;
@@ -41,63 +92,147 @@ class _ProductSelectionScreenState
       categoryName = category.name;
     }
 
+    Widget titleWidget;
+    final countSuffix = ' (已选${selectedIds.length}种)';
+
+    // 使用 trim() 来确保 searchQuery 包含可见字符，而不仅仅是空格。
+    if (searchQuery.trim().isNotEmpty) {
+      titleWidget = Row(
+        children: [
+          Flexible(
+            flex: 2,
+            child: Text(
+              searchQuery,
+              overflow: TextOverflow.ellipsis,
+              softWrap: false,
+              style: const TextStyle(fontSize: 14), // 缩小字体以减少空间占用
+            ),
+          ),
+          const SizedBox(width: 8),
+          Flexible(
+            flex: 5,
+            child: Text(
+              '(已选${selectedIds.length}种)',
+              // overflow: TextOverflow.ellipsis,
+              // softWrap: false,
+              style: const TextStyle(fontSize: 14), // 统一缩小字体
+            ),
+          ),
+        ],
+      );
+    } else {
+      titleWidget = Text(
+        '${categoryName ?? '选择货品'}$countSuffix',
+        style: const TextStyle(fontSize: 15),
+      );
+    }
+
     return Scaffold(
       appBar: AppBar(
-        title: Text(
-          '${categoryName ?? '选择货品'} (已选${selectedIds.length}种)',
-          style: TextStyle(fontSize: 15),
-        ),
+        toolbarHeight: 33,
+        title: titleWidget,
         actions: [
-          if (selectedCategoryId != null)
-            IconButton(
-              icon: const Icon(Icons.clear),
-              tooltip: '清除筛选',
-              onPressed: () {
-                ref.read(selectedCategoryIdProvider.notifier).state = null;
-              },
-            ),
-          IconButton(
-            icon: const Icon(Icons.filter_list),
-            tooltip: '按分类筛选',
-            onPressed: () async {
-              final selectedCategory = await Navigator.push<Category>(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => const CategorySelectionScreen(),
+          Transform.translate(
+            offset: const Offset(0, -8.0), // 向上移动按钮
+            child: Wrap(
+              spacing: -8.0, // 使用负间距来减少按钮间的空隙
+              crossAxisAlignment: WrapCrossAlignment.center,
+              children: [
+                if (searchQuery.isNotEmpty || selectedCategoryId != null)
+                  IconButton(
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(),
+                    icon: const Icon(Icons.clear_all, size: 22),
+                    tooltip: '清除所有筛选和搜索',
+                    onPressed: () {
+                      ref.read(searchQueryProvider.notifier).state = '';
+                      ref.read(selectedCategoryIdProvider.notifier).state =
+                          null;
+                    },
+                  ),
+                IconButton(
+                  padding: const EdgeInsets.symmetric(horizontal: 0),
+                  constraints: const BoxConstraints(),
+                  icon: const Icon(Icons.search, size: 22),
+                  tooltip: '搜索',
+                  onPressed: () => _showSearchDialog(context, ref),
                 ),
-              );
-              if (selectedCategory != null) {
-                ref.read(selectedCategoryIdProvider.notifier).state =
-                    selectedCategory.id;
-              }
-            },
-          ),
-          TextButton(
-            onPressed: () {
-              Navigator.of(context).pop(selectedIds);
-            },
-            child: const Text('确定'),
+                IconButton(
+                  padding: const EdgeInsets.symmetric(horizontal: 0),
+                  constraints: const BoxConstraints(),
+                  icon: const Icon(Icons.filter_list, size: 22),
+                  tooltip: '按分类筛选',
+                  onPressed: () async {
+                    final selectedCategory = await Navigator.push<Category>(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const CategorySelectionScreen(),
+                      ),
+                    );
+                    if (selectedCategory != null) {
+                      ref.read(selectedCategoryIdProvider.notifier).state =
+                          selectedCategory.id;
+                    }
+                  },
+                ),
+                Padding(
+                  padding: const EdgeInsets.only(right: 8.0),
+                  child: TextButton(
+                    style: TextButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(horizontal: 0),
+                      minimumSize: Size.zero,
+                    ),
+                    onPressed: () {
+                      Navigator.of(context).pop(selectedIds);
+                    },
+                    child: const Text('确定'),
+                  ),
+                ),
+              ],
+            ),
           ),
         ],
       ),
-      body: Consumer(
-        builder: (context, ref, child) {
-          final productsAsync = ref.watch(filteredProductsProvider);
-          return productsAsync.when(
-            data: (products) => ProductList(
-              data: products,
-              mode: 'select',
-              selectedIds: selectedIds,
-              onSelectionChange: (newSelectedIds) {
-                setState(() {
-                  selectedIds = newSelectedIds;
-                });
-              },
-            ),
-            loading: () => const Center(child: CircularProgressIndicator()),
-            error: (error, stack) => Center(child: Text('加载失败: $error')),
+      body: productsAsync.when(
+        data: (products) {
+          final sortedProducts = [...products]
+            ..sort(
+              (a, b) =>
+                  (b.lastUpdated ??
+                          DateTime.fromMillisecondsSinceEpoch(
+                            int.tryParse(b.id) ?? 0,
+                          ))
+                      .compareTo(
+                        a.lastUpdated ??
+                            DateTime.fromMillisecondsSinceEpoch(
+                              int.tryParse(a.id) ?? 0,
+                            ),
+                      ),
+            );
+          return ProductList(
+            data: sortedProducts,
+            mode: 'select',
+            selectedIds: selectedIds,
+            onSelectionChange: (newSelectedIds) {
+              setState(() {
+                selectedIds = newSelectedIds;
+              });
+            },
           );
         },
+        loading: () => const Center(child: CircularProgressIndicator()),
+        error: (error, stack) => Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text('加载失败: $error'),
+              ElevatedButton(
+                onPressed: () => ref.invalidate(allProductsProvider),
+                child: const Text('重试'),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

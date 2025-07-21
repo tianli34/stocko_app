@@ -1,13 +1,19 @@
 import 'package:drift/drift.dart';
+import 'purchase_orders_table.dart';
 
-/// 采购表
-/// 存储采购单信息，包括采购单号、货品ID、单位ID、单价、数量、生产日期、店铺ID、供应商ID、采购日期等
-class PurchasesTable extends Table {
+/// 采购订单明细表
+/// 存储采购订单中的具体货品信息
+class PurchaseOrderItemsTable extends Table {
   @override
-  String get tableName => 'purchases';
+  String get tableName => 'purchase_order_items';
 
-  /// 主键 - 采购单号（系统自动生成）
-  TextColumn get purchaseNumber => text().named('purchase_number')();
+  /// 主键 - 自增ID
+  IntColumn get id => integer().autoIncrement()();
+
+  /// 外键 - 关联到采购订单表
+  IntColumn get purchaseOrderId => integer()
+      .named('purchase_order_id')
+      .references(PurchaseOrdersTable, #id)();
 
   /// 外键 - 货品ID
   TextColumn get productId => text().named('product_id')();
@@ -25,15 +31,6 @@ class PurchasesTable extends Table {
   DateTimeColumn get productionDate =>
       dateTime().named('production_date').nullable()();
 
-  /// 外键 - 店铺ID
-  TextColumn get shopId => text().named('shop_id')();
-
-  /// 外键 - 供应商ID
-  TextColumn get supplierId => text().named('supplier_id')();
-
-  /// 采购日期
-  DateTimeColumn get purchaseDate => dateTime().named('purchase_date')();
-
   /// 创建时间
   DateTimeColumn get createdAt =>
       dateTime().named('created_at').withDefault(currentDateAndTime)();
@@ -41,7 +38,4 @@ class PurchasesTable extends Table {
   /// 最后更新时间
   DateTimeColumn get updatedAt =>
       dateTime().named('updated_at').withDefault(currentDateAndTime)();
-
-  @override
-  Set<Column> get primaryKey => {purchaseNumber};
 }

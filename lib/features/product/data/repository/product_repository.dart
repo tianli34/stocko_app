@@ -286,3 +286,12 @@ class ProductRepository implements IProductRepository {
 final productRepositoryProvider = Provider<IProductRepository>((ref) {
   return ProductRepository(ref.watch(appDatabaseProvider));
 });
+
+/// Provider to get a single product by its ID.
+final productByIdProvider = FutureProvider.family<Product?, String>((
+  ref,
+  id,
+) async {
+  final repository = ref.watch(productRepositoryProvider);
+  return repository.getProductById(id);
+});

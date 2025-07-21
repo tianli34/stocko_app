@@ -1,31 +1,31 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:drift/drift.dart' as drift;
 import '../../../../core/database/database.dart';
-import '../../data/dao/purchase_dao.dart';
+import '../../../purchase/data/dao/purchase_dao.dart';
 import '../../../product/data/dao/batch_dao.dart';
 import '../../../inbound/data/dao/inbound_receipt_dao.dart';
 import '../../../inbound/data/dao/inbound_item_dao.dart';
-import '../../data/dao/product_supplier_dao.dart'; // 新增引入
+import '../../../purchase/data/dao/product_supplier_dao.dart';
 import '../../../inventory/application/inventory_service.dart';
 import '../../../inventory/domain/model/batch.dart';
-import '../../domain/model/purchase_item.dart'; // 导入PurchaseItem类
-import '../../domain/repository/i_supplier_repository.dart';
-import '../../domain/model/supplier.dart';
-import '../provider/supplier_providers.dart';
+import '../../domain/model/inbound_item.dart';
+import '../../../purchase/domain/repository/i_supplier_repository.dart';
+import '../../../purchase/domain/model/supplier.dart';
+import '../../../purchase/application/provider/supplier_providers.dart';
 
-/// 采购服务
-/// 处理采购单入库的业务逻辑
-class PurchaseService {
+/// 入库服务
+/// 处理入库单的业务逻辑
+class InboundService {
   final AppDatabase _database;
   final PurchaseDao _purchaseDao;
   final BatchDao _batchDao;
   final InboundReceiptDao _inboundReceiptDao;
   final InboundItemDao _inboundItemDao;
-  final ProductSupplierDao _productSupplierDao; // 新增字段
+  final ProductSupplierDao _productSupplierDao;
   final InventoryService _inventoryService;
   final ISupplierRepository _supplierRepository;
 
-  PurchaseService(
+  InboundService(
     this._database,
     this._inventoryService,
     this._supplierRepository,
@@ -33,115 +33,141 @@ class PurchaseService {
       _batchDao = _database.batchDao,
       _inboundReceiptDao = _database.inboundReceiptDao,
       _inboundItemDao = _database.inboundItemDao,
-      _productSupplierDao = _database.productSupplierDao; // 新增初始化
+      _productSupplierDao = _database.productSupplierDao;
+
   /// 一键入库
-  /// 1. 检查并创建供应商（如果不存在）
-  /// 2. 写入采购表
-  /// 3. 根据条件写入批次表
-  /// 4. 写入货品供应商关联表
-  /// 5. 写入入库单表、入库单明细表
-  /// 6. 间接写入流水表、库存表
+  /// 1. 如果是采购模式，检查并创建供应商、创建采购单、写入货品供应商关联
+  /// 2. 写入批次表
+  /// 3. 写入入库单表、入库单明细表
+  /// 4. 更新库存
   Future<String> processOneClickInbound({
-    required String supplierId,
     required String shopId,
-    required List<PurchaseItem> purchaseItems,
+    required List<InboundItem> inboundItems,
+    required String source,
+    required bool isPurchaseMode,
+    String? supplierId,
+    String? supplierName,
     String? remarks,
-    String? supplierName, // 新增参数：供应商名称，用于自动创建供应商
   }) async {
     print('🚀 开始执行一键入库流程...');
-    print('📊 供应商ID: $supplierId');
+    print('📦 模式: ${isPurchaseMode ? "采购" : "非采购"}');
     print('🏪 店铺ID: $shopId');
-    print('📦 采购商品数量: ${purchaseItems.length}');
+    print('📦 商品数量: ${inboundItems.length}');
+    print('ℹ️ 来源: $source');
 
     return await _database.transaction(() async {
       final now = DateTime.now();
+      int? purchaseOrderId;
+      String? purchaseOrderNumber;
 
-      // 1. 检查并创建供应商（如果不存在）
-      final actualSupplierId = await _ensureSupplierExists(
-        supplierId,
-        supplierName,
-      );
-      print('✅ 确认供应商ID: $actualSupplierId');
+      if (isPurchaseMode) {
+        // --- 采购模式下的特定逻辑 ---
+        if (supplierId == null) {
+          throw Exception("采购模式下，supplierId不能为空");
+        }
+        // 1. 检查并创建供应商
+        final actualSupplierId = await _ensureSupplierExists(
+          supplierId,
+          supplierName,
+        );
+        print('✅ 确认供应商ID: $actualSupplierId');
 
-      // 生成采购单号
-      final purchaseNumber = await _purchaseDao.generatePurchaseNumber(now);
-      print('📝 生成采购单号: $purchaseNumber'); // 2. 写入采购表
-      print('⏳ 步骤2: 写入采购表...');
-      await _writePurchaseRecords(
-        purchaseNumber: purchaseNumber,
-        supplierId: actualSupplierId,
-        shopId: shopId,
-        purchaseItems: purchaseItems,
-        purchaseDate: now,
-      );
+        // 2. 创建完整的采购订单
+        print('⏳ 步骤2: 创建采购订单...');
+        final purchaseOrderData = await _createPurchaseOrder(
+          supplierId: actualSupplierId,
+          shopId: shopId,
+          purchaseItems: inboundItems,
+          purchaseDate: now,
+        );
+        purchaseOrderId = purchaseOrderData.orderId;
+        purchaseOrderNumber = purchaseOrderData.orderNumber;
+        print('✅ 采购订单创建完成，ID: $purchaseOrderId');
 
+        // 4. 写入货品供应商关联表
+        print('⏳ 步骤4: 写入货品供应商关联表...');
+        await _writeProductSupplierRecords(
+          supplierId: actualSupplierId,
+          purchaseItems: inboundItems,
+        );
+      }
+
+      // --- 通用逻辑 ---
       // 3. 根据条件写入批次表
       print('⏳ 步骤3: 根据条件写入批次表...');
-      await _writeBatchRecords(shopId: shopId, purchaseItems: purchaseItems);
+      await _writeBatchRecords(shopId: shopId, inboundItems: inboundItems);
 
-      // 4. 写入货品供应商关联表
-      print('⏳ 步骤4: 写入货品供应商关联表...');
-      await _writeProductSupplierRecords(
-        supplierId: actualSupplierId,
-        purchaseItems: purchaseItems,
-      ); // 5. 写入入库单表、入库单明细表
+      // 5. 写入入库单表、入库单明细表
       print('⏳ 步骤5: 写入入库单表、入库单明细表...');
       final receiptNumber = await _writeInboundRecords(
         shopId: shopId,
-        purchaseItems: purchaseItems,
-        purchaseNumber: purchaseNumber,
+        inboundItems: inboundItems,
+        purchaseOrderId: purchaseOrderId,
+        purchaseOrderNumber: purchaseOrderNumber,
         remarks: remarks,
-      ); // 6. 间接写入流水表、库存表
-      print('⏳ 步骤6: 间接写入流水表、库存表...');
-      await _writeInventoryRecords(
-        shopId: shopId,
-        purchaseItems: purchaseItems,
+        source: source, // 传递 source
       );
+
+      // 6. 间接写入流水表、库存表
+      print('⏳ 步骤6: 间接写入流水表、库存表...');
+      await _writeInventoryRecords(shopId: shopId, inboundItems: inboundItems);
 
       print('🎉 一键入库流程执行完成！入库单号: $receiptNumber');
       return receiptNumber;
     });
   }
 
-  /// 1. 写入采购表
-  Future<void> _writePurchaseRecords({
-    required String purchaseNumber,
+  /// 创建采购订单（包括订单头和所有明细）
+  Future<({int orderId, String orderNumber})> _createPurchaseOrder({
     required String supplierId,
     required String shopId,
-    required List<PurchaseItem> purchaseItems,
+    required List<InboundItem> purchaseItems,
     required DateTime purchaseDate,
   }) async {
-    final companions = <PurchasesTableCompanion>[];
+    // 生成采购单号
+    final purchaseNumber = await _purchaseDao.generatePurchaseNumber(
+      purchaseDate,
+    );
 
+    // 准备订单头
+    final orderCompanion = PurchaseOrdersTableCompanion(
+      purchaseOrderNumber: drift.Value(purchaseNumber),
+      supplierId: drift.Value(supplierId),
+      shopId: drift.Value(shopId),
+      purchaseDate: drift.Value(purchaseDate),
+      status: const drift.Value('completed'), // 一键入库直接完成
+    );
+
+    // 准备订单明细列表
+    final itemCompanions = <PurchaseOrderItemsTableCompanion>[];
     for (final item in purchaseItems) {
-      // 获取单位ID
       final unitId = await _getUnitIdFromUnitName(item.unitName);
-
-      // 为每个商品项创建采购记录
-      final companion = PurchasesTableCompanion(
-        purchaseNumber: drift.Value(purchaseNumber),
-        productId: drift.Value(item.productId),
-        unitId: drift.Value(unitId),
-        unitPrice: drift.Value(item.unitPrice),
-        quantity: drift.Value(item.quantity),
-        productionDate: drift.Value(item.productionDate),
-        shopId: drift.Value(shopId),
-        supplierId: drift.Value(supplierId),
-        purchaseDate: drift.Value(purchaseDate),
+      itemCompanions.add(
+        PurchaseOrderItemsTableCompanion(
+          productId: drift.Value(item.productId),
+          unitId: drift.Value(unitId),
+          quantity: drift.Value(item.quantity),
+          unitPrice: drift.Value(item.unitPrice),
+          productionDate: drift.Value(item.productionDate),
+        ),
       );
-      companions.add(companion);
     }
 
-    await _purchaseDao.insertMultiplePurchases(companions);
-    print('✅ 采购记录写入完成，共 ${companions.length} 条');
+    // 调用DAO中的事务方法创建完整订单
+    final orderId = await _purchaseDao.createFullPurchaseOrder(
+      order: orderCompanion,
+      items: itemCompanions,
+    );
+
+    return (orderId: orderId, orderNumber: purchaseNumber);
   }
 
-  /// 2. 根据条件写入批次表
+  /// 根据条件写入批次表
   Future<void> _writeBatchRecords({
     required String shopId,
-    required List<PurchaseItem> purchaseItems,
+    required List<InboundItem> inboundItems,
   }) async {
-    for (final item in purchaseItems) {
+    for (final item in inboundItems) {
       // 检查产品是否启用批次管理
       final product = await _database.productDao.getProductById(item.productId);
 
@@ -175,10 +201,10 @@ class PurchaseService {
     }
   }
 
-  /// 3. 写入货品供应商关联表
+  /// 写入货品供应商关联表
   Future<void> _writeProductSupplierRecords({
     required String supplierId,
-    required List<PurchaseItem> purchaseItems,
+    required List<InboundItem> purchaseItems,
   }) async {
     print('📋 开始处理货品供应商关联...');
 
@@ -250,11 +276,13 @@ class PurchaseService {
     print('📋 货品供应商关联处理完成');
   }
 
-  /// 3. 写入入库单表、入库单明细表
+  /// 写入入库单表、入库单明细表
   Future<String> _writeInboundRecords({
     required String shopId,
-    required List<PurchaseItem> purchaseItems,
-    required String purchaseNumber,
+    required List<InboundItem> inboundItems,
+    required String source,
+    int? purchaseOrderId,
+    String? purchaseOrderNumber,
     String? remarks,
   }) async {
     final now = DateTime.now();
@@ -271,13 +299,14 @@ class PurchaseService {
       shopId: drift.Value(shopId),
       submittedAt: drift.Value(now),
       completedAt: drift.Value(now),
+      source: drift.Value(source),
     );
 
     await _inboundReceiptDao.insertInboundReceipt(receipt);
     print('✅ 入库单创建完成: $receiptNumber'); // 创建入库单明细记录
     final itemCompanions = <InboundReceiptItemsTableCompanion>[];
 
-    for (final item in purchaseItems) {
+    for (final item in inboundItems) {
       final product = await _database.productDao.getProductById(item.productId);
       final unitId = await _getUnitIdFromUnitName(item.unitName);
 
@@ -290,7 +319,7 @@ class PurchaseService {
         productionDate: drift.Value(item.productionDate),
         locationId: const drift.Value.absent(), // 采购入库暂不指定货位
         purchaseQuantity: drift.Value(item.quantity),
-        purchaseOrderId: drift.Value(purchaseNumber),
+        purchaseOrderId: drift.Value(purchaseOrderId?.toString()),
         batchNumber:
             item.productionDate != null &&
                 product?.enableBatchManagement == true
@@ -308,12 +337,12 @@ class PurchaseService {
     return receiptNumber;
   }
 
-  /// 4. 间接写入流水表、库存表
+  /// 间接写入流水表、库存表
   Future<void> _writeInventoryRecords({
     required String shopId,
-    required List<PurchaseItem> purchaseItems,
+    required List<InboundItem> inboundItems,
   }) async {
-    for (final item in purchaseItems) {
+    for (final item in inboundItems) {
       final product = await _database.productDao.getProductById(item.productId);
 
       // 根据产品批次管理设置决定批次号生成策略
@@ -413,10 +442,10 @@ class PurchaseService {
   }
 }
 
-/// 采购服务提供者
-final purchaseServiceProvider = Provider<PurchaseService>((ref) {
+/// 入库服务提供者
+final inboundServiceProvider = Provider<InboundService>((ref) {
   final database = ref.watch(appDatabaseProvider);
   final inventoryService = ref.watch(inventoryServiceProvider);
   final supplierRepository = ref.watch(supplierRepositoryProvider);
-  return PurchaseService(database, inventoryService, supplierRepository);
+  return InboundService(database, inventoryService, supplierRepository);
 });

@@ -1,121 +1,168 @@
 import 'package:drift/drift.dart';
 import '../../../../core/database/database.dart';
-import '../../../../core/database/purchases_table.dart';
+import '../../../../core/database/purchase_orders_table.dart';
+import '../../../../core/database/purchase_order_items_table.dart';
+import '../../../../core/database/products_table.dart';
+import 'package:rxdart/rxdart.dart';
 
 part 'purchase_dao.g.dart';
 
-/// 采购记录包含货品名称的数据类
-class PurchaseWithProductName {
-  final PurchasesTableData purchase;
-  final String productName;
+/// 采购订单及其所有明细的数据类
+class PurchaseOrderWithItems {
+  final PurchaseOrdersTableData order;
+  final List<PurchaseOrderItemWithDetails> items;
 
-  PurchaseWithProductName({
-    required this.purchase,
-    required this.productName,
-  });
+  PurchaseOrderWithItems({required this.order, required this.items});
 }
 
-/// 采购数据访问对象 (DAO)
-/// 专门负责采购表相关的数据库操作
-@DriftAccessor(tables: [PurchasesTable])
+/// 采购订单明细及其关联产品信息的数据类
+class PurchaseOrderItemWithDetails {
+  final PurchaseOrderItemsTableData item;
+  final ProductsTableData product;
+
+  PurchaseOrderItemWithDetails({required this.item, required this.product});
+}
+
+/// 采购订单数据访问对象 (DAO)
+@DriftAccessor(
+  tables: [PurchaseOrdersTable, PurchaseOrderItemsTable, ProductsTable],
+)
 class PurchaseDao extends DatabaseAccessor<AppDatabase>
     with _$PurchaseDaoMixin {
   PurchaseDao(super.db);
 
-  /// 添加采购记录
-  Future<int> insertPurchase(PurchasesTableCompanion companion) async {
-    return await into(db.purchasesTable).insert(companion);
+  // ===========================================================================
+  // 采购订单 (Purchase Order) 操作
+  // ===========================================================================
+
+  /// 创建一个新的采购订单，并返回其自增ID
+  Future<int> createPurchaseOrder(PurchaseOrdersTableCompanion companion) {
+    return into(db.purchaseOrdersTable).insert(companion);
   }
 
-  /// 批量添加采购记录
-  Future<void> insertMultiplePurchases(
-    List<PurchasesTableCompanion> companions,
-  ) async {
-    await batch((batch) {
-      batch.insertAll(db.purchasesTable, companions);
+  /// 根据ID获取单个采购订单
+  Future<PurchaseOrdersTableData?> getPurchaseOrderById(int orderId) {
+    return (select(
+      db.purchaseOrdersTable,
+    )..where((tbl) => tbl.id.equals(orderId))).getSingleOrNull();
+  }
+
+  /// 监听所有采购订单的变化
+  Stream<List<PurchaseOrdersTableData>> watchAllPurchaseOrders() {
+    return select(db.purchaseOrdersTable).watch();
+  }
+
+  /// 删除一个采购订单（需要先删除其所有明细）
+  Future<int> deletePurchaseOrder(int orderId) async {
+    return transaction(() async {
+      // 1. 删除所有关联的明细
+      await (delete(
+        db.purchaseOrderItemsTable,
+      )..where((tbl) => tbl.purchaseOrderId.equals(orderId))).go();
+      // 2. 删除订单本身
+      return (delete(
+        db.purchaseOrdersTable,
+      )..where((tbl) => tbl.id.equals(orderId))).go();
     });
   }
 
-  /// 根据采购单号获取采购记录
-  Future<PurchasesTableData?> getPurchaseByNumber(String purchaseNumber) async {
-    return await (select(db.purchasesTable)
-          ..where((tbl) => tbl.purchaseNumber.equals(purchaseNumber)))
-        .getSingleOrNull();
+  // ===========================================================================
+  // 采购订单明细 (Purchase Order Item) 操作
+  // ===========================================================================
+
+  /// 为指定的采购订单批量添加明细
+  Future<void> addPurchaseOrderItems(
+    List<PurchaseOrderItemsTableCompanion> companions,
+  ) {
+    return batch((batch) {
+      batch.insertAll(db.purchaseOrderItemsTable, companions);
+    });
   }
 
-  /// 获取所有采购记录
-  Future<List<PurchasesTableData>> getAllPurchases() async {
-    return await select(db.purchasesTable).get();
+  /// 获取指定采购订单的所有明细
+  Future<List<PurchaseOrderItemsTableData>> getPurchaseOrderItems(int orderId) {
+    return (select(
+      db.purchaseOrderItemsTable,
+    )..where((tbl) => tbl.purchaseOrderId.equals(orderId))).get();
   }
 
-  /// 根据店铺ID获取采购记录
-  Future<List<PurchasesTableData>> getPurchasesByShop(String shopId) async {
-    return await (select(
-      db.purchasesTable,
-    )..where((tbl) => tbl.shopId.equals(shopId))).get();
-  }
+  // ===========================================================================
+  // 组合查询和事务性操作
+  // ===========================================================================
 
-  /// 根据供应商ID获取采购记录
-  Future<List<PurchasesTableData>> getPurchasesBySupplier(
-    String supplierId,
-  ) async {
-    return await (select(
-      db.purchasesTable,
-    )..where((tbl) => tbl.supplierId.equals(supplierId))).get();
-  }
+  /// 监听一个完整的采购订单（包含其所有明细及产品信息）
+  Stream<PurchaseOrderWithItems> watchPurchaseOrderWithItems(int orderId) {
+    final orderStream = (select(
+      db.purchaseOrdersTable,
+    )..where((tbl) => tbl.id.equals(orderId))).watchSingle();
 
-  /// 根据产品ID获取采购记录
-  Future<List<PurchasesTableData>> getPurchasesByProduct(
-    String productId,
-  ) async {
-    return await (select(
-      db.purchasesTable,
-    )..where((tbl) => tbl.productId.equals(productId))).get();
-  }
+    final itemsStream =
+        (select(
+          db.purchaseOrderItemsTable,
+        )..where((tbl) => tbl.purchaseOrderId.equals(orderId))).join([
+          innerJoin(
+            db.productsTable,
+            db.productsTable.id.equalsExp(db.purchaseOrderItemsTable.productId),
+          ),
+        ]).watch();
 
-  /// 监听所有采购记录变化
-  Stream<List<PurchasesTableData>> watchAllPurchases() {
-    return select(db.purchasesTable).watch();
-  }
-
-  /// 监听所有采购记录变化（包含货品名称）
-  Stream<List<PurchaseWithProductName>> watchAllPurchasesWithProductName() {
-    final query = select(db.purchasesTable).join([
-      leftOuterJoin(db.productsTable, db.productsTable.id.equalsExp(db.purchasesTable.productId)),
-    ]);
-    
-    return query.watch().map((rows) {
-      return rows.map((row) {
-        final purchase = row.readTable(db.purchasesTable);
-        final product = row.readTableOrNull(db.productsTable);
-        return PurchaseWithProductName(
-          purchase: purchase,
-          productName: product?.name ?? '未知货品',
+    return orderStream.switchMap((order) {
+      if (order == null) {
+        return Stream.value(
+          PurchaseOrderWithItems(
+            order: PurchaseOrdersTableData(
+              id: -1,
+              purchaseOrderNumber: '',
+              supplierId: '',
+              shopId: '',
+              purchaseDate: DateTime.now(),
+              status: 'draft',
+              createdAt: DateTime.now(),
+              updatedAt: DateTime.now(),
+            ),
+            items: [],
+          ),
         );
-      }).toList();
+      }
+      return itemsStream.map((rows) {
+        final detailedItems = rows.map((row) {
+          return PurchaseOrderItemWithDetails(
+            item: row.readTable(db.purchaseOrderItemsTable),
+            product: row.readTable(db.productsTable),
+          );
+        }).toList();
+        return PurchaseOrderWithItems(order: order, items: detailedItems);
+      });
     });
   }
 
-  /// 更新采购记录
-  Future<bool> updatePurchase(PurchasesTableCompanion companion) async {
-    final rowsAffected =
-        await (update(db.purchasesTable)..where(
-              (tbl) =>
-                  tbl.purchaseNumber.equals(companion.purchaseNumber.value),
-            ))
-            .write(companion);
-    return rowsAffected > 0;
+  /// 创建一个完整的采购订单（包括订单头和多个明细项）
+  /// 这是一个事务性操作，确保数据一致性
+  Future<int> createFullPurchaseOrder({
+    required PurchaseOrdersTableCompanion order,
+    required List<PurchaseOrderItemsTableCompanion> items,
+  }) {
+    return transaction(() async {
+      // 1. 插入订单头，获取新订单的ID
+      final orderId = await into(db.purchaseOrdersTable).insert(order);
+
+      // 2. 为每个明细项设置外键 (purchaseOrderId)
+      final itemsWithOrderId = items.map((item) {
+        return item.copyWith(purchaseOrderId: Value(orderId));
+      }).toList();
+
+      // 3. 批量插入所有明细项
+      await batch((batch) {
+        batch.insertAll(db.purchaseOrderItemsTable, itemsWithOrderId);
+      });
+
+      return orderId;
+    });
   }
 
-  /// 删除采购记录
-  Future<int> deletePurchase(String purchaseNumber) async {
-    print('💾 数据库层：删除采购记录，单号: $purchaseNumber');
-    final result = await (delete(
-      db.purchasesTable,
-    )..where((tbl) => tbl.purchaseNumber.equals(purchaseNumber))).go();
-    print('💾 数据库层：删除完成，影响行数: $result');
-    return result;
-  }
+  // ===========================================================================
+  // 工具方法
+  // ===========================================================================
 
   /// 生成新的采购单号
   /// 格式：PUR + YYYYMMDD + 4位序号
@@ -124,14 +171,14 @@ class PurchaseDao extends DatabaseAccessor<AppDatabase>
     final prefix = 'PUR$dateStr';
 
     // 获取当天已有的采购单数量
-    final count =
-        await (selectOnly(db.purchasesTable)
-              ..where(db.purchasesTable.purchaseNumber.like('$prefix%'))
-              ..addColumns([db.purchasesTable.purchaseNumber.count()]))
-            .getSingle();
+    final query = selectOnly(db.purchaseOrdersTable)
+      ..where(db.purchaseOrdersTable.purchaseOrderNumber.like('$prefix%'))
+      ..addColumns([db.purchaseOrdersTable.id.count()]);
 
-    final sequenceNumber =
-        (count.read(db.purchasesTable.purchaseNumber.count()) ?? 0) + 1;
+    final result = await query.getSingle();
+    final count = result.read(db.purchaseOrdersTable.id.count());
+
+    final sequenceNumber = (count ?? 0) + 1;
     return '$prefix${sequenceNumber.toString().padLeft(4, '0')}';
   }
 }

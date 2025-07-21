@@ -1,30 +1,30 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../domain/model/purchase_item.dart';
 import '../../../product/domain/model/product.dart';
+import '../../domain/model/inbound_item.dart';
 
-/// 采购列表状态通知器
+/// 入库列表状态通知器
 ///
-/// 管理采购项列表的状态，并提供增、删、改、查等操作。
-class PurchaseListNotifier extends StateNotifier<List<PurchaseItem>> {
-  PurchaseListNotifier() : super([]);
+/// 管理入库项列表的状态，并提供增、删、改、查等操作。
+class InboundListNotifier extends StateNotifier<List<InboundItem>> {
+  InboundListNotifier() : super([]);
 
-  /// 添加单个采购项到列表头部
-  void addItem(PurchaseItem item) {
+  /// 添加单个入库项到列表头部
+  void addItem(InboundItem item) {
     state = [item, ...state];
   }
 
-  /// 添加多个采购项到列表头部
-  void addAllItems(List<PurchaseItem> items) {
+  /// 添加多个入库项到列表头部
+  void addAllItems(List<InboundItem> items) {
     state = [...items.reversed, ...state];
   }
 
-  /// 根据ID移除采购项
+  /// 根据ID移除入库项
   void removeItem(String itemId) {
     state = state.where((item) => item.id != itemId).toList();
   }
 
-  /// 更新指定的采购项
-  void updateItem(PurchaseItem updatedItem) {
+  /// 更新指定的入库项
+  void updateItem(InboundItem updatedItem) {
     state = [
       for (final item in state)
         if (item.id == updatedItem.id) updatedItem else item,
@@ -62,13 +62,13 @@ class PurchaseListNotifier extends StateNotifier<List<PurchaseItem>> {
       updateItem(updatedItem);
       // 可以返回一个值或状态，用于在UI层显示提示信息
     } else {
-      // 如果是新货品，创建新的采购项
+      // 如果是新货品，创建新的入库项
       // 使用条码作为唯一标识符的一部分，以确保唯一性
       final itemId = barcode != null
           ? 'item_${barcode}_${DateTime.now().millisecondsSinceEpoch}'
           : 'item_${product.id}_${DateTime.now().millisecondsSinceEpoch}';
 
-      final newItem = PurchaseItem(
+      final newItem = InboundItem(
         id: itemId,
         productId: product.id,
         productName: product.name,
@@ -90,20 +90,20 @@ class PurchaseListNotifier extends StateNotifier<List<PurchaseItem>> {
   }
 }
 
-/// 采购列表Provider
+/// 入库列表Provider
 ///
-/// 这是UI层访问 [PurchaseListNotifier] 的入口。
-final purchaseListProvider =
-    StateNotifierProvider<PurchaseListNotifier, List<PurchaseItem>>(
-      (ref) => PurchaseListNotifier(),
+/// 这是UI层访问 [InboundListNotifier] 的入口。
+final inboundListProvider =
+    StateNotifierProvider<InboundListNotifier, List<InboundItem>>(
+      (ref) => InboundListNotifier(),
     );
 
-/// 采购统计信息Provider
+/// 入库统计信息Provider
 ///
-/// 派生自 [purchaseListProvider]，用于高效计算总计信息。
+/// 派生自 [inboundListProvider]，用于高效计算总计信息。
 /// UI可以只监听这个Provider，从而避免在列表项内容变化时进行不必要的重算。
-final purchaseTotalsProvider = Provider<Map<String, double>>((ref) {
-  final items = ref.watch(purchaseListProvider);
+final inboundTotalsProvider = Provider<Map<String, double>>((ref) {
+  final items = ref.watch(inboundListProvider);
   final totalQuantity = items.fold(0.0, (sum, item) => sum + item.quantity);
   final totalAmount = items.fold(0.0, (sum, item) => sum + item.amount);
   return {

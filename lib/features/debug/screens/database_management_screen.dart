@@ -422,7 +422,7 @@ class DatabaseManagementScreen extends ConsumerWidget {
 
   Future<void> _showPurchasesData(BuildContext context, WidgetRef ref) async {
     final database = ref.read(appDatabaseProvider);
-    final purchases = await database.select(database.purchasesTable).get();
+    final purchases = await database.select(database.purchaseOrdersTable).get();
 
     if (context.mounted) {
       showDialog(
@@ -440,21 +440,16 @@ class DatabaseManagementScreen extends ConsumerWidget {
                 return Card(
                   margin: const EdgeInsets.symmetric(vertical: 4),
                   child: ListTile(
-                    title: Text('采购单号: ${purchase.purchaseNumber}'),
+                    title: Text('采购单号: ${purchase.purchaseOrderNumber}'),
                     subtitle: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text('产品ID: ${purchase.productId}'),
-                        Text('数量: ${purchase.quantity} (${purchase.unitId})'),
-                        Text('单价: ¥${purchase.unitPrice.toStringAsFixed(2)}'),
+                        Text('供应商ID: ${purchase.supplierId}'),
+                        Text('店铺ID: ${purchase.shopId}'),
                         Text(
                           '采购日期: ${purchase.purchaseDate.toString().substring(0, 16)}',
                         ),
-                        Text(
-                          '生产日期: ${purchase.productionDate.toString().substring(0, 10)}',
-                        ),
-                        Text('店铺: ${purchase.shopId}'),
-                        Text('供应商: ${purchase.supplierId}'),
+                        Text('状态: ${purchase.status}'),
                       ],
                     ),
                     isThreeLine: true,

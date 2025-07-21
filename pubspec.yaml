@@ -54,6 +54,7 @@ dependencies:
   fluttertoast: ^8.2.12
   dropdown_button2: ^2.3.9
   file_picker: ^10.2.0
+  rxdart: ^0.28.0
 
 dev_dependencies:
   flutter_test:

@@ -13,7 +13,8 @@ import '../../features/database/presentation/screens/database_viewer_screen.dart
 import '../../features/debug/screens/database_management_screen.dart';
 import '../../features/inbound/presentation/screens/screens.dart';
 import '../../features/inventory/presentation/screens/screens.dart';
-import '../../features/purchase/presentation/screens/screens.dart';
+import '../../features/purchase/presentation/screens/purchase_records_screen.dart';
+import '../../features/purchase/presentation/screens/purchase_detail_screen.dart';
 import '../../features/settings/presentation/screens/settings_screen.dart';
 
 // GoRouter Provider
@@ -307,11 +308,6 @@ final routerProvider = Provider<GoRouter>((ref) {
         ),
       ),
       GoRoute(
-        path: AppRoutes.purchaseCreate,
-        name: 'purchase-create',
-        builder: (context, state) => const CreatePurchaseScreen(),
-      ),
-      GoRoute(
         path: AppRoutes.purchaseRecords,
         name: 'purchase-records',
         builder: (context, state) => const PurchaseRecordsScreen(),
@@ -320,8 +316,8 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: AppRoutes.purchaseDetail,
         name: 'purchase-detail',
         builder: (context, state) {
-          final purchaseNumber = state.pathParameters['purchaseNumber']!;
-          return PurchaseDetailScreen(purchaseNumber: purchaseNumber);
+          final orderId = state.pathParameters['orderId']!;
+          return PurchaseDetailScreen(orderId: orderId);
         },
       ),
       GoRoute(

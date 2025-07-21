@@ -124,16 +124,20 @@ class ProductListScreen extends ConsumerWidget {
     }
 
     Widget titleWidget;
+    final productCount = productsAsyncValue.asData?.value.length;
+    final countSuffix = productCount != null ? ' ($productCount)' : '';
+
     if (searchQuery.isNotEmpty) {
       titleWidget = Row(
         children: [
           const Icon(Icons.search, size: 20),
           const SizedBox(width: 8),
           Expanded(child: Text(searchQuery, overflow: TextOverflow.ellipsis)),
+          if (productCount != null) Text('($productCount)'),
         ],
       );
     } else {
-      titleWidget = Text(categoryName ?? '货品列表');
+      titleWidget = Text('${categoryName ?? '货品列表'}$countSuffix');
     }
 
     return Scaffold(

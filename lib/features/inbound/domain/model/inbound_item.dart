@@ -1,144 +1,107 @@
-/// 入库单明细领域模型
+/// 入库单商品项领域模型
 /// 表示入库单中的商品明细信息
 class InboundItem {
   final String id;
-  final String receiptId;
   final String productId;
   final String productName;
-  final String productSpec; // 规格，如"红色S码"
-  final String? productImage;
-  final double quantity; // 本次入库数量
-  /// 入库数量的别名，用于兼容 UI 代码
-  double get inboundQuantity => quantity;
-
-  final String unitId; // 入库单位ID
-  final DateTime? productionDate; // 生产日期
-
-  /// 是否要求生产日期（根据商品类型判断）
-  bool get requiresProductionDate => productionDate != null;
-  final String? locationId; // 入库位置ID
-  final String? locationName; // 入库位置名称
-  final double? purchaseQuantity; // 采购数量
-  final String? purchaseOrderId; // 采购单ID
-  final String? batchNumber; // 批次号
-  final DateTime createdAt;
-  final DateTime updatedAt;
+  final String unitName;
+  final double unitPrice;
+  final double quantity;
+  final double amount;
+  final DateTime? productionDate;
 
   const InboundItem({
     required this.id,
-    required this.receiptId,
     required this.productId,
     required this.productName,
-    required this.productSpec,
-    this.productImage,
+    required this.unitName,
+    required this.unitPrice,
     required this.quantity,
-    required this.unitId,
+    required this.amount,
     this.productionDate,
-    this.locationId,
-    this.locationName,
-    this.purchaseQuantity,
-    this.purchaseOrderId,
-    this.batchNumber,
-    required this.createdAt,
-    required this.updatedAt,
   });
 
-  /// 复制并更新入库单明细
+  /// 复制并更新入库项
   InboundItem copyWith({
     String? id,
-    String? receiptId,
     String? productId,
     String? productName,
-    String? productSpec,
-    String? productImage,
+    String? unitName,
+    double? unitPrice,
     double? quantity,
-    String? unitId,
+    double? amount,
     DateTime? productionDate,
-    String? locationId,
-    String? locationName,
-    double? purchaseQuantity,
-    String? purchaseOrderId,
-    String? batchNumber,
-    DateTime? createdAt,
-    DateTime? updatedAt,
   }) {
     return InboundItem(
       id: id ?? this.id,
-      receiptId: receiptId ?? this.receiptId,
       productId: productId ?? this.productId,
       productName: productName ?? this.productName,
-      productSpec: productSpec ?? this.productSpec,
-      productImage: productImage ?? this.productImage,
+      unitName: unitName ?? this.unitName,
+      unitPrice: unitPrice ?? this.unitPrice,
       quantity: quantity ?? this.quantity,
-      unitId: unitId ?? this.unitId,
+      amount: amount ?? this.amount,
       productionDate: productionDate ?? this.productionDate,
-      locationId: locationId ?? this.locationId,
-      locationName: locationName ?? this.locationName,
-      purchaseQuantity: purchaseQuantity ?? this.purchaseQuantity,
-      purchaseOrderId: purchaseOrderId ?? this.purchaseOrderId,
-      batchNumber: batchNumber ?? this.batchNumber,
-      createdAt: createdAt ?? this.createdAt,
-      updatedAt: updatedAt ?? this.updatedAt,
     );
+  }
+
+  /// 创建新的入库项
+  factory InboundItem.create({
+    required String productId,
+    required String productName,
+    required String unitName,
+    required double unitPrice,
+    required double quantity,
+    DateTime? productionDate,
+  }) {
+    final now = DateTime.now();
+    return InboundItem(
+      id: 'item_${now.millisecondsSinceEpoch}',
+      productId: productId,
+      productName: productName,
+      unitName: unitName,
+      unitPrice: unitPrice,
+      quantity: quantity,
+      amount: unitPrice * quantity,
+      productionDate: productionDate,
+    );
+  }
+
+  /// 更新数量并重新计算金额
+  InboundItem updateQuantity(double newQuantity) {
+    return copyWith(quantity: newQuantity, amount: unitPrice * newQuantity);
+  }
+
+  /// 更新单价并重新计算金额
+  InboundItem updateUnitPrice(double newUnitPrice) {
+    return copyWith(unitPrice: newUnitPrice, amount: newUnitPrice * quantity);
   }
 
   /// 是否有生产日期
   bool get hasProductionDate => productionDate != null;
 
-  /// 是否有货位
-  bool get hasLocation => locationId != null && locationId!.isNotEmpty;
+  /// 获取格式化的单价显示
+  String get formattedUnitPrice => '¥${unitPrice.toStringAsFixed(2)}';
 
-  /// 是否有采购单关联
-  bool get hasPurchaseOrder =>
-      purchaseOrderId != null && purchaseOrderId!.isNotEmpty;
+  /// 获取格式化的金额显示
+  String get formattedAmount => '¥${amount.toStringAsFixed(2)}';
 
-  /// 是否有批次号
-  bool get hasBatch => batchNumber != null && batchNumber!.isNotEmpty;
+  /// 获取格式化的数量显示
+  String get formattedQuantity =>
+      '${quantity.toStringAsFixed(quantity.truncateToDouble() == quantity ? 0 : 2)}$unitName';
 
-  /// 采购数量与入库数量的差异
-  double get quantityDifference {
-    if (purchaseQuantity == null) return 0.0;
-    return quantity - purchaseQuantity!;
+  @override
+  String toString() {
+    return 'InboundItem(id: $id, productName: $productName, quantity: $quantity, unitPrice: $unitPrice, amount: $amount)';
   }
 
-  /// 是否完全入库（入库数量等于采购数量）
-  bool get isFullyReceived {
-    if (purchaseQuantity == null) return true;
-    return quantity >= purchaseQuantity!;
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) return true;
+    return other is InboundItem &&
+        other.id == id &&
+        other.productId == productId;
   }
 
-  /// 创建新的入库单明细
-  factory InboundItem.create({
-    required String receiptId,
-    required String productId,
-    required String productName,
-    required String productSpec,
-    String? productImage,
-    required double quantity,
-    required String unitId,
-    DateTime? productionDate,
-    String? locationId,
-    String? locationName,
-    double? purchaseQuantity,
-    String? purchaseOrderId,
-  }) {
-    final now = DateTime.now();
-    return InboundItem(
-      id: 'item_${now.millisecondsSinceEpoch}',
-      receiptId: receiptId,
-      productId: productId,
-      productName: productName,
-      productSpec: productSpec,
-      productImage: productImage,
-      quantity: quantity,
-      unitId: unitId,
-      productionDate: productionDate,
-      locationId: locationId,
-      locationName: locationName,
-      purchaseQuantity: purchaseQuantity,
-      purchaseOrderId: purchaseOrderId,
-      createdAt: now,
-      updatedAt: now,
-    );
-  }
+  @override
+  int get hashCode => Object.hash(id, productId);
 }

@@ -19,7 +19,8 @@ import 'inventory_transactions_table.dart';
 import 'locations_table.dart';
 import 'inbound_receipts_table.dart';
 import 'inbound_receipt_items_table.dart';
-import 'purchases_table.dart'; // 新增采购表
+import 'purchase_orders_table.dart';
+import 'purchase_order_items_table.dart';
 import 'barcodes_table.dart'; // 新增条码表
 import '../../features/product/data/dao/product_dao.dart';
 import '../../features/product/data/dao/category_dao.dart';
@@ -54,7 +55,8 @@ part 'database.g.dart';
     LocationsTable,
     InboundReceiptsTable,
     InboundReceiptItemsTable,
-    PurchasesTable, // 新增采购表
+    PurchaseOrdersTable,
+    PurchaseOrderItemsTable,
     BarcodesTable, // 新增条码表
   ],
   daos: [
@@ -78,7 +80,7 @@ part 'database.g.dart';
 class AppDatabase extends _$AppDatabase {
   AppDatabase(super.e);
   @override
-  int get schemaVersion => 13; // 提升版本以应用新的迁移
+  int get schemaVersion => 15; // 提升版本以应用新的迁移
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -94,14 +96,22 @@ class AppDatabase extends _$AppDatabase {
       );
     },
     onUpgrade: (Migrator m, int from, int to) async {
+      if (from < 15 && to >= 15) {
+        await m.addColumn(inboundReceiptsTable, inboundReceiptsTable.source);
+      }
+      if (from < 14 && to >= 14) {
+        await m.deleteTable('purchases');
+        await m.createTable(purchaseOrdersTable);
+        await m.createTable(purchaseOrderItemsTable);
+      }
       if (from < 13 && to >= 13) {
         // 为 product_units 表添加 wholesale_price 列
         await m.addColumn(productUnitsTable, productUnitsTable.wholesalePrice);
       }
       if (from < 12 && to >= 12) {
         // 重建采购表以使 production_date 列可为空
-        await m.drop(purchasesTable);
-        await m.createTable(purchasesTable);
+        // This migration is now obsolete as purchasesTable is removed.
+        // The logic is replaced by migration to version 14.
       }
       if (from < 11 && to >= 11) {
         // 添加条码表
@@ -123,7 +133,8 @@ class AppDatabase extends _$AppDatabase {
         await m.createTable(productSuppliersTable);
       }
       if (from < 8 && to >= 8) {
-        await m.createTable(purchasesTable);
+        // This migration is now obsolete as purchasesTable is removed.
+        // The logic is replaced by migration to version 14.
       }
       if (from == 1 && to == 2) {
         // 从版本1升级到版本2：修改产品表的ID列为非空
