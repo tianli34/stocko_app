@@ -2,7 +2,7 @@
 
 cd E:\stocko_app\
 git add .
-git commit -m "0720 1 635 采购拆分前"
+git commit -m "0721 3 626 非采购模式"
 git push
 
 

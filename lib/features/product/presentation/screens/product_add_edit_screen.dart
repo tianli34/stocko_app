@@ -17,7 +17,7 @@ import '../../application/provider/product_unit_providers.dart';
 import '../../application/provider/barcode_providers.dart';
 import '../../application/provider/unit_edit_form_providers.dart';
 import 'category_selection_screen.dart';
-import 'add_auxiliary_unit_screen.dart';
+import 'auxiliaryunit_edit_screen.dart';
 import 'unit_selection_screen.dart';
 import '../widgets/product_image_picker.dart';
 import '../controllers/product_add_edit_controller.dart';
@@ -1022,7 +1022,7 @@ class _ProductAddEditScreenState extends ConsumerState<ProductAddEditScreen> {
 
     final dynamic result = await Navigator.of(context).push<dynamic>(
       MaterialPageRoute(
-        builder: (context) => UnitEditScreen(
+        builder: (context) => AuxiliaryUnitEditScreen(
           productId: widget.product?.id,
           baseUnitId: baseUnitId,
           baseUnitName: baseUnitName,

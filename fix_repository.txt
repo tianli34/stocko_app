@@ -1,4 +1,0 @@
-    // 添加辅单位 - 直接从仓储层获取最新单位数据
-    final unitRepository = ref.read(unitRepositoryProvider);
-    final allUnits = await unitRepository.getAllUnits();
-    print('🔍 [DEBUG] 从仓储层获取的单位总数: ${allUnits.length}');

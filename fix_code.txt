@@ -1,7 +1,0 @@
-    // 添加辅单位 - 重新刷新单位数据
-    await ref.read(unitControllerProvider.notifier).loadUnits();
-    final allUnits = ref.read(allUnitsProvider).maybeWhen(
-      data: (u) => u,
-      orElse: () => <Unit>[],
-    );
-    print('🔍 [DEBUG] 刷新后单位总数: ${allUnits.length}');

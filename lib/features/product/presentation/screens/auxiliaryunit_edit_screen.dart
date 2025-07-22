@@ -10,12 +10,12 @@ import '../../application/provider/barcode_providers.dart';
 import '../../application/provider/product_unit_providers.dart';
 import 'unit_selection_screen.dart';
 
-class UnitEditScreen extends ConsumerStatefulWidget {
+class AuxiliaryUnitEditScreen extends ConsumerStatefulWidget {
   final String? productId;
   final String? baseUnitId;
   final String? baseUnitName;
 
-  const UnitEditScreen({
+  const AuxiliaryUnitEditScreen({
     super.key,
     this.productId,
     this.baseUnitId,
@@ -23,10 +23,12 @@ class UnitEditScreen extends ConsumerStatefulWidget {
   });
 
   @override
-  ConsumerState<UnitEditScreen> createState() => _UnitEditScreenState();
+  ConsumerState<AuxiliaryUnitEditScreen> createState() =>
+      _AuxiliaryUnitEditScreenState();
 }
 
-class _UnitEditScreenState extends ConsumerState<UnitEditScreen> {
+class _AuxiliaryUnitEditScreenState
+    extends ConsumerState<AuxiliaryUnitEditScreen> {
   final _formKey = GlobalKey<FormState>();
 
   final List<_AuxiliaryUnit> _auxiliaryUnits = [];

@@ -6,4 +6,4 @@ export 'product_list_screen.dart';
 export 'product_add_edit_screen.dart';
 export 'category_selection_screen.dart';
 export 'unit_selection_screen.dart';
-export 'add_auxiliary_unit_screen.dart';
+export 'auxiliaryunit_edit_screen.dart';
