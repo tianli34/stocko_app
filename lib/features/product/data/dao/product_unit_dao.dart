@@ -123,4 +123,13 @@ class ProductUnitDao extends DatabaseAccessor<AppDatabase>
       }
     });
   }
+/// 根据单位ID计算其被引用的次数
+  /// [unitId] 要检查的单位ID
+  /// 返回一个 Future<int>，代表被引用的次数
+  Future<int> countByUnitId(String unitId) async {
+    final countExp = countAll(filter: db.productUnitsTable.unitId.equals(unitId));
+    final query = selectOnly(db.productUnitsTable)..addColumns([countExp]);
+    final result = await query.map((row) => row.read(countExp)).getSingleOrNull();
+    return result ?? 0;
+  }
 }

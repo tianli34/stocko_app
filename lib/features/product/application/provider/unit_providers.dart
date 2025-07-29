@@ -2,6 +2,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../domain/model/unit.dart';
 import '../../domain/repository/i_unit_repository.dart';
 import '../../data/repository/unit_repository.dart';
+import '../../domain/repository/i_product_unit_repository.dart';
+import '../../data/repository/product_unit_repository.dart';
 
 /// 单位操作状态
 enum UnitOperationStatus { initial, loading, success, error }
@@ -37,11 +39,12 @@ class UnitControllerState {
 
 /// 单位控制器 - 管理单位的增删改操作
 class UnitController extends StateNotifier<UnitControllerState> {
-  final IUnitRepository _repository;
+  final IUnitRepository _unitRepository;
+  final IProductUnitRepository _productUnitRepository;
   final Ref _ref;
 
-  UnitController(this._repository, this._ref)
-    : super(const UnitControllerState());
+  UnitController(this._unitRepository, this._productUnitRepository, this._ref)
+      : super(const UnitControllerState());
 
   /// 添加单位
   Future<void> addUnit(Unit unit) async {
@@ -57,7 +60,7 @@ class UnitController extends StateNotifier<UnitControllerState> {
 
       // 检查单位名称是否已存在
       print('🔍 检查单位名称是否已存在: "${unit.name.trim()}"');
-      final existingUnit = await _repository.getUnitByName(unit.name.trim());
+      final existingUnit = await _unitRepository.getUnitByName(unit.name.trim());
       if (existingUnit != null) {
         print('❌ 单位名称已存在: ${existingUnit.id}');
         throw Exception('单位名称已存在');
@@ -65,7 +68,7 @@ class UnitController extends StateNotifier<UnitControllerState> {
       print('✅ 单位名称检查通过');
 
       print('💾 调用仓储层添加单位...');
-      await _repository.addUnit(unit);
+      await _unitRepository.addUnit(unit);
       print('✅ 仓储层添加单位成功');
       
       state = state.copyWith(
@@ -102,7 +105,7 @@ class UnitController extends StateNotifier<UnitControllerState> {
     state = state.copyWith(status: UnitOperationStatus.loading);
 
     try {
-      final success = await _repository.updateUnit(unit);
+      final success = await _unitRepository.updateUnit(unit);
       if (success) {
         state = state.copyWith(
           status: UnitOperationStatus.success,
@@ -132,8 +135,12 @@ class UnitController extends StateNotifier<UnitControllerState> {
     state = state.copyWith(status: UnitOperationStatus.loading);
 
     try {
+      if (await isUnitInUse(unitId)) {
+        throw Exception('该单位已被商品使用，无法删除。');
+      }
+
       print('🔥 调用仓储删除方法...');
-      final deletedCount = await _repository.deleteUnit(unitId);
+      final deletedCount = await _unitRepository.deleteUnit(unitId);
       print('🔥 删除操作返回的影响行数: $deletedCount');
 
       if (deletedCount > 0) {
@@ -171,7 +178,7 @@ class UnitController extends StateNotifier<UnitControllerState> {
   /// 根据ID获取单位
   Future<Unit?> getUnitById(String unitId) async {
     try {
-      return await _repository.getUnitById(unitId);
+      return await _unitRepository.getUnitById(unitId);
     } catch (e) {
       state = state.copyWith(
         status: UnitOperationStatus.error,
@@ -184,7 +191,7 @@ class UnitController extends StateNotifier<UnitControllerState> {
   /// 根据名称获取单位
   Future<Unit?> getUnitByName(String name) async {
     try {
-      return await _repository.getUnitByName(name);
+      return await _unitRepository.getUnitByName(name);
     } catch (e) {
       state = state.copyWith(
         status: UnitOperationStatus.error,
@@ -197,7 +204,7 @@ class UnitController extends StateNotifier<UnitControllerState> {
   /// 检查单位名称是否已存在
   Future<bool> isUnitNameExists(String name, [String? excludeId]) async {
     try {
-      return await _repository.isUnitNameExists(name, excludeId);
+      return await _unitRepository.isUnitNameExists(name, excludeId);
     } catch (e) {
       state = state.copyWith(
         status: UnitOperationStatus.error,
@@ -207,12 +214,25 @@ class UnitController extends StateNotifier<UnitControllerState> {
     }
   }
 
+  /// 检查单位是否正在被任何商品使用
+  Future<bool> isUnitInUse(String unitId) async {
+    try {
+      return await _productUnitRepository.isUnitReferenced(unitId);
+    } catch (e) {
+      state = state.copyWith(
+        status: UnitOperationStatus.error,
+        errorMessage: '检查单位使用状态失败: ${e.toString()}',
+      );
+      return true; // 发生错误时，为安全起见，假定它正在被使用
+    }
+  }
+
   /// 插入默认单位
   Future<void> insertDefaultUnits() async {
     state = state.copyWith(status: UnitOperationStatus.loading);
 
     try {
-      await _repository.insertDefaultUnits();
+      await _unitRepository.insertDefaultUnits();
       state = state.copyWith(
         status: UnitOperationStatus.success,
         errorMessage: null,
@@ -246,7 +266,7 @@ class UnitController extends StateNotifier<UnitControllerState> {
 
 /// 所有单位列表的StreamProvider
 /// 监听单位数据的实时变化，当数据库中的单位发生变化时会自动更新UI
-final allUnitsProvider = StreamProvider<List<Unit>>((ref) {
+final allUnitsProvider = StreamProvider.autoDispose<List<Unit>>((ref) {
   final repository = ref.watch(unitRepositoryProvider);
   return repository.watchAllUnits().asBroadcastStream();
 });
@@ -254,7 +274,8 @@ final allUnitsProvider = StreamProvider<List<Unit>>((ref) {
 /// 单位控制器Provider
 /// 管理单位的增删改操作状态
 final unitControllerProvider =
-    StateNotifierProvider<UnitController, UnitControllerState>((ref) {
-      final repository = ref.watch(unitRepositoryProvider);
-      return UnitController(repository, ref);
-    });
+    StateNotifierProvider.autoDispose<UnitController, UnitControllerState>((ref) {
+  final unitRepository = ref.watch(unitRepositoryProvider);
+  final productUnitRepository = ref.watch(productUnitRepositoryProvider);
+  return UnitController(unitRepository, productUnitRepository, ref);
+});

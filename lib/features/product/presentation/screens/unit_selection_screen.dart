@@ -301,30 +301,55 @@ class _UnitSelectionScreenState extends ConsumerState<UnitSelectionScreen> {
   }
 
   /// 显示删除单位确认对话框
-  void _showDeleteUnitDialog(BuildContext context, Unit unit) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('确认删除'),
-        content: Text('确定要删除单位 "${unit.name}" 吗？此操作不可恢复。'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('取消'),
-          ),
-          TextButton(
-            onPressed: () async {
-              Navigator.of(context).pop();
+  /// 显示删除单位确认对话框（增强版）
+  void _showDeleteUnitDialog(BuildContext context, Unit unit) async {
+    final controller = ref.read(unitControllerProvider.notifier);
+    
+    // 1. 在显示对话框前，先进行依赖检查
+    final bool isUsed = await controller.isUnitInUse(unit.id);
 
-              final controller = ref.read(unitControllerProvider.notifier);
-              await controller.deleteUnit(unit.id);
-            },
-            style: TextButton.styleFrom(foregroundColor: Colors.red),
-            child: const Text('删除'),
-          ),
-        ],
-      ),
-    );
+    if (!mounted) return; // 检查 widget 是否还在 widget 树中
+
+    // 2. 根据检查结果，显示不同的对话框
+    if (isUsed) {
+      // 2a. 如果单位已被使用，显示提示信息
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text('无法删除'),
+          content: Text('单位 "${unit.name}" 已被一个或多个商品使用，因此无法删除。'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('好的'),
+            ),
+          ],
+        ),
+      );
+    } else {
+      // 2b. 如果单位未被使用，显示确认删除对话框
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text('确认删除'),
+          content: Text('确定要删除单位 "${unit.name}" 吗？此操作不可恢复。'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('取消'),
+            ),
+            TextButton(
+              onPressed: () async {
+                Navigator.of(context).pop(); // 先关闭确认对话框
+                await controller.deleteUnit(unit.id);
+              },
+              style: TextButton.styleFrom(foregroundColor: Colors.red),
+              child: const Text('删除'),
+            ),
+          ],
+        ),
+      );
+    }
   }
 
   /// 确认选择单位

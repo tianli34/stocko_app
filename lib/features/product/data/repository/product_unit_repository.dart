@@ -11,7 +11,7 @@ class ProductUnitRepository implements IProductUnitRepository {
   final ProductUnitDao _productUnitDao;
 
   ProductUnitRepository(AppDatabase database)
-    : _productUnitDao = database.productUnitDao;
+      : _productUnitDao = database.productUnitDao;
 
   @override
   Future<int> addProductUnit(ProductUnit productUnit) async {
@@ -200,6 +200,18 @@ class ProductUnitRepository implements IProductUnitRepository {
     } catch (e) {
       print('🗃️ 仓储层：替换产品单位配置失败: $e');
       rethrow;
+    }
+  }
+
+  @override
+  Future<bool> isUnitReferenced(String unitId) async {
+    try {
+      final count = await _productUnitDao.countByUnitId(unitId);
+      return count > 0;
+    } catch (e) {
+      print('检查单位引用时出错: $e');
+      // 为安全起见，当检查发生错误时，默认单位已被引用，防止误删
+      return true;
     }
   }
 

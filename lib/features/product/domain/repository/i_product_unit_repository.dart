@@ -47,4 +47,10 @@ abstract class IProductUnitRepository {
     String productId,
     List<ProductUnit> productUnits,
   );
+
+  /// 检查指定的单位ID是否被任何商品单位关联引用
+  ///
+  /// [unitId] 要检查的单位ID
+  /// 返回一个 Future<bool>，如果被引用则为 true，否则为 false
+  Future<bool> isUnitReferenced(String unitId);
 }
