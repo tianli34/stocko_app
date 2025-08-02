@@ -8,6 +8,7 @@ import '../../application/provider/unit_providers.dart';
 import '../../application/provider/unit_edit_form_providers.dart';
 import '../../application/provider/barcode_providers.dart';
 import '../../application/provider/product_unit_providers.dart';
+import '../../../../core/utils/snackbar_helper.dart';
 import 'unit_selection_screen.dart';
 
 class AuxiliaryUnitEditScreen extends ConsumerStatefulWidget {
@@ -494,12 +495,7 @@ class _AuxiliaryUnitEditScreenState
       if (widget.baseUnitName != null &&
           existingUnit.name == widget.baseUnitName!) {
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('辅单位不能与基本单位相同'),
-              backgroundColor: Colors.orange,
-            ),
-          );
+          showAppSnackBar(context, message: '辅单位不能与基本单位相同', isError: true);
         }
         return;
       }
@@ -509,12 +505,7 @@ class _AuxiliaryUnitEditScreenState
       );
       if (existingIndex != -1 && existingIndex != index) {
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('该单位已被其他辅单位使用'),
-              backgroundColor: Colors.orange,
-            ),
-          );
+          showAppSnackBar(context, message: '该单位已被其他辅单位使用', isError: true);
         }
         return;
       }
@@ -569,7 +560,6 @@ class _AuxiliaryUnitEditScreenState
         MaterialPageRoute(
           builder: (context) => UnitSelectionScreen(
             selectedUnitId: _auxiliaryUnits[index].unit?.id,
-            isSelectionMode: true,
           ),
         ),
       );
@@ -578,12 +568,7 @@ class _AuxiliaryUnitEditScreenState
         if (widget.baseUnitName != null &&
             selectedUnit.name == widget.baseUnitName!) {
           if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('辅单位不能与基本单位相同'),
-                backgroundColor: Colors.orange,
-              ),
-            );
+            showAppSnackBar(context, message: '辅单位不能与基本单位相同', isError: true);
           }
           return;
         }
@@ -593,12 +578,7 @@ class _AuxiliaryUnitEditScreenState
         );
         if (existingIndex != -1 && existingIndex != index) {
           if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('该单位已被其他辅单位使用'),
-                backgroundColor: Colors.orange,
-              ),
-            );
+            showAppSnackBar(context, message: '该单位已被其他辅单位使用', isError: true);
           }
           return;
         }
@@ -617,9 +597,7 @@ class _AuxiliaryUnitEditScreenState
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('选择单位失败: $e'), backgroundColor: Colors.red),
-        );
+        showAppSnackBar(context, message: '选择单位失败: $e', isError: true);
       }
     }
   }
@@ -642,19 +620,12 @@ class _AuxiliaryUnitEditScreenState
         _auxiliaryUnits[index].unitFocusNode.requestFocus();
 
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('扫描成功: $barcode'),
-              backgroundColor: Colors.green,
-            ),
-          );
+          showAppSnackBar(context, message: '扫描成功: $barcode');
         }
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('扫描失败: $e'), backgroundColor: Colors.red),
-        );
+        showAppSnackBar(context, message: '扫描失败: $e', isError: true);
       }
     }
   }

@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/database/database_providers.dart';
 import '../../../core/database/database.dart';
+import '../../../core/utils/snackbar_helper.dart';
 import '../../../core/constants/app_routes.dart';
 
 /// 数据库管理开发工具
@@ -194,15 +195,11 @@ class DatabaseManagementScreen extends ConsumerWidget {
     try {
       await ref.read(databaseInitializationProvider.future);
       if (context.mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text('✅ 数据库初始化完成')));
+        showAppSnackBar(context, message: '✅ 数据库初始化完成');
       }
     } catch (e) {
       if (context.mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('❌ 初始化失败: $e')));
+        showAppSnackBar(context, message: '❌ 初始化失败: $e', isError: true);
       }
     }
   }
@@ -231,15 +228,11 @@ class DatabaseManagementScreen extends ConsumerWidget {
       try {
         await ref.read(resetDatabaseProvider(true).future);
         if (context.mounted) {
-          ScaffoldMessenger.of(
-            context,
-          ).showSnackBar(const SnackBar(content: Text('✅ 数据库重置完成')));
+          showAppSnackBar(context, message: '✅ 数据库重置完成');
         }
       } catch (e) {
         if (context.mounted) {
-          ScaffoldMessenger.of(
-            context,
-          ).showSnackBar(SnackBar(content: Text('❌ 重置失败: $e')));
+          showAppSnackBar(context, message: '❌ 重置失败: $e', isError: true);
         }
       }
     }

@@ -2,6 +2,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../domain/model/unit.dart';
 import '../../domain/repository/i_unit_repository.dart';
 import '../../data/repository/unit_repository.dart';
+import '../../domain/repository/i_product_repository.dart';
+import '../../data/repository/product_repository.dart';
 
 /// 单位操作状态
 enum UnitOperationStatus { initial, loading, success, error }
@@ -38,10 +40,11 @@ class UnitControllerState {
 /// 单位控制器 - 管理单位的增删改操作
 class UnitController extends StateNotifier<UnitControllerState> {
   final IUnitRepository _repository;
+  final IProductRepository _productRepository;
   final Ref _ref;
 
-  UnitController(this._repository, this._ref)
-    : super(const UnitControllerState());
+  UnitController(this._repository, this._productRepository, this._ref)
+      : super(const UnitControllerState());
 
   /// 添加单位
   Future<void> addUnit(Unit unit) async {
@@ -88,83 +91,36 @@ class UnitController extends StateNotifier<UnitControllerState> {
     }
   }
 
-  /// 更新单位
-  Future<void> updateUnit(Unit unit) async {
-    // 检查单位ID是否为空
-    if (unit.id.isEmpty) {
-      state = state.copyWith(
-        status: UnitOperationStatus.error,
-        errorMessage: '单位ID不能为空',
-      );
-      return;
-    }
-
-    state = state.copyWith(status: UnitOperationStatus.loading);
-
-    try {
-      final success = await _repository.updateUnit(unit);
-      if (success) {
-        state = state.copyWith(
-          status: UnitOperationStatus.success,
-          lastOperatedUnit: unit,
-          errorMessage: null,
-        );
-
-        // 刷新单位列表
-        _ref.invalidate(allUnitsProvider);
-      } else {
-        state = state.copyWith(
-          status: UnitOperationStatus.error,
-          errorMessage: '更新单位失败：未找到对应的单位记录',
-        );
-      }
-    } catch (e) {
-      state = state.copyWith(
-        status: UnitOperationStatus.error,
-        errorMessage: '更新单位失败: ${e.toString()}',
-      );
-    }
-  }
+  // updateUnit 方法已不再需要，因为编辑功能被移除了。
 
   /// 删除单位
   Future<void> deleteUnit(String unitId) async {
-    print('🔥 开始删除单位，ID: $unitId');
     state = state.copyWith(status: UnitOperationStatus.loading);
-
     try {
-      print('🔥 调用仓储删除方法...');
+      // 依赖检查
+      final isUsed = await _productRepository.isUnitUsed(unitId);
+      if (isUsed) {
+        throw Exception('无法删除：该单位已被一个或多个商品使用');
+      }
+
       final deletedCount = await _repository.deleteUnit(unitId);
-      print('🔥 删除操作返回的影响行数: $deletedCount');
 
       if (deletedCount > 0) {
-        print('🔥 删除成功，更新状态并刷新列表');
         state = state.copyWith(
           status: UnitOperationStatus.success,
           errorMessage: null,
         );
-
-        // 强制刷新单位列表 - 确保UI更新
-        print('🔥 第一次刷新单位列表...');
         _ref.invalidate(allUnitsProvider);
-
-        // 添加短暂延迟后再次刷新，确保数据库变更完全反映
-        Future.delayed(const Duration(milliseconds: 100), () {
-          print('🔥 延迟后第二次刷新单位列表...');
-          _ref.invalidate(allUnitsProvider);
-        });
       } else {
-        print('🔥 删除失败：没有找到对应的单位记录');
-        state = state.copyWith(
-          status: UnitOperationStatus.error,
-          errorMessage: '删除单位失败：未找到对应的单位记录',
-        );
+        throw Exception('删除单位失败：未找到对应的单位记录');
       }
     } catch (e) {
-      print('🔥 删除时发生异常: $e');
       state = state.copyWith(
         status: UnitOperationStatus.error,
-        errorMessage: '删除单位失败: ${e.toString()}',
+        errorMessage: e.toString(),
       );
+      // 让UI层能捕获到详细错误
+      rethrow;
     }
   }
 
@@ -256,5 +212,6 @@ final allUnitsProvider = StreamProvider<List<Unit>>((ref) {
 final unitControllerProvider =
     StateNotifierProvider<UnitController, UnitControllerState>((ref) {
       final repository = ref.watch(unitRepositoryProvider);
-      return UnitController(repository, ref);
+      final productRepository = ref.watch(productRepositoryProvider);
+      return UnitController(repository, productRepository, ref);
     });

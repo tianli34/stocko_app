@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../../../core/services/image_cache_service.dart';
+import '../../../../core/utils/snackbar_helper.dart';
 
 /// 图片缓存管理页面
 /// 提供缓存状态查看和管理功能
@@ -39,7 +40,7 @@ class _ImageCacheManagementScreenState
       setState(() {
         _isLoading = false;
       });
-      _showErrorSnackBar('获取缓存状态失败: $e');
+      showAppSnackBar(context, message: '获取缓存状态失败: $e', isError: true);
     }
   }
 
@@ -57,12 +58,12 @@ class _ImageCacheManagementScreenState
       try {
         await _cacheService.clearAllCache();
         await _loadCacheStatus();
-        _showSuccessSnackBar('缓存清理完成');
+        showAppSnackBar(context, message: '缓存清理完成');
       } catch (e) {
         setState(() {
           _isLoading = false;
         });
-        _showErrorSnackBar('清理缓存失败: $e');
+        showAppSnackBar(context, message: '清理缓存失败: $e', isError: true);
       }
     }
   }
@@ -375,22 +376,7 @@ class _ImageCacheManagementScreenState
 
   void _copyToClipboard(String text) {
     Clipboard.setData(ClipboardData(text: text));
-    _showSuccessSnackBar('已复制到剪贴板');
+    showAppSnackBar(context, message: '已复制到剪贴板');
   }
 
-  void _showSuccessSnackBar(String message) {
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(message), backgroundColor: Colors.green),
-      );
-    }
-  }
-
-  void _showErrorSnackBar(String message) {
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(message), backgroundColor: Colors.red),
-      );
-    }
-  }
 }

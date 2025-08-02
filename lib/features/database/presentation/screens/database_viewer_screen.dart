@@ -4,6 +4,7 @@ import '../../../product/application/provider/product_providers.dart';
 import '../../../product/application/category_notifier.dart';
 import '../../../product/data/repository/product_unit_repository.dart';
 import '../../../product/data/repository/unit_repository.dart';
+import '../../../../core/utils/snackbar_helper.dart';
 import '../../../../core/widgets/cached_image_widget.dart';
 import '../../../../core/widgets/full_screen_image_viewer.dart';
 
@@ -80,9 +81,7 @@ class _DatabaseViewerScreenState extends ConsumerState<DatabaseViewerScreen>
     ref.read(categoryListProvider.notifier).loadCategories();
 
     // 显示刷新提示
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('数据已刷新'), duration: Duration(seconds: 2)),
-    );
+    showAppSnackBar(context, message: '数据已刷新');
   }
 
   /// 构建产品数据页面

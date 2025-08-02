@@ -245,4 +245,13 @@ class ProductDao extends DatabaseAccessor<AppDatabase> with _$ProductDaoMixin {
       wholesalePrice: productUnit.wholesalePrice,
     );
   }
+
+  /// 检查单位是否被任何产品使用
+  Future<bool> isUnitUsed(String unitId) async {
+    final query = select(db.productsTable)
+      ..where((tbl) => tbl.unitId.equals(unitId))
+      ..limit(1);
+    final result = await query.getSingleOrNull();
+    return result != null;
+  }
 }

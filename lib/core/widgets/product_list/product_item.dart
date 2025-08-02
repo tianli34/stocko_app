@@ -46,6 +46,17 @@ class _ProductItemState extends ConsumerState<ProductItem> {
     _loadUnitName();
   }
 
+  @override
+  void didUpdateWidget(covariant ProductItem oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // 当外部传入的 item 的 unitId 发生变化时，重新加载单位名称
+    if (widget.item.unitId != oldWidget.item.unitId) {
+      // 重置标志位，允许重新加载
+      _unitLoaded = false;
+      _loadUnitName();
+    }
+  }
+
   Future<void> _loadUnitName() async {
     print('🔍 产品 ${widget.item.name} 的 unitId: ${widget.item.unitId}');
     if (widget.item.unitId != null && !_unitLoaded) {

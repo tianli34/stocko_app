@@ -212,8 +212,11 @@ class _ProductAddEditScreenState extends ConsumerState<ProductAddEditScreen> {
     final categories = ref.watch(categoriesProvider); // 获取类别列表
     final unitsAsyncValue = ref.watch(allUnitsProvider); // 获取单位列表
     final isEdit = widget.product != null;
-    return Scaffold(
-      appBar: AppBar(
+    return GestureDetector(
+      onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
+      behavior: HitTestBehavior.opaque,
+      child: Scaffold(
+        appBar: AppBar(
         title: Text(isEdit ? '编辑货品' : '添加货品'),
         elevation: 0,
         actions: [
@@ -526,7 +529,8 @@ class _ProductAddEditScreenState extends ConsumerState<ProductAddEditScreen> {
           ),
         ),
       ),
-    );
+    ),
+   );
   }
 
   /// 构建文本输入框
@@ -962,7 +966,6 @@ class _ProductAddEditScreenState extends ConsumerState<ProductAddEditScreen> {
       MaterialPageRoute(
         builder: (context) => UnitSelectionScreen(
           selectedUnitId: _selectedUnitId,
-          isSelectionMode: true,
         ),
       ),
     );

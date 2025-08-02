@@ -187,6 +187,10 @@ class ProductAddEditController {
       // 7. 保存辅单位条码
       await _saveAuxiliaryUnitBarcodes(product, data.auxiliaryUnitBarcodes);
 
+      // 修复：在所有数据库操作（包括单位和条码）完成后，再次强制刷新产品列表，
+      // 确保UI获取到包含最新单位信息的货品数据。
+      ref.invalidate(allProductsProvider);
+
       return ProductOperationResult.success(
         message: data.productId == null || data.productId!.isEmpty
             ? '创建成功'

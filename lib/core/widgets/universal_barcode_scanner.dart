@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:audioplayers/audioplayers.dart';
+import 'package:stocko_app/core/utils/snackbar_helper.dart';
 
 /// 扫码结果回调类型定义
 typedef OnBarcodeScanned = void Function(String barcode);
@@ -406,12 +407,8 @@ class _UniversalBarcodeScannerState extends State<UniversalBarcodeScanner> {
     if (widget.onScanError != null) {
       widget.onScanError!(error);
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('该功能暂不可用，请使用相机扫描'),
-          backgroundColor: Colors.orange,
-        ),
-      );
+      showAppSnackBar(context,
+          message: '该功能暂不可用，请使用相机扫描', isError: true);
     }
   }
 

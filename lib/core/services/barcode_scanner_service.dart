@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:stocko_app/core/utils/snackbar_helper.dart';
 import '../widgets/universal_barcode_scanner.dart';
 
 /// 扫码服务类
@@ -91,12 +92,8 @@ class BarcodeScannerService {
                     setState(() {
                       isLoading = false;
                     });
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text('处理失败: ${e.toString()}'),
-                        backgroundColor: Colors.red,
-                      ),
-                    );
+                    showAppSnackBar(context,
+                        message: '处理失败: ${e.toString()}', isError: true);
                   }
                 }
               },

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../application/category_notifier.dart';
 import '../../domain/model/category.dart';
+import '../../../../core/utils/snackbar_helper.dart';
 import '../../data/repository/product_repository.dart';
 
 /// 类别选择屏幕
@@ -316,19 +317,9 @@ class _CategorySelectionScreenState
                       .read(categoryListProvider.notifier)
                       .addCategory(name: nameController.text.trim());
                   Navigator.of(context).pop();
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('类别添加成功'),
-                      backgroundColor: Colors.green,
-                    ),
-                  );
+                  showAppSnackBar(context, message: '类别添加成功');
                 } catch (e) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text('添加失败: $e'),
-                      backgroundColor: Colors.red,
-                    ),
-                  );
+                  showAppSnackBar(context, message: '添加失败: $e', isError: true);
                 }
               }
             },
@@ -408,19 +399,10 @@ class _CategorySelectionScreenState
                       );
 
                   Navigator.of(context).pop();
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text('父类"${nameController.text.trim()}"创建成功'),
-                      backgroundColor: Colors.green,
-                    ),
-                  );
+                  showAppSnackBar(context,
+                      message: '父类"${nameController.text.trim()}"创建成功');
                 } catch (e) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text('添加失败: $e'),
-                      backgroundColor: Colors.red,
-                    ),
-                  );
+                  showAppSnackBar(context, message: '添加失败: $e', isError: true);
                 }
               }
             },
@@ -478,19 +460,9 @@ class _CategorySelectionScreenState
                         name: nameController.text.trim(),
                       );
                   Navigator.of(context).pop();
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('类别重命名成功'),
-                      backgroundColor: Colors.green,
-                    ),
-                  );
+                  showAppSnackBar(context, message: '类别重命名成功');
                 } catch (e) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text('重命名失败: $e'),
-                      backgroundColor: Colors.red,
-                    ),
-                  );
+                  showAppSnackBar(context, message: '重命名失败: $e', isError: true);
                 }
               }
             },
@@ -535,17 +507,10 @@ class _CategorySelectionScreenState
                 .read(categoryListProvider.notifier)
                 .deleteCategoryOnly(category.id);
             Navigator.of(context).pop();
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('类别删除成功，子类别和产品已保留'),
-                backgroundColor: Colors.green,
-              ),
-            );
+            showAppSnackBar(context, message: '类别删除成功，子类别和产品已保留');
           } catch (e) {
             Navigator.of(context).pop();
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text('删除失败: $e'), backgroundColor: Colors.red),
-            );
+            showAppSnackBar(context, message: '删除失败: $e', isError: true);
           }
         },
         onDeleteCascade: () async {
@@ -554,17 +519,10 @@ class _CategorySelectionScreenState
                 .read(categoryListProvider.notifier)
                 .deleteCategoryCascade(category.id);
             Navigator.of(context).pop();
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('类别及所有关联内容删除成功'),
-                backgroundColor: Colors.orange,
-              ),
-            );
+            showAppSnackBar(context, message: '类别及所有关联内容删除成功', isError: true);
           } catch (e) {
             Navigator.of(context).pop();
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text('删除失败: $e'), backgroundColor: Colors.red),
-            );
+            showAppSnackBar(context, message: '删除失败: $e', isError: true);
           }
         },
       ),

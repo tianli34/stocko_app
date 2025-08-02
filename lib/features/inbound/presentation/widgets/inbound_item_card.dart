@@ -39,9 +39,44 @@ class _InboundItemCardState extends ConsumerState<InboundItemCard> {
 
   bool _isUpdatingFromAmount = false; // 标记是否从金额更新其他字段
 
-  void _onQuantityFocus() {
+  void _onUnitPriceFocusChange() {
+    if (_unitPriceFocusNode.hasFocus) {
+      // 获取焦点时清空，方便重新输入
+      _unitPriceController.clear();
+    } else {
+      // 失去焦点时，如果为空，则恢复为原来的值
+      if (_unitPriceController.text.isEmpty) {
+        final item = ref
+            .read(inboundListProvider)
+            .firstWhere((it) => it.id == widget.itemId);
+        _unitPriceController.text = item.unitPrice.toStringAsFixed(2);
+      }
+    }
+  }
+
+  void _onQuantityFocusChange() {
     if (widget.quantityFocusNode?.hasFocus == true) {
       _quantityController.clear();
+    } else {
+      if (_quantityController.text.isEmpty) {
+        final item = ref
+            .read(inboundListProvider)
+            .firstWhere((it) => it.id == widget.itemId);
+        _quantityController.text = item.quantity.toStringAsFixed(0);
+      }
+    }
+  }
+
+  void _onAmountFocusChange() {
+    if (widget.amountFocusNode?.hasFocus == true) {
+      _amountController.clear();
+    } else {
+      if (_amountController.text.isEmpty) {
+        final item = ref
+            .read(inboundListProvider)
+            .firstWhere((it) => it.id == widget.itemId);
+        _amountController.text = item.amount.toStringAsFixed(2);
+      }
     }
   }
 
@@ -49,7 +84,9 @@ class _InboundItemCardState extends ConsumerState<InboundItemCard> {
   void initState() {
     super.initState();
     // 监听器在initState中添加
-    widget.quantityFocusNode?.addListener(_onQuantityFocus);
+    _unitPriceFocusNode.addListener(_onUnitPriceFocusChange);
+    widget.quantityFocusNode?.addListener(_onQuantityFocusChange);
+    widget.amountFocusNode?.addListener(_onAmountFocusChange);
   }
 
   @override
@@ -57,8 +94,12 @@ class _InboundItemCardState extends ConsumerState<InboundItemCard> {
     super.didUpdateWidget(oldWidget);
     // 如果FocusNode实例发生变化，需要重新添加监听器
     if (widget.quantityFocusNode != oldWidget.quantityFocusNode) {
-      oldWidget.quantityFocusNode?.removeListener(_onQuantityFocus);
-      widget.quantityFocusNode?.addListener(_onQuantityFocus);
+      oldWidget.quantityFocusNode?.removeListener(_onQuantityFocusChange);
+      widget.quantityFocusNode?.addListener(_onQuantityFocusChange);
+    }
+    if (widget.amountFocusNode != oldWidget.amountFocusNode) {
+      oldWidget.amountFocusNode?.removeListener(_onAmountFocusChange);
+      widget.amountFocusNode?.addListener(_onAmountFocusChange);
     }
   }
 
@@ -67,8 +108,10 @@ class _InboundItemCardState extends ConsumerState<InboundItemCard> {
     _unitPriceController.dispose();
     _quantityController.dispose();
     _amountController.dispose();
+    _unitPriceFocusNode.removeListener(_onUnitPriceFocusChange);
     _unitPriceFocusNode.dispose(); // 清理本地FocusNode
-    widget.quantityFocusNode?.removeListener(_onQuantityFocus);
+    widget.quantityFocusNode?.removeListener(_onQuantityFocusChange);
+    widget.amountFocusNode?.removeListener(_onAmountFocusChange);
     super.dispose();
   }
 
@@ -162,285 +205,346 @@ class _InboundItemCardState extends ConsumerState<InboundItemCard> {
 
     return Card(
       elevation: 2,
-      child: Padding(
-        padding: const EdgeInsets.all(3),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Consumer(
-              builder: (context, ref, child) {
-                final productAsync = ref.watch(
-                  productByIdProvider(item.productId),
-                );
+      child: Stack(
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(3),
+            child: Consumer(
+              builder: (context, ref, _) {
+                // 将product provider的监听提升到顶层，以便在多个地方共享其状态
+                final productAsync =
+                    ref.watch(productByIdProvider(item.productId));
+
                 return productAsync.when(
-                  data: (product) {
-                    if (product?.image?.isNotEmpty == true) {
-                      return SizedBox(
-                        width: 60,
-                        height: 80,
-                        child: CachedImageWidget(
-                          imagePath: product!.image!,
-                          fit: BoxFit.cover,
-                        ),
-                      );
-                    }
-                    return const SizedBox(
-                      width: 60,
-                      height: 80,
-                      child: Center(
-                        child: Icon(
-                          Icons.image_not_supported,
-                          color: Colors.grey,
-                          size: 30,
-                        ),
-                      ),
-                    );
-                  },
-                  error: (e, st) => const SizedBox(
-                    width: 60,
-                    height: 80,
-                    child: Center(
-                      child: Icon(Icons.error, color: Colors.red, size: 30),
-                    ),
-                  ),
                   loading: () => const SizedBox(
-                    width: 60,
                     height: 80,
                     child: Center(child: CircularProgressIndicator()),
                   ),
-                );
-              },
-            ),
-            const SizedBox(width: 8),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // 第一行：商品名称 + 单位 + 删除按钮
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      Expanded(
-                        child: Text(
-                          item.productName,
-                          style: const TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w500,
-                          ),
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                      if (!widget.showPriceInfo) ...[
-                        const SizedBox(width: 8),
+                  error: (e, st) => SizedBox(
+                    height: 80,
+                    child: Center(
+                        child: Icon(Icons.error, color: Colors.red, size: 30)),
+                  ),
+                  data: (product) {
+                    // 根据产品是否需要批次管理，决定日期选择器是否可见
+                    final bool isDatePickerVisible =
+                        product?.enableBatchManagement == true;
+
+                    // 根据日期选择器的可见性，动态调整垂直对齐方式
+                    return Row(
+                      crossAxisAlignment: isDatePickerVisible
+                          ? CrossAxisAlignment.start
+                          : CrossAxisAlignment.center,
+                      children: [
+                        // --- 左侧图片 ---
                         SizedBox(
                           width: 60,
-                          height: 30,
-                          child: TextFormField(
-                            controller: _quantityController,
-                            focusNode: widget.quantityFocusNode,
-                            keyboardType: const TextInputType.numberWithOptions(
-                              decimal: false,
-                            ),
-                            textAlign: TextAlign.center,
-                            textInputAction: TextInputAction.next,
-                            decoration: const InputDecoration(
-                              hintText: '数量',
-                              border: OutlineInputBorder(),
-                              contentPadding: EdgeInsets.zero,
-                            ),
-                            onTap: () => _quantityController.clear(),
-                            onChanged: (value) => _updateItem(item),
-                            onFieldSubmitted: (value) =>
-                                widget.onAmountSubmitted?.call(),
-                          ),
-                        ),
-                      ],
-                      const SizedBox(width: 8),
-                      Text(
-                        item.unitName,
-                        style: TextStyle(fontSize: 12, color: Colors.grey[600]),
-                      ),
-                      const SizedBox(width: 8),
-                      IconButton(
-                        onPressed: () => ref
-                            .read(inboundListProvider.notifier)
-                            .removeItem(widget.itemId),
-                        icon: const Icon(Icons.close, size: 18),
-                        style: IconButton.styleFrom(
-                          backgroundColor: Colors.red.shade50,
-                          foregroundColor: Colors.red,
-                          minimumSize: const Size(24, 24),
-                          padding: EdgeInsets.zero,
-                        ),
-                        tooltip: '删除',
-                      ),
-                    ],
-                  ),
-
-                  const SizedBox(height: 3),
-
-                  // Second row: Price, Quantity, Amount (only for purchase inbound)
-                  if (widget.showPriceInfo)
-                    Row(
-                      children: [
-                        Expanded(
-                          child: SizedBox(
-                            height: 27, // Set fixed height
-                            child: TextFormField(
-                              controller: _unitPriceController,
-                              focusNode: _unitPriceFocusNode,
-                              keyboardType:
-                                  const TextInputType.numberWithOptions(
-                                    decimal: true,
+                          height: 80,
+                          child: product?.image?.isNotEmpty == true
+                              ? CachedImageWidget(
+                                  imagePath: product!.image!,
+                                  fit: BoxFit.cover,
+                                )
+                              : const Center(
+                                  child: Icon(
+                                    Icons.image_outlined,
+                                    color: Colors.grey,
+                                    size: 30,
                                   ),
-                              decoration: const InputDecoration(
-                                labelText: '单价',
-                                border: OutlineInputBorder(),
-                                contentPadding: EdgeInsets.symmetric(
-                                  horizontal: 12,
-                                  vertical: 7,
                                 ),
-                                prefixText: '¥',
-                              ),
-                              onTap: () => _unitPriceController.clear(),
-                              onChanged: (value) => _updateItem(item),
-                            ),
-                          ),
                         ),
-                        const SizedBox.square(dimension: 12.0),
-                        Expanded(
-                          child: SizedBox(
-                            height: 27, // Set fixed height
-                            child: TextFormField(
-                              controller: _quantityController,
-                              focusNode: widget.quantityFocusNode,
-                              keyboardType:
-                                  const TextInputType.numberWithOptions(
-                                    decimal: false,
-                                  ),
-                              textInputAction: TextInputAction.next,
-                              decoration: const InputDecoration(
-                                labelText: '数量',
-                                border: OutlineInputBorder(),
-                                contentPadding: EdgeInsets.symmetric(
-                                  horizontal: 12,
-                                  vertical: 7,
-                                ),
-                              ),
-                              onTap: () => _quantityController.clear(),
-                              onChanged: (value) => _updateItem(item),
-                              onFieldSubmitted: (value) {
-                                if (widget.amountFocusNode != null) {
-                                  widget.amountFocusNode!.requestFocus();
-                                  WidgetsBinding.instance.addPostFrameCallback((
-                                    _,
-                                  ) {
-                                    _amountController.clear();
-                                  });
-                                }
-                              },
-                            ),
-                          ),
-                        ),
-                        const SizedBox.square(dimension: 12.0),
-                        Expanded(
-                          child: SizedBox(
-                            height: 27, // Set fixed height
-                            child: TextFormField(
-                              controller: _amountController,
-                              focusNode: widget.amountFocusNode,
-                              keyboardType:
-                                  const TextInputType.numberWithOptions(
-                                    decimal: true,
-                                  ),
-                              textInputAction: TextInputAction.done,
-                              decoration: const InputDecoration(
-                                labelText: '金额',
-                                border: OutlineInputBorder(),
-                                contentPadding: EdgeInsets.symmetric(
-                                  horizontal: 12,
-                                  vertical: 7,
-                                ),
-                                prefixText: '¥',
-                              ),
-                              onTap: () => _amountController.clear(),
-                              onChanged: (value) => _updateFromAmount(item),
-                              onFieldSubmitted: (value) =>
-                                  widget.onAmountSubmitted?.call(),
-                              style: const TextStyle(
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
+                        const SizedBox(width: 8),
 
-                  const SizedBox(height: 6),
-
-                  // 第三行：生产日期选择（根据enableBatchManagement决定是否显示）
-                  Consumer(
-                    builder: (context, ref, child) {
-                      final productAsync = ref.watch(
-                        productByIdProvider(item.productId),
-                      );
-                      return productAsync.when(
-                        data: (product) {
-                          if (product?.enableBatchManagement == true) {
-                            return Row(
-                              children: [
-                                const Text(
-                                  '生产日期',
-                                  style: TextStyle(fontSize: 12),
-                                ),
-                                const SizedBox(width: 12),
-                                Expanded(
-                                  child: InkWell(
-                                    onTap: () => _selectProductionDate(item),
-                                    child: Container(
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 12,
-                                        vertical: 4,
+                        // --- 右侧信息列 ---
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              // 第一行：商品名称 + (数量) + 单位
+                              Row(
+                                crossAxisAlignment: CrossAxisAlignment.center,
+                                children: [
+                                  SizedBox(
+                                    width: 120,
+                                    child: Text(
+                                      item.productName,
+                                      style: const TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.w500,
                                       ),
-                                      decoration: BoxDecoration(
-                                        border: Border.all(
-                                          color: Colors.grey.shade300,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                                  if (!widget.showPriceInfo) ...[
+                                    const SizedBox(width: 8),
+                                    SizedBox(
+                                      width: 60,
+                                      height: 30,
+                                      child: TextFormField(
+                                        controller: _quantityController,
+                                        focusNode: widget.quantityFocusNode,
+                                        keyboardType: const TextInputType
+                                            .numberWithOptions(
+                                          decimal: false,
                                         ),
-                                        borderRadius: BorderRadius.circular(4),
+                                        textAlign: TextAlign.center,
+                                        textInputAction: TextInputAction.next,
+                                        decoration: const InputDecoration(
+                                          hintText: '数量',
+                                          border: OutlineInputBorder(),
+                                          contentPadding: EdgeInsets.zero,
+                                        ),
+                                        onChanged: (value) =>
+                                            _updateItem(item),
+                                        onFieldSubmitted: (value) =>
+                                            widget.onAmountSubmitted?.call(),
                                       ),
-                                      child: Row(
+                                    ),
+                                  ],
+                                  const Spacer(),
+                                  Text(
+                                    item.unitName,
+                                    style: TextStyle(
+                                        fontSize: 12,
+                                        color: Colors.grey[600]),
+                                  ),
+                                  const SizedBox(width: 55),
+                                ],
+                              ),
+
+                              const SizedBox(height: 3),
+
+                              // 第二行：价格、数量、金额 (仅采购入库)
+                              if (widget.showPriceInfo)
+                                Row(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Expanded(
+                                      flex: 2,
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
                                         children: [
-                                          Text(
-                                            _formatDate(item.productionDate),
-                                            style: TextStyle(
-                                              fontSize: 12,
-                                              color: item.productionDate == null
-                                                  ? Colors.grey[600]
-                                                  : Colors.black,
+                                          const Text('单价',
+                                              style: TextStyle(
+                                                  fontSize: 12,
+                                                  color: Colors.grey)),
+                                          const SizedBox(height: 4),
+                                          SizedBox(
+                                            height: 27,
+                                            child: TextFormField(
+                                              controller:
+                                                  _unitPriceController,
+                                              focusNode: _unitPriceFocusNode,
+                                              keyboardType:
+                                                  const TextInputType
+                                                      .numberWithOptions(
+                                                decimal: true,
+                                              ),
+                                              decoration:
+                                                  const InputDecoration(
+                                                border: OutlineInputBorder(),
+                                                contentPadding: EdgeInsets
+                                                    .symmetric(
+                                                        horizontal: 12,
+                                                        vertical: 7),
+                                                prefixText: '¥',
+                                              ),
+                                              onChanged: (value) =>
+                                                  _updateItem(item),
                                             ),
                                           ),
-                                          const Spacer(),
-                                          const Icon(Icons.arrow_drop_down),
                                         ],
                                       ),
                                     ),
-                                  ),
+                                    const SizedBox.square(dimension: 12.0),
+                                    Expanded(
+                                      flex: 1,
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          const Text('数量',
+                                              style: TextStyle(
+                                                  fontSize: 12,
+                                                  color: Colors.grey)),
+                                          const SizedBox(height: 4),
+                                          SizedBox(
+                                            height: 27,
+                                            child: TextFormField(
+                                              controller:
+                                                  _quantityController,
+                                              focusNode:
+                                                  widget.quantityFocusNode,
+                                              keyboardType:
+                                                  const TextInputType
+                                                      .numberWithOptions(
+                                                decimal: false,
+                                              ),
+                                              textInputAction:
+                                                  TextInputAction.next,
+                                              decoration:
+                                                  const InputDecoration(
+                                                border: OutlineInputBorder(),
+                                                contentPadding: EdgeInsets
+                                                    .symmetric(
+                                                        horizontal: 12,
+                                                        vertical: 7),
+                                              ),
+                                              onChanged: (value) =>
+                                                  _updateItem(item),
+                                              onFieldSubmitted: (value) {
+                                                if (widget.amountFocusNode !=
+                                                    null) {
+                                                  widget.amountFocusNode!
+                                                      .requestFocus();
+                                                  WidgetsBinding.instance
+                                                      .addPostFrameCallback(
+                                                          (_) {
+                                                    _amountController
+                                                        .clear();
+                                                  });
+                                                }
+                                              },
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                    const SizedBox.square(dimension: 12.0),
+                                    Expanded(
+                                      flex: 2,
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          const Text('金额',
+                                              style: TextStyle(
+                                                  fontSize: 12,
+                                                  color: Colors.grey)),
+                                          const SizedBox(height: 4),
+                                          SizedBox(
+                                            height: 27,
+                                            child: TextFormField(
+                                              controller: _amountController,
+                                              focusNode:
+                                                  widget.amountFocusNode,
+                                              keyboardType:
+                                                  const TextInputType
+                                                      .numberWithOptions(
+                                                decimal: true,
+                                              ),
+                                              textInputAction:
+                                                  TextInputAction.done,
+                                              decoration:
+                                                  const InputDecoration(
+                                                border: OutlineInputBorder(),
+                                                contentPadding: EdgeInsets
+                                                    .symmetric(
+                                                        horizontal: 12,
+                                                        vertical: 7),
+                                                prefixText: '¥',
+                                              ),
+                                              onChanged: (value) =>
+                                                  _updateFromAmount(item),
+                                              onFieldSubmitted: (value) =>
+                                                  widget.onAmountSubmitted
+                                                      ?.call(),
+                                              style: const TextStyle(
+                                                fontWeight: FontWeight.w500,
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ],
                                 ),
-                              ],
-                            );
-                          }
-                          return const SizedBox.shrink(); // 不显示生产日期选择器
-                        },
-                        loading: () => const SizedBox.shrink(),
-                        error: (_, __) => const SizedBox.shrink(),
-                      );
-                    },
-                  ),
-                ],
-              ),
+
+                              const SizedBox(height: 6),
+
+                              // 第三行：生产日期 (条件显示)
+                              if (isDatePickerVisible)
+                                Row(
+                                  children: [
+                                    const Text(
+                                      '生产日期',
+                                      style: TextStyle(fontSize: 12),
+                                    ),
+                                    const SizedBox(width: 12),
+                                    Expanded(
+                                      child: InkWell(
+                                        onTap: () =>
+                                            _selectProductionDate(item),
+                                        child: Container(
+                                          padding:
+                                              const EdgeInsets.symmetric(
+                                            horizontal: 12,
+                                            vertical: 4,
+                                          ),
+                                          decoration: BoxDecoration(
+                                            border: Border.all(
+                                              color: Colors.grey.shade300,
+                                            ),
+                                            borderRadius:
+                                                BorderRadius.circular(4),
+                                          ),
+                                          child: Row(
+                                            children: [
+                                              Text(
+                                                _formatDate(
+                                                    item.productionDate),
+                                                style: TextStyle(
+                                                  fontSize: 12,
+                                                  color: item.productionDate ==
+                                                          null
+                                                      ? Colors.grey[600]
+                                                      : Colors.black,
+                                                  fontWeight:
+                                                      FontWeight.w500,
+                                                ),
+                                              ),
+                                              const Spacer(),
+                                              Icon(
+                                                Icons.calendar_today,
+                                                size: 12,
+                                                color: Colors.grey[600],
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    );
+                  },
+                );
+              },
             ),
-          ],
-        ),
+          ),
+          Positioned(
+            top: -15,
+            right: -15,
+            child: IconButton(
+              onPressed: () =>
+                  ref.read(inboundListProvider.notifier).removeItem(widget.itemId),
+              icon: const Icon(Icons.close, size: 18),
+              style: IconButton.styleFrom(
+                backgroundColor: Colors.red.shade50,
+                foregroundColor: Colors.red,
+                minimumSize: const Size(24, 24),
+                padding: EdgeInsets.zero,
+              ),
+              tooltip: '删除',
+            ),
+          ),
+        ],
       ),
     );
   }

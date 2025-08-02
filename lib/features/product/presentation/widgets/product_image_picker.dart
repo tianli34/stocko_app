@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import '../../../../core/services/image_service.dart';
+import '../../../../core/utils/snackbar_helper.dart';
 
 /// 产品图片选择器组件
 class ProductImagePicker extends StatefulWidget {
@@ -199,7 +200,7 @@ class _ProductImagePickerState extends State<ProductImagePicker> {
         _updateImage(imagePath);
       }
     } catch (e) {
-      _showErrorSnackBar('拍照失败: $e');
+      showAppSnackBar(context, message: '拍照失败: $e', isError: true);
     }
   }
 
@@ -210,7 +211,7 @@ class _ProductImagePickerState extends State<ProductImagePicker> {
         _updateImage(imagePath);
       }
     } catch (e) {
-      _showErrorSnackBar('选择图片失败: $e');
+      showAppSnackBar(context, message: '选择图片失败: $e', isError: true);
     }
   }
 
@@ -227,15 +228,4 @@ class _ProductImagePickerState extends State<ProductImagePicker> {
   //   widget.onImageChanged(null);
   // }
 
-  void _showErrorSnackBar(String message) {
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(message),
-          backgroundColor: Colors.red,
-          duration: const Duration(seconds: 3),
-        ),
-      );
-    }
-  }
 }

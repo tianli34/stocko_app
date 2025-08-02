@@ -62,4 +62,9 @@ abstract class IProductRepository {
   /// 返回包含产品和单位名称的结果，如果不存在则返回null
   Future<({Product product, String unitName, double? wholesalePrice})?>
   getProductWithUnitByBarcode(String barcode);
+
+  /// 检查单位是否被任何产品使用
+  /// [unitId] 单位ID
+  /// 返回布尔值，表示是否被使用
+  Future<bool> isUnitUsed(String unitId);
 }

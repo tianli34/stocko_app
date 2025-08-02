@@ -1,23 +1,23 @@
-
+ git branch
 
 cd E:\stocko_app\
 git add .
-git commit -m "0721 3 626 非采购模式"
+git commit -m "0729 2 627"
 git push
 
 
 
 
 cd E:\stocko_app\
-adb connect 192.168.5.83:37141 
 flutter run -v
+adb connect 192.168.5.83:37141 
+
 
 cd E:\stocko_app\lib
 gemini
 
 dart run build_runner build --delete-conflicting-outputs
 
-cd E:\stocko_app\
 flutter run
 
 flutter test
@@ -25,7 +25,9 @@ flutter test
 cd E:\stocko_app\
 flutter devices
 
+ancient-medium-456903-f3
 
+AIzaSyAIsu3ZFPCAHmDvDdXnQw4kyMLvkRnjF0w
 
 在"扫码添加商品"按钮旁边添加"连续扫码"滑动开关，默认为关闭状态
 

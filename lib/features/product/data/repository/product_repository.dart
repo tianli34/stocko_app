@@ -279,6 +279,15 @@ class ProductRepository implements IProductRepository {
       lastUpdated: data.lastUpdated,
     );
   }
+
+  @override
+  Future<bool> isUnitUsed(String unitId) async {
+    try {
+      return await _productDao.isUnitUsed(unitId);
+    } catch (e) {
+      throw Exception('检查单位是否被使用失败: $e');
+    }
+  }
 }
 
 /// 产品仓储 Provider

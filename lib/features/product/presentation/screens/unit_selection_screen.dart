@@ -1,21 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_slidable/flutter_slidable.dart';
 import '../../application/provider/unit_providers.dart';
 import '../../domain/model/unit.dart';
 import '../../../../core/shared_widgets/loading_widget.dart';
 import '../../../../core/shared_widgets/error_widget.dart';
-import '../widgets/unit_list_tile.dart';
+import '../../../../core/utils/snackbar_helper.dart';
 
 /// 单位选择屏幕
 /// 支持选择单位、新增单位及删除单位操作
 class UnitSelectionScreen extends ConsumerStatefulWidget {
   final String? selectedUnitId;
-  final bool isSelectionMode;
 
   const UnitSelectionScreen({
     super.key,
     this.selectedUnitId,
-    this.isSelectionMode = true,
   });
 
   @override
@@ -40,22 +39,16 @@ class _UnitSelectionScreenState extends ConsumerState<UnitSelectionScreen> {
     // 监听操作结果
     ref.listen<UnitControllerState>(unitControllerProvider, (previous, next) {
       if (next.isSuccess) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('操作成功'), backgroundColor: Colors.green),
-        );
+        showAppSnackBar(context, message: '操作成功');
       } else if (next.isError) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(next.errorMessage ?? '操作失败'),
-            backgroundColor: Colors.red,
-          ),
-        );
+        showAppSnackBar(context,
+            message: next.errorMessage ?? '操作失败', isError: true);
       }
     });
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.isSelectionMode ? '选择单位' : '单位管理'),
+        title: const Text('选择单位'),
         actions: [
           IconButton(
             onPressed: () => _showAddUnitDialog(context),
@@ -124,14 +117,39 @@ class _UnitSelectionScreenState extends ConsumerState<UnitSelectionScreen> {
   Widget _buildUnitTile(BuildContext context, Unit unit) {
     final isSelected = _selectedUnitId == unit.id;
 
-    if (widget.isSelectionMode) {
-      return Card(
+    return Slidable(
+      key: ValueKey(unit.id),
+      endActionPane: ActionPane(
+        motion: const DrawerMotion(),
+        children: [
+          Expanded(
+            child: CustomSlidableAction(
+              onPressed: (context) {
+                // 只调用方法，不在此处处理UI反馈
+                ref.read(unitControllerProvider.notifier).deleteUnit(unit.id);
+              },
+              backgroundColor: Colors.red,
+              child: const Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.delete, color: Colors.white),
+                  SizedBox(width: 4),
+                  Text('删除', style: TextStyle(color: Colors.white)),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+      child: Card(
         margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
         elevation: isSelected ? 4 : 1,
         color: isSelected
             ? Theme.of(context).primaryColor.withOpacity(0.1)
             : null,
         child: ListTile(
+          dense: true,
+          contentPadding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 0.0),
           title: Text(
             unit.name,
             style: TextStyle(
@@ -143,20 +161,11 @@ class _UnitSelectionScreenState extends ConsumerState<UnitSelectionScreen> {
             setState(() {
               _selectedUnitId = unit.id;
             });
-            // 直接确认选择并返回
             _confirmSelection();
           },
         ),
-      );
-    } else {
-      return UnitListTile(
-        unit: unit,
-        isSelected: isSelected,
-        onEdit: () => _showEditUnitDialog(context, unit),
-        onDelete: () => _showDeleteUnitDialog(context, unit),
-        showActions: true,
-      );
-    }
+      ),
+    );
   }
 
   /// 显示新增单位对话框
@@ -202,12 +211,8 @@ class _UnitSelectionScreenState extends ConsumerState<UnitSelectionScreen> {
                 final exists = await controller.isUnitNameExists(unitName);
 
                 if (exists) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('单位名称已存在'),
-                      backgroundColor: Colors.orange,
-                    ),
-                  );
+                  showAppSnackBar(context,
+                      message: '单位名称已存在', isError: true);
                   return;
                 }
 
@@ -230,102 +235,7 @@ class _UnitSelectionScreenState extends ConsumerState<UnitSelectionScreen> {
     );
   }
 
-  /// 显示编辑单位对话框
-  void _showEditUnitDialog(BuildContext context, Unit unit) {
-    final nameController = TextEditingController(text: unit.name);
-    final formKey = GlobalKey<FormState>();
-
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('编辑单位'),
-        content: Form(
-          key: formKey,
-          child: TextFormField(
-            controller: nameController,
-            decoration: const InputDecoration(
-              labelText: '单位名称',
-              hintText: '请输入单位名称',
-              border: OutlineInputBorder(),
-              prefixIcon: Icon(Icons.straighten),
-            ),
-            validator: (value) {
-              if (value == null || value.trim().isEmpty) {
-                return '请输入单位名称';
-              }
-              return null;
-            },
-            autofocus: true,
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('取消'),
-          ),
-          ElevatedButton(
-            onPressed: () async {
-              if (formKey.currentState!.validate()) {
-                final unitName = nameController.text.trim();
-
-                // 检查单位名称是否已存在（排除当前单位）
-                final controller = ref.read(unitControllerProvider.notifier);
-                final exists = await controller.isUnitNameExists(
-                  unitName,
-                  unit.id,
-                );
-
-                if (exists) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('单位名称已存在'),
-                      backgroundColor: Colors.orange,
-                    ),
-                  );
-                  return;
-                }
-
-                final updatedUnit = unit.copyWith(name: unitName);
-                await controller.updateUnit(updatedUnit);
-
-                if (mounted) {
-                  Navigator.of(context).pop();
-                }
-              }
-            },
-            child: const Text('保存'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  /// 显示删除单位确认对话框
-  void _showDeleteUnitDialog(BuildContext context, Unit unit) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('确认删除'),
-        content: Text('确定要删除单位 "${unit.name}" 吗？此操作不可恢复。'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('取消'),
-          ),
-          TextButton(
-            onPressed: () async {
-              Navigator.of(context).pop();
-
-              final controller = ref.read(unitControllerProvider.notifier);
-              await controller.deleteUnit(unit.id);
-            },
-            style: TextButton.styleFrom(foregroundColor: Colors.red),
-            child: const Text('删除'),
-          ),
-        ],
-      ),
-    );
-  }
+  // 编辑和删除对话框都不再需要
 
   /// 确认选择单位
   void _confirmSelection() {

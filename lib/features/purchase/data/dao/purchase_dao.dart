@@ -107,23 +107,6 @@ class PurchaseDao extends DatabaseAccessor<AppDatabase>
         ]).watch();
 
     return orderStream.switchMap((order) {
-      if (order == null) {
-        return Stream.value(
-          PurchaseOrderWithItems(
-            order: PurchaseOrdersTableData(
-              id: -1,
-              purchaseOrderNumber: '',
-              supplierId: '',
-              shopId: '',
-              purchaseDate: DateTime.now(),
-              status: 'draft',
-              createdAt: DateTime.now(),
-              updatedAt: DateTime.now(),
-            ),
-            items: [],
-          ),
-        );
-      }
       return itemsStream.map((rows) {
         final detailedItems = rows.map((row) {
           return PurchaseOrderItemWithDetails(

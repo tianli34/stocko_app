@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:stocko_app/core/utils/snackbar_helper.dart';
 import '../constants/app_routes.dart';
 
 /// 主页按钮组件
@@ -180,9 +181,7 @@ class HomeButton extends StatelessWidget {
     final currentLocation = GoRouterState.of(context).uri.toString();
     if (currentLocation == AppRoutes.home) {
       // 如果已经在主页，显示提示
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('当前已在主页'), duration: Duration(seconds: 1)),
-      );
+      showAppSnackBar(context, message: '当前已在主页');
       return;
     }
 

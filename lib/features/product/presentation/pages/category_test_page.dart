@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../application/category_notifier.dart';
 import '../../application/category_sample_data_service.dart';
+import '../../../../core/utils/snackbar_helper.dart';
 import '../../domain/model/category.dart';
 
 /// 类别管理测试页面
@@ -43,30 +44,24 @@ class _CategoryTestPageState extends ConsumerState<CategoryTestPage> {
                 try {
                   await sampleDataService.createSampleCategories();
                   if (mounted) {
-                    ScaffoldMessenger.of(
-                      context,
-                    ).showSnackBar(const SnackBar(content: Text('示例数据创建成功')));
+                    showAppSnackBar(context, message: '示例数据创建成功');
                   }
                 } catch (e) {
                   if (mounted) {
-                    ScaffoldMessenger.of(
-                      context,
-                    ).showSnackBar(SnackBar(content: Text('创建示例数据失败: $e')));
+                    showAppSnackBar(context,
+                        message: '创建示例数据失败: $e', isError: true);
                   }
                 }
               } else if (value == 'clear_all') {
                 try {
                   await sampleDataService.clearAllCategories();
                   if (mounted) {
-                    ScaffoldMessenger.of(
-                      context,
-                    ).showSnackBar(const SnackBar(content: Text('所有数据已清除')));
+                    showAppSnackBar(context, message: '所有数据已清除');
                   }
                 } catch (e) {
                   if (mounted) {
-                    ScaffoldMessenger.of(
-                      context,
-                    ).showSnackBar(SnackBar(content: Text('清除数据失败: $e')));
+                    showAppSnackBar(context,
+                        message: '清除数据失败: $e', isError: true);
                   }
                 }
               }
@@ -272,9 +267,7 @@ class _CategoryTestPageState extends ConsumerState<CategoryTestPage> {
 
   Future<void> _addCategory() async {
     if (_nameController.text.trim().isEmpty) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('请输入类别名称')));
+      showAppSnackBar(context, message: '请输入类别名称', isError: true);
       return;
     }
 
@@ -292,15 +285,11 @@ class _CategoryTestPageState extends ConsumerState<CategoryTestPage> {
       });
 
       if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text('类别添加成功')));
+        showAppSnackBar(context, message: '类别添加成功');
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('添加失败: $e')));
+        showAppSnackBar(context, message: '添加失败: $e', isError: true);
       }
     }
   }
@@ -373,15 +362,12 @@ class _CategoryTestPageState extends ConsumerState<CategoryTestPage> {
 
                   if (mounted) {
                     Navigator.of(context).pop();
-                    ScaffoldMessenger.of(
-                      context,
-                    ).showSnackBar(const SnackBar(content: Text('类别更新成功')));
+                    showAppSnackBar(context, message: '类别更新成功');
                   }
                 } catch (e) {
                   if (mounted) {
-                    ScaffoldMessenger.of(
-                      context,
-                    ).showSnackBar(SnackBar(content: Text('更新失败: $e')));
+                    showAppSnackBar(context,
+                        message: '更新失败: $e', isError: true);
                   }
                 }
               },
@@ -413,16 +399,12 @@ class _CategoryTestPageState extends ConsumerState<CategoryTestPage> {
 
                 if (mounted) {
                   Navigator.of(context).pop();
-                  ScaffoldMessenger.of(
-                    context,
-                  ).showSnackBar(const SnackBar(content: Text('类别删除成功')));
+                  showAppSnackBar(context, message: '类别删除成功');
                 }
               } catch (e) {
                 if (mounted) {
                   Navigator.of(context).pop();
-                  ScaffoldMessenger.of(
-                    context,
-                  ).showSnackBar(SnackBar(content: Text('删除失败: $e')));
+                  showAppSnackBar(context, message: '删除失败: $e', isError: true);
                 }
               }
             },

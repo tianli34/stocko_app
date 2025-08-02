@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../constants/app_routes.dart';
-import '../../features/test/test_page.dart';
 import '../../features/product/presentation/screens/product_list_screen.dart';
 import '../../features/product/presentation/screens/product_add_edit_screen.dart';
 import '../../features/product/presentation/screens/product_detail_screen.dart';
@@ -93,13 +92,6 @@ final routerProvider = Provider<GoRouter>((ref) {
                       ),
                     ),
                     const SizedBox(height: 16),
-                    SizedBox(
-                      width: 200,
-                      child: ElevatedButton(
-                        onPressed: () => context.push(AppRoutes.test),
-                        child: const Text('数据库测试'),
-                      ),
-                    ),
                     const SizedBox(height: 16),
                     SizedBox(
                       width: 200,
@@ -349,11 +341,6 @@ final routerProvider = Provider<GoRouter>((ref) {
             ),
           ),
         ),
-      ),
-      GoRoute(
-        path: AppRoutes.test,
-        name: 'test',
-        builder: (context, state) => const TestPage(),
       ),
       GoRoute(
         path: AppRoutes.databaseViewer,

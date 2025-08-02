@@ -19,12 +19,9 @@ import '../../../inventory/presentation/providers/inventory_query_providers.dart
 import '../../../product/application/provider/product_providers.dart';
 import '../../../product/presentation/screens/product_selection_screen.dart';
 import '../widgets/inbound_item_card.dart';
+import '../../../../core/utils/snackbar_helper.dart';
 import '../../../../core/widgets/universal_barcode_scanner.dart';
 import '../../../../core/widgets/custom_date_picker.dart';
-
-// 常量定义
-const Duration _kSnackBarDuration = Duration(seconds: 3);
-const Duration _kShortSnackBarDuration = Duration(milliseconds: 1500);
 
 enum InboundMode { purchase, nonPurchase }
 
@@ -159,7 +156,8 @@ class _CreateInboundScreenState extends ConsumerState<CreateInboundScreen> {
     } catch (e) {
       // 捕获并处理可能的异常
       if (!mounted) return;
-      _showErrorMessage('添加货品失败: ${e.toString()}');
+      showAppSnackBar(context,
+          message: '添加货品失败: ${e.toString()}', isError: true);
     }
   }
 
@@ -203,9 +201,7 @@ class _CreateInboundScreenState extends ConsumerState<CreateInboundScreen> {
   }
 
   void _saveDraft() {
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(const SnackBar(content: Text('保存草稿功能待实现')));
+    showAppSnackBar(context, message: '保存草稿功能待实现');
   }
 
   void _confirmInbound() async {
@@ -270,7 +266,7 @@ class _CreateInboundScreenState extends ConsumerState<CreateInboundScreen> {
       );
 
       Navigator.of(context).pop();
-      _showSuccessMessage('✅ 一键入库成功！入库单号：$receiptNumber');
+      showAppSnackBar(context, message: '✅ 一键入库成功！入库单号：$receiptNumber');
 
       // 核心修复：使入库记录和库存查询的Provider失效，以便在导航后刷新数据
       ref.invalidate(inboundRecordsProvider);
@@ -284,7 +280,8 @@ class _CreateInboundScreenState extends ConsumerState<CreateInboundScreen> {
       });
     } catch (e) {
       Navigator.of(context).pop();
-      _showErrorMessage('❌ 一键入库失败: ${e.toString()}');
+      showAppSnackBar(context,
+          message: '❌ 一键入库失败: ${e.toString()}', isError: true);
     } finally {
       if (mounted) {
         setState(() => _isProcessing = false);
@@ -293,25 +290,7 @@ class _CreateInboundScreenState extends ConsumerState<CreateInboundScreen> {
   }
 
   void _handleSingleProductScan(String barcode) async {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Row(
-          children: [
-            SizedBox(
-              width: 20,
-              height: 20,
-              child: CircularProgressIndicator(
-                strokeWidth: 2.5,
-                color: Theme.of(context).colorScheme.inversePrimary,
-              ),
-            ),
-            const SizedBox(width: 16),
-            const Text('正在查询货品信息...'),
-          ],
-        ),
-        duration: const Duration(seconds: 2),
-      ),
-    );
+    showAppSnackBar(context, message: '正在查询货品信息...');
 
     try {
       final productOperations = ref.read(productOperationsProvider.notifier);
@@ -342,7 +321,7 @@ class _CreateInboundScreenState extends ConsumerState<CreateInboundScreen> {
       // 关闭扫码页面
       Navigator.of(context).pop();
       // 显示错误信息
-      _showErrorMessage('❌ 查询货品失败: $e');
+      showAppSnackBar(context, message: '❌ 查询货品失败: $e', isError: true);
     }
   }
 
@@ -354,22 +333,7 @@ class _CreateInboundScreenState extends ConsumerState<CreateInboundScreen> {
 
     // 在连续扫码模式下，不显示全局的加载提示，而是快速反馈
     HapticFeedback.lightImpact();
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Row(
-          children: [
-            const SizedBox(
-              width: 16,
-              height: 16,
-              child: CircularProgressIndicator(strokeWidth: 2),
-            ),
-            const SizedBox(width: 16),
-            Expanded(child: Text('条码: $barcode...')),
-          ],
-        ),
-        duration: _kShortSnackBarDuration,
-      ),
-    );
+    showAppSnackBar(context, message: '条码: $barcode...');
 
     try {
       final productOperations = ref.read(productOperationsProvider.notifier);
@@ -390,34 +354,17 @@ class _CreateInboundScreenState extends ConsumerState<CreateInboundScreen> {
             );
         _lastScannedBarcode = barcode; // 仅在成功时更新上一个条码
         // 成功添加后给予一个更明确的提示
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('✅ ${result.product.name} 已添加'),
-            backgroundColor: Colors.green[600],
-            duration: _kShortSnackBarDuration,
-          ),
-        );
+        showAppSnackBar(context, message: '✅ ${result.product.name} 已添加');
       } else {
         _lastScannedBarcode = null; // 如果未找到，则允许立即重扫
         // 未找到货品时给予一个失败提示
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('❌ 未找到条码对应的货品: $barcode'),
-            backgroundColor: Theme.of(context).colorScheme.error,
-            duration: _kShortSnackBarDuration,
-          ),
-        );
+        showAppSnackBar(context,
+            message: '❌ 未找到条码对应的货品: $barcode', isError: true);
       }
     } catch (e) {
       if (!mounted) return;
       _lastScannedBarcode = null; // 如果出错，则允许立即重扫
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('❌ 查询失败: $e'),
-          backgroundColor: Theme.of(context).colorScheme.error,
-          duration: _kShortSnackBarDuration,
-        ),
-      );
+      showAppSnackBar(context, message: '❌ 查询失败: $e', isError: true);
     }
   }
 
@@ -448,51 +395,34 @@ class _CreateInboundScreenState extends ConsumerState<CreateInboundScreen> {
     if (_currentMode == InboundMode.purchase) {
       if (_selectedSupplier == null &&
           _supplierController.text.trim().isEmpty) {
-        _showErrorMessage('请选择或输入供应商名称');
+        showAppSnackBar(context, message: '请选择或输入供应商名称', isError: true);
         return false;
       }
     }
     if (_selectedShop == null) {
-      _showErrorMessage('请选择入库店铺');
+      showAppSnackBar(context, message: '请选择入库店铺', isError: true);
       return false;
     }
     final inboundItems = ref.read(inboundListProvider);
     if (inboundItems.isEmpty) {
-      _showErrorMessage('请先添加货品');
+      showAppSnackBar(context, message: '请先添加货品', isError: true);
       return false;
     }
     for (final item in inboundItems) {
       if (item.quantity <= 0) {
-        _showErrorMessage('货品"${item.productName}"的数量必须大于0');
+        showAppSnackBar(context,
+            message: '货品"${item.productName}"的数量必须大于0', isError: true);
         return false;
       }
       if (_currentMode == InboundMode.purchase && item.unitPrice < 0) {
-        _showErrorMessage('货品"${item.productName}"的单价不能为负数');
+        showAppSnackBar(context,
+            message: '货品"${item.productName}"的单价不能为负数', isError: true);
         return false;
       }
     }
     return true;
   }
 
-  void _showErrorMessage(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        backgroundColor: Theme.of(context).colorScheme.error,
-        duration: _kSnackBarDuration,
-      ),
-    );
-  }
-
-  void _showSuccessMessage(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        backgroundColor: Theme.of(context).colorScheme.primary,
-        duration: _kSnackBarDuration,
-      ),
-    );
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -517,8 +447,11 @@ class _CreateInboundScreenState extends ConsumerState<CreateInboundScreen> {
           context.go('/');
         }
       },
-      child: Scaffold(
-        appBar: AppBar(
+      child: GestureDetector(
+        onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
+        behavior: HitTestBehavior.opaque,
+        child: Scaffold(
+          appBar: AppBar(
           leading: !canPop
               ? IconButton(
                   icon: const Icon(Icons.arrow_back),
@@ -546,12 +479,12 @@ class _CreateInboundScreenState extends ConsumerState<CreateInboundScreen> {
           actions: [const SizedBox(width: 8)],
         ),
         body: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 12),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               _buildHeaderSection(theme, textTheme),
-              const SizedBox(height: 16),
+              const SizedBox(height: 0),
               if (inboundItemIds.isEmpty)
                 _buildEmptyState(theme, textTheme)
               else
@@ -589,7 +522,7 @@ class _CreateInboundScreenState extends ConsumerState<CreateInboundScreen> {
             ],
           ),
         ),
-      ),
+      )),
     );
   }
 
@@ -761,97 +694,101 @@ class _CreateInboundScreenState extends ConsumerState<CreateInboundScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        allShopsAsync.when(
-          data: (shops) {
-            // 设置默认店铺为“长山的店”，如果它存在且尚未选择店铺
-            if (_selectedShop == null) {
-              final defaultShop = shops.firstWhereOrNull(
-                (shop) => shop.name == '长山的店',
-              );
-              if (defaultShop != null) {
-                // 使用WidgetsBinding.instance.addPostFrameCallback确保在UI更新后设置状态
-                WidgetsBinding.instance.addPostFrameCallback((_) {
-                  if (mounted) {
-                    setState(() {
-                      _selectedShop = defaultShop;
-                    });
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              flex: 2,
+              child: allShopsAsync.when(
+                data: (shops) {
+                  if (_selectedShop == null) {
+                    final defaultShop = shops
+                        .firstWhereOrNull((shop) => shop.name == '长山的店');
+                    if (defaultShop != null) {
+                      WidgetsBinding.instance.addPostFrameCallback((_) {
+                        if (mounted) {
+                          setState(() {
+                            _selectedShop = defaultShop;
+                          });
+                        }
+                      });
+                    }
                   }
-                });
-              }
-            }
-            return DropdownButtonFormField<Shop>(
-              key: const Key('shop_dropdown'),
-              focusNode: _shopFocusNode,
-              value: _selectedShop,
-              decoration: const InputDecoration(labelText: '入库店铺'),
-              items: shops
-                  .map(
-                    (shop) =>
-                        DropdownMenuItem(value: shop, child: Text(shop.name)),
-                  )
-                  .toList(),
-              onChanged: (value) {
-                setState(() {
-                  _selectedShop = value;
-                });
-              },
-              // validator: (value) => value == null ? '请选择入库店铺' : null,
-            );
-          },
-          loading: () => const Center(child: CircularProgressIndicator()),
-          error: (err, stack) => Text('无法加载店铺: $err'),
-        ),
-        const SizedBox(height: 16),
-
-        if (_currentMode == InboundMode.purchase)
-          TypeAheadField<Supplier>(
-            key: const Key('supplier_typeahead'),
-            controller: _supplierController,
-            focusNode: _supplierFocusNode,
-            suggestionsCallback: (pattern) async {
-              return await ref.read(searchSuppliersProvider(pattern).future);
-            },
-            itemBuilder: (context, suggestion) {
-              return ListTile(title: Text(suggestion.name));
-            },
-            onSelected: (suggestion) {
-              setState(() {
-                _selectedSupplier = suggestion;
-                _supplierController.text = suggestion.name;
-              });
-              _shopFocusNode.requestFocus();
-            },
-            builder: (context, controller, focusNode) {
-              return TextField(
-                controller: controller,
-                focusNode: focusNode,
-                decoration: const InputDecoration(
-                  labelText: '供应商',
-                  hintText: '搜索或选择一个供应商',
-                ),
-              );
-            },
-          )
-        else
-          TextFormField(
-            controller: _sourceController,
-            decoration: const InputDecoration(
-              labelText: '来源',
-              hintText: '输入货品来源 (可选)',
+                  return DropdownButtonFormField<Shop>(
+                    key: const Key('shop_dropdown'),
+                    focusNode: _shopFocusNode,
+                    value: _selectedShop,
+                    decoration: const InputDecoration(
+                      isDense: true,
+                      contentPadding: EdgeInsets.symmetric(vertical: 3),
+                    ),
+                    items: shops
+                        .map((shop) =>
+                            DropdownMenuItem(value: shop, child: Text(shop.name)))
+                        .toList(),
+                    onChanged: (value) {
+                      setState(() {
+                        _selectedShop = value;
+                      });
+                    },
+                  );
+                },
+                loading: () => const Center(child: CircularProgressIndicator()),
+                error: (err, stack) => Text('无法加载店铺: $err'),
+              ),
             ),
-          ),
-        const SizedBox(height: 16),
-        // TextFormField(
-        //   key: const Key('remarks_textfield'),
-        //   controller: _remarksController,
-        //   decoration: const InputDecoration(
-        //     labelText: '备注',
-        //     hintText: '输入入库单备注信息 (可选)',
-        //     prefixIcon: Icon(Icons.notes_outlined),
-        //   ),
-        //   textCapitalization: TextCapitalization.sentences,
-        // ),
-        // const SizedBox(height: 16),
+            const SizedBox(width: 16),
+            Expanded(
+              flex: 4,
+              child: _currentMode == InboundMode.purchase
+                  ? TypeAheadField<Supplier>(
+                      key: const Key('supplier_typeahead'),
+                      controller: _supplierController,
+                      focusNode: _supplierFocusNode,
+                      suggestionsCallback: (pattern) async {
+                        return await ref
+                            .read(searchSuppliersProvider(pattern).future);
+                      },
+                      itemBuilder: (context, suggestion) {
+                        return ListTile(
+                          title: Text(suggestion.name),
+                          contentPadding:
+                              const EdgeInsets.symmetric(horizontal: 16.0),
+                        );
+                      },
+                      onSelected: (suggestion) {
+                        setState(() {
+                          _selectedSupplier = suggestion;
+                          _supplierController.text = suggestion.name;
+                        });
+                        _shopFocusNode.requestFocus();
+                      },
+                      builder: (context, controller, focusNode) {
+                        return TextField(
+                          controller: controller,
+                          focusNode: focusNode,
+                          decoration: const InputDecoration(
+                            labelText: '供应商',
+                            hintText: '搜索或选择',
+                            isDense: true,
+                            contentPadding: EdgeInsets.symmetric(vertical: 3),
+                          ),
+                        );
+                      },
+                    )
+                  : TextFormField(
+                      controller: _sourceController,
+                      decoration: const InputDecoration(
+                        labelText: '来源',
+                        hintText: '输入货品来源 (可选)',
+                        isDense: true,
+                        contentPadding: EdgeInsets.symmetric(vertical: 2),
+                      ),
+                    ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 0),
         Divider(color: theme.colorScheme.outline.withOpacity(0.5)),
       ],
     );
