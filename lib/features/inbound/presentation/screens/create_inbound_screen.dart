@@ -419,6 +419,12 @@ class _CreateInboundScreenState extends ConsumerState<CreateInboundScreen> {
             message: '货品"${item.productName}"的单价不能为负数', isError: true);
         return false;
       }
+      // 采购模式下，单价不能为0
+      if (_currentMode == InboundMode.purchase && item.unitPrice == 0) {
+        showAppSnackBar(context,
+            message: '货品"${item.productName}"的单价不能为0', isError: true);
+        return false;
+      }
     }
     return true;
   }
@@ -479,7 +485,7 @@ class _CreateInboundScreenState extends ConsumerState<CreateInboundScreen> {
           actions: [const SizedBox(width: 8)],
         ),
         body: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 12),
+          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 5),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
@@ -492,7 +498,7 @@ class _CreateInboundScreenState extends ConsumerState<CreateInboundScreen> {
                   final index = entry.key;
                   final itemId = entry.value;
                   return Padding(
-                    padding: const EdgeInsets.only(bottom: 8),
+                    padding: const EdgeInsets.only(bottom: 0),
                     child: InboundItemCard(
                       key: ValueKey(itemId),
                       itemId: itemId,
@@ -507,9 +513,9 @@ class _CreateInboundScreenState extends ConsumerState<CreateInboundScreen> {
                     ),
                   );
                 }),
-              const SizedBox(height: 16),
+              const SizedBox(height: 0),
               _buildActionButtons(theme, textTheme),
-              const SizedBox(height: 16),
+              const SizedBox(height: 4),
               _buildTotalsBar(
                 theme,
                 textTheme,
@@ -517,7 +523,7 @@ class _CreateInboundScreenState extends ConsumerState<CreateInboundScreen> {
                 totalQuantity,
                 totalAmount,
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 4),
               _buildBottomAppBar(theme, textTheme),
             ],
           ),
@@ -528,7 +534,7 @@ class _CreateInboundScreenState extends ConsumerState<CreateInboundScreen> {
 
   Widget _buildEmptyState(ThemeData theme, TextTheme textTheme) {
     return Container(
-      padding: const EdgeInsets.symmetric(vertical: 48, horizontal: 24),
+      padding: const EdgeInsets.symmetric(vertical: 123, horizontal: 24),
       decoration: BoxDecoration(
         color: theme.colorScheme.surfaceContainerHighest.withOpacity(0.3),
         borderRadius: BorderRadius.circular(12),
@@ -570,7 +576,7 @@ class _CreateInboundScreenState extends ConsumerState<CreateInboundScreen> {
             icon: const Icon(Icons.add, size: 18),
             label: Text('添加货品', style: textTheme.bodyMedium),
             style: OutlinedButton.styleFrom(
-              padding: const EdgeInsets.symmetric(vertical: 12),
+              padding: const EdgeInsets.symmetric(vertical: 0),
             ),
           ),
         ),
@@ -581,7 +587,7 @@ class _CreateInboundScreenState extends ConsumerState<CreateInboundScreen> {
             icon: const Icon(Icons.camera_alt_outlined, size: 18),
             label: Text('扫码添加', style: textTheme.bodyMedium),
             style: OutlinedButton.styleFrom(
-              padding: const EdgeInsets.symmetric(vertical: 12),
+              padding: const EdgeInsets.symmetric(vertical: 0),
             ),
           ),
         ),
@@ -592,7 +598,7 @@ class _CreateInboundScreenState extends ConsumerState<CreateInboundScreen> {
             icon: const Icon(Icons.qr_code_scanner, size: 18),
             label: Text('连续扫码', style: textTheme.bodyMedium),
             style: OutlinedButton.styleFrom(
-              padding: const EdgeInsets.symmetric(vertical: 12),
+              padding: const EdgeInsets.symmetric(vertical: 0),
             ),
           ),
         ),
@@ -608,7 +614,7 @@ class _CreateInboundScreenState extends ConsumerState<CreateInboundScreen> {
     double totalAmount,
   ) {
     return Container(
-      padding: const EdgeInsets.symmetric(vertical: 12),
+      padding: const EdgeInsets.symmetric(vertical: 5),
       decoration: BoxDecoration(
         color: theme.colorScheme.surfaceContainerHighest.withOpacity(0.5),
         border: Border(
@@ -663,12 +669,12 @@ class _CreateInboundScreenState extends ConsumerState<CreateInboundScreen> {
     return ElevatedButton.icon(
       onPressed: _isProcessing ? null : _confirmInbound,
       icon: _isProcessing
-          ? SizedBox(
+          ? const SizedBox(
               width: 24,
-              height: 24,
+              height: 0, // 修复：将高度从 0 改为 24
               child: CircularProgressIndicator(
                 strokeWidth: 3,
-                color: theme.colorScheme.onPrimary,
+                color: Colors.white,
               ),
             )
           : const Icon(Icons.check_circle_outline, size: 24),
@@ -680,7 +686,8 @@ class _CreateInboundScreenState extends ConsumerState<CreateInboundScreen> {
         ),
       ),
       style: ElevatedButton.styleFrom(
-        minimumSize: const Size(double.infinity, 56),
+        // 修改：使用 padding 调整按钮高度
+        padding: const EdgeInsets.symmetric(vertical: 0),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         backgroundColor: theme.colorScheme.primary,
         foregroundColor: theme.colorScheme.onPrimary,
@@ -720,7 +727,7 @@ class _CreateInboundScreenState extends ConsumerState<CreateInboundScreen> {
                     value: _selectedShop,
                     decoration: const InputDecoration(
                       isDense: true,
-                      contentPadding: EdgeInsets.symmetric(vertical: 3),
+                      contentPadding: EdgeInsets.symmetric(vertical: 0),
                     ),
                     items: shops
                         .map((shop) =>
@@ -739,57 +746,77 @@ class _CreateInboundScreenState extends ConsumerState<CreateInboundScreen> {
             ),
             const SizedBox(width: 16),
             Expanded(
-              flex: 4,
+              flex: 5,
               child: _currentMode == InboundMode.purchase
-                  ? TypeAheadField<Supplier>(
-                      key: const Key('supplier_typeahead'),
-                      controller: _supplierController,
-                      focusNode: _supplierFocusNode,
-                      suggestionsCallback: (pattern) async {
-                        return await ref
-                            .read(searchSuppliersProvider(pattern).future);
-                      },
-                      itemBuilder: (context, suggestion) {
-                        return ListTile(
-                          title: Text(suggestion.name),
-                          contentPadding:
-                              const EdgeInsets.symmetric(horizontal: 16.0),
-                        );
-                      },
-                      onSelected: (suggestion) {
-                        setState(() {
-                          _selectedSupplier = suggestion;
-                          _supplierController.text = suggestion.name;
-                        });
-                        _shopFocusNode.requestFocus();
-                      },
-                      builder: (context, controller, focusNode) {
-                        return TextField(
-                          controller: controller,
-                          focusNode: focusNode,
-                          decoration: const InputDecoration(
-                            labelText: '供应商',
-                            hintText: '搜索或选择',
-                            isDense: true,
-                            contentPadding: EdgeInsets.symmetric(vertical: 3),
+                  ? Row(
+                      crossAxisAlignment: CrossAxisAlignment.baseline,
+                      textBaseline: TextBaseline.alphabetic,
+                      children: [
+                        Text('供应商:', style: const TextStyle(fontSize: 17)),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: TypeAheadField<Supplier>(
+                            key: const Key('supplier_typeahead'),
+                            controller: _supplierController,
+                            focusNode: _supplierFocusNode,
+                            suggestionsCallback: (pattern) async {
+                              return await ref.read(
+                                  searchSuppliersProvider(pattern).future);
+                            },
+                            itemBuilder: (context, suggestion) {
+                              return ListTile(
+                                title: Text(suggestion.name),
+                                contentPadding: const EdgeInsets.symmetric(
+                                    horizontal: 16.0),
+                              );
+                            },
+                            onSelected: (suggestion) {
+                              setState(() {
+                                _selectedSupplier = suggestion;
+                                _supplierController.text = suggestion.name;
+                              });
+                              _shopFocusNode.requestFocus();
+                            },
+                            builder: (context, controller, focusNode) {
+                              return TextField(
+                                controller: controller,
+                                focusNode: focusNode,
+                                decoration: const InputDecoration(
+                                  hintText: '搜索或选择',
+                                  isDense: true,
+                                  contentPadding:
+                                      EdgeInsets.symmetric(vertical: 0),
+                                ),
+                              );
+                            },
                           ),
-                        );
-                      },
+                        ),
+                      ],
                     )
-                  : TextFormField(
-                      controller: _sourceController,
-                      decoration: const InputDecoration(
-                        labelText: '来源',
-                        hintText: '输入货品来源 (可选)',
-                        isDense: true,
-                        contentPadding: EdgeInsets.symmetric(vertical: 2),
-                      ),
+                  : Row(
+                      crossAxisAlignment: CrossAxisAlignment.baseline,
+                      textBaseline: TextBaseline.alphabetic,
+                      children: [
+                        Text('来源:', style: const TextStyle(fontSize: 17)),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: TextFormField(
+                            controller: _sourceController,
+                            style: const TextStyle(fontSize: 15.5),
+                            decoration: const InputDecoration(
+                              hintText: '输入货品来源 (可选)',
+                              isDense: true,
+                              contentPadding: EdgeInsets.symmetric(vertical: 0),
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
             ),
           ],
         ),
-        const SizedBox(height: 0),
-        Divider(color: theme.colorScheme.outline.withOpacity(0.5)),
+        const SizedBox(height: 5),
+        // Divider(color: theme.colorScheme.outline.withOpacity(0.5)),
       ],
     );
   }

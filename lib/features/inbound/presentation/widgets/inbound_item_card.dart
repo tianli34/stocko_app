@@ -321,7 +321,7 @@ class _InboundItemCardState extends ConsumerState<InboundItemCard> {
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Expanded(
-                                      flex: 2,
+                                      flex: 6,
                                       child: Column(
                                         crossAxisAlignment:
                                             CrossAxisAlignment.start,
@@ -360,7 +360,7 @@ class _InboundItemCardState extends ConsumerState<InboundItemCard> {
                                     ),
                                     const SizedBox.square(dimension: 12.0),
                                     Expanded(
-                                      flex: 1,
+                                      flex: 3,
                                       child: Column(
                                         crossAxisAlignment:
                                             CrossAxisAlignment.start,
@@ -414,7 +414,7 @@ class _InboundItemCardState extends ConsumerState<InboundItemCard> {
                                     ),
                                     const SizedBox.square(dimension: 12.0),
                                     Expanded(
-                                      flex: 2,
+                                      flex: 7,
                                       child: Column(
                                         crossAxisAlignment:
                                             CrossAxisAlignment.start,
