@@ -21,7 +21,7 @@ class ProductDao extends DatabaseAccessor<AppDatabase> with _$ProductDaoMixin {
   }
 
   /// 根据ID获取产品
-  Future<ProductsTableData?> getProductById(String id) async {
+  Future<ProductsTableData?> getProductById(int id) async {
     return await (select(
       db.productsTable,
     )..where((tbl) => tbl.id.equals(id))).getSingleOrNull();
@@ -39,7 +39,14 @@ class ProductDao extends DatabaseAccessor<AppDatabase> with _$ProductDaoMixin {
 
   /// 监听所有产品及其主单位的名称
   Stream<
-    List<({ProductsTableData product, String unitName, double? wholesalePrice})>
+    List<
+      ({
+        ProductsTableData product,
+        String unitId,
+        String unitName,
+        double? wholesalePrice
+      })
+    >
   >
   watchAllProductsWithUnit() {
     final query = select(db.productsTable).join([
@@ -61,6 +68,7 @@ class ProductDao extends DatabaseAccessor<AppDatabase> with _$ProductDaoMixin {
         final productUnit = row.readTableOrNull(db.productUnitsTable);
         return (
           product: product,
+          unitId: unit?.id ?? '',
           unitName: unit?.name ?? '未知单位',
           wholesalePrice: productUnit?.wholesalePrice,
         );
@@ -77,7 +85,7 @@ class ProductDao extends DatabaseAccessor<AppDatabase> with _$ProductDaoMixin {
   }
 
   /// 删除产品
-  Future<int> deleteProduct(String id) async {
+  Future<int> deleteProduct(int id) async {
     print('💾 数据库层：删除产品，ID: $id');
     final result = await (delete(
       db.productsTable,
@@ -152,7 +160,7 @@ class ProductDao extends DatabaseAccessor<AppDatabase> with _$ProductDaoMixin {
   }
 
   /// 检查产品是否存在
-  Future<bool> productExists(String id) async {
+  Future<bool> productExists(int id) async {
     final result =
         await (selectOnly(db.productsTable)
               ..addColumns([db.productsTable.id])
@@ -201,7 +209,12 @@ class ProductDao extends DatabaseAccessor<AppDatabase> with _$ProductDaoMixin {
   /// 根据条码获取产品及其单位信息
   /// 返回包含产品信息和单位名称的结果
   Future<
-    ({ProductsTableData product, String unitName, double? wholesalePrice})?
+    ({
+      ProductsTableData product,
+      String unitId,
+      String unitName,
+      double? wholesalePrice
+    })?
   >
   getProductWithUnitByBarcode(String barcode) async {
     // 首先在条码表中找到对应的产品单位ID
@@ -241,6 +254,7 @@ class ProductDao extends DatabaseAccessor<AppDatabase> with _$ProductDaoMixin {
 
     return (
       product: product,
+      unitId: unit.id,
       unitName: unit.name,
       wholesalePrice: productUnit.wholesalePrice,
     );

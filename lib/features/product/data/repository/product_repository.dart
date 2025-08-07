@@ -29,7 +29,7 @@ class ProductRepository implements IProductRepository {
   @override
   Future<bool> updateProduct(Product product) async {
     // 检查产品ID是否为空
-    if (product.id.isEmpty) {
+    if (product.id <= 0) {
       throw Exception('产品ID不能为空');
     }
 
@@ -41,7 +41,7 @@ class ProductRepository implements IProductRepository {
   }
 
   @override
-  Future<int> deleteProduct(String id) async {
+  Future<int> deleteProduct(int id) async {
     print('🗃️ 仓储层：删除产品，ID: $id');
     try {
       final productUnitDao = (_productDao.db).productUnitDao;
@@ -75,7 +75,7 @@ class ProductRepository implements IProductRepository {
   }
 
   @override
-  Future<Product?> getProductById(String id) async {
+  Future<Product?> getProductById(int id) async {
     try {
       final result = await _productDao.getProductById(id);
       return result != null ? _dataToProduct(result) : null;
@@ -95,7 +95,16 @@ class ProductRepository implements IProductRepository {
   }
 
   @override
-  Stream<List<({Product product, String unitName, double? wholesalePrice})>>
+  Stream<
+    List<
+      ({
+        Product product,
+        String unitId,
+        String unitName,
+        double? wholesalePrice
+      })
+    >
+  >
   watchAllProductsWithUnit() {
     return _productDao
         .watchAllProductsWithUnit()
@@ -104,6 +113,7 @@ class ProductRepository implements IProductRepository {
               .map(
                 (e) => (
                   product: _dataToProduct(e.product),
+                  unitId: e.unitId,
                   unitName: e.unitName,
                   wholesalePrice: e.wholesalePrice,
                 ),
@@ -168,7 +178,14 @@ class ProductRepository implements IProductRepository {
 
   /// 根据条码获取产品及其单位信息
   @override
-  Future<({Product product, String unitName, double? wholesalePrice})?>
+  Future<
+    ({
+      Product product,
+      String unitId,
+      String unitName,
+      double? wholesalePrice
+    })?
+  >
   getProductWithUnitByBarcode(String barcode) async {
     try {
       final result = await _productDao.getProductWithUnitByBarcode(barcode);
@@ -176,6 +193,7 @@ class ProductRepository implements IProductRepository {
 
       return (
         product: _dataToProduct(result.product),
+        unitId: result.unitId,
         unitName: result.unitName,
         wholesalePrice: result.wholesalePrice,
       );
@@ -215,7 +233,7 @@ class ProductRepository implements IProductRepository {
   }
 
   /// 检查产品是否存在
-  Future<bool> productExists(String id) async {
+  Future<bool> productExists(int id) async {
     try {
       return await _productDao.productExists(id);
     } catch (e) {
@@ -259,7 +277,7 @@ class ProductRepository implements IProductRepository {
   /// 将数据库数据转换为Product模型
   Product _dataToProduct(ProductsTableData data) {
     return Product(
-      id: data.id, // ID现在是必需的，不需要null检查
+      id: data.id, // 直接使用int类型的id
       name: data.name,
       sku: data.sku,
       image: data.image,
@@ -297,7 +315,7 @@ final productRepositoryProvider = Provider<IProductRepository>((ref) {
 });
 
 /// Provider to get a single product by its ID.
-final productByIdProvider = FutureProvider.family<Product?, String>((
+final productByIdProvider = FutureProvider.family<Product?, int>((
   ref,
   id,
 ) async {

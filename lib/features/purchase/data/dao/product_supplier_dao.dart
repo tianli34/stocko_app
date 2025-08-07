@@ -15,7 +15,7 @@ class ProductSupplierDao extends DatabaseAccessor<AppDatabase>
 
   /// 根据商品ID获取供应商（按单位分组）
   Future<List<ProductSuppliersTableData>> getSuppliersByProductId(
-    String productId,
+    int productId,
   ) {
     return (select(
       productSuppliersTable,
@@ -24,7 +24,7 @@ class ProductSupplierDao extends DatabaseAccessor<AppDatabase>
 
   /// 根据商品ID和单位ID获取供应商
   Future<List<ProductSuppliersTableData>> getSuppliersByProductIdAndUnitId(
-    String productId,
+    int productId,
     String unitId,
   ) {
     return (select(productSuppliersTable)..where(
@@ -44,7 +44,7 @@ class ProductSupplierDao extends DatabaseAccessor<AppDatabase>
 
   /// 获取商品指定单位的主要供应商
   Future<ProductSuppliersTableData?> getPrimarySupplierByProductIdAndUnitId(
-    String productId,
+    int productId,
     String unitId,
   ) {
     return (select(productSuppliersTable)..where(
@@ -59,7 +59,7 @@ class ProductSupplierDao extends DatabaseAccessor<AppDatabase>
 
   /// 获取商品的主要供应商（所有单位）
   Future<ProductSuppliersTableData?> getPrimarySupplierByProductId(
-    String productId,
+    int productId,
   ) {
     return (select(productSuppliersTable)..where(
           (tbl) =>
@@ -88,7 +88,7 @@ class ProductSupplierDao extends DatabaseAccessor<AppDatabase>
   }
 
   /// 删除商品的所有供应商关联
-  Future<int> deleteProductSuppliersByProductId(String productId) {
+  Future<int> deleteProductSuppliersByProductId(int productId) {
     return (delete(
       productSuppliersTable,
     )..where((tbl) => tbl.productId.equals(productId))).go();
@@ -103,7 +103,7 @@ class ProductSupplierDao extends DatabaseAccessor<AppDatabase>
 
   /// 设置商品指定单位的主要供应商（会将该单位的其他供应商设为非主要）
   Future<void> setPrimarySupplierForUnit(
-    String productId,
+    int productId,
     String unitId,
     String supplierId,
   ) async {
@@ -137,7 +137,7 @@ class ProductSupplierDao extends DatabaseAccessor<AppDatabase>
   }
 
   /// 设置商品的主要供应商（会将其他供应商设为非主要）
-  Future<void> setPrimarySupplier(String productId, String supplierId) async {
+  Future<void> setPrimarySupplier(int productId, String supplierId) async {
     await transaction(() async {
       // 先将该商品的所有供应商设为非主要
       await (update(
@@ -166,7 +166,7 @@ class ProductSupplierDao extends DatabaseAccessor<AppDatabase>
 
   /// 检查货品供应商关联是否存在（指定单位）
   Future<bool> existsProductSupplierWithUnit(
-    String productId,
+    int productId,
     String supplierId,
     String unitId,
   ) async {
@@ -184,7 +184,7 @@ class ProductSupplierDao extends DatabaseAccessor<AppDatabase>
 
   /// 检查货品供应商关联是否存在（任意单位）
   Future<bool> existsProductSupplier(
-    String productId,
+    int productId,
     String supplierId,
   ) async {
     final count =

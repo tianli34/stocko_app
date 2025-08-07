@@ -1,4 +1,5 @@
 import 'package:drift/drift.dart';
+import 'products_table.dart';
 
 /// 库存流水表
 /// 记录产品库存变动的历史记录
@@ -10,7 +11,8 @@ class InventoryTransactionsTable extends Table {
   TextColumn get id => text().named('id')();
 
   /// 外键 - 产品ID
-  TextColumn get productId => text().named('product_id')();
+  IntColumn get productId =>
+      integer().named('product_id').references(ProductsTable, #id)();
 
   /// 流水类型（入库、出库等）
   TextColumn get type => text().named('type')();

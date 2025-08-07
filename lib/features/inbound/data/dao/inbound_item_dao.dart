@@ -74,7 +74,7 @@ class InboundItemDao extends DatabaseAccessor<AppDatabase>
 
   /// 根据商品ID获取入库明细
   Future<List<InboundReceiptItemsTableData>> getInboundItemsByProductId(
-    String productId,
+    int productId,
   ) {
     return (select(
       inboundReceiptItemsTable,

@@ -11,7 +11,7 @@ abstract class IInventoryRepository {
 
   /// 根据产品ID和店铺ID获取库存
   Future<Inventory?> getInventoryByProductAndShop(
-    String productId,
+    int productId,
     String shopId,
   );
 
@@ -22,7 +22,7 @@ abstract class IInventoryRepository {
   Future<List<Inventory>> getInventoryByShop(String shopId);
 
   /// 根据产品ID获取库存列表
-  Future<List<Inventory>> getInventoryByProduct(String productId);
+  Future<List<Inventory>> getInventoryByProduct(int productId);
 
   /// 监听所有库存变化
   Stream<List<Inventory>> watchAllInventory();
@@ -31,7 +31,7 @@ abstract class IInventoryRepository {
   Stream<List<Inventory>> watchInventoryByShop(String shopId);
 
   /// 监听指定产品的库存变化
-  Stream<List<Inventory>> watchInventoryByProduct(String productId);
+  Stream<List<Inventory>> watchInventoryByProduct(int productId);
 
   /// 更新库存
   Future<bool> updateInventory(Inventory inventory);
@@ -40,25 +40,25 @@ abstract class IInventoryRepository {
   Future<int> deleteInventory(String id);
 
   /// 根据产品和店铺删除库存
-  Future<int> deleteInventoryByProductAndShop(String productId, String shopId);
+  Future<int> deleteInventoryByProductAndShop(int productId, String shopId);
 
   /// 更新库存数量
   Future<bool> updateInventoryQuantity(
-    String productId,
+    int productId,
     String shopId,
     double quantity,
   );
 
   /// 增加库存数量
   Future<bool> addInventoryQuantity(
-    String productId,
+    int productId,
     String shopId,
     double amount,
   );
 
   /// 减少库存数量
   Future<bool> subtractInventoryQuantity(
-    String productId,
+    int productId,
     String shopId,
     double amount,
   );
@@ -73,8 +73,8 @@ abstract class IInventoryRepository {
   Future<double> getTotalInventoryByShop(String shopId);
 
   /// 获取库存总数量（按产品）
-  Future<double> getTotalInventoryByProduct(String productId);
+  Future<double> getTotalInventoryByProduct(int productId);
 
   /// 检查库存是否存在
-  Future<bool> inventoryExists(String productId, String shopId);
+  Future<bool> inventoryExists(int productId, String shopId);
 }

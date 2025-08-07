@@ -9,7 +9,7 @@ class InventoryItemCard extends StatelessWidget {
   const InventoryItemCard({super.key, required this.inventory});
   @override
   Widget build(BuildContext context) {
-    final quantity = inventory['quantity'] as double? ?? 0.0;
+    final quantity = (inventory['quantity'] as num? ?? 0).toInt();
     final productName = inventory['productName'] as String? ?? '';
     final productImage = inventory['productImage'] as String?;
     final unit = inventory['unit'] as String? ?? '件';
@@ -30,7 +30,7 @@ class InventoryItemCard extends StatelessWidget {
             // 商品图片
             Container(
               width: 60,
-              height: 60,
+              height: 80,
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(8),
                 color: Colors.grey[200],
@@ -41,7 +41,7 @@ class InventoryItemCard extends StatelessWidget {
                     ? CachedImageWidget(
                         imagePath: productImage,
                         width: 60,
-                        height: 60,
+                        height: 80,
                         fit: BoxFit.cover,
                       )
                     : Icon(
@@ -73,18 +73,28 @@ class InventoryItemCard extends StatelessWidget {
                   // 库存信息
                   Row(
                     children: [
-                      const Icon(
-                        Icons.inventory_2,
-                        size: 20,
-                        color: Colors.blue,
-                      ),
+                      
                       const SizedBox(width: 8),
-                      Text(
-                        '库存: ${quantity.toInt()} ($unit)',
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                        ),
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.baseline,
+                        textBaseline: TextBaseline.alphabetic,
+                        children: [
+                          Text(
+                            '$quantity',
+                            style: const TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            unit,
+                            style: TextStyle(
+                              fontSize: 14,
+                              color: Colors.grey[600],
+                            ),
+                          ),
+                        ],
                       ),
                       const Spacer(),
 
@@ -93,57 +103,6 @@ class InventoryItemCard extends StatelessWidget {
                     ],
                   ),
                   const SizedBox(height: 8),
-
-                  // 其他信息
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Row(
-                          children: [
-                            const Icon(
-                              Icons.category,
-                              size: 16,
-                              color: Colors.grey,
-                            ),
-                            const SizedBox(width: 4),
-                            Flexible(
-                              child: Text(
-                                categoryName,
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  color: Colors.grey[600],
-                                ),
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: Row(
-                          children: [
-                            const Icon(
-                              Icons.store,
-                              size: 16,
-                              color: Colors.grey,
-                            ),
-                            const SizedBox(width: 4),
-                            Flexible(
-                              child: Text(
-                                shopName,
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  color: Colors.grey[600],
-                                ),
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
                 ],
               ),
             ),
@@ -154,7 +113,7 @@ class InventoryItemCard extends StatelessWidget {
   }
 
   /// 根据库存数量获取状态
-  _StockStatus _getStockStatus(double quantity) {
+  _StockStatus _getStockStatus(int quantity) {
     if (quantity <= 0) {
       return _StockStatus.outOfStock;
     } else if (quantity <= 10) {

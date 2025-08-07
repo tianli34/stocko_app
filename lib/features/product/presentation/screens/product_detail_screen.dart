@@ -11,7 +11,7 @@ import '../../../../core/widgets/full_screen_image_viewer.dart';
 
 /// 商品详情页面
 class ProductDetailScreen extends ConsumerWidget {
-  final String productId;
+  final int productId;
 
   const ProductDetailScreen({super.key, required this.productId});
 
@@ -26,7 +26,7 @@ class ProductDetailScreen extends ConsumerWidget {
           // 编辑按钮
           IconButton(
             onPressed: () {
-              context.go(AppRoutes.productEditPath(productId));
+              context.go(AppRoutes.productEditPath(productId.toString()));
             },
             icon: const Icon(Icons.edit),
             tooltip: '编辑商品',
@@ -250,7 +250,7 @@ class ProductDetailScreen extends ConsumerWidget {
               Expanded(
                 child: OutlinedButton.icon(
                   onPressed: () {
-                    context.go(AppRoutes.productEditPath(productId));
+                    context.go(AppRoutes.productEditPath(productId.toString()));
                   },
                   icon: const Icon(Icons.edit),
                   label: const Text('编辑商品'),

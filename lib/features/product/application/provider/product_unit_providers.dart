@@ -123,7 +123,7 @@ class ProductUnitController extends StateNotifier<ProductUnitControllerState> {
   }
 
   /// 删除产品单位
-  Future<void> deleteProductUnit(String productUnitId, String productId) async {
+  Future<void> deleteProductUnit(String productUnitId, int productId) async {
     state = state.copyWith(status: ProductUnitOperationStatus.loading);
 
     try {
@@ -152,7 +152,7 @@ class ProductUnitController extends StateNotifier<ProductUnitControllerState> {
 
   /// 替换产品的所有单位配置
   Future<void> replaceProductUnits(
-    String productId,
+    int productId,
     List<ProductUnit> productUnits,
   ) async {
     print('🎯 ProductUnitController.replaceProductUnits - 开始替换产品单位配置');
@@ -191,7 +191,7 @@ class ProductUnitController extends StateNotifier<ProductUnitControllerState> {
   }
 
   /// 根据产品ID获取产品单位
-  Future<List<ProductUnit>> getProductUnitsByProductId(String productId) async {
+  Future<List<ProductUnit>> getProductUnitsByProductId(int productId) async {
     try {
       return await _repository.getProductUnitsByProductId(productId);
     } catch (e) {
@@ -204,7 +204,7 @@ class ProductUnitController extends StateNotifier<ProductUnitControllerState> {
   }
 
   /// 获取产品的基础单位
-  Future<ProductUnit?> getBaseUnitForProduct(String productId) async {
+  Future<ProductUnit?> getBaseUnitForProduct(int productId) async {
     try {
       return await _repository.getBaseUnitForProduct(productId);
     } catch (e) {
@@ -218,7 +218,7 @@ class ProductUnitController extends StateNotifier<ProductUnitControllerState> {
 
   /// 检查产品是否已配置某个单位
   Future<bool> isUnitConfiguredForProduct(
-    String productId,
+    int productId,
     String unitId,
   ) async {
     try {
@@ -249,7 +249,7 @@ class ProductUnitController extends StateNotifier<ProductUnitControllerState> {
 }
 
 /// 根据产品ID获取产品单位列表的StreamProvider
-final productUnitsProvider = StreamProvider.family<List<ProductUnit>, String>((
+final productUnitsProvider = StreamProvider.family<List<ProductUnit>, int>((
   ref,
   productId,
 ) {
@@ -267,7 +267,7 @@ final productUnitControllerProvider =
     });
 
 /// 根据产品ID获取基础单位的FutureProvider
-final baseUnitProvider = FutureProvider.family<ProductUnit?, String>((
+final baseUnitProvider = FutureProvider.family<ProductUnit?, int>((
   ref,
   productId,
 ) {

@@ -1,164 +1,102 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
+import '../../../../core/database/database.dart';
+import '../providers/inbound_records_provider.dart';
+import 'inbound_record_item_tile.dart';
+import '../../../../core/database/shops_table.dart';
 
-/// 入库记录卡片
-/// 展示单条入库记录的信息
-class InboundRecordCard extends StatelessWidget {
-  final Map<String, dynamic> record;
+// This might need to be created if it doesn't exist.
+// For now, let's create a simple one.
+final shopByIdProvider =
+    FutureProvider.family<ShopsTableData?, String>((ref, id) {
+  final database = ref.watch(appDatabaseProvider);
+  return database.shopDao.getShopById(id);
+});
+
+
+/// Inbound Record Card
+/// Displays a single inbound record with an expandable list of items.
+class InboundRecordCard extends ConsumerWidget {
+  final InboundReceiptsTableData record;
 
   const InboundRecordCard({super.key, required this.record});
 
   @override
-  Widget build(BuildContext context) {
-    final recordId = record['id'] as String? ?? '';
-    final shopName = record['shopName'] as String? ?? '';
-    final date = record['date'] as DateTime? ?? DateTime.now();
-    final productCount = record['productCount'] as int? ?? 0;
-    final totalQuantity = record['totalQuantity'] as double? ?? 0.0;
+  Widget build(BuildContext context, WidgetRef ref) {
+    final itemsAsync = ref.watch(inboundRecordItemsProvider(record.id));
+    final shopAsync = ref.watch(shopByIdProvider(record.shopId));
 
-    // 格式化日期
     final dateFormatter = DateFormat('yyyy-MM-dd');
-    final formattedDate = dateFormatter.format(date);
+    final formattedDate = dateFormatter.format(record.createdAt);
 
     return Card(
       elevation: 2,
       margin: EdgeInsets.zero,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(12),
-        onTap: () {
-          // TODO: 导航到入库记录详情页面
-          _showRecordDetails(context);
-        },
-        child: Container(
-          padding: const EdgeInsets.all(16),
-          child: Row(
-            children: [
-              // 主要信息区域
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // 第一行：记录ID、店铺名称、日期
-                    Row(
-                      children: [
-                        // 记录ID
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 8,
-                            vertical: 4,
-                          ),
-                          decoration: BoxDecoration(
-                            color: Theme.of(
-                              context,
-                            ).colorScheme.primaryContainer,
-                            borderRadius: BorderRadius.circular(6),
-                          ),
-                          child: Text(
-                            recordId,
-                            style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.bold,
-                              color: Theme.of(
-                                context,
-                              ).colorScheme.onPrimaryContainer,
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        // 店铺名称
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 8,
-                            vertical: 4,
-                          ),
-                          decoration: BoxDecoration(
-                            color: Colors.green.shade100,
-                            borderRadius: BorderRadius.circular(6),
-                          ),
-                          child: Text(
-                            shopName,
-                            style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w500,
-                              color: Colors.green.shade700,
-                            ),
-                          ),
-                        ),
-                        const Spacer(),
-                        // 日期
-                        Text(
-                          formattedDate,
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: Colors.grey[600],
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 12),
-                    // 第二行：统计信息
-                    Row(
-                      children: [
-                        Text(
-                          '总计: ',
-                          style: TextStyle(
-                            fontSize: 14,
-                            color: Colors.grey[600],
-                          ),
-                        ),
-                        Text(
-                          '$productCount种货品, ',
-                          style: const TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                        Text(
-                          '共${totalQuantity.toStringAsFixed(totalQuantity.truncateToDouble() == totalQuantity ? 0 : 1)}件',
-                          style: const TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-              // 箭头图标
-              const SizedBox(width: 8),
-              Icon(Icons.chevron_right, color: Colors.grey[400], size: 24),
-            ],
-          ),
+      child: ExpansionTile(
+        title: Text(
+          '单号: ${record.receiptNumber}',
+          style: const TextStyle(fontWeight: FontWeight.bold),
         ),
-      ),
-    );
-  }
-
-  /// 显示记录详情（临时实现）
-  void _showRecordDetails(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text('入库记录详情'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
+        subtitle: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('记录ID: ${record['id']}'),
-            Text('店铺: ${record['shopName']}'),
-            Text('日期: ${DateFormat('yyyy-MM-dd').format(record['date'])}'),
-            Text('货品种类: ${record['productCount']}种'),
-            Text(
-              '总数量: ${(record['totalQuantity'] as double).toStringAsFixed((record['totalQuantity'] as double).truncateToDouble() == (record['totalQuantity'] as double) ? 0 : 1)}件',
+            Text('日期: $formattedDate'),
+            shopAsync.when(
+              data: (shop) => Text('店铺: ${shop?.name ?? '未知'}'),
+              loading: () => const Text('店铺: 加载中...'),
+              error: (_, __) => const Text('店铺: 加载失败'),
             ),
+            if (record.source != null && record.source!.isNotEmpty)
+              Text('来源: ${record.source}'),
           ],
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('关闭'),
+        trailing: itemsAsync.when(
+          data: (items) {
+            final totalQuantity = items.fold<double>(
+              0,
+              (sum, item) => sum + item.quantity,
+            );
+            return Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Text(
+                  '${items.length} 种',
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                Text(
+                  '${totalQuantity.toStringAsFixed(totalQuantity.truncateToDouble() == totalQuantity ? 0 : 1)} 件',
+                  style: const TextStyle(fontSize: 12, color: Colors.grey),
+                ),
+              ],
+            );
+          },
+          loading: () => const SizedBox(
+            width: 20,
+            height: 20,
+            child: CircularProgressIndicator(strokeWidth: 2),
+          ),
+          error: (_, __) => const Icon(Icons.error, color: Colors.red),
+        ),
+        children: [
+          itemsAsync.when(
+            data: (items) => Column(
+              children: items
+                  .map((item) => InboundRecordItemTile(item: item))
+                  .toList(),
+            ),
+            loading: () => const Padding(
+              padding: EdgeInsets.all(16.0),
+              child: Center(child: CircularProgressIndicator()),
+            ),
+            error: (e, s) => Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Center(child: Text('加载明细失败: $e')),
+            ),
           ),
         ],
       ),

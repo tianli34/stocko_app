@@ -1,64 +1,48 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/database/database.dart';
+import '../../../inbound/data/dao/inbound_item_dao.dart';
+import '../../../../core/database/inbound_receipts_table.dart';
 
-/// 入库记录数据模型
-class InboundRecordData {
-  final String id;
-  final String shopName;
-  final DateTime date;
-  final int productCount;
-  final double totalQuantity;
-  final String status;
+final inboundItemDaoProvider = Provider<InboundItemDao>((ref) {
+  final db = ref.watch(appDatabaseProvider);
+  return db.inboundItemDao;
+});
 
-  const InboundRecordData({
-    required this.id,
-    required this.shopName,
-    required this.date,
-    required this.productCount,
-    required this.totalQuantity,
-    required this.status,
-  });
-}
-
-/// 入库记录Provider
-/// 负责获取入库记录数据
-final inboundRecordsProvider = FutureProvider<List<InboundRecordData>>((
-  ref,
-) async {
+/// Provider to watch all inbound records, returning the full data objects.
+final inboundRecordsProvider =
+    FutureProvider<List<InboundReceiptsTableData>>((ref) async {
   final database = ref.read(appDatabaseProvider);
-
-  // 获取所有入库单，按创建时间倒序排列
   final receipts = await database.inboundReceiptDao.getAllInboundReceipts();
+  // Sort by creation date descending
   receipts.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+  return receipts;
+});
 
-  final records = <InboundRecordData>[];
-
-  for (final receipt in receipts) {
-    // 获取店铺信息
-    final shop = await database.shopDao.getShopById(receipt.shopId);
-    final shopName = shop?.name ?? '未知店铺';
-
-    // 获取入库单明细，计算商品种类数和总数量
-    final items = await database.inboundItemDao.getInboundItemsByReceiptId(
-      receipt.id,
-    );
-    final productCount = items.length;
-    final totalQuantity = items.fold<double>(
-      0.0,
-      (sum, item) => sum + item.quantity,
-    );
-
-    records.add(
-      InboundRecordData(
-        id: receipt.receiptNumber, // 使用入库单号作为显示ID
-        shopName: shopName,
-        date: receipt.createdAt,
-        productCount: productCount,
-        totalQuantity: totalQuantity,
-        status: receipt.status,
-      ),
-    );
-  }
-
-  return records;
+/// Provider to get items for a specific inbound record
+final inboundRecordItemsProvider =
+    FutureProvider.family<List<InboundReceiptItemsTableData>, String>((
+  ref,
+  recordId,
+) {
+  final dao = ref.watch(inboundItemDaoProvider);
+  // We are using receiptNumber as the id in InboundRecordData,
+  // but the dao method needs the actual id from the inbound_receipts_table.
+  // A better approach might be to pass the whole InboundRecord object
+  // or adjust the providers. For now, we assume recordId is the receiptNumber.
+  // This will require a lookup.
+  // Let's modify the inboundRecordsProvider to return the full InboundReceiptsTableData object
+  // to avoid this lookup.
+  
+  // For now, let's assume we can get the receipt by its number.
+  // This is a placeholder for the actual implementation.
+  // We will need to add a method to InboundReceiptDao to get a receipt by its number.
+  // Let's assume we have it for now.
+  // final receipt = await ref.read(inboundReceiptDaoProvider).getReceiptByNumber(recordId);
+  // if (receipt != null) {
+  //   return dao.getInboundItemsByReceiptId(receipt.id);
+  // } else {
+  //   return [];
+  // }
+  // The ID passed to the family is the actual receipt ID.
+  return dao.getInboundItemsByReceiptId(recordId);
 });

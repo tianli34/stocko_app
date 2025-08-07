@@ -12,10 +12,11 @@ class BatchDao extends DatabaseAccessor<AppDatabase> with _$BatchDaoMixin {
 
   /// 根据货品ID和生产日期自动生成批次号
   /// 格式：货品ID前3位 + YYYYMMDD (例如：ABC20250523)
-  String generateBatchNumber(String productId, DateTime productionDate) {
-    final productPrefix = productId.length >= 3
-        ? productId.substring(0, 3).toUpperCase()
-        : productId.padRight(3, '0').toUpperCase();
+  String generateBatchNumber(int productId, DateTime productionDate) {
+    final productIdStr = productId.toString();
+    final productPrefix = productIdStr.length >= 3
+        ? productIdStr.substring(0, 3).toUpperCase()
+        : productIdStr.padRight(3, '0').toUpperCase();
 
     final dateString = productionDate
         .toIso8601String()
@@ -27,7 +28,7 @@ class BatchDao extends DatabaseAccessor<AppDatabase> with _$BatchDaoMixin {
 
   /// 创建新批次
   Future<void> createBatch({
-    required String productId,
+    required int productId,
     required DateTime productionDate,
     required double initialQuantity,
     required String shopId,
@@ -82,7 +83,7 @@ class BatchDao extends DatabaseAccessor<AppDatabase> with _$BatchDaoMixin {
   }
 
   /// 根据货品ID获取批次
-  Future<List<BatchesTableData>> getBatchesByProduct(String productId) {
+  Future<List<BatchesTableData>> getBatchesByProduct(int productId) {
     return (select(
       batchesTable,
     )..where((t) => t.productId.equals(productId))).get();

@@ -23,7 +23,7 @@ class InventoryDao extends DatabaseAccessor<AppDatabase>
 
   /// 根据产品ID和店铺ID获取库存
   Future<InventoryTableData?> getInventoryByProductAndShop(
-    String productId,
+    int productId,
     String shopId,
   ) {
     return (select(inventoryTable)..where(
@@ -45,7 +45,7 @@ class InventoryDao extends DatabaseAccessor<AppDatabase>
   }
 
   /// 根据产品ID获取库存列表
-  Future<List<InventoryTableData>> getInventoryByProduct(String productId) {
+  Future<List<InventoryTableData>> getInventoryByProduct(int productId) {
     return (select(
       inventoryTable,
     )..where((t) => t.productId.equals(productId))).get();
@@ -64,7 +64,7 @@ class InventoryDao extends DatabaseAccessor<AppDatabase>
   }
 
   /// 监听指定产品的库存变化
-  Stream<List<InventoryTableData>> watchInventoryByProduct(String productId) {
+  Stream<List<InventoryTableData>> watchInventoryByProduct(int productId) {
     return (select(
       inventoryTable,
     )..where((t) => t.productId.equals(productId))).watch();
@@ -84,7 +84,7 @@ class InventoryDao extends DatabaseAccessor<AppDatabase>
   }
 
   /// 根据产品和店铺删除库存
-  Future<int> deleteInventoryByProductAndShop(String productId, String shopId) {
+  Future<int> deleteInventoryByProductAndShop(int productId, String shopId) {
     return (delete(inventoryTable)..where(
           (t) => t.productId.equals(productId) & t.shopId.equals(shopId),
         ))
@@ -93,7 +93,7 @@ class InventoryDao extends DatabaseAccessor<AppDatabase>
 
   /// 更新库存数量
   Future<bool> updateInventoryQuantity(
-    String productId,
+    int productId,
     String shopId,
     double quantity,
   ) async {
@@ -142,7 +142,7 @@ class InventoryDao extends DatabaseAccessor<AppDatabase>
   }
 
   /// 获取库存总数量（按产品）
-  Future<double> getTotalInventoryByProduct(String productId) async {
+  Future<double> getTotalInventoryByProduct(int productId) async {
     final result =
         await (selectOnly(inventoryTable)
               ..addColumns([inventoryTable.quantity.sum()])
@@ -152,7 +152,7 @@ class InventoryDao extends DatabaseAccessor<AppDatabase>
   }
 
   /// 检查库存是否存在
-  Future<bool> inventoryExists(String productId, String shopId) async {
+  Future<bool> inventoryExists(int productId, String shopId) async {
     final result = await getInventoryByProductAndShop(productId, shopId);
     return result != null;
   }

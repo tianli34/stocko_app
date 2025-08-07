@@ -7,7 +7,7 @@ part 'product_unit.g.dart';
 abstract class ProductUnit with _$ProductUnit {
   const factory ProductUnit({
     required String productUnitId, // 主键
-    required String productId, // 外键, 指向 Products 表
+    required int productId, // 外键, 指向 Products 表
     required String unitId, // 外键, 指向 Units 表
     required double conversionRate, // 换算率
     double? sellingPrice, // 售价

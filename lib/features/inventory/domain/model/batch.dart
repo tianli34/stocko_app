@@ -2,7 +2,7 @@
 /// 用于批次管理功能的数据模型
 class Batch {
   final String batchNumber;
-  final String productId;
+  final int productId;
   final DateTime productionDate;
 
   /// 初始数量，同一批次可累加
@@ -23,10 +23,11 @@ class Batch {
 
   /// 根据货品ID和生产日期生成批次号
   /// 格式: 货品ID前3位 + YYYYMMDD (如: ABC20250523)
-  static String generateBatchNumber(String productId, DateTime productionDate) {
-    final productPrefix = productId.length >= 3
-        ? productId.substring(0, 3).toUpperCase()
-        : productId.padRight(3, '0').toUpperCase();
+  static String generateBatchNumber(int productId, DateTime productionDate) {
+    final productIdStr = productId.toString();
+    final productPrefix = productIdStr.length >= 3
+        ? productIdStr.substring(0, 3).toUpperCase()
+        : productIdStr.padRight(3, '0').toUpperCase();
 
     final year = productionDate.year.toString();
     final month = productionDate.month.toString().padLeft(2, '0');
@@ -36,7 +37,7 @@ class Batch {
 
   /// 创建新批次
   factory Batch.create({
-    required String productId,
+    required int productId,
     required DateTime productionDate,
     required double initialQuantity,
     required String shopId,
@@ -56,7 +57,7 @@ class Batch {
   /// 复制批次并更新指定字段
   Batch copyWith({
     String? batchNumber,
-    String? productId,
+    int? productId,
     DateTime? productionDate,
     double? initialQuantity,
     String? shopId,

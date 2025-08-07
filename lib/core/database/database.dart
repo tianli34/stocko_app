@@ -22,6 +22,9 @@ import 'inbound_receipt_items_table.dart';
 import 'purchase_orders_table.dart';
 import 'purchase_order_items_table.dart';
 import 'barcodes_table.dart'; // 新增条码表
+import 'customers_table.dart';
+import 'sales_transactions_table.dart';
+import 'sales_transaction_items_table.dart';
 import '../../features/product/data/dao/product_dao.dart';
 import '../../features/product/data/dao/category_dao.dart';
 import '../../features/product/data/dao/unit_dao.dart';
@@ -37,6 +40,9 @@ import '../../features/inbound/data/dao/inbound_receipt_dao.dart';
 import '../../features/inbound/data/dao/inbound_item_dao.dart';
 import '../../features/purchase/data/dao/purchase_dao.dart';
 import '../../features/product/data/dao/barcode_dao.dart';
+import '../../features/sale/data/dao/customer_dao.dart';
+import '../../features/sale/data/dao/sales_transaction_dao.dart';
+import '../../features/sale/data/dao/sales_transaction_item_dao.dart';
 
 part 'database.g.dart';
 
@@ -58,6 +64,9 @@ part 'database.g.dart';
     PurchaseOrdersTable,
     PurchaseOrderItemsTable,
     BarcodesTable, // 新增条码表
+    Customers,
+    SalesTransactionsTable,
+    SalesTransactionItemsTable,
   ],
   daos: [
     ProductDao,
@@ -75,12 +84,15 @@ part 'database.g.dart';
     InboundItemDao,
     PurchaseDao,
     BarcodeDao, // 新增条码DAO
+    CustomerDao,
+    SalesTransactionDao,
+    SalesTransactionItemDao,
   ],
 )
 class AppDatabase extends _$AppDatabase {
   AppDatabase(super.e);
   @override
-  int get schemaVersion => 15; // 提升版本以应用新的迁移
+  int get schemaVersion => 18; // 提升版本以应用新的迁移
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -96,6 +108,18 @@ class AppDatabase extends _$AppDatabase {
       );
     },
     onUpgrade: (Migrator m, int from, int to) async {
+      if (from < 17 && to >= 17) {
+        await m.createTable(salesTransactionsTable);
+        await m.createTable(salesTransactionItemsTable);
+      }
+      if (from < 18 && to >= 18) {
+        // 为 sales_transaction_items 表的 unit_id 列添加明确的列名
+        // 由于我们已经修改了表结构，需要重新创建表
+        await m.createTable(salesTransactionItemsTable);
+      }
+      if (from < 16 && to >= 16) {
+        await m.createTable(customers);
+      }
       if (from < 15 && to >= 15) {
         await m.addColumn(inboundReceiptsTable, inboundReceiptsTable.source);
       }

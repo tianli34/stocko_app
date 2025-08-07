@@ -29,7 +29,7 @@ class AuxiliaryUnitBarcodeData {
 
 /// 表单数据封装
 class ProductFormData {
-  final String? productId;
+  final int? productId;
   final String name;
   final String? selectedCategoryId;
   final String newCategoryName;
@@ -152,9 +152,8 @@ class ProductAddEditController {
 
       // 3. 构建产品对象
       final product = Product(
-        id: data.productId?.isNotEmpty == true
-            ? data.productId!
-            : DateTime.now().millisecondsSinceEpoch.toString(),
+        id: data.productId ?? DateTime.now().millisecondsSinceEpoch,
+        // 确保id为整数类型
         name: data.name.trim(),
         image: data.imagePath,
         categoryId: categoryId,
@@ -172,7 +171,7 @@ class ProductAddEditController {
 
       // 4. 保存产品
       final ops = ref.read(productOperationsProvider.notifier);
-      if (data.productId == null || data.productId!.isEmpty) {
+      if (data.productId == null) {
         await ops.addProduct(product);
       } else {
         await ops.updateProduct(product);
@@ -192,7 +191,7 @@ class ProductAddEditController {
       ref.invalidate(allProductsProvider);
 
       return ProductOperationResult.success(
-        message: data.productId == null || data.productId!.isEmpty
+        message: data.productId == null
             ? '创建成功'
             : '更新成功',
         product: product,
@@ -406,7 +405,7 @@ class ProductAddEditController {
               pu.conversionRate == auxUnit.conversionRate,
           orElse: () => ProductUnit(
             productUnitId: '',
-            productId: '',
+            productId: 0, // 使用默认整数值
             unitId: '',
             conversionRate: 0,
           ),

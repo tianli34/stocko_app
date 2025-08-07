@@ -2,8 +2,9 @@
 /// 表示入库单中的商品明细信息
 class InboundItem {
   final String id;
-  final String productId;
+  final int productId;
   final String productName;
+  final String unitId;
   final String unitName;
   final double unitPrice;
   final double quantity;
@@ -14,6 +15,7 @@ class InboundItem {
     required this.id,
     required this.productId,
     required this.productName,
+    required this.unitId,
     required this.unitName,
     required this.unitPrice,
     required this.quantity,
@@ -24,8 +26,9 @@ class InboundItem {
   /// 复制并更新入库项
   InboundItem copyWith({
     String? id,
-    String? productId,
+    int? productId,
     String? productName,
+    String? unitId,
     String? unitName,
     double? unitPrice,
     double? quantity,
@@ -36,6 +39,7 @@ class InboundItem {
       id: id ?? this.id,
       productId: productId ?? this.productId,
       productName: productName ?? this.productName,
+      unitId: unitId ?? this.unitId,
       unitName: unitName ?? this.unitName,
       unitPrice: unitPrice ?? this.unitPrice,
       quantity: quantity ?? this.quantity,
@@ -46,8 +50,9 @@ class InboundItem {
 
   /// 创建新的入库项
   factory InboundItem.create({
-    required String productId,
+    required int productId,
     required String productName,
+    required String unitId,
     required String unitName,
     required double unitPrice,
     required double quantity,
@@ -58,6 +63,7 @@ class InboundItem {
       id: 'item_${now.millisecondsSinceEpoch}',
       productId: productId,
       productName: productName,
+      unitId: unitId,
       unitName: unitName,
       unitPrice: unitPrice,
       quantity: quantity,

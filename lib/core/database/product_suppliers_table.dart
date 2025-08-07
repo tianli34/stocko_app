@@ -1,4 +1,5 @@
 import 'package:drift/drift.dart';
+import 'products_table.dart';
 
 /// 货品供应商关联表
 /// 建立商品和供应商之间的多对多关系
@@ -10,7 +11,8 @@ class ProductSuppliersTable extends Table {
   TextColumn get id => text().named('id')();
 
   /// 商品ID - 外键关联到products表
-  TextColumn get productId => text().named('product_id')();
+  IntColumn get productId =>
+      integer().named('product_id').references(ProductsTable, #id)();
 
   /// 供应商ID - 外键关联到suppliers表
   TextColumn get supplierId => text().named('supplier_id')();

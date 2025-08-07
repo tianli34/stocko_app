@@ -39,6 +39,7 @@ class InboundListNotifier extends StateNotifier<List<InboundItem>> {
   /// [defaultUnitName] - 默认单位名称
   void addOrUpdateItem({
     required Product product,
+    required String unitId,
     String? unitName,
     String? barcode,
     double? wholesalePrice,
@@ -49,7 +50,7 @@ class InboundListNotifier extends StateNotifier<List<InboundItem>> {
       if (barcode != null && item.id.contains('item_${barcode}_')) {
         return true;
       }
-      return item.productId == product.id && item.unitName == actualUnitName;
+      return item.productId == product.id && item.unitId == unitId;
     });
 
     if (existingItemIndex != -1) {
@@ -66,12 +67,13 @@ class InboundListNotifier extends StateNotifier<List<InboundItem>> {
       // 使用条码作为唯一标识符的一部分，以确保唯一性
       final itemId = barcode != null
           ? 'item_${barcode}_${DateTime.now().millisecondsSinceEpoch}'
-          : 'item_${product.id}_${DateTime.now().millisecondsSinceEpoch}';
+          : 'item_${product.id}_${unitId}_${DateTime.now().millisecondsSinceEpoch}';
 
       final newItem = InboundItem(
         id: itemId,
         productId: product.id,
         productName: product.name,
+        unitId: unitId,
         unitName: actualUnitName,
         unitPrice: wholesalePrice ?? 0.0,
         quantity: 1,

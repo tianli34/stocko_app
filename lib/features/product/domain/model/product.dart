@@ -6,7 +6,7 @@ part 'product.g.dart';
 @freezed
 abstract class Product with _$Product {
   const factory Product({
-    required String id, // ID现在是必需的
+    required int id, // ID现在是必需的
     required String name, // 名称必须
     String? sku,
     String? image, // 图片
@@ -29,7 +29,7 @@ abstract class Product with _$Product {
   const Product._();
 
   factory Product.fromJson(Map<String, dynamic> json) =>
-      _$ProductFromJson(json);
+      _$ProductFromJson(json..['id'] = json['id'] is String ? int.tryParse(json['id']) ?? 0 : json['id']);
 
   // 获取有效价格（促销价 > 零售价 > 建议零售价）
   double? get effectivePrice {
@@ -80,5 +80,10 @@ abstract class Product with _$Product {
   // 复制并更新最后更新时间
   Product updateTimestamp() {
     return copyWith(lastUpdated: DateTime.now());
+  }
+
+  /// 将字符串ID转换为整数
+  static int parseId(String id) {
+    return int.tryParse(id) ?? 0;
   }
 }

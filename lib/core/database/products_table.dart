@@ -3,7 +3,7 @@ import 'package:drift/drift.dart';
 class ProductsTable extends Table {
   @override
   String get tableName => 'products';
-  TextColumn get id => text()(); // 改为不可为空的主键
+  IntColumn get id => integer().autoIncrement()();
   TextColumn get name => text()(); // 名称必须
   TextColumn get sku => text().nullable()();
   TextColumn get image => text().nullable()(); // 图片
@@ -25,6 +25,4 @@ class ProductsTable extends Table {
   TextColumn get remarks => text().nullable()(); // 备注
   DateTimeColumn get lastUpdated => dateTime().nullable()(); // 最后更新日期
 
-  @override
-  Set<Column> get primaryKey => {id};
 }

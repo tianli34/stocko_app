@@ -36,7 +36,7 @@ class ProductUnitDao extends DatabaseAccessor<AppDatabase>
 
   /// 根据产品ID获取所有产品单位
   Future<List<ProductUnitsTableData>> getProductUnitsByProductId(
-    String productId,
+    int productId,
   ) async {
     return await (select(
       db.productUnitsTable,
@@ -50,7 +50,7 @@ class ProductUnitDao extends DatabaseAccessor<AppDatabase>
 
   /// 监听产品的所有单位变化
   Stream<List<ProductUnitsTableData>> watchProductUnitsByProductId(
-    String productId,
+    int productId,
   ) {
     return (select(
       db.productUnitsTable,
@@ -75,7 +75,7 @@ class ProductUnitDao extends DatabaseAccessor<AppDatabase>
   }
 
   /// 删除产品的所有单位
-  Future<int> deleteProductUnitsByProductId(String productId) async {
+  Future<int> deleteProductUnitsByProductId(int productId) async {
     return await (delete(
       db.productUnitsTable,
     )..where((tbl) => tbl.productId.equals(productId))).go();
@@ -83,7 +83,7 @@ class ProductUnitDao extends DatabaseAccessor<AppDatabase>
 
   /// 检查产品是否已配置某个单位
   Future<bool> isUnitConfiguredForProduct(
-    String productId,
+    int productId,
     String unitId,
   ) async {
     final result =
@@ -96,7 +96,7 @@ class ProductUnitDao extends DatabaseAccessor<AppDatabase>
   }
 
   /// 获取产品的基础单位（换算率为1.0的单位）
-  Future<ProductUnitsTableData?> getBaseUnitForProduct(String productId) async {
+  Future<ProductUnitsTableData?> getBaseUnitForProduct(int productId) async {
     return await (select(db.productUnitsTable)..where(
           (tbl) =>
               tbl.productId.equals(productId) & tbl.conversionRate.equals(1.0),

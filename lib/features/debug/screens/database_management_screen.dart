@@ -187,6 +187,35 @@ class DatabaseManagementScreen extends ConsumerWidget {
             ),
           ],
         ),
+        const SizedBox(height: 8),
+        Row(
+          children: [
+            Expanded(
+              child: OutlinedButton(
+                onPressed: () => _showSalesTransactionsData(context, ref),
+                child: const Text('查看销售交易'),
+              ),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: OutlinedButton(
+                onPressed: () => _showCustomersData(context, ref),
+                child: const Text('查看客户'),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        Row(
+          children: [
+            Expanded(
+              child: OutlinedButton(
+                onPressed: () => _showSalesTransactionItemsData(context, ref),
+                child: const Text('查看销售交易项'),
+              ),
+            ),
+          ],
+        ),
       ],
     );
   }
@@ -360,7 +389,7 @@ class DatabaseManagementScreen extends ConsumerWidget {
                 return ListTile(
                   title: Text(product.name),
                   subtitle: Text('状态: ${product.status}'),
-                  trailing: Text(product.id),
+                  trailing: Text(product.id.toString()),
                 );
               },
             ),
@@ -558,6 +587,167 @@ class DatabaseManagementScreen extends ConsumerWidget {
           ],
         ),
       );
+    }
+  }
+
+  Future<void> _showSalesTransactionsData(BuildContext context, WidgetRef ref) async {
+    final database = ref.read(appDatabaseProvider);
+    final salesTransactions = await database.select(database.salesTransactionsTable).get();
+
+    if (context.mounted) {
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: Text('销售交易数据 (${salesTransactions.length} 条)'),
+          content: SizedBox(
+            width: double.maxFinite,
+            height: 500, // 设置固定高度以便滚动
+            child: ListView.builder(
+              shrinkWrap: true,
+              itemCount: salesTransactions.length,
+              itemBuilder: (context, index) {
+                final salesTransaction = salesTransactions[index];
+                return Card(
+                  margin: const EdgeInsets.symmetric(vertical: 4),
+                  child: ListTile(
+                    title: Text('销售订单号: ${salesTransaction.salesOrderNo}'),
+                    subtitle: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text('客户ID: ${salesTransaction.customerId}'),
+                        Text('店铺ID: ${salesTransaction.shopId}'),
+                        Text('总金额: ¥${salesTransaction.totalAmount.toStringAsFixed(2)}'),
+                        Text('实际金额: ¥${salesTransaction.actualAmount.toStringAsFixed(2)}'),
+                        Text('状态: ${salesTransaction.status}'),
+                        if (salesTransaction.remarks != null && salesTransaction.remarks!.isNotEmpty)
+                          Text('备注: ${salesTransaction.remarks}'),
+                        Text(
+                          '创建时间: ${salesTransaction.createdAt.toString().substring(0, 16)}',
+                        ),
+                        Text(
+                          '更新时间: ${salesTransaction.updatedAt.toString().substring(0, 16)}',
+                        ),
+                      ],
+                    ),
+                    isThreeLine: true,
+                  ),
+                );
+              },
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('关闭'),
+            ),
+          ],
+        ),
+      );
+    }
+  }
+
+  Future<void> _showCustomersData(BuildContext context, WidgetRef ref) async {
+    final database = ref.read(appDatabaseProvider);
+    final customers = await database.select(database.customers).get();
+
+    if (context.mounted) {
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: Text('客户数据 (${customers.length} 条)'),
+          content: SizedBox(
+            width: double.maxFinite,
+            height: 400, // 设置固定高度以便滚动
+            child: ListView.builder(
+              shrinkWrap: true,
+              itemCount: customers.length,
+              itemBuilder: (context, index) {
+                final customer = customers[index];
+                return Card(
+                  margin: const EdgeInsets.symmetric(vertical: 4),
+                  child: ListTile(
+                    title: Text(customer.name),
+                    subtitle: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text('ID: ${customer.id}'),
+                        Text('客户名称: ${customer.name}'),
+                      ],
+                    ),
+                    isThreeLine: true,
+                  ),
+                );
+              },
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('关闭'),
+            ),
+          ],
+        ),
+      );
+    }
+  }
+
+  Future<void> _showSalesTransactionItemsData(BuildContext context, WidgetRef ref) async {
+    try {
+      final database = ref.read(appDatabaseProvider);
+      final salesTransactionItems = await database.select(database.salesTransactionItemsTable).get();
+      
+      // 添加调试日志
+      print('销售交易项数据查询结果: ${salesTransactionItems.length} 条记录');
+
+      if (context.mounted) {
+        showDialog(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: Text('销售交易项数据 (${salesTransactionItems.length} 条)'),
+            content: SizedBox(
+              width: double.maxFinite,
+              height: 500, // 设置固定高度以便滚动
+              child: ListView.builder(
+                shrinkWrap: true,
+                itemCount: salesTransactionItems.length,
+                itemBuilder: (context, index) {
+                  final salesTransactionItem = salesTransactionItems[index];
+                  return Card(
+                    margin: const EdgeInsets.symmetric(vertical: 4),
+                    child: ListTile(
+                      title: Text('销售交易ID: ${salesTransactionItem.salesTransactionId}'),
+                      subtitle: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text('产品ID: ${salesTransactionItem.productId ?? '未知'}'),
+                          Text('单位ID: ${salesTransactionItem.unitId ?? '未知'}'),
+                          Text('数量: ${salesTransactionItem.quantity ?? 0}'),
+                          Text('单价: ¥${(salesTransactionItem.unitPrice ?? 0).toStringAsFixed(2)}'),
+                          Text('总价: ¥${(salesTransactionItem.totalPrice ?? 0).toStringAsFixed(2)}'),
+                          if (salesTransactionItem.batchId != null && salesTransactionItem.batchId!.isNotEmpty)
+                            Text('批次ID: ${salesTransactionItem.batchId}'),
+                        ],
+                      ),
+                      isThreeLine: true,
+                    ),
+                  );
+                },
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(),
+                child: const Text('关闭'),
+              ),
+            ],
+          ),
+        );
+      }
+    } catch (e) {
+      print('查询销售交易项数据时出错: $e');
+      if (context.mounted) {
+        showAppSnackBar(context, message: '❌ 查询失败: $e', isError: true);
+      }
     }
   }
 }

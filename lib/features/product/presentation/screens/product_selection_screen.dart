@@ -200,12 +200,12 @@ class _ProductSelectionScreenState
               (a, b) =>
                   (b.lastUpdated ??
                           DateTime.fromMillisecondsSinceEpoch(
-                            int.tryParse(b.id) ?? 0,
+                            b.id,
                           ))
                       .compareTo(
                         a.lastUpdated ??
                             DateTime.fromMillisecondsSinceEpoch(
-                              int.tryParse(a.id) ?? 0,
+                              a.id,
                             ),
                       ),
             );

@@ -16,6 +16,7 @@ class DatabaseInitializer {
     await initializeDefaultProducts();
     await initializeDefaultProductUnits();
     await initializeDefaultBarcodes();
+    await initializeDefaultCustomers();
     // 可以继续添加其他初始化方法
   }
 
@@ -178,7 +179,7 @@ class DatabaseInitializer {
 
       final defaultProducts = [
         ProductsTableCompanion.insert(
-          id: 'prod_rice',
+          id: const Value(1),
           name: '大米',
           categoryId: const Value('cat_food'),
           unitId: const Value('unit_kg'),
@@ -192,7 +193,7 @@ class DatabaseInitializer {
           lastUpdated: Value(DateTime.now()),
         ),
         ProductsTableCompanion.insert(
-          id: 'prod_flour',
+          id: const Value(2),
           name: '面粉',
           categoryId: const Value('cat_food'),
           unitId: const Value('unit_kg'),
@@ -206,7 +207,7 @@ class DatabaseInitializer {
           lastUpdated: Value(DateTime.now()),
         ),
         ProductsTableCompanion.insert(
-          id: 'prod_cola',
+          id: const Value(3),
           name: '可乐',
           categoryId: const Value('cat_beverage'),
           unitId: const Value('unit_bottle'),
@@ -220,7 +221,7 @@ class DatabaseInitializer {
           lastUpdated: Value(DateTime.now()),
         ),
         ProductsTableCompanion.insert(
-          id: 'prod_water',
+          id: const Value(4),
           name: '矿泉水',
           categoryId: const Value('cat_beverage'),
           unitId: const Value('unit_bottle'),
@@ -234,7 +235,7 @@ class DatabaseInitializer {
           lastUpdated: Value(DateTime.now()),
         ),
         ProductsTableCompanion.insert(
-          id: 'prod_noodles',
+          id: const Value(5),
           name: '面条',
           categoryId: const Value('cat_food'),
           unitId: const Value('unit_kg'),
@@ -248,7 +249,7 @@ class DatabaseInitializer {
           lastUpdated: Value(DateTime.now()),
         ),
         ProductsTableCompanion.insert(
-          id: 'prod_milk',
+          id: const Value(6),
           name: '牛奶',
           categoryId: const Value('cat_beverage'),
           unitId: const Value('unit_box'),
@@ -262,7 +263,7 @@ class DatabaseInitializer {
           lastUpdated: Value(DateTime.now()),
         ),
         ProductsTableCompanion.insert(
-          id: 'prod_toothpaste',
+          id: const Value(7),
           name: '牙膏',
           categoryId: const Value('cat_daily'),
           unitId: const Value('unit_piece'),
@@ -276,7 +277,7 @@ class DatabaseInitializer {
           lastUpdated: Value(DateTime.now()),
         ),
         ProductsTableCompanion.insert(
-          id: 'prod_soy_sauce',
+          id: const Value(8),
           name: '酱油',
           categoryId: const Value('cat_food'),
           unitId: const Value('unit_bottle'),
@@ -290,7 +291,7 @@ class DatabaseInitializer {
           lastUpdated: Value(DateTime.now()),
         ),
         ProductsTableCompanion.insert(
-          id: 'prod_toilet_paper',
+          id: const Value(9),
           name: '卫生纸',
           categoryId: const Value('cat_daily'),
           unitId: const Value('unit_roll'),
@@ -304,7 +305,7 @@ class DatabaseInitializer {
           lastUpdated: Value(DateTime.now()),
         ),
         ProductsTableCompanion.insert(
-          id: 'prod_beer',
+          id: const Value(10),
           name: '啤酒',
           categoryId: const Value('cat_beverage'),
           unitId: const Value('unit_bottle'),
@@ -318,7 +319,7 @@ class DatabaseInitializer {
           lastUpdated: Value(DateTime.now()),
         ),
         ProductsTableCompanion.insert(
-          id: 'prod_shampoo',
+          id: const Value(11),
           name: '洗发水',
           categoryId: const Value('cat_daily'),
           unitId: const Value('unit_bottle'),
@@ -332,7 +333,7 @@ class DatabaseInitializer {
           lastUpdated: Value(DateTime.now()),
         ),
         ProductsTableCompanion.insert(
-          id: 'prod_egg',
+          id: const Value(12),
           name: '鸡蛋',
           categoryId: const Value('cat_food'),
           unitId: const Value('unit_box'),
@@ -346,7 +347,7 @@ class DatabaseInitializer {
           lastUpdated: Value(DateTime.now()),
         ),
         ProductsTableCompanion.insert(
-          id: 'prod_salt',
+          id: const Value(13),
           name: '食盐',
           categoryId: const Value('cat_food'),
           unitId: const Value('unit_bag'),
@@ -360,7 +361,7 @@ class DatabaseInitializer {
           lastUpdated: Value(DateTime.now()),
         ),
         ProductsTableCompanion.insert(
-          id: 'prod_tissue',
+          id: const Value(14),
           name: '抽纸',
           categoryId: const Value('cat_daily'),
           unitId: const Value('unit_pack'),
@@ -402,28 +403,28 @@ class DatabaseInitializer {
       final defaultProductUnits = [
         ProductUnitsTableCompanion.insert(
           productUnitId: 'pu_rice_kg',
-          productId: 'prod_rice',
+          productId: 1,
           unitId: 'unit_kg',
           conversionRate: 1.0, // 基础单位
           lastUpdated: Value(DateTime.now()),
         ),
         ProductUnitsTableCompanion.insert(
           productUnitId: 'pu_flour_kg',
-          productId: 'prod_flour',
+          productId: 2,
           unitId: 'unit_kg',
           conversionRate: 1.0, // 基础单位
           lastUpdated: Value(DateTime.now()),
         ),
         ProductUnitsTableCompanion.insert(
           productUnitId: 'pu_cola_bottle',
-          productId: 'prod_cola',
+          productId: 3,
           unitId: 'unit_bottle',
           conversionRate: 1.0, // 基础单位
           lastUpdated: Value(DateTime.now()),
         ),
         ProductUnitsTableCompanion.insert(
           productUnitId: 'pu_water_bottle',
-          productId: 'prod_water',
+          productId: 4, // 修改为整数ID
           unitId: 'unit_bottle',
           conversionRate: 1.0, // 基础单位
           lastUpdated: Value(DateTime.now()),
@@ -497,9 +498,45 @@ class DatabaseInitializer {
     }
   }
 
+  /// 初始化默认客户
+  Future<void> initializeDefaultCustomers() async {
+    try {
+      final count = await (_database.select(
+        _database.customers,
+      )..limit(1)).get();
+
+      if (count.isNotEmpty) {
+        print('👥 客户数据已存在，跳过初始化');
+        return;
+      }
+
+      final defaultCustomers = [
+        CustomersCompanion.insert(
+          id: const Value(0),
+          name: '匿名散客',
+        ),
+      ];
+
+      await _database.transaction(() async {
+        for (final customer in defaultCustomers) {
+          await _database.into(_database.customers).insert(customer);
+        }
+      });
+
+      print('✅ 成功初始化 ${defaultCustomers.length} 个默认客户');
+    } catch (e) {
+      print('❌ 初始化默认客户失败: $e');
+    }
+  }
+
   /// 重置所有数据（仅用于开发/测试）
   Future<void> resetAllData() async {
     await _database.transaction(() async {
+      // 删除销售相关的表数据
+      await _database.delete(_database.salesTransactionItemsTable).go();
+      await _database.delete(_database.salesTransactionsTable).go();
+      await _database.delete(_database.customers).go();
+
       // 删除业务数据表
       await _database.delete(_database.inboundReceiptItemsTable).go();
       await _database.delete(_database.inboundReceiptsTable).go();

@@ -32,7 +32,7 @@ class InventoryTransactionDao extends DatabaseAccessor<AppDatabase>
 
   /// 根据产品ID获取流水记录
   Future<List<InventoryTransactionsTableData>> getTransactionsByProduct(
-    String productId,
+    int productId,
   ) {
     return (select(inventoryTransactionsTable)
           ..where((t) => t.productId.equals(productId))
@@ -62,7 +62,7 @@ class InventoryTransactionDao extends DatabaseAccessor<AppDatabase>
 
   /// 根据产品和店铺获取流水记录
   Future<List<InventoryTransactionsTableData>> getTransactionsByProductAndShop(
-    String productId,
+    int productId,
     String shopId,
   ) {
     return (select(inventoryTransactionsTable)
@@ -78,7 +78,7 @@ class InventoryTransactionDao extends DatabaseAccessor<AppDatabase>
     DateTime startDate,
     DateTime endDate, {
     String? shopId,
-    String? productId,
+    int? productId,
   }) {
     var query = select(inventoryTransactionsTable)
       ..where((t) => t.time.isBetweenValues(startDate, endDate));
@@ -103,7 +103,7 @@ class InventoryTransactionDao extends DatabaseAccessor<AppDatabase>
 
   /// 监听指定产品的流水变化
   Stream<List<InventoryTransactionsTableData>> watchTransactionsByProduct(
-    String productId,
+    int productId,
   ) {
     return (select(inventoryTransactionsTable)
           ..where((t) => t.productId.equals(productId))
@@ -139,7 +139,7 @@ class InventoryTransactionDao extends DatabaseAccessor<AppDatabase>
   }
 
   /// 根据产品删除相关流水
-  Future<int> deleteTransactionsByProduct(String productId) {
+  Future<int> deleteTransactionsByProduct(int productId) {
     return (delete(
       inventoryTransactionsTable,
     )..where((t) => t.productId.equals(productId))).go();
@@ -156,7 +156,7 @@ class InventoryTransactionDao extends DatabaseAccessor<AppDatabase>
   Future<List<InventoryTransactionsTableData>> getRecentTransactions(
     int limit, {
     String? shopId,
-    String? productId,
+    int? productId,
   }) {
     var query = select(inventoryTransactionsTable);
 
@@ -177,7 +177,7 @@ class InventoryTransactionDao extends DatabaseAccessor<AppDatabase>
   /// 获取流水总数
   Future<int> getTransactionCount({
     String? shopId,
-    String? productId,
+    int? productId,
     String? type,
   }) async {
     var query = selectOnly(inventoryTransactionsTable)

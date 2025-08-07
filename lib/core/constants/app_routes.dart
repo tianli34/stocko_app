@@ -17,10 +17,13 @@ class AppRoutes {
   static const String purchaseRecords = '/purchase/records';
   static const String purchaseDetail = '/purchase/detail/:purchaseNumber';
   static const String sales = '/sales';
+  static const String saleCreate = '/sales/create';
+  static const String saleRecords = '/sales/records';
   static const String test = '/test';
   static const String databaseViewer = '/database-viewer';
   static const String databaseManagement = '/database-management';
   static const String settings = '/settings';
+  static const String customers = '/customers';
 
   // 辅助方法，用于生成带参数的路由
   static String productDetailPath(String id) => '/products/$id';

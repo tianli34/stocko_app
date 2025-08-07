@@ -16,12 +16,12 @@ abstract class IProductRepository {
   /// 删除产品
   /// [id] 产品ID
   /// 返回删除的记录数
-  Future<int> deleteProduct(String id);
+  Future<int> deleteProduct(int id);
 
   /// 根据ID获取产品
   /// [id] 产品ID
   /// 返回产品对象，如果不存在则返回null
-  Future<Product?> getProductById(String id);
+  Future<Product?> getProductById(int id);
 
   /// 监听所有产品变化
   /// 使用Stream实时监听产品列表的变化
@@ -29,7 +29,16 @@ abstract class IProductRepository {
   Stream<List<Product>> watchAllProducts();
 
   /// 监听所有产品及其单位名称
-  Stream<List<({Product product, String unitName, double? wholesalePrice})>>
+  Stream<
+    List<
+      ({
+        Product product,
+        String unitId,
+        String unitName,
+        double? wholesalePrice
+      })
+    >
+  >
   watchAllProductsWithUnit();
 
   /// 获取所有产品
@@ -60,7 +69,14 @@ abstract class IProductRepository {
   /// 根据条码获取产品及其单位信息
   /// [barcode] 条码
   /// 返回包含产品和单位名称的结果，如果不存在则返回null
-  Future<({Product product, String unitName, double? wholesalePrice})?>
+  Future<
+    ({
+      Product product,
+      String unitId,
+      String unitName,
+      double? wholesalePrice
+    })?
+  >
   getProductWithUnitByBarcode(String barcode);
 
   /// 检查单位是否被任何产品使用

@@ -39,7 +39,7 @@ class InventoryRepository implements IInventoryRepository {
 
   @override
   Future<Inventory?> getInventoryByProductAndShop(
-    String productId,
+    int productId,
     String shopId,
   ) async {
     try {
@@ -77,7 +77,7 @@ class InventoryRepository implements IInventoryRepository {
   }
 
   @override
-  Future<List<Inventory>> getInventoryByProduct(String productId) async {
+  Future<List<Inventory>> getInventoryByProduct(int productId) async {
     try {
       final dataList = await _inventoryDao.getInventoryByProduct(productId);
       return dataList.map(_dataToInventory).toList();
@@ -112,7 +112,7 @@ class InventoryRepository implements IInventoryRepository {
   }
 
   @override
-  Stream<List<Inventory>> watchInventoryByProduct(String productId) {
+  Stream<List<Inventory>> watchInventoryByProduct(int productId) {
     try {
       return _inventoryDao
           .watchInventoryByProduct(productId)
@@ -149,7 +149,7 @@ class InventoryRepository implements IInventoryRepository {
 
   @override
   Future<int> deleteInventoryByProductAndShop(
-    String productId,
+    int productId,
     String shopId,
   ) async {
     try {
@@ -166,7 +166,7 @@ class InventoryRepository implements IInventoryRepository {
 
   @override
   Future<bool> updateInventoryQuantity(
-    String productId,
+    int productId,
     String shopId,
     double quantity,
   ) async {
@@ -184,7 +184,7 @@ class InventoryRepository implements IInventoryRepository {
 
   @override
   Future<bool> addInventoryQuantity(
-    String productId,
+    int productId,
     String shopId,
     double amount,
   ) async {
@@ -206,7 +206,7 @@ class InventoryRepository implements IInventoryRepository {
 
   @override
   Future<bool> subtractInventoryQuantity(
-    String productId,
+    int productId,
     String shopId,
     double amount,
   ) async {
@@ -265,7 +265,7 @@ class InventoryRepository implements IInventoryRepository {
   }
 
   @override
-  Future<double> getTotalInventoryByProduct(String productId) async {
+  Future<double> getTotalInventoryByProduct(int productId) async {
     try {
       return await _inventoryDao.getTotalInventoryByProduct(productId);
     } catch (e) {
@@ -275,7 +275,7 @@ class InventoryRepository implements IInventoryRepository {
   }
 
   @override
-  Future<bool> inventoryExists(String productId, String shopId) async {
+  Future<bool> inventoryExists(int productId, String shopId) async {
     try {
       return await _inventoryDao.inventoryExists(productId, shopId);
     } catch (e) {

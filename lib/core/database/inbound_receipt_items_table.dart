@@ -1,4 +1,5 @@
 import 'package:drift/drift.dart';
+import 'products_table.dart';
 
 /// 入库单明细表
 /// 存储入库单中的具体商品明细信息
@@ -13,7 +14,8 @@ class InboundReceiptItemsTable extends Table {
   TextColumn get receiptId => text().named('receipt_id')();
 
   /// 外键 - 商品ID
-  TextColumn get productId => text().named('product_id')();
+  IntColumn get productId =>
+      integer().named('product_id').references(ProductsTable, #id)();
 
   /// 本次入库数量
   RealColumn get quantity => real().named('quantity')();

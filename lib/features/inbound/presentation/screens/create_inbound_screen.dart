@@ -137,8 +137,14 @@ class _CreateInboundScreenState extends ConsumerState<CreateInboundScreen> {
       // 使用 `ref.read(provider.future)` 来异步等待数据加载完成。
       // 这可以确保无论 `allProductsWithUnitProvider` 是否已缓存数据，
       // 我们都能在获取到数据后再执行后续逻辑，从而修复首次加载时数据未就绪的bug。
-      final List<({Product product, String unitName, double? wholesalePrice})>
-      productsWithUnit = await ref.read(allProductsWithUnitProvider.future);
+      final List<
+        ({
+          Product product,
+          String unitId,
+          String unitName,
+          double? wholesalePrice
+        })
+      > productsWithUnit = await ref.read(allProductsWithUnitProvider.future);
 
       final selectedProducts = productsWithUnit
           .where((p) => result.contains(p.product.id))
@@ -149,6 +155,7 @@ class _CreateInboundScreenState extends ConsumerState<CreateInboundScreen> {
             .read(inboundListProvider.notifier)
             .addOrUpdateItem(
               product: p.product,
+              unitId: p.unitId,
               unitName: p.unitName,
               wholesalePrice: p.wholesalePrice,
             );
@@ -200,9 +207,6 @@ class _CreateInboundScreenState extends ConsumerState<CreateInboundScreen> {
     );
   }
 
-  void _saveDraft() {
-    showAppSnackBar(context, message: '保存草稿功能待实现');
-  }
 
   void _confirmInbound() async {
     if (_isProcessing) return;
@@ -308,6 +312,7 @@ class _CreateInboundScreenState extends ConsumerState<CreateInboundScreen> {
             .read(inboundListProvider.notifier)
             .addOrUpdateItem(
               product: result.product,
+              unitId: result.unitId,
               unitName: result.unitName,
               barcode: barcode,
               wholesalePrice: result.wholesalePrice,
@@ -348,6 +353,7 @@ class _CreateInboundScreenState extends ConsumerState<CreateInboundScreen> {
             .read(inboundListProvider.notifier)
             .addOrUpdateItem(
               product: result.product,
+              unitId: result.unitId,
               unitName: result.unitName,
               barcode: barcode,
               wholesalePrice: result.wholesalePrice,

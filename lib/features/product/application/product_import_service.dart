@@ -1,5 +1,4 @@
 import 'package:drift/drift.dart';
-import 'package:uuid/uuid.dart';
 
 // 导入数据库定义文件和所有表
 import '../../../core/database/database.dart';
@@ -7,7 +6,6 @@ import '../../../core/database/database.dart';
 /// 一个服务类，用于处理从外部数据源批量导入商品。
 class ProductImportService {
   final AppDatabase db;
-  final Uuid _uuid = const Uuid();
 
   ProductImportService(this.db);
 
@@ -22,7 +20,7 @@ class ProductImportService {
       return existingCategory.id; // 2. 如果找到，返回其ID
     } else {
       // 3. 如果没找到，创建一个新的
-      final newId = _uuid.v4();
+      final newId = DateTime.now().millisecondsSinceEpoch.toString();
       final companion = CategoriesTableCompanion.insert(id: newId, name: name);
       await db.into(db.categoriesTable).insert(companion);
       return newId;
@@ -38,7 +36,7 @@ class ProductImportService {
     if (existingUnit != null) {
       return existingUnit.id;
     } else {
-      final newId = _uuid.v4();
+      final newId = DateTime.now().millisecondsSinceEpoch.toString();
       final companion = UnitsTableCompanion.insert(id: newId, name: name);
       await db.into(db.unitsTable).insert(companion);
       return newId;
@@ -131,7 +129,8 @@ class ProductImportService {
     try {
       await db.batch((batch) {
         for (final productData in rawProductsData) {
-          final productId = _uuid.v4();
+          final productId =
+              DateTime.now().millisecondsSinceEpoch; // 使用时间戳作为临时ID
           final productName = productData['货品名称'] as String;
           final brand = productData['品牌'] as String;
           final categoryId = categoryIdMap[brand]!; // 从Map中快速获取ID
@@ -148,7 +147,7 @@ class ProductImportService {
           batch.insert(
             db.productsTable,
             ProductsTableCompanion.insert(
-              id: productId,
+              id: Value(productId),
               name: productName,
               brand: Value(brand),
               categoryId: Value(categoryId),
@@ -160,11 +159,11 @@ class ProductImportService {
           );
 
           // 插入“包”的单位和条码记录
-          final productPackUnitId = _uuid.v4();
+          final productPackUnitId = (DateTime.now().millisecondsSinceEpoch + 1).toString();
           batch.insert(
             db.productUnitsTable,
             ProductUnitsTableCompanion.insert(
-              productUnitId: productPackUnitId,
+              productUnitId:productPackUnitId,
               productId: productId,
               unitId: packUnitId,
               conversionRate: 1.0,
@@ -177,7 +176,7 @@ class ProductImportService {
             batch.insert(
               db.barcodesTable,
               BarcodesTableCompanion.insert(
-                id: _uuid.v4(),
+                id: (DateTime.now().millisecondsSinceEpoch + 2).toString(),
                 productUnitId: productPackUnitId,
                 barcode: packBarcode,
               ),
@@ -185,7 +184,8 @@ class ProductImportService {
           }
 
           // 插入“条”的单位和条码记录
-          final productCartonUnitId = _uuid.v4();
+          final productCartonUnitId =
+              (DateTime.now().millisecondsSinceEpoch + 3).toString();
           batch.insert(
             db.productUnitsTable,
             ProductUnitsTableCompanion.insert(
@@ -202,8 +202,8 @@ class ProductImportService {
             batch.insert(
               db.barcodesTable,
               BarcodesTableCompanion.insert(
-                id: _uuid.v4(),
-                productUnitId: productCartonUnitId,
+                id: (DateTime.now().millisecondsSinceEpoch + 4).toString(),
+                productUnitId:productCartonUnitId,
                 barcode: cartonBarcode,
               ),
             );

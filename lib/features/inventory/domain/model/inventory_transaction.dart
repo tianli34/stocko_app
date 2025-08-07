@@ -9,7 +9,7 @@ part 'inventory_transaction.g.dart';
 abstract class InventoryTransaction with _$InventoryTransaction {
   const factory InventoryTransaction({
     required String id,
-    required String productId,
+    required int productId,
     required String type,
     required double quantity,
     required String shopId,
@@ -41,7 +41,7 @@ abstract class InventoryTransaction with _$InventoryTransaction {
 
   /// 创建入库流水
   factory InventoryTransaction.createInbound({
-    required String productId,
+    required int productId,
     required double quantity,
     required String shopId,
     DateTime? time,
@@ -62,7 +62,7 @@ abstract class InventoryTransaction with _$InventoryTransaction {
 
   /// 创建出库流水
   factory InventoryTransaction.createOutbound({
-    required String productId,
+    required int productId,
     required double quantity,
     required String shopId,
     DateTime? time,
@@ -83,7 +83,7 @@ abstract class InventoryTransaction with _$InventoryTransaction {
 
   /// 创建调整流水
   factory InventoryTransaction.createAdjustment({
-    required String productId,
+    required int productId,
     required double quantity,
     required String shopId,
     DateTime? time,

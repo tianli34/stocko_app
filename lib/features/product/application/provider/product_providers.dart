@@ -31,7 +31,7 @@ class ProductOperationsNotifier extends AsyncNotifier<void> {
   /// 更新产品
   Future<void> updateProduct(Product product) async {
     // 检查产品ID是否为空
-    if (product.id.isEmpty) {
+    if (product.id <= 0) {
       state = AsyncValue.error(Exception('产品ID不能为空'), StackTrace.current);
       return;
     }
@@ -52,7 +52,7 @@ class ProductOperationsNotifier extends AsyncNotifier<void> {
   }
 
   /// 删除产品
-  Future<void> deleteProduct(String productId) async {
+  Future<void> deleteProduct(int productId) async {
     state = const AsyncValue.loading();
 
     state = await AsyncValue.guard(() async {
@@ -77,7 +77,7 @@ class ProductOperationsNotifier extends AsyncNotifier<void> {
   }
 
   /// 根据ID获取产品
-  Future<Product?> getProductById(String productId) async {
+  Future<Product?> getProductById(int productId) async {
     try {
       final repository = ref.read(productRepositoryProvider);
       return await repository.getProductById(productId);
@@ -105,7 +105,14 @@ class ProductOperationsNotifier extends AsyncNotifier<void> {
   }
 
   /// 根据条码获取产品及其单位信息
-  Future<({Product product, String unitName, double? wholesalePrice})?>
+  Future<
+    ({
+      Product product,
+      String unitId,
+      String unitName,
+      double? wholesalePrice
+    })?
+  >
   getProductWithUnitByBarcode(String barcode) async {
     try {
       final repository = ref.read(productRepositoryProvider);
@@ -163,7 +170,7 @@ final productListStreamProvider =
     });
 
 /// 根据ID获取产品
-final productByIdProvider = FutureProvider.family<Product?, String>((
+final productByIdProvider = FutureProvider.family<Product?, int>((
   ref,
   productId,
 ) async {
@@ -263,7 +270,14 @@ final filteredProductsProvider = Provider<AsyncValue<List<Product>>>((ref) {
 /// 提供所有产品及其单位名称的流
 final allProductsWithUnitProvider =
     StreamProvider<
-      List<({Product product, String unitName, double? wholesalePrice})>
+      List<
+        ({
+          Product product,
+          String unitId,
+          String unitName,
+          double? wholesalePrice
+        })
+      >
     >((ref) {
       final repository = ref.watch(productRepositoryProvider);
       return repository.watchAllProductsWithUnit();

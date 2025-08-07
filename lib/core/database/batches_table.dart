@@ -1,4 +1,5 @@
 import 'package:drift/drift.dart';
+import 'products_table.dart';
 
 /// 批次表
 /// 存储产品批次信息，包括批次号、生产日期、数量等
@@ -19,7 +20,8 @@ class BatchesTable extends Table {
   TextColumn get shopId => text().named('shop_id')();
 
   /// 外键 - 货品ID
-  TextColumn get productId => text().named('product_id')();
+  IntColumn get productId =>
+      integer().named('product_id').references(ProductsTable, #id)();
 
   /// 创建时间
   DateTimeColumn get createdAt =>

@@ -13,7 +13,7 @@ abstract class IInventoryTransactionRepository {
   Future<List<InventoryTransaction>> getAllTransactions();
 
   /// 根据产品ID获取流水记录
-  Future<List<InventoryTransaction>> getTransactionsByProduct(String productId);
+  Future<List<InventoryTransaction>> getTransactionsByProduct(int productId);
 
   /// 根据店铺ID获取流水记录
   Future<List<InventoryTransaction>> getTransactionsByShop(String shopId);
@@ -23,7 +23,7 @@ abstract class IInventoryTransactionRepository {
 
   /// 根据产品和店铺获取流水记录
   Future<List<InventoryTransaction>> getTransactionsByProductAndShop(
-    String productId,
+    int productId,
     String shopId,
   );
 
@@ -32,7 +32,7 @@ abstract class IInventoryTransactionRepository {
     DateTime startDate,
     DateTime endDate, {
     String? shopId,
-    String? productId,
+    int? productId,
   });
 
   /// 监听所有库存流水变化
@@ -40,7 +40,7 @@ abstract class IInventoryTransactionRepository {
 
   /// 监听指定产品的流水变化
   Stream<List<InventoryTransaction>> watchTransactionsByProduct(
-    String productId,
+    int productId,
   );
 
   /// 监听指定店铺的流水变化
@@ -53,7 +53,7 @@ abstract class IInventoryTransactionRepository {
   Future<int> deleteTransaction(String id);
 
   /// 根据产品删除相关流水
-  Future<int> deleteTransactionsByProduct(String productId);
+  Future<int> deleteTransactionsByProduct(int productId);
 
   /// 根据店铺删除相关流水
   Future<int> deleteTransactionsByShop(String shopId);
@@ -61,19 +61,19 @@ abstract class IInventoryTransactionRepository {
   /// 获取入库流水记录
   Future<List<InventoryTransaction>> getInboundTransactions({
     String? shopId,
-    String? productId,
+    int? productId,
   });
 
   /// 获取出库流水记录
   Future<List<InventoryTransaction>> getOutboundTransactions({
     String? shopId,
-    String? productId,
+    int? productId,
   });
 
   /// 获取调整流水记录
   Future<List<InventoryTransaction>> getAdjustmentTransactions({
     String? shopId,
-    String? productId,
+    int? productId,
   });
 
   /// 统计指定期间的流水数量
@@ -81,20 +81,20 @@ abstract class IInventoryTransactionRepository {
     DateTime startDate,
     DateTime endDate, {
     String? shopId,
-    String? productId,
+    int? productId,
   });
 
   /// 获取最近的流水记录
   Future<List<InventoryTransaction>> getRecentTransactions(
     int limit, {
     String? shopId,
-    String? productId,
+    int? productId,
   });
 
   /// 获取流水总数
   Future<int> getTransactionCount({
     String? shopId,
-    String? productId,
+    int? productId,
     String? type,
   });
 }

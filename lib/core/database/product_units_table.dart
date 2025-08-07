@@ -1,4 +1,5 @@
 import 'package:drift/drift.dart';
+import 'products_table.dart';
 
 /// 产品单位关联表
 /// 存储产品与单位的关联关系及换算率信息
@@ -10,7 +11,8 @@ class ProductUnitsTable extends Table {
   TextColumn get productUnitId => text().named('product_unit_id')();
 
   /// 外键 - 产品ID
-  TextColumn get productId => text().named('product_id')();
+  IntColumn get productId =>
+      integer().named('product_id').references(ProductsTable, #id)();
 
   /// 外键 - 单位ID
   TextColumn get unitId => text().named('unit_id')();

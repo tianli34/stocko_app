@@ -50,7 +50,7 @@ class ProductUnitRepository implements IProductUnitRepository {
   }
 
   @override
-  Future<List<ProductUnit>> getProductUnitsByProductId(String productId) async {
+  Future<List<ProductUnit>> getProductUnitsByProductId(int productId) async {
     try {
       final dataList = await _productUnitDao.getProductUnitsByProductId(
         productId,
@@ -74,7 +74,7 @@ class ProductUnitRepository implements IProductUnitRepository {
   }
 
   @override
-  Stream<List<ProductUnit>> watchProductUnitsByProductId(String productId) {
+  Stream<List<ProductUnit>> watchProductUnitsByProductId(int productId) {
     try {
       return _productUnitDao.watchProductUnitsByProductId(productId).map((
         dataList,
@@ -112,7 +112,7 @@ class ProductUnitRepository implements IProductUnitRepository {
   }
 
   @override
-  Future<int> deleteProductUnitsByProductId(String productId) async {
+  Future<int> deleteProductUnitsByProductId(int productId) async {
     try {
       print('🗃️ 仓储层：删除产品的所有单位，产品ID: $productId');
       return await _productUnitDao.deleteProductUnitsByProductId(productId);
@@ -124,7 +124,7 @@ class ProductUnitRepository implements IProductUnitRepository {
 
   @override
   Future<bool> isUnitConfiguredForProduct(
-    String productId,
+    int productId,
     String unitId,
   ) async {
     try {
@@ -139,7 +139,7 @@ class ProductUnitRepository implements IProductUnitRepository {
   }
 
   @override
-  Future<ProductUnit?> getBaseUnitForProduct(String productId) async {
+  Future<ProductUnit?> getBaseUnitForProduct(int productId) async {
     try {
       final data = await _productUnitDao.getBaseUnitForProduct(productId);
       return data != null ? _dataToProductUnit(data) : null;
@@ -178,7 +178,7 @@ class ProductUnitRepository implements IProductUnitRepository {
 
   @override
   Future<void> replaceProductUnits(
-    String productId,
+    int productId,
     List<ProductUnit> productUnits,
   ) async {
     try {

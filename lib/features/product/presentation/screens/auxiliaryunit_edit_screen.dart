@@ -12,7 +12,7 @@ import '../../../../core/utils/snackbar_helper.dart';
 import 'unit_selection_screen.dart';
 
 class AuxiliaryUnitEditScreen extends ConsumerStatefulWidget {
-  final String? productId;
+  final int? productId;
   final String? baseUnitId;
   final String? baseUnitName;
 
@@ -643,7 +643,7 @@ class _AuxiliaryUnitEditScreenState
     if (widget.baseUnitId != null) {
       final baseUnit = ProductUnit(
         productUnitId: '${widget.productId ?? 'new'}_${widget.baseUnitId!}',
-        productId: widget.productId ?? 'new',
+        productId: widget.productId ?? 0,
         unitId: widget.baseUnitId!,
         conversionRate: 1.0,
       );
@@ -687,7 +687,7 @@ class _AuxiliaryUnitEditScreenState
 
         final auxUnit = ProductUnit(
           productUnitId: '${widget.productId ?? 'new'}_${aux.unit!.id}',
-          productId: widget.productId ?? 'new',
+          productId: widget.productId ?? 0,
           unitId: aux.unit!.id,
           conversionRate: aux.conversionRate,
           sellingPrice: sellingPrice,

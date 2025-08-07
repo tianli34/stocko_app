@@ -9,7 +9,7 @@ part 'inventory.g.dart';
 abstract class Inventory with _$Inventory {
   const factory Inventory({
     required String id,
-    required String productId,
+    required int productId,
     required double quantity,
     required String shopId,
     required String batchNumber, // 批次号（外键）
@@ -23,7 +23,7 @@ abstract class Inventory with _$Inventory {
 
   /// 创建新库存记录
   factory Inventory.create({
-    required String productId,
+    required int productId,
     required double quantity,
     required String shopId,
     required String batchNumber,

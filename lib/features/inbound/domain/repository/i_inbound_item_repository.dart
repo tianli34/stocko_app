@@ -28,7 +28,7 @@ abstract class IInboundItemRepository {
   Future<int> deleteInboundItemsByReceiptId(String receiptId);
 
   /// 根据商品ID获取入库明细
-  Future<List<InboundItem>> getInboundItemsByProductId(String productId);
+  Future<List<InboundItem>> getInboundItemsByProductId(int productId);
 
   /// 根据批次号获取入库明细
   Future<List<InboundItem>> getInboundItemsByBatchNumber(String batchNumber);

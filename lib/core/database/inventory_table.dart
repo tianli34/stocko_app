@@ -1,4 +1,5 @@
 import 'package:drift/drift.dart';
+import 'products_table.dart';
 
 /// 库存表
 /// 存储产品在各店铺的库存信息
@@ -10,7 +11,8 @@ class InventoryTable extends Table {
   TextColumn get id => text().named('id')();
 
   /// 外键 - 货品ID
-  TextColumn get productId => text().named('product_id')();
+  IntColumn get productId =>
+      integer().named('product_id').references(ProductsTable, #id)();
 
   /// 库存数量
   RealColumn get quantity => real().named('quantity')();
