@@ -16,6 +16,7 @@ class CachedImageWidget extends StatefulWidget {
   final BorderRadius? borderRadius;
   final bool enableCache;
   final int quality;
+  final DateTime? fileModifiedTime;
 
   const CachedImageWidget({
     super.key,
@@ -28,6 +29,7 @@ class CachedImageWidget extends StatefulWidget {
     this.borderRadius,
     this.enableCache = true,
     this.quality = 100,
+    this.fileModifiedTime,
   });
 
   @override
@@ -52,11 +54,12 @@ class _CachedImageWidgetState extends State<CachedImageWidget> {
   void didUpdateWidget(CachedImageWidget oldWidget) {
     super.didUpdateWidget(oldWidget);
 
-    // 如果图片路径或尺寸发生变化，重新加载
+    // 如果图片路径、尺寸、质量或修改时间发生变化，重新加载
     if (oldWidget.imagePath != widget.imagePath ||
         oldWidget.width != widget.width ||
         oldWidget.height != widget.height ||
-        oldWidget.quality != widget.quality) {
+        oldWidget.quality != widget.quality ||
+        oldWidget.fileModifiedTime != widget.fileModifiedTime) {
       _loadImage();
     }
   }
@@ -91,6 +94,7 @@ class _CachedImageWidgetState extends State<CachedImageWidget> {
 
       bool fileExists = false;
       try {
+
         // 在测试环境中，对于明显不存在的路径，直接返回false
         if (widget.imagePath.startsWith('/non/existent/')) {
           fileExists = false;
@@ -123,6 +127,18 @@ class _CachedImageWidgetState extends State<CachedImageWidget> {
 
       Uint8List? imageBytes;
       if (widget.enableCache) {
+        // 如果没有提供fileModifiedTime，自动获取文件修改时间
+        DateTime? effectiveFileModifiedTime = widget.fileModifiedTime;
+        if (effectiveFileModifiedTime == null) {
+          try {
+            final fileStat = await file.stat();
+            effectiveFileModifiedTime = fileStat.modified;
+            debugPrint('自动获取文件修改时间: $effectiveFileModifiedTime');
+          } catch (e) {
+            debugPrint('获取文件修改时间失败: $e');
+          }
+        }
+        
         // 使用缓存服务获取优化后的图片
         try {
           imageBytes = await _cacheService.getOptimizedImage(
@@ -130,6 +146,7 @@ class _CachedImageWidgetState extends State<CachedImageWidget> {
             width: widget.width?.toInt(),
             height: widget.height?.toInt(),
             quality: widget.quality,
+            fileModifiedTime: effectiveFileModifiedTime,
           );
         } catch (e) {
           debugPrint('图片缓存加载失败: $e');

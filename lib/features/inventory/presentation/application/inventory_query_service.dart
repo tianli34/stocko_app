@@ -29,6 +29,7 @@ class InventoryQueryService {
 
   /// 获取库存详细信息
   /// 包含产品名称、图片、库存数量、单位、分类、店铺等信息
+  /// 新入库的记录会显示在顶部
   Future<List<Map<String, dynamic>>> getInventoryWithDetails({
     String? shopFilter,
     String? categoryFilter,
@@ -72,6 +73,16 @@ class InventoryQueryService {
 
       // 6. 构建详细的库存信息列表
       final result = <Map<String, dynamic>>[];
+
+      // 先按时间排序，最新的在前
+      inventoryList.sort((a, b) {
+        if (a.updatedAt != null && b.updatedAt != null) {
+          return b.updatedAt!.compareTo(a.updatedAt!);
+        }
+        if (a.updatedAt != null) return -1;
+        if (b.updatedAt != null) return 1;
+        return 0;
+      });
 
       for (final inventory in inventoryList) {
         final product = productMap[inventory.productId];

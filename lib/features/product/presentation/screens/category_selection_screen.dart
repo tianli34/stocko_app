@@ -242,8 +242,16 @@ class _CategorySelectionScreenState
           ),
           onTap: () {
             if (widget.isSelectionMode) {
-              // 选择模式：直接返回选中的类别
-              Navigator.of(context).pop(category);
+              // 检查是否为"烟"类别且是一级类别
+              if (category.name == '烟' && level == 0 && hasSubCategories) {
+                // "烟"类别且有子类别：切换展开/收起状态
+                setState(() {
+                  _expandedCategories[category.id] = !isExpanded;
+                });
+              } else {
+                // 选择模式：直接返回选中的类别
+                Navigator.of(context).pop(category);
+              }
             } else if (hasSubCategories) {
               // 非选择模式且有子类别：切换展开/收起状态
               setState(() {

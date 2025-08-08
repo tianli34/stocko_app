@@ -150,19 +150,9 @@ class ProductListScreen extends ConsumerWidget {
       ),
     );
 
-    print('*****************************************************************');
-    print('***** 🔍 Search Dialog Closed 🔍 *****');
-    print('*****************************************************************');
-    print('  - Dialog-provided search query: "$newQuery"');
-
     if (newQuery != null) {
-      print('  - ✅ Query is not null. Updating provider...');
       ref.read(searchQueryProvider.notifier).state = newQuery;
-      print('  - 🟢 SUCCESS: searchQueryProvider updated to "$newQuery"');
-    } else {
-      print('  - 🟡 Query is null. No update will be performed.');
     }
-    print('*****************************************************************');
   }
 
   @override
@@ -172,12 +162,6 @@ class ProductListScreen extends ConsumerWidget {
     final searchQuery = ref.watch(searchQueryProvider);
     final allCategories = ref.watch(categoriesProvider);
 
-    print('=================================================================');
-    print('==== 📺 ProductListScreen BUILD Method Executed 📺 ====');
-    print('=================================================================');
-    print('  - ⚡️ Current Search Query: "$searchQuery"');
-    print('  - ⚡️ Current Category ID: "$selectedCategoryId"');
-    print('  - ⚡️ productsAsyncValue state: ${productsAsyncValue.runtimeType}');
 
     String? categoryName;
     if (selectedCategoryId != null) {
@@ -248,12 +232,6 @@ class ProductListScreen extends ConsumerWidget {
       ),
       body: productsAsyncValue.when(
         data: (products) {
-          print(
-            '  -> 📊 [Data] Received ${products.length} products to display.',
-          );
-          if (products.isNotEmpty) {
-            print('  -> Sample: ${products.first.name}');
-          }
           final sortedProducts = [...products]
             ..sort(
               (a, b) =>

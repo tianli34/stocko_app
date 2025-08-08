@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../../../core/widgets/cached_image_widget.dart';
+import 'package:stocko_app/core/widgets/cached_image_widget.dart';
 
 /// 库存商品卡片
 /// 展示单个商品的库存信息
@@ -13,8 +13,6 @@ class InventoryItemCard extends StatelessWidget {
     final productName = inventory['productName'] as String? ?? '';
     final productImage = inventory['productImage'] as String?;
     final unit = inventory['unit'] as String? ?? '件';
-    final categoryName = inventory['categoryName'] as String? ?? '未分类';
-    final shopName = inventory['shopName'] as String? ?? '未知店铺';
 
     // 根据库存数量确定状态
     final stockStatus = _getStockStatus(quantity);
@@ -28,29 +26,21 @@ class InventoryItemCard extends StatelessWidget {
         child: Row(
           children: [
             // 商品图片
-            Container(
-              width: 60,
-              height: 80,
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(8),
-                color: Colors.grey[200],
-              ),
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(8),
-                child: productImage != null && productImage.isNotEmpty
-                    ? CachedImageWidget(
-                        imagePath: productImage,
-                        width: 60,
-                        height: 80,
-                        fit: BoxFit.cover,
-                      )
-                    : Icon(
-                        Icons.inventory_2_outlined,
-                        size: 30,
-                        color: Colors.grey[400],
-                      ),
-              ),
-            ),
+            productImage != null
+                ? ProductThumbnailImage(imagePath: productImage)
+                : Container(
+                    width: 60,
+                    height: 80,
+                    decoration: BoxDecoration(
+                      color: Colors.grey.shade100,
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: Icon(
+                      Icons.image_outlined,
+                      color: Colors.grey.shade400,
+                      size: 30,
+                    ),
+                  ),
             const SizedBox(width: 16),
 
             // 商品信息和库存

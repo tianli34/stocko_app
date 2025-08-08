@@ -9,19 +9,30 @@ class ProductImportService {
 
   ProductImportService(this.db);
 
-  /// 根据名称查找或创建一个分类，并返回其ID。
-  Future<String> _getOrCreateCategory(String name) async {
+  /// 根据名称和可选的父ID查找或创建一个分类，并返回其ID。
+  Future<String> _getOrCreateCategory(String name, {String? parentId}) async {
     // 1. 尝试查找已存在的分类
-    final existingCategory = await (db.select(
-      db.categoriesTable,
-    )..where((tbl) => tbl.name.equals(name))).getSingleOrNull();
+    final query = db.select(db.categoriesTable)
+      ..where((tbl) => tbl.name.equals(name));
+
+    if (parentId == null) {
+      query.where((tbl) => tbl.parentId.isNull());
+    } else {
+      query.where((tbl) => tbl.parentId.equals(parentId));
+    }
+
+    final existingCategory = await query.getSingleOrNull();
 
     if (existingCategory != null) {
       return existingCategory.id; // 2. 如果找到，返回其ID
     } else {
       // 3. 如果没找到，创建一个新的
       final newId = DateTime.now().millisecondsSinceEpoch.toString();
-      final companion = CategoriesTableCompanion.insert(id: newId, name: name);
+      final companion = CategoriesTableCompanion.insert(
+        id: newId,
+        name: name,
+        parentId: Value(parentId),
+      );
       await db.into(db.categoriesTable).insert(companion);
       return newId;
     }
@@ -67,9 +78,17 @@ class ProductImportService {
     final unitNames = {'包', '条'}; // 根据需求固定
 
     // --- 步骤 2: 一次性查找或创建所有需要的ID，并存入Map ---
+    // --- 步骤 2: 创建层级分类 ---
+    // 2.1 首先创建或获取顶级分类“烟”
+    final rootCategoryName = '烟';
+    final rootCategoryId = await _getOrCreateCategory(rootCategoryName);
+
+    // 2.2 然后将文件中的品牌作为“烟”的子分类
     final categoryIdMap = <String, String>{};
     for (final name in categoryNames) {
-      categoryIdMap[name] = await _getOrCreateCategory(name);
+      // 将品牌作为二级分类，父级是“烟”
+      categoryIdMap[name] =
+          await _getOrCreateCategory(name, parentId: rootCategoryId);
     }
 
     final unitIdMap = <String, String>{};
@@ -128,9 +147,18 @@ class ProductImportService {
     // --- 步骤 3: 执行高效的批量插入 ---
     try {
       await db.batch((batch) {
+        // --- 新增: 改进ID生成策略 ---
+        final baseTimestamp = DateTime.now().millisecondsSinceEpoch;
+        int idOffset = 0;
+
         for (final productData in rawProductsData) {
-          final productId =
-              DateTime.now().millisecondsSinceEpoch; // 使用时间戳作为临时ID
+          // 使用基础时间戳和偏移量生成唯一的ID
+          final productId = baseTimestamp + idOffset;
+          final productPackUnitId = (baseTimestamp + idOffset + 1).toString();
+          final packBarcodeId = (baseTimestamp + idOffset + 2).toString();
+          final productCartonUnitId = (baseTimestamp + idOffset + 3).toString();
+          final cartonBarcodeId = (baseTimestamp + idOffset + 4).toString();
+
           final productName = productData['货品名称'] as String;
           final brand = productData['品牌'] as String;
           final categoryId = categoryIdMap[brand]!; // 从Map中快速获取ID
@@ -147,7 +175,7 @@ class ProductImportService {
           batch.insert(
             db.productsTable,
             ProductsTableCompanion.insert(
-              id: Value(productId),
+              id: Value(productId), // 使用新ID
               name: productName,
               brand: Value(brand),
               categoryId: Value(categoryId),
@@ -159,11 +187,10 @@ class ProductImportService {
           );
 
           // 插入“包”的单位和条码记录
-          final productPackUnitId = (DateTime.now().millisecondsSinceEpoch + 1).toString();
           batch.insert(
             db.productUnitsTable,
             ProductUnitsTableCompanion.insert(
-              productUnitId:productPackUnitId,
+              productUnitId: productPackUnitId, // 使用新ID
               productId: productId,
               unitId: packUnitId,
               conversionRate: 1.0,
@@ -176,7 +203,7 @@ class ProductImportService {
             batch.insert(
               db.barcodesTable,
               BarcodesTableCompanion.insert(
-                id: (DateTime.now().millisecondsSinceEpoch + 2).toString(),
+                id: packBarcodeId, // 使用新ID
                 productUnitId: productPackUnitId,
                 barcode: packBarcode,
               ),
@@ -184,12 +211,10 @@ class ProductImportService {
           }
 
           // 插入“条”的单位和条码记录
-          final productCartonUnitId =
-              (DateTime.now().millisecondsSinceEpoch + 3).toString();
           batch.insert(
             db.productUnitsTable,
             ProductUnitsTableCompanion.insert(
-              productUnitId: productCartonUnitId,
+              productUnitId: productCartonUnitId, // 使用新ID
               productId: productId,
               unitId: cartonUnitId,
               conversionRate: conversionRate,
@@ -202,19 +227,23 @@ class ProductImportService {
             batch.insert(
               db.barcodesTable,
               BarcodesTableCompanion.insert(
-                id: (DateTime.now().millisecondsSinceEpoch + 4).toString(),
-                productUnitId:productCartonUnitId,
+                id: cartonBarcodeId, // 使用新ID
+                productUnitId: productCartonUnitId,
                 barcode: cartonBarcode,
               ),
             );
           }
+          // 为下一个商品增加ID偏移量
+          idOffset += 5;
         }
       });
       return '批量导入任务完成，成功处理 ${rawProductsData.length} 条记录。';
     } catch (e, s) {
       // 在预检查后，此处的 UNIQUE constraint 错误理论上不应再发生
       // 但保留以防万一
-      print('处理商品数据时发生意外错误: $e\n$s'); // 保留开发者日志
+      print('>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>处理商品数据时发生意外错误: $e\n$s<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<'); // 保留开发者日志
+      print('>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>日志结束<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<'); // 保留开发者日志
+      
       return '导入过程中发生未知错误，请检查日志。';
     }
   }

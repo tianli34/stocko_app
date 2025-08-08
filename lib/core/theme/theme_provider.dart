@@ -31,6 +31,20 @@ class AppTheme {
       ),
     ),
 
+    // NavigationBar 样式
+    navigationBarTheme: NavigationBarThemeData(
+      height: 64,
+      indicatorColor: primaryColor.withOpacity(0.12),
+      backgroundColor: Colors.transparent,
+      labelTextStyle: WidgetStatePropertyAll(
+        TextStyle(fontSize: 12, color: Colors.grey.shade700),
+      ),
+      iconTheme: const WidgetStatePropertyAll(
+        IconThemeData(size: 24),
+      ),
+      surfaceTintColor: Colors.transparent,
+    ),
+
     elevatedButtonTheme: ElevatedButtonThemeData(
       style: ElevatedButton.styleFrom(
         padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
@@ -58,6 +72,20 @@ class AppTheme {
       brightness: Brightness.dark,
     ),
     fontFamily: fontFamily,
+
+    navigationBarTheme: NavigationBarThemeData(
+      height: 64,
+      indicatorColor: primaryColor.withOpacity(0.24),
+      backgroundColor: Colors.transparent,
+      labelTextStyle: WidgetStatePropertyAll(
+        TextStyle(fontSize: 12, color: Colors.grey.shade300),
+      ),
+      iconTheme: const WidgetStatePropertyAll(
+        IconThemeData(size: 24),
+      ),
+      surfaceTintColor: Colors.transparent,
+    ),
+
     elevatedButtonTheme: ElevatedButtonThemeData(
       style: ElevatedButton.styleFrom(
         padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),

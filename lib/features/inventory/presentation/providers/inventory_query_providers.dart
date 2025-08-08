@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../application/inventory_query_service.dart';
+import '../../../product/application/provider/product_providers.dart';
 
 /// 库存筛选状态
 class InventoryFilterState {
@@ -57,11 +58,16 @@ final inventoryFilterProvider =
     });
 
 /// 库存查询数据Provider - 使用真实数据库查询
+/// 添加对产品数据变化的监听，确保产品图片更新后库存页面能同步刷新
 final inventoryQueryProvider = FutureProvider<List<Map<String, dynamic>>>((
   ref,
 ) async {
   final filterState = ref.watch(inventoryFilterProvider);
   final queryService = ref.watch(inventoryQueryServiceProvider);
+  
+  // 监听产品数据变化，确保产品信息（包括图片）更新后库存页面能同步刷新
+  ref.watch(productListStreamProvider);
+  
   // 将默认值转换为null传递给查询服务
   final shopFilter = filterState.selectedShop == '所有仓库'
       ? null

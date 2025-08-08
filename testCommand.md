@@ -2,7 +2,7 @@
 
 cd E:\stocko_app\
 git add .
-git commit -m "0802 2 613"
+git commit -m "0807 18 652 销售、调整库存"
 git push
 
 

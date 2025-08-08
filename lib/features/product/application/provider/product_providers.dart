@@ -1,7 +1,9 @@
 import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../domain/model/product.dart';
+import '../../domain/model/category.dart';
 import '../../data/repository/product_repository.dart'; // 这里包含了 productRepositoryProvider
+import '../category_notifier.dart';
 
 // 注意：这个文件展示了使用 AsyncNotifier 重构后的代码结构
 // 这是 product_providers.dart 的完整重构版本
@@ -201,69 +203,61 @@ final filteredProductsProvider = Provider<AsyncValue<List<Product>>>((ref) {
   final selectedCategoryId = ref.watch(selectedCategoryIdProvider);
   final searchQuery = ref.watch(searchQueryProvider);
   final productsAsyncValue = ref.watch(allProductsProvider);
-
-  print('#################################################################');
-  print('##### 🔄 filteredProductsProvider 开始执行 🔄 #####');
-  print('#################################################################');
-  print('  - 🔍 搜索关键字: "$searchQuery"');
-  print('  - 🗂️  分类ID: "$selectedCategoryId"');
+  final allCategories = ref.watch(categoriesProvider);
 
   return productsAsyncValue.when(
     data: (products) {
-      print('  -> ✅ [数据分支] 成功获取原始产品列表，数量: ${products.length}');
       var filteredList = products;
+
+      // 默认筛选：如果未选择任何分类，则默认不显示“烟”类别及其所有子类别
+      if (selectedCategoryId == null || selectedCategoryId.isEmpty) {
+        // 查找所有后代ID的辅助函数
+        Set<String> getAllDescendantIds(
+            String parentId, List<Category> categories) {
+          final Set<String> descendantIds = {};
+          final children =
+              categories.where((c) => c.parentId == parentId).toList();
+          for (final child in children) {
+            descendantIds.add(child.id);
+            descendantIds.addAll(getAllDescendantIds(child.id, categories));
+          }
+          return descendantIds;
+        }
+
+        try {
+          final tobaccoCategory =
+              allCategories.firstWhere((c) => c.name == '烟');
+          final idsToExclude = {tobaccoCategory.id};
+          idsToExclude
+              .addAll(getAllDescendantIds(tobaccoCategory.id, allCategories));
+
+          filteredList = filteredList
+              .where((p) => !idsToExclude.contains(p.categoryId))
+              .toList();
+        } catch (e) {
+          // 未找到 "烟" 类别，不执行任何操作
+        }
+      }
 
       // 按分类筛选
       if (selectedCategoryId != null && selectedCategoryId.isNotEmpty) {
-        final initialCount = filteredList.length;
         filteredList = filteredList
             .where((p) => p.categoryId == selectedCategoryId)
             .toList();
-        print(
-          '  ->  lọc 按分类筛选: ID="$selectedCategoryId", 数量从 $initialCount -> ${filteredList.length}',
-        );
-      } else {
-        print('  -> ℹ️  无需按分类筛选');
       }
 
       // 按关键字搜索
       if (searchQuery.isNotEmpty) {
-        final initialCount = filteredList.length;
         final lowerCaseQuery = searchQuery.toLowerCase();
         filteredList = filteredList
             .where((p) => p.name.toLowerCase().contains(lowerCaseQuery))
             .toList();
-        print(
-          '  -> 🔎 按关键字筛选: 关键字="$searchQuery", 数量从 $initialCount -> ${filteredList.length}',
-        );
-      } else {
-        print('  -> ℹ️  无需按关键字筛选');
       }
 
-      if (filteredList.isEmpty) {
-        print('  -> ⚠️  最终列表为空');
-      } else {
-        print('  -> ✅ 最终产品列表数量: ${filteredList.length}');
-      }
-      print(
-        '#################################################################',
-      );
       return AsyncValue.data(filteredList);
     },
-    loading: () {
-      print('  -> ⏳ [加载中分支]');
-      print(
-        '#################################################################',
-      );
-      return const AsyncValue.loading();
-    },
-    error: (error, stack) {
-      print('  -> ❌ [错误分支] 错误: $error');
-      print(
-        '#################################################################',
-      );
-      return AsyncValue.error(error, stack);
-    },
+    loading: () => const AsyncValue.loading(),
+    error: (error, stack) => AsyncValue.error(error, stack),
   );
 });
 
