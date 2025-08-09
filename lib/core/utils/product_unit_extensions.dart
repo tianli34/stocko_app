@@ -57,7 +57,7 @@ extension ProductUnitListExtensions on List<ProductUnit> {
   }
 
   /// 根据单位ID查找ProductUnit
-  ProductUnit? findByUnitId(String unitId) {
+  ProductUnit? findByUnitId(int unitId) {
     try {
       return firstWhere((pu) => pu.unitId == unitId);
     } catch (e) {

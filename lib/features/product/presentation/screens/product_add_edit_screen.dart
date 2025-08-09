@@ -59,7 +59,7 @@ class _ProductAddEditScreenState extends ConsumerState<ProductAddEditScreen> {
 
   // 表单状态
   String? _selectedCategoryId; // 添加类别选择状态
-  String? _selectedUnitId; // 添加单位选择状态
+  int? _selectedUnitId; // 添加单位选择状态
   String? _selectedImagePath; // 添加图片路径状态
   List<ProductUnit>? _productUnits; // 存储单位配置数据
   List<Map<String, String>>? _auxiliaryUnitBarcodes; // 存储辅单位条码数据
@@ -702,9 +702,9 @@ class _ProductAddEditScreenState extends ConsumerState<ProductAddEditScreen> {
     if (_unitController.text.isEmpty && _selectedUnitId != null) {
       final unit = units.firstWhere(
         (u) => u.id == _selectedUnitId,
-        orElse: () => Unit(id: '', name: ''),
+        orElse: () => Unit.empty(),
       );
-      if (unit.id.isNotEmpty) {
+      if (unit.id != 0) {
         // 在从外部数据源赋值时，处理一次空格
         _unitController.text = unit.name.replaceAll(' ', '');
       }
@@ -962,10 +962,15 @@ class _ProductAddEditScreenState extends ConsumerState<ProductAddEditScreen> {
 
   /// 导航到单位列表页
   void _navigateToUnitList() async {
+    final allUnits = ref.read(allUnitsProvider).value ?? [];
+    final initialUnit = _selectedUnitId != null
+        ? allUnits.firstWhere((u) => u.id == _selectedUnitId,
+            orElse: () => Unit.empty())
+        : Unit.empty();
     final Unit? selectedUnit = await Navigator.of(context).push<Unit>(
       MaterialPageRoute(
         builder: (context) => UnitSelectionScreen(
-          selectedUnitId: _selectedUnitId,
+          initialUnit: initialUnit,
         ),
       ),
     );
@@ -988,24 +993,28 @@ class _ProductAddEditScreenState extends ConsumerState<ProductAddEditScreen> {
     print(
       '🔧 ProductAddEditScreen: 当前单位控制器文本 = ${_unitController.text}',
     ); // 获取基本单位信息（从前端输入框获取）
-    String? baseUnitId = _selectedUnitId;
+    int? baseUnitId = _selectedUnitId;
     String baseUnitName = _unitController.text.trim(); // 修改为非null类型
 
     // 如果没有选择单位，但输入了单位名称，需要先创建或查找单位
     if (baseUnitId == null && baseUnitName.isNotEmpty) {
       try {
         final allUnits = await ref.read(allUnitsProvider.future);
-        final existingUnit = allUnits.firstWhere(
-          (unit) => unit.name.toLowerCase() == baseUnitName.toLowerCase(),
-          orElse: () => Unit(id: '', name: ''),
-        );
+        Unit? existingUnit;
+        try {
+          existingUnit = allUnits.firstWhere(
+            (unit) => unit.name.toLowerCase() == baseUnitName.toLowerCase(),
+          );
+        } catch (e) {
+          // firstWhere in case of failure throws an exception, which is the case of "not found".
+          existingUnit = null;
+        }
 
-        if (existingUnit.id.isNotEmpty) {
+        if (existingUnit != null) {
           baseUnitId = existingUnit.id;
           print('🔧 ProductAddEditScreen: 找到现有单位: ${existingUnit.name}');
         } else {
           // 创建新单位
-          baseUnitId = 'unit_${DateTime.now().millisecondsSinceEpoch}';
           print('🔧 ProductAddEditScreen: 将创建新单位: $baseUnitName');
         }
       } catch (e) {
@@ -1027,7 +1036,7 @@ class _ProductAddEditScreenState extends ConsumerState<ProductAddEditScreen> {
       MaterialPageRoute(
         builder: (context) => AuxiliaryUnitEditScreen(
           productId: widget.product?.id,
-          baseUnitId: baseUnitId,
+          baseUnitId: baseUnitId.toString(),
           baseUnitName: baseUnitName,
         ),
       ),

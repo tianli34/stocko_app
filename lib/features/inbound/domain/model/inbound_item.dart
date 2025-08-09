@@ -4,7 +4,7 @@ class InboundItem {
   final String id;
   final int productId;
   final String productName;
-  final String unitId;
+  final int unitId;
   final String unitName;
   final double unitPrice;
   final double quantity;
@@ -28,7 +28,7 @@ class InboundItem {
     String? id,
     int? productId,
     String? productName,
-    String? unitId,
+    int? unitId,
     String? unitName,
     double? unitPrice,
     double? quantity,
@@ -52,7 +52,7 @@ class InboundItem {
   factory InboundItem.create({
     required int productId,
     required String productName,
-    required String unitId,
+    required int unitId,
     required String unitName,
     required double unitPrice,
     required double quantity,

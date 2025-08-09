@@ -140,7 +140,7 @@ class _CreateInboundScreenState extends ConsumerState<CreateInboundScreen> {
       final List<
         ({
           Product product,
-          String unitId,
+          int unitId,
           String unitName,
           double? wholesalePrice
         })

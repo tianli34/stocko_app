@@ -115,7 +115,7 @@ class _CreateSaleScreenState extends ConsumerState<CreateSaleScreen> {
       final List<
         ({
           Product product,
-          String unitId,
+          int unitId,
           String unitName,
           double? wholesalePrice,
         })
@@ -211,13 +211,11 @@ class _CreateSaleScreenState extends ConsumerState<CreateSaleScreen> {
 
     try {
       final saleService = ref.read(saleServiceProvider);
-      final String source;
       final int? customerId;
       final String? customerName;
       final bool isSaleMode = _currentMode == SaleMode.sale;
 
       if (isSaleMode) {
-        source = '销售';
         if (_selectedCustomer != null) {
           customerId = _selectedCustomer!.id;
           customerName = _selectedCustomer!.name;
@@ -230,9 +228,6 @@ class _CreateSaleScreenState extends ConsumerState<CreateSaleScreen> {
         }
       } else {
         // 非销售模式
-        source = _sourceController.text.trim().isEmpty
-            ? '零售'
-            : _sourceController.text.trim();
         customerId = null;
         customerName = null;
       }
@@ -321,13 +316,11 @@ class _CreateSaleScreenState extends ConsumerState<CreateSaleScreen> {
 
     try {
       final saleService = ref.read(saleServiceProvider);
-      final String source;
       final int? customerId;
       final String? customerName;
       final bool isSaleMode = _currentMode == SaleMode.sale;
 
       if (isSaleMode) {
-        source = '销售';
         if (_selectedCustomer != null) {
           customerId = _selectedCustomer!.id;
           customerName = _selectedCustomer!.name;
@@ -340,9 +333,6 @@ class _CreateSaleScreenState extends ConsumerState<CreateSaleScreen> {
         }
       } else {
         // 非销售模式
-        source = _sourceController.text.trim().isEmpty
-            ? '零售'
-            : _sourceController.text.trim();
         customerId = null;
         customerName = null;
       }

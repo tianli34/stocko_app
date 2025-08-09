@@ -74,7 +74,7 @@ class InventoryService {
   }) async {
     try {
       // 检查库存是否足够
-      final inventory = await _inventoryRepository.getInventoryByProductAndShop(
+      await _inventoryRepository.getInventoryByProductAndShop(
         productId,
         shopId,
       );

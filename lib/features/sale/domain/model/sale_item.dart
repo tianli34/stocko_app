@@ -4,7 +4,7 @@ class SaleItem {
   final String id;
   final int productId;
   final String productName;
-  final String unitId;
+  final int unitId;
   final String unitName;
   final String? batchId;
   final double sellingPrice; // 从 unitPrice 改为 sellingPrice
@@ -27,7 +27,7 @@ class SaleItem {
     String? id,
     int? productId,
     String? productName,
-    String? unitId,
+    int? unitId,
     String? unitName,
     String? batchId,
     double? sellingPrice,
@@ -51,7 +51,7 @@ class SaleItem {
   factory SaleItem.create({
     required int productId,
     required String productName,
-    required String unitId,
+    required int unitId,
     required String unitName,
     String? batchId,
     required double sellingPrice,

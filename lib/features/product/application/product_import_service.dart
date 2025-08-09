@@ -39,18 +39,16 @@ class ProductImportService {
   }
 
   /// 根据名称查找或创建一个单位，并返回其ID。
-  Future<String> _getOrCreateUnit(String name) async {
+  Future<int> _getOrCreateUnit(String name) async {
     final existingUnit = await (db.select(
-      db.unitsTable,
+      db.unit,
     )..where((tbl) => tbl.name.equals(name))).getSingleOrNull();
 
     if (existingUnit != null) {
       return existingUnit.id;
     } else {
-      final newId = DateTime.now().millisecondsSinceEpoch.toString();
-      final companion = UnitsTableCompanion.insert(id: newId, name: name);
-      await db.into(db.unitsTable).insert(companion);
-      return newId;
+      final companion = UnitCompanion.insert(name: name);
+      return await db.into(db.unit).insert(companion);
     }
   }
 
@@ -91,7 +89,7 @@ class ProductImportService {
           await _getOrCreateCategory(name, parentId: rootCategoryId);
     }
 
-    final unitIdMap = <String, String>{};
+    final unitIdMap = <String, int>{};
     for (final name in unitNames) {
       unitIdMap[name] = await _getOrCreateUnit(name);
     }

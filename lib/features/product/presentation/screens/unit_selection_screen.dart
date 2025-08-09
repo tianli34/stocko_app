@@ -10,11 +10,11 @@ import '../../../../core/utils/snackbar_helper.dart';
 /// 单位选择屏幕
 /// 支持选择单位、新增单位及删除单位操作
 class UnitSelectionScreen extends ConsumerStatefulWidget {
-  final String? selectedUnitId;
+  final Unit? initialUnit;
 
   const UnitSelectionScreen({
     super.key,
-    this.selectedUnitId,
+    this.initialUnit,
   });
 
   @override
@@ -23,12 +23,12 @@ class UnitSelectionScreen extends ConsumerStatefulWidget {
 }
 
 class _UnitSelectionScreenState extends ConsumerState<UnitSelectionScreen> {
-  String? _selectedUnitId;
+  int? _selectedUnitId;
 
   @override
   void initState() {
     super.initState();
-    _selectedUnitId = widget.selectedUnitId;
+    _selectedUnitId = widget.initialUnit?.id;
   }
 
   @override
@@ -128,7 +128,11 @@ class _UnitSelectionScreenState extends ConsumerState<UnitSelectionScreen> {
               child: CustomSlidableAction(
                 onPressed: (context) {
                   // 只调用方法，不在此处处理UI反馈
-                  ref.read(unitControllerProvider.notifier).deleteUnit(unit.id);
+                  if (unit.id != null) {
+                    ref.read(unitControllerProvider.notifier).deleteUnit(unit.id!);
+                  } else {
+                    showAppSnackBar(context, message: '无法删除没有ID的单位', isError: true);
+                  }
                 },
                 backgroundColor: Colors.red,
                 child: const Row(
@@ -221,7 +225,6 @@ class _UnitSelectionScreenState extends ConsumerState<UnitSelectionScreen> {
                 }
 
                 final unit = Unit(
-                  id: 'unit_${DateTime.now().millisecondsSinceEpoch}',
                   name: unitName,
                 );
 

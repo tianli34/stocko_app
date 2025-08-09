@@ -99,7 +99,7 @@ class ProductRepository implements IProductRepository {
     List<
       ({
         Product product,
-        String unitId,
+        int unitId,
         String unitName,
         double? wholesalePrice
       })
@@ -181,7 +181,7 @@ class ProductRepository implements IProductRepository {
   Future<
     ({
       Product product,
-      String unitId,
+      int unitId,
       String unitName,
       double? wholesalePrice
     })?
@@ -299,7 +299,7 @@ class ProductRepository implements IProductRepository {
   }
 
   @override
-  Future<bool> isUnitUsed(String unitId) async {
+  Future<bool> isUnitUsed(int unitId) async {
     try {
       return await _productDao.isUnitUsed(unitId);
     } catch (e) {

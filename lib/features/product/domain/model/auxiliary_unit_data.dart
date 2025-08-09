@@ -8,7 +8,7 @@ class AuxiliaryUnitData {
   final int id;
 
   /// 单位ID
-  final String? unitId;
+  final int? unitId;
 
   /// 单位名称
   final String unitName;
@@ -47,7 +47,7 @@ class AuxiliaryUnitData {
   /// 复制并更新指定字段
   AuxiliaryUnitData copyWith({
     int? id,
-    String? unitId,
+    int? unitId,
     String? unitName,
     double? conversionRate,
     String? barcode,
@@ -82,7 +82,7 @@ class AuxiliaryUnitData {
   factory AuxiliaryUnitData.fromJson(Map<String, dynamic> json) {
     return AuxiliaryUnitData(
       id: json['id'] as int,
-      unitId: json['unitId'] as String?,
+      unitId: json['unitId'] as int?,
       unitName: json['unitName'] as String? ?? '',
       conversionRate: (json['conversionRate'] as num?)?.toDouble() ?? 0.0,
       barcode: json['barcode'] as String? ?? '',

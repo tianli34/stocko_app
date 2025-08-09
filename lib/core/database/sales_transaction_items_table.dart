@@ -8,7 +8,7 @@ class SalesTransactionItemsTable extends Table {
   IntColumn get id => integer().autoIncrement()();
   IntColumn get salesTransactionId => integer().references(SalesTransactionsTable, #id)();
   IntColumn get productId => integer().references(ProductsTable, #id)();
-  TextColumn get unitId => text().named('unit_id').references(UnitsTable, #id)();
+  IntColumn get unitId => integer().named('unit_id').references(Unit, #id)();
   IntColumn get quantity => integer()();
   RealColumn get unitPrice => real()();
   RealColumn get totalPrice => real()();

@@ -368,7 +368,7 @@ class InboundService {
   }
 
   /// 根据单位名称获取单位ID
-  Future<String> _getUnitIdFromUnitName(String unitName) async {
+  Future<int> _getUnitIdFromUnitName(String unitName) async {
     try {
       final unitDao = _database.unitDao;
       final unit = await unitDao.getUnitByName(unitName);
@@ -377,12 +377,16 @@ class InboundService {
       }
 
       // 如果找不到对应单位，根据常见映射返回
+      // 注意：这里硬编码了ID，这在实际应用中可能不是最佳实践
+      // 最好是确保所有单位都已预先插入数据库
       final unitMapping = {
-        '瓶': 'unit_bottle',
-        '包': 'unit_package',
-        '箱': 'unit_box',
-        '千克': 'unit_kg',
-        '个': 'unit_piece',
+        '个': 1,
+        '箱': 2,
+        '包': 3,
+        '公斤': 4,
+        '克': 5,
+        '升': 6,
+        '毫升': 7,
       };
 
       final mappedUnitId = unitMapping[unitName];
@@ -391,12 +395,16 @@ class InboundService {
         return mappedUnitId;
       }
 
-      // 如果都找不到，返回默认单位
-      print('⚠️ 未找到单位 "$unitName"，使用默认单位');
-      return 'unit_piece'; // 默认单位
+      // 如果都找不到，返回默认单位 "个" 的ID
+      print('⚠️ 未找到单位 "$unitName"，使用默认单位 "个"');
+      final defaultUnit = await unitDao.getUnitByName('个');
+      if (defaultUnit != null) {
+        return defaultUnit.id;
+      }
+      return 1; // Fallback to ID 1 for '个'
     } catch (e) {
-      print('⚠️ 查询单位失败: $e，使用默认单位');
-      return 'unit_piece'; // 默认单位
+      print('⚠️ 查询单位失败: $e，使用默认单位 "个"');
+      return 1; // 默认单位 "个" 的ID
     }
   }
 

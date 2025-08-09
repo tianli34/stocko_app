@@ -1,7 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/database/database.dart';
 import '../../../inbound/data/dao/inbound_item_dao.dart';
-import '../../../../core/database/inbound_receipts_table.dart';
 
 final inboundItemDaoProvider = Provider<InboundItemDao>((ref) {
   final db = ref.watch(appDatabaseProvider);

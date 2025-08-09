@@ -4,7 +4,6 @@ import 'package:intl/intl.dart';
 import '../../../../core/database/database.dart';
 import '../providers/inbound_records_provider.dart';
 import 'inbound_record_item_tile.dart';
-import '../../../../core/database/shops_table.dart';
 
 // This might need to be created if it doesn't exist.
 // For now, let's create a simple one.

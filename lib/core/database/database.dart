@@ -50,7 +50,7 @@ part 'database.g.dart';
   tables: [
     ProductsTable,
     CategoriesTable,
-    UnitsTable,
+    Unit,
     ProductUnitsTable,
     ShopsTable,
     SuppliersTable,
@@ -171,7 +171,7 @@ class AppDatabase extends _$AppDatabase {
       }
       if (from == 3 && to == 4) {
         // 从版本3升级到版本4：添加单位表
-        await m.createTable(unitsTable);
+        await m.createTable(unit);
       }
       if (from == 4 && to == 5) {
         // 从版本4升级到版本5：添加产品单位表
@@ -195,7 +195,7 @@ class AppDatabase extends _$AppDatabase {
       if (from < 7 && to == 7) {
         // 确保所有表都存在
         if (from < 3) await m.createTable(categoriesTable);
-        if (from < 4) await m.createTable(unitsTable);
+        if (from < 4) await m.createTable(unit);
         if (from < 5) await m.createTable(productUnitsTable);
         if (from < 6) await m.createTable(shopsTable);
         await m.createTable(suppliersTable);
@@ -216,29 +216,29 @@ class AppDatabase extends _$AppDatabase {
         // 从版本1直接升级到版本4
         await m.recreateAllViews();
         await m.createTable(categoriesTable);
-        await m.createTable(unitsTable);
+        await m.createTable(unit);
       }
       if (from == 1 && to == 5) {
         // 从版本1直接升级到版本5
         await m.recreateAllViews();
         await m.createTable(categoriesTable);
-        await m.createTable(unitsTable);
+        await m.createTable(unit);
         await m.createTable(productUnitsTable);
       }
       if (from == 2 && to == 4) {
         // 从版本2直接升级到版本4
         await m.createTable(categoriesTable);
-        await m.createTable(unitsTable);
+        await m.createTable(unit);
       }
       if (from == 2 && to == 5) {
         // 从版本2升级到版本5
         await m.createTable(categoriesTable);
-        await m.createTable(unitsTable);
+        await m.createTable(unit);
         await m.createTable(productUnitsTable);
       }
       if (from == 3 && to == 5) {
         // 从版本3升级到版本5
-        await m.createTable(unitsTable);
+        await m.createTable(unit);
         await m.createTable(productUnitsTable);
       }
       // 在任何版本升级后都确保条码表索引存在（移除了产品表条码索引，因为产品表已无条码字段）

@@ -338,7 +338,7 @@ class DatabaseManagementScreen extends ConsumerWidget {
 
   Future<void> _showUnitsData(BuildContext context, WidgetRef ref) async {
     final database = ref.read(appDatabaseProvider);
-    final units = await database.select(database.unitsTable).get();
+    final units = await database.select(database.unit).get();
 
     if (context.mounted) {
       showDialog(
@@ -354,7 +354,7 @@ class DatabaseManagementScreen extends ConsumerWidget {
                 final unit = units[index];
                 return ListTile(
                   title: Text(unit.name),
-                  trailing: Text(unit.id),
+                  trailing: Text(unit.id.toString()),
                 );
               },
             ),
@@ -719,11 +719,11 @@ class DatabaseManagementScreen extends ConsumerWidget {
                       subtitle: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text('产品ID: ${salesTransactionItem.productId ?? '未知'}'),
-                          Text('单位ID: ${salesTransactionItem.unitId ?? '未知'}'),
-                          Text('数量: ${salesTransactionItem.quantity ?? 0}'),
-                          Text('单价: ¥${(salesTransactionItem.unitPrice ?? 0).toStringAsFixed(2)}'),
-                          Text('总价: ¥${(salesTransactionItem.totalPrice ?? 0).toStringAsFixed(2)}'),
+                          Text('产品ID: ${salesTransactionItem.productId}'),
+                          Text('单位ID: ${salesTransactionItem.unitId}'),
+                          Text('数量: ${salesTransactionItem.quantity}'),
+                          Text('单价: ¥${salesTransactionItem.unitPrice.toStringAsFixed(2)}'),
+                          Text('总价: ¥${salesTransactionItem.totalPrice.toStringAsFixed(2)}'),
                           if (salesTransactionItem.batchId != null && salesTransactionItem.batchId!.isNotEmpty)
                             Text('批次ID: ${salesTransactionItem.batchId}'),
                         ],

@@ -11,7 +11,7 @@ abstract class Product with _$Product {
     String? sku,
     String? image, // 图片
     String? categoryId, // 类别ID (关联分类表)
-    String? unitId, // 单位ID (关联单位表)
+    int? unitId, // 单位ID (关联单位表)
     String? specification, // 型号/规格
     String? brand, // 品牌
     double? suggestedRetailPrice, // 建议零售价
@@ -29,7 +29,7 @@ abstract class Product with _$Product {
   const Product._();
 
   factory Product.fromJson(Map<String, dynamic> json) =>
-      _$ProductFromJson(json..['id'] = json['id'] is String ? int.tryParse(json['id']) ?? 0 : json['id']);
+      _$ProductFromJson(json..['id'] = json['id'] is String ? int.tryParse(json['id']) ?? 0 : json['id']..['unitId'] = json['unitId'] is String ? int.tryParse(json['unitId']) ?? 0 : json['unitId']);
 
   // 获取有效价格（促销价 > 零售价 > 建议零售价）
   double? get effectivePrice {

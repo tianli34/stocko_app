@@ -1,26 +1,11 @@
 import 'package:drift/drift.dart';
 
 /// 单位表
-/// 存储产品的计量单位信息
-class UnitsTable extends Table {
-  @override
-  String get tableName => 'units';
+/// 存储产品的计量单位信息（如 kg, pcs, m）
+class Unit extends Table {
 
-  /// 主键 - 单位ID
-  TextColumn get id => text().named('id')();
+  IntColumn get id => integer().autoIncrement()();
 
-  /// 单位名称 (如: 个, 箱, 包, 公斤等)
-  /// 添加唯一约束防止重复单位
-  TextColumn get name => text().named('name').unique()();
-
-  /// 创建时间
-  DateTimeColumn get createdAt =>
-      dateTime().named('created_at').withDefault(currentDateAndTime)();
-
-  /// 最后更新时间
-  DateTimeColumn get updatedAt =>
-      dateTime().named('updated_at').withDefault(currentDateAndTime)();
-
-  @override
-  Set<Column> get primaryKey => {id};
+  /// 单位名称（唯一，例如 "千克"、"米"、"件"）
+  TextColumn get name => text().unique()();
 }

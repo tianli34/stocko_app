@@ -84,7 +84,7 @@ class ProductUnitDao extends DatabaseAccessor<AppDatabase>
   /// 检查产品是否已配置某个单位
   Future<bool> isUnitConfiguredForProduct(
     int productId,
-    String unitId,
+    int unitId,
   ) async {
     final result =
         await (select(db.productUnitsTable)..where(

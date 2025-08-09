@@ -203,7 +203,7 @@ class SaleOrderCard extends ConsumerWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                '${_formatDateTime(sale.createdAt)}',
+                _formatDateTime(sale.createdAt),
                 style: const TextStyle(fontSize: 12, color: Colors.grey),
               ),
               const SizedBox(height: 4),

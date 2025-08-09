@@ -33,7 +33,7 @@ abstract class IProductRepository {
     List<
       ({
         Product product,
-        String unitId,
+        int unitId,
         String unitName,
         double? wholesalePrice
       })
@@ -72,7 +72,7 @@ abstract class IProductRepository {
   Future<
     ({
       Product product,
-      String unitId,
+      int unitId,
       String unitName,
       double? wholesalePrice
     })?
@@ -82,5 +82,5 @@ abstract class IProductRepository {
   /// 检查单位是否被任何产品使用
   /// [unitId] 单位ID
   /// 返回布尔值，表示是否被使用
-  Future<bool> isUnitUsed(String unitId);
+  Future<bool> isUnitUsed(int unitId);
 }

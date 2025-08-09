@@ -39,7 +39,7 @@ class SaleListNotifier extends StateNotifier<List<SaleItem>> {
   /// [sellingPrice] - 销售价
   void addOrUpdateItem({
     required Product product,
-    required String unitId,
+    required int unitId,
     String? unitName,
     String? barcode,
     String? batchId,

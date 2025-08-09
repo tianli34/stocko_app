@@ -16,9 +16,7 @@ class OutboundRecordCard extends ConsumerWidget {
     final shopAsync = ref.watch(shopByIdProvider(record.shopId));
 
     final dateFormatter = DateFormat('yyyy-MM-dd HH:mm');
-    final formattedDate = record.time != null
-        ? dateFormatter.format(record.time!)
-        : '时间未知';
+    final formattedDate = dateFormatter.format(record.time);
 
     return Card(
       elevation: 2,

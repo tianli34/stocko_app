@@ -8,7 +8,7 @@ class ProductsTable extends Table {
   TextColumn get sku => text().nullable()();
   TextColumn get image => text().nullable()(); // 图片
   TextColumn get categoryId => text().nullable()(); // 类别ID
-  TextColumn get unitId => text().nullable()(); // 单位ID
+  IntColumn get unitId => integer().nullable()(); // 单位ID
   TextColumn get specification => text().nullable()(); // 型号/规格
   TextColumn get brand => text().nullable()(); // 品牌
   RealColumn get suggestedRetailPrice => real().nullable()(); // 建议零售价

@@ -1,5 +1,6 @@
 import 'package:drift/drift.dart';
 import 'products_table.dart';
+import 'units_table.dart';
 
 /// 货品供应商关联表
 /// 建立商品和供应商之间的多对多关系
@@ -18,7 +19,7 @@ class ProductSuppliersTable extends Table {
   TextColumn get supplierId => text().named('supplier_id')();
 
   /// 单位ID - 外键关联到units表，指定供货单位
-  TextColumn get unitId => text().named('unit_id')();
+  IntColumn get unitId => integer().named('unit_id').references(Unit, #id)();
 
   /// 供应商商品编号/型号
   TextColumn get supplierProductCode =>

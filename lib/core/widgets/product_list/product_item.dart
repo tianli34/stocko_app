@@ -4,7 +4,6 @@ import '../../../features/product/domain/model/product.dart';
 import '../../../features/product/application/provider/unit_providers.dart';
 import '../../widgets/cached_image_widget.dart';
 import 'package:flutter/services.dart';
-import 'product_list.dart';
 
 class ProductItem extends ConsumerStatefulWidget {
   final Product item;
@@ -56,7 +55,7 @@ class _ProductItemState extends ConsumerState<ProductItem> {
       try {
         final unit = await ref
             .read(unitControllerProvider.notifier)
-            .getUnitById(widget.item.unitId!);
+            .getUnitById(widget.item.unitId as int);
         if (mounted) {
           setState(() {
             _unitName = unit?.name;

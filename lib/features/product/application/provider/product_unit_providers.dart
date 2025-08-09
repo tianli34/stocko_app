@@ -219,7 +219,7 @@ class ProductUnitController extends StateNotifier<ProductUnitControllerState> {
   /// 检查产品是否已配置某个单位
   Future<bool> isUnitConfiguredForProduct(
     int productId,
-    String unitId,
+    int unitId,
   ) async {
     try {
       return await _repository.isUnitConfiguredForProduct(productId, unitId);

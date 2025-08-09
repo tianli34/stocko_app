@@ -39,7 +39,7 @@ class InboundListNotifier extends StateNotifier<List<InboundItem>> {
   /// [defaultUnitName] - 默认单位名称
   void addOrUpdateItem({
     required Product product,
-    required String unitId,
+    required int unitId,
     String? unitName,
     String? barcode,
     double? wholesalePrice,

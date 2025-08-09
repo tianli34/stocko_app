@@ -38,14 +38,14 @@ class DatabaseInitializer {
           id: 'shop_branch_01',
           name: '长山的店',
           manager: 'changshan',
-          createdAt: Value(DateTime.now()),
+          
           updatedAt: Value(DateTime.now()),
         ),
         ShopsTableCompanion.insert(
           id: 'shop_branch_02',
           name: '田立的店',
           manager: 'tianli',
-          createdAt: Value(DateTime.now()),
+          
           updatedAt: Value(DateTime.now()),
         ),
       ];
@@ -80,19 +80,19 @@ class DatabaseInitializer {
         CategoriesTableCompanion.insert(
           id: 'cat_food',
           name: '食品',
-          createdAt: Value(DateTime.now()),
+          
           updatedAt: Value(DateTime.now()),
         ),
         CategoriesTableCompanion.insert(
           id: 'cat_beverage',
           name: '饮料',
-          createdAt: Value(DateTime.now()),
+          
           updatedAt: Value(DateTime.now()),
         ),
         CategoriesTableCompanion.insert(
           id: 'cat_daily',
           name: '日用品',
-          createdAt: Value(DateTime.now()),
+          
           updatedAt: Value(DateTime.now()),
         ),
       ];
@@ -113,7 +113,7 @@ class DatabaseInitializer {
   Future<void> initializeDefaultUnits() async {
     try {
       final count = await (_database.select(
-        _database.unitsTable,
+        _database.unit,
       )..limit(1)).get();
 
       if (count.isNotEmpty) {
@@ -121,41 +121,38 @@ class DatabaseInitializer {
         return;
       }
       final defaultUnits = [
-        UnitsTableCompanion.insert(
-          id: 'unit_piece',
+        UnitCompanion.insert(
+          id: Value(1),
           name: '个',
-          createdAt: Value(DateTime.now()),
-          updatedAt: Value(DateTime.now()),
+          
+          
         ),
-        UnitsTableCompanion.insert(
-          id: 'unit_kg',
+        UnitCompanion.insert(
+          id: Value(2),
           name: '千克',
-          createdAt: Value(DateTime.now()),
-          updatedAt: Value(DateTime.now()),
         ),
-        UnitsTableCompanion.insert(
-          id: 'unit_box',
+        UnitCompanion.insert(
+          id: Value(3),
           name: '箱',
-          createdAt: Value(DateTime.now()),
-          updatedAt: Value(DateTime.now()),
+          
+          
         ),
-        UnitsTableCompanion.insert(
-          id: 'unit_bottle',
+        UnitCompanion.insert(
+          id: Value(4),
           name: '瓶',
-          createdAt: Value(DateTime.now()),
-          updatedAt: Value(DateTime.now()),
+          
+          
         ),
-        UnitsTableCompanion.insert(
-          id: 'unit_package',
+        UnitCompanion.insert(
+          id: Value(5),
           name: '包',
-          createdAt: Value(DateTime.now()),
-          updatedAt: Value(DateTime.now()),
+          
         ),
       ];
 
       await _database.transaction(() async {
         for (final unit in defaultUnits) {
-          await _database.into(_database.unitsTable).insert(unit);
+          await _database.into(_database.unit).insert(unit);
         }
       });
 
@@ -182,7 +179,7 @@ class DatabaseInitializer {
           id: const Value(1),
           name: '大米',
           categoryId: const Value('cat_food'),
-          unitId: const Value('unit_kg'),
+          unitId: const Value(2),
           retailPrice: const Value(2.5),
           suggestedRetailPrice: const Value(3.0),
           stockWarningValue: const Value(10),
@@ -196,7 +193,7 @@ class DatabaseInitializer {
           id: const Value(2),
           name: '面粉',
           categoryId: const Value('cat_food'),
-          unitId: const Value('unit_kg'),
+          unitId: const Value(2),
           retailPrice: const Value(3.0),
           suggestedRetailPrice: const Value(3.5),
           stockWarningValue: const Value(5),
@@ -210,7 +207,7 @@ class DatabaseInitializer {
           id: const Value(3),
           name: '可乐',
           categoryId: const Value('cat_beverage'),
-          unitId: const Value('unit_bottle'),
+          unitId: const Value(4),
           retailPrice: const Value(1.5),
           suggestedRetailPrice: const Value(2.0),
           stockWarningValue: const Value(20),
@@ -224,7 +221,7 @@ class DatabaseInitializer {
           id: const Value(4),
           name: '矿泉水',
           categoryId: const Value('cat_beverage'),
-          unitId: const Value('unit_bottle'),
+          unitId: const Value(4),
           retailPrice: const Value(1.0),
           suggestedRetailPrice: const Value(1.5),
           stockWarningValue: const Value(30),
@@ -238,7 +235,7 @@ class DatabaseInitializer {
           id: const Value(5),
           name: '面条',
           categoryId: const Value('cat_food'),
-          unitId: const Value('unit_kg'),
+          unitId: const Value(2),
           retailPrice: const Value(4.0),
           suggestedRetailPrice: const Value(4.5),
           stockWarningValue: const Value(8),
@@ -252,7 +249,7 @@ class DatabaseInitializer {
           id: const Value(6),
           name: '牛奶',
           categoryId: const Value('cat_beverage'),
-          unitId: const Value('unit_box'),
+          unitId: const Value(3),
           retailPrice: const Value(5.0),
           suggestedRetailPrice: const Value(6.0),
           stockWarningValue: const Value(15),
@@ -266,7 +263,7 @@ class DatabaseInitializer {
           id: const Value(7),
           name: '牙膏',
           categoryId: const Value('cat_daily'),
-          unitId: const Value('unit_piece'),
+          unitId: const Value(1),
           retailPrice: const Value(8.0),
           suggestedRetailPrice: const Value(10.0),
           stockWarningValue: const Value(5),
@@ -280,7 +277,7 @@ class DatabaseInitializer {
           id: const Value(8),
           name: '酱油',
           categoryId: const Value('cat_food'),
-          unitId: const Value('unit_bottle'),
+          unitId: const Value(4),
           retailPrice: const Value(7.5),
           suggestedRetailPrice: const Value(8.0),
           stockWarningValue: const Value(10),
@@ -294,7 +291,7 @@ class DatabaseInitializer {
           id: const Value(9),
           name: '卫生纸',
           categoryId: const Value('cat_daily'),
-          unitId: const Value('unit_roll'),
+          unitId: const Value(5),
           retailPrice: const Value(12.0),
           suggestedRetailPrice: const Value(15.0),
           stockWarningValue: const Value(5),
@@ -308,7 +305,7 @@ class DatabaseInitializer {
           id: const Value(10),
           name: '啤酒',
           categoryId: const Value('cat_beverage'),
-          unitId: const Value('unit_bottle'),
+          unitId: const Value(4),
           retailPrice: const Value(4.5),
           suggestedRetailPrice: const Value(6.0),
           stockWarningValue: const Value(20),
@@ -322,7 +319,7 @@ class DatabaseInitializer {
           id: const Value(11),
           name: '洗发水',
           categoryId: const Value('cat_daily'),
-          unitId: const Value('unit_bottle'),
+          unitId: const Value(4),
           retailPrice: const Value(25.0),
           suggestedRetailPrice: const Value(30.0),
           stockWarningValue: const Value(8),
@@ -336,7 +333,7 @@ class DatabaseInitializer {
           id: const Value(12),
           name: '鸡蛋',
           categoryId: const Value('cat_food'),
-          unitId: const Value('unit_box'),
+          unitId: const Value(3),
           retailPrice: const Value(15.0),
           suggestedRetailPrice: const Value(18.0),
           stockWarningValue: const Value(10),
@@ -350,7 +347,7 @@ class DatabaseInitializer {
           id: const Value(13),
           name: '食盐',
           categoryId: const Value('cat_food'),
-          unitId: const Value('unit_bag'),
+          unitId: const Value(5),
           retailPrice: const Value(2.0),
           suggestedRetailPrice: const Value(3.0),
           stockWarningValue: const Value(5),
@@ -364,7 +361,7 @@ class DatabaseInitializer {
           id: const Value(14),
           name: '抽纸',
           categoryId: const Value('cat_daily'),
-          unitId: const Value('unit_pack'),
+          unitId: const Value(5),
           retailPrice: const Value(8.0),
           suggestedRetailPrice: const Value(10.0),
           stockWarningValue: const Value(15),
@@ -404,28 +401,28 @@ class DatabaseInitializer {
         ProductUnitsTableCompanion.insert(
           productUnitId: 'pu_rice_kg',
           productId: 1,
-          unitId: 'unit_kg',
+          unitId: 2,
           conversionRate: 1.0, // 基础单位
           lastUpdated: Value(DateTime.now()),
         ),
         ProductUnitsTableCompanion.insert(
           productUnitId: 'pu_flour_kg',
           productId: 2,
-          unitId: 'unit_kg',
+          unitId: 2,
           conversionRate: 1.0, // 基础单位
           lastUpdated: Value(DateTime.now()),
         ),
         ProductUnitsTableCompanion.insert(
           productUnitId: 'pu_cola_bottle',
           productId: 3,
-          unitId: 'unit_bottle',
+          unitId: 4,
           conversionRate: 1.0, // 基础单位
           lastUpdated: Value(DateTime.now()),
         ),
         ProductUnitsTableCompanion.insert(
           productUnitId: 'pu_water_bottle',
           productId: 4, // 修改为整数ID
-          unitId: 'unit_bottle',
+          unitId: 4,
           conversionRate: 1.0, // 基础单位
           lastUpdated: Value(DateTime.now()),
         ),
@@ -460,28 +457,28 @@ class DatabaseInitializer {
           id: 'bc_rice',
           productUnitId: 'pu_rice_kg',
           barcode: '1234567890123',
-          createdAt: Value(DateTime.now()),
+          
           updatedAt: Value(DateTime.now()),
         ),
         BarcodesTableCompanion.insert(
           id: 'bc_flour',
           productUnitId: 'pu_flour_kg',
           barcode: '1234567890124',
-          createdAt: Value(DateTime.now()),
+          
           updatedAt: Value(DateTime.now()),
         ),
         BarcodesTableCompanion.insert(
           id: 'bc_cola',
           productUnitId: 'pu_cola_bottle',
           barcode: '1234567890125',
-          createdAt: Value(DateTime.now()),
+          
           updatedAt: Value(DateTime.now()),
         ),
         BarcodesTableCompanion.insert(
           id: 'bc_water',
           productUnitId: 'pu_water_bottle',
           barcode: '1234567890126',
-          createdAt: Value(DateTime.now()),
+          
           updatedAt: Value(DateTime.now()),
         ),
       ];
@@ -553,7 +550,7 @@ class DatabaseInitializer {
       await _database.delete(_database.productsTable).go();
       await _database.delete(_database.shopsTable).go();
       await _database.delete(_database.categoriesTable).go();
-      await _database.delete(_database.unitsTable).go();
+      await _database.delete(_database.unit).go();
     });
 
     await initializeAllDefaults();

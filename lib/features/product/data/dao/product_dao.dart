@@ -10,7 +10,7 @@ part 'product_dao.g.dart';
 /// 产品数据访问对象 (DAO)
 /// 专门负责产品相关的数据库操作
 @DriftAccessor(
-  tables: [ProductsTable, BarcodesTable, ProductUnitsTable, UnitsTable],
+  tables: [ProductsTable, BarcodesTable, ProductUnitsTable, Unit],
 )
 class ProductDao extends DatabaseAccessor<AppDatabase> with _$ProductDaoMixin {
   ProductDao(super.db);
@@ -42,7 +42,7 @@ class ProductDao extends DatabaseAccessor<AppDatabase> with _$ProductDaoMixin {
     List<
       ({
         ProductsTableData product,
-        String unitId,
+        int unitId,
         String unitName,
         double? wholesalePrice
       })
@@ -56,19 +56,19 @@ class ProductDao extends DatabaseAccessor<AppDatabase> with _$ProductDaoMixin {
             db.productUnitsTable.conversionRate.equals(1.0),
       ),
       leftOuterJoin(
-        db.unitsTable,
-        db.unitsTable.id.equalsExp(db.productsTable.unitId),
+        db.unit,
+        db.unit.id.equalsExp(db.productsTable.unitId),
       ),
     ]);
 
     return query.watch().map((rows) {
       return rows.map((row) {
         final product = row.readTable(db.productsTable);
-        final unit = row.readTableOrNull(db.unitsTable);
+        final unit = row.readTableOrNull(db.unit);
         final productUnit = row.readTableOrNull(db.productUnitsTable);
         return (
           product: product,
-          unitId: unit?.id ?? '',
+          unitId: unit?.id ?? 0,
           unitName: unit?.name ?? '未知单位',
           wholesalePrice: productUnit?.wholesalePrice,
         );
@@ -211,7 +211,7 @@ class ProductDao extends DatabaseAccessor<AppDatabase> with _$ProductDaoMixin {
   Future<
     ({
       ProductsTableData product,
-      String unitId,
+      int unitId,
       String unitName,
       double? wholesalePrice
     })?
@@ -234,8 +234,8 @@ class ProductDao extends DatabaseAccessor<AppDatabase> with _$ProductDaoMixin {
             db.productsTable.id.equalsExp(db.productUnitsTable.productId),
           ),
           innerJoin(
-            db.unitsTable,
-            db.unitsTable.id.equalsExp(db.productUnitsTable.unitId),
+            db.unit,
+            db.unit.id.equalsExp(db.productUnitsTable.unitId),
           ),
         ])..where(
           db.productUnitsTable.productUnitId.equals(
@@ -249,7 +249,7 @@ class ProductDao extends DatabaseAccessor<AppDatabase> with _$ProductDaoMixin {
     }
 
     final product = result.readTable(db.productsTable);
-    final unit = result.readTable(db.unitsTable);
+    final unit = result.readTable(db.unit);
     final productUnit = result.readTable(db.productUnitsTable);
 
     return (
@@ -261,7 +261,7 @@ class ProductDao extends DatabaseAccessor<AppDatabase> with _$ProductDaoMixin {
   }
 
   /// 检查单位是否被任何产品使用
-  Future<bool> isUnitUsed(String unitId) async {
+  Future<bool> isUnitUsed(int unitId) async {
     final query = select(db.productsTable)
       ..where((tbl) => tbl.unitId.equals(unitId))
       ..limit(1);

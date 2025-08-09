@@ -33,7 +33,7 @@ class ProductFormData {
   final String name;
   final String? selectedCategoryId;
   final String newCategoryName;
-  final String? selectedUnitId;
+  final int? selectedUnitId;
   final String newUnitName;
   final String? imagePath;
   final String barcode;
@@ -106,7 +106,7 @@ class ProductAddEditController {
         final existingCat = categories.firstWhere(
           (c) =>
               c.name.toLowerCase() == data.newCategoryName.trim().toLowerCase(),
-          orElse: () => Category(id: '', name: ''),
+          orElse: () => const Category(id: '', name: ''),
         );
         if (existingCat.id.isNotEmpty) {
           categoryId = existingCat.id;
@@ -123,27 +123,31 @@ class ProductAddEditController {
       }
 
       // 2. 处理单位
-      String? unitId = data.selectedUnitId;
-      if ((unitId == null || unitId.isEmpty) &&
-          data.newUnitName.trim().isNotEmpty) {
+      int? unitId = data.selectedUnitId;
+      if (unitId == null && data.newUnitName.trim().isNotEmpty) {
         final units = ref
             .read(allUnitsProvider)
             .maybeWhen(data: (u) => u, orElse: () => <Unit>[]);
-        final existingUnit = units.firstWhere(
-          (u) => u.name.toLowerCase() == data.newUnitName.trim().toLowerCase(),
-          orElse: () => Unit(id: '', name: ''),
-        );
-        if (existingUnit.id.isNotEmpty) {
+        Unit? existingUnit;
+        try {
+          existingUnit = units.firstWhere(
+            (u) => u.name.toLowerCase() == data.newUnitName.trim().toLowerCase(),
+          );
+        } catch (e) {
+          existingUnit = null;
+        }
+
+        if (existingUnit != null) {
           unitId = existingUnit.id;
         } else {
           final unitCtrl = ref.read(unitControllerProvider.notifier);
-          unitId = 'unit_${DateTime.now().millisecondsSinceEpoch}';
-          await unitCtrl.addUnit(
-            Unit(id: unitId, name: data.newUnitName.trim()),
+          final newUnit = await unitCtrl.addUnit(
+            Unit(name: data.newUnitName.trim()),
           );
+          unitId = newUnit.id;
         }
       }
-      if (unitId == null || unitId.isEmpty) {
+      if (unitId == null) {
         return ProductOperationResult.failure('请选择计量单位');
       }
 
@@ -238,15 +242,8 @@ class ProductAddEditController {
       ),
     );
 
-    // 添加辅单位 - 重新刷新单位数据并等待加载完成
-    ref.invalidate(allUnitsProvider);
-
-    // 等待数据重新加载
-    await Future.delayed(const Duration(milliseconds: 100));
-
-    final allUnits = ref
-        .read(allUnitsProvider)
-        .maybeWhen(data: (u) => u, orElse: () => <Unit>[]);
+    // 直接从provider获取最新的单位列表，.future会自动处理加载状态
+    final allUnits = await ref.read(allUnitsProvider.future);
     print('🔍 [DEBUG] 刷新后单位总数: ${allUnits.length}');
 
     for (final auxUnit in auxiliaryUnits) {
@@ -258,33 +255,24 @@ class ProductAddEditController {
         continue;
       }
 
-      var unit = allUnits.firstWhere(
-        (u) => u.name.toLowerCase() == unitName.toLowerCase(),
-        orElse: () => Unit(id: '', name: ''),
-      );
-
-      // 如果未找到单位，尝试重新刷新数据并再次查找
-      if (unit.id.isEmpty) {
-        print('🔍 [DEBUG] 首次未找到单位 "$unitName"，重新刷新数据');
-        ref.invalidate(allUnitsProvider);
-        await Future.delayed(const Duration(milliseconds: 200));
-
-        final refreshedUnits = ref
-            .read(allUnitsProvider)
-            .maybeWhen(data: (u) => u, orElse: () => <Unit>[]);
-
-        unit = refreshedUnits.firstWhere(
+      Unit? unit;
+      try {
+        unit = allUnits.firstWhere(
           (u) => u.name.toLowerCase() == unitName.toLowerCase(),
-          orElse: () => Unit(id: '', name: ''),
         );
+      } catch (e) {
+        unit = null;
       }
 
-      if (unit.id.isNotEmpty) {
+      // 如果在这里找不到单位，说明有一个辅单位的名称在单位表中不存在，
+      // 这在正常流程下不应该发生，因为所有新单位都应在_processAuxiliaryUnits中被添加。
+      // 因此，这是一个关键错误，需要抛出异常而不是静默失败。
+      if (unit != null && unit.id != null) {
         list.add(
           ProductUnit(
             productUnitId: 'pu_${product.id}_${unit.id}',
             productId: product.id,
-            unitId: unit.id,
+            unitId: unit.id!,
             conversionRate: auxUnit.conversionRate,
             sellingPrice: auxUnit.retailPrice.trim().isNotEmpty
                 ? double.tryParse(auxUnit.retailPrice.trim())
@@ -298,9 +286,10 @@ class ProductAddEditController {
           '🔍 [DEBUG] ✅ 添加辅单位: ${unit.name} (ID: ${unit.id}, 换算率: ${auxUnit.conversionRate})',
         );
       } else {
-        print('🔍 [DEBUG] ❌ 未找到单位: "$unitName"');
-        // 可以选择跳过这个单位或抛出异常
-        // throw Exception('未找到单位: $unitName');
+        print('🔍 [DEBUG] ❌ 在_saveProductUnits中未找到单位: "$unitName"');
+        // 这是一个关键错误，意味着在表单提交时，一个预期的单位没有被正确创建或找到。
+        // 抛出异常以阻止不完整的数据被保存。
+        throw Exception('保存产品单位失败：无法找到单位 "$unitName"。请检查单位是否已正确添加。');
       }
     }
 
@@ -393,23 +382,32 @@ class ProductAddEditController {
       final allUnits = ref
           .read(allUnitsProvider)
           .maybeWhen(data: (u) => u, orElse: () => <Unit>[]);
-      final targetUnit = allUnits.firstWhere(
-        (u) => u.name.toLowerCase() == auxUnit.unitName.trim().toLowerCase(),
-        orElse: () => Unit(id: '', name: ''),
-      );
-
-      if (targetUnit.id.isNotEmpty) {
-        final matchingProductUnit = productUnits.firstWhere(
-          (pu) =>
-              pu.unitId == targetUnit.id &&
-              pu.conversionRate == auxUnit.conversionRate,
-          orElse: () => ProductUnit(
-            productUnitId: '',
-            productId: 0, // 使用默认整数值
-            unitId: '',
-            conversionRate: 0,
-          ),
+      Unit? targetUnit;
+      try {
+        targetUnit = allUnits.firstWhere(
+          (u) => u.name.toLowerCase() == auxUnit.unitName.trim().toLowerCase(),
         );
+      } catch (e) {
+        targetUnit = null;
+      }
+
+      if (targetUnit != null) {
+        final finalTargetUnit = targetUnit;
+        ProductUnit? matchingProductUnit;
+        try {
+          matchingProductUnit = productUnits.firstWhere(
+            (pu) =>
+                pu.unitId == finalTargetUnit.id &&
+                pu.conversionRate == auxUnit.conversionRate,
+          );
+        } catch (e) {
+          matchingProductUnit = null;
+        }
+
+        if (matchingProductUnit == null) {
+          throw Exception(
+              '数据不一致：在产品单位列表中找不到单位 ${finalTargetUnit.name} (换算率: ${auxUnit.conversionRate})');
+        }
 
         if (matchingProductUnit.productUnitId.isNotEmpty) {
           final id =
@@ -478,26 +476,31 @@ class ProductAddEditController {
       }
 
       // 检查单位是否已存在
-      final existingUnit = units.firstWhere(
-        (u) => u.name.toLowerCase() == unitName.toLowerCase(),
-        orElse: () => Unit(id: '', name: ''),
-      );
+      Unit? existingUnit;
+      try {
+        existingUnit = units.firstWhere(
+          (u) => u.name.toLowerCase() == unitName.toLowerCase(),
+        );
+      } catch (e) {
+        existingUnit = null;
+      }
 
-      if (existingUnit.id.isNotEmpty) {
+      if (existingUnit != null) {
         print(
           '🔍 [DEBUG] 单位已存在: ID=${existingUnit.id}, 名称="${existingUnit.name}"',
         );
       } else {
         // 如果单位不存在，创建新单位
-        final newUnitId =
-            'unit_${DateTime.now().millisecondsSinceEpoch}_${unitName.hashCode}';
-        print('🔍 [DEBUG] 创建新单位: ID=$newUnitId, 名称="$unitName"');
+        print('🔍 [DEBUG] 创建新单位: 名称="$unitName"');
 
         try {
-          await unitCtrl.addUnit(Unit(id: newUnitId, name: unitName));
-          print('🔍 [DEBUG] ✅ 新单位创建成功');
-
-          // 刷新单位缓存以确保新单位可被查找到
+          // 调用新的addUnit方法，它会处理一切
+          final newUnit = await unitCtrl.addUnit(Unit(name: unitName));
+          print('🔍 [DEBUG] ✅ 新单位创建成功, ID: ${newUnit.id}');
+          
+          // 将新创建的单位添加到当前循环的单位列表中，
+          // 以便在同一个循环中处理依赖于这个新单位的其他逻辑。
+          units.add(newUnit);
           ref.invalidate(allUnitsProvider);
         } catch (e) {
           print('🔍 [DEBUG] ❌ 新单位创建失败: $e');

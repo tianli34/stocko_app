@@ -30,7 +30,7 @@ abstract class IProductUnitRepository {
   Future<int> deleteProductUnitsByProductId(int productId);
 
   /// 检查产品是否已配置某个单位
-  Future<bool> isUnitConfiguredForProduct(int productId, String unitId);
+  Future<bool> isUnitConfiguredForProduct(int productId, int unitId);
 
   /// 获取产品的基础单位
   Future<ProductUnit?> getBaseUnitForProduct(int productId);

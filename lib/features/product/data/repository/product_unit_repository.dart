@@ -125,7 +125,7 @@ class ProductUnitRepository implements IProductUnitRepository {
   @override
   Future<bool> isUnitConfiguredForProduct(
     int productId,
-    String unitId,
+    int unitId,
   ) async {
     try {
       return await _productUnitDao.isUnitConfiguredForProduct(

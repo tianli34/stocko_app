@@ -11,7 +11,7 @@ abstract class SalesTransactionItem with _$SalesTransactionItem {
     int? id,
     required int salesTransactionId,
     required int productId,
-    required String unitId,
+    required int unitId,
     String? batchId,
     required int quantity,
     required double unitPrice,
@@ -24,7 +24,7 @@ abstract class SalesTransactionItem with _$SalesTransactionItem {
   bool get isValidProductId => productId > 0;
 
   /// 验证单位ID的有效性
-  bool get isValidUnitId => unitId.isNotEmpty;
+  bool get isValidUnitId => unitId > 0;
 
   /// 验证批次ID的有效性（如果提供了批次ID）
   bool get isValidBatchId => batchId == null || batchId!.isNotEmpty;
@@ -165,7 +165,7 @@ abstract class SalesTransactionItem with _$SalesTransactionItem {
     int? id,
     required int salesTransactionId,
     required int productId,
-    required String unitId,
+    required int unitId,
     String? batchId,
     required int quantity,
     required double unitPrice,

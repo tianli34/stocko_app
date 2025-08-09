@@ -1,5 +1,6 @@
 import 'package:drift/drift.dart';
 import 'products_table.dart';
+import 'units_table.dart';
 
 /// 入库单明细表
 /// 存储入库单中的具体商品明细信息
@@ -21,7 +22,7 @@ class InboundReceiptItemsTable extends Table {
   RealColumn get quantity => real().named('quantity')();
 
   /// 外键 - 单位ID（入库时使用的单位）
-  TextColumn get unitId => text().named('unit_id')();
+  IntColumn get unitId => integer().named('unit_id').references(Unit, #id)();
 
   /// 生产日期
   DateTimeColumn get productionDate =>

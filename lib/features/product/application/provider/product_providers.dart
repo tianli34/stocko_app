@@ -110,7 +110,7 @@ class ProductOperationsNotifier extends AsyncNotifier<void> {
   Future<
     ({
       Product product,
-      String unitId,
+      int unitId,
       String unitName,
       double? wholesalePrice
     })?
@@ -267,7 +267,7 @@ final allProductsWithUnitProvider =
       List<
         ({
           Product product,
-          String unitId,
+          int unitId,
           String unitName,
           double? wholesalePrice
         })

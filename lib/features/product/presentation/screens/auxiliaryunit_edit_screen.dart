@@ -478,13 +478,12 @@ class _AuxiliaryUnitEditScreenState
 
       Unit? existingUnit = allUnits.firstWhere(
         (unit) => unit.name == trimmedName,
-        orElse: () => Unit(id: '', name: ''),
+        orElse: () => Unit.empty(),
       );
 
-      if (existingUnit.id.isEmpty) {
+      if (existingUnit.isNew) {
         print('🔍 单位不存在，创建新单位对象: "$trimmedName"');
         existingUnit = Unit(
-          id: 'unit_${DateTime.now().millisecondsSinceEpoch}',
           name: trimmedName,
         );
         print('🔍 新单位对象已创建: ID=${existingUnit.id}, 名称="${existingUnit.name}"');
@@ -559,7 +558,7 @@ class _AuxiliaryUnitEditScreenState
       final Unit? selectedUnit = await Navigator.of(context).push<Unit>(
         MaterialPageRoute(
           builder: (context) => UnitSelectionScreen(
-            selectedUnitId: _auxiliaryUnits[index].unit?.id,
+            initialUnit: _auxiliaryUnits[index].unit,
           ),
         ),
       );
@@ -644,7 +643,7 @@ class _AuxiliaryUnitEditScreenState
       final baseUnit = ProductUnit(
         productUnitId: '${widget.productId ?? 'new'}_${widget.baseUnitId!}',
         productId: widget.productId ?? 0,
-        unitId: widget.baseUnitId!,
+        unitId: int.parse(widget.baseUnitId!),
         conversionRate: 1.0,
       );
       productUnits.add(baseUnit);
@@ -688,7 +687,7 @@ class _AuxiliaryUnitEditScreenState
         final auxUnit = ProductUnit(
           productUnitId: '${widget.productId ?? 'new'}_${aux.unit!.id}',
           productId: widget.productId ?? 0,
-          unitId: aux.unit!.id,
+          unitId: aux.unit!.id!,
           conversionRate: aux.conversionRate,
           sellingPrice: sellingPrice,
           wholesalePrice: wholesalePrice,
@@ -789,14 +788,12 @@ class _AuxiliaryUnitEditScreenState
         if (auxData.unitName.trim().isNotEmpty) {
           unit = allUnits.firstWhere(
             (u) => u.name == auxData.unitName.trim(),
-            orElse: () => Unit(id: '', name: ''),
+            orElse: () => Unit.empty(),
           );
 
-          if (unit.id.isEmpty) {
+          if (unit.isNew) {
             unit = Unit(
-              id:
-                  auxData.unitId ??
-                  'unit_${DateTime.now().millisecondsSinceEpoch}',
+              id: auxData.unitId,
               name: auxData.unitName.trim(),
             );
           }

@@ -1,6 +1,7 @@
 import 'package:drift/drift.dart';
 import 'products_table.dart';
 import 'purchase_orders_table.dart';
+import 'units_table.dart';
 
 /// 采购订单明细表
 /// 存储采购订单中的具体货品信息
@@ -21,7 +22,7 @@ class PurchaseOrderItemsTable extends Table {
       integer().named('product_id').references(ProductsTable, #id)();
 
   /// 外键 - 单位ID
-  TextColumn get unitId => text().named('unit_id')();
+  IntColumn get unitId => integer().named('unit_id').references(Unit, #id)();
 
   /// 单价
   RealColumn get unitPrice => real().named('unit_price')();
