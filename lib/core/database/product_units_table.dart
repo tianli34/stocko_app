@@ -4,12 +4,9 @@ import 'units_table.dart';
 
 /// 产品单位关联表
 /// 存储产品与单位的关联关系及换算率信息
-class ProductUnitsTable extends Table {
-  @override
-  String get tableName => 'product_units';
-
+class ProductUnit extends Table {
   /// 主键 - 产品单位ID
-  TextColumn get productUnitId => text().named('product_unit_id')();
+  IntColumn get productUnitId => integer().autoIncrement()();
 
   /// 外键 - 产品ID
   IntColumn get productId =>
@@ -19,20 +16,19 @@ class ProductUnitsTable extends Table {
   IntColumn get unitId => integer().named('unit_id').references(Unit, #id)();
 
   /// 换算率（相对于基础单位）
-  RealColumn get conversionRate => real().named('conversion_rate')();
+  IntColumn get conversionRate => integer().named('conversion_rate')();
 
-  /// 售价（可选）
-  RealColumn get sellingPrice => real().named('selling_price').nullable()();
+  /// 售价（以分为单位存储，避免浮点数精度问题）
+  IntColumn get sellingPriceInCents =>
+      integer().named('selling_price_in_cents').nullable()();
 
-  /// 批发价（可选）
-  RealColumn get wholesalePrice => real().named('wholesale_price').nullable()();
+  /// 批发价（以分为单位存储）
+  IntColumn get wholesalePriceInCents =>
+      integer().named('wholesale_price_in_cents').nullable()();
 
   /// 最后更新时间
   DateTimeColumn get lastUpdated =>
       dateTime().named('last_updated').withDefault(currentDateAndTime)();
-
-  @override
-  Set<Column> get primaryKey => {productUnitId};
 
   @override
   List<Set<Column>> get uniqueKeys => [

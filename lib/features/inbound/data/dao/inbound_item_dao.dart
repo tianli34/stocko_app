@@ -114,9 +114,9 @@ class InboundItemDao extends DatabaseAccessor<AppDatabase>
     final result =
         await (selectOnly(inboundReceiptItemsTable)
               ..where(inboundReceiptItemsTable.receiptId.equals(receiptId))
-              ..addColumns([inboundReceiptItemsTable.quantity.sum()]))
+              ..addColumns([inboundReceiptItemsTable.quantity.sum().cast<double>()]))
             .getSingle();
-    return result.read(inboundReceiptItemsTable.quantity.sum()) ?? 0.0;
+    return result.read(inboundReceiptItemsTable.quantity.sum().cast<double>()) ?? 0.0;
   }
 
   /// 替换入库单明细（删除旧的，插入新的）

@@ -387,10 +387,10 @@ class _DatabaseViewerScreenState extends ConsumerState<DatabaseViewerScreen>
                         Text('产品ID: ${productUnit.productId}'),
                         Text('单位ID: ${productUnit.unitId}'),
                         Text('换算率: ${productUnit.conversionRate}'),
-                        if (productUnit.sellingPrice != null)
-                          Text('售价: ¥${productUnit.sellingPrice}'),
-                        // if (productUnit.wholesalePrice != null)
-                        Text('批发价: ¥${productUnit.wholesalePrice}'),
+                        if (productUnit.sellingPriceInCents != null)
+                          Text('售价: ¥${productUnit.sellingPriceInCents}'),
+                        // if (productUnit.wholesalePriceInCents != null)
+                        Text('批发价: ¥${productUnit.wholesalePriceInCents}'),
                       ],
                     ),
                     trailing: const Icon(Icons.link),

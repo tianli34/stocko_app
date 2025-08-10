@@ -93,7 +93,7 @@ class UnitEditFormNotifier extends Notifier<UnitEditFormState> {
   }
 
   /// 更新辅单位的换算率
-  void updateAuxiliaryUnitConversionRate(int id, double conversionRate) {
+  void updateAuxiliaryUnitConversionRate(int id, int conversionRate) {
     final updatedUnits = state.auxiliaryUnits.map((unit) {
       if (unit.id == id) {
         return unit.copyWith(conversionRate: conversionRate);
@@ -126,10 +126,10 @@ class UnitEditFormNotifier extends Notifier<UnitEditFormState> {
   }
 
   /// 更新辅单位的批发价
-  void updateAuxiliaryUnitWholesalePrice(int id, String wholesalePrice) {
+  void updateAuxiliaryUnitWholesalePrice(int id, String wholesalePriceInCents) {
     final updatedUnits = state.auxiliaryUnits.map((unit) {
       if (unit.id == id) {
-        return unit.copyWith(wholesalePrice: wholesalePrice);
+        return unit.copyWith(wholesalePriceInCents: wholesalePriceInCents);
       }
       return unit;
     }).toList();
@@ -170,10 +170,10 @@ class UnitEditFormNotifier extends Notifier<UnitEditFormState> {
             id: auxUnit.id as int,
             unitId: auxUnit.unit?.id as int?,
             unitName: auxUnit.unitController?.text as String? ?? '',
-            conversionRate: auxUnit.conversionRate as double? ?? 0.0,
+            conversionRate: auxUnit.conversionRate ?? 1,
             barcode: auxUnit.barcodeController?.text as String? ?? '',
             retailPrice: auxUnit.retailPriceController?.text as String? ?? '',
-            wholesalePrice:
+            wholesalePriceInCents:
                 auxUnit.wholesalePriceController?.text as String? ?? '',
           ),
         );

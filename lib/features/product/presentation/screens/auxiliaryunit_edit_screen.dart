@@ -119,8 +119,8 @@ class _AuxiliaryUnitEditScreenState
       try {
         print('=================【仓储层调试】=================');
         print('ProductUnit ID: ${productUnit.productUnitId}');
-        print('SELLING PRICE: ${productUnit.sellingPrice}');
-        print('WHOLESALE PRICE: ${productUnit.wholesalePrice}');
+        print('SELLING PRICE: ${productUnit.sellingPriceInCents}');
+        print('WHOLESALE PRICE: ${productUnit.wholesalePriceInCents}');
         print(
           'productId: ${productUnit.productId}, unitId: ${productUnit.unitId}, conversionRate: ${productUnit.conversionRate}',
         );
@@ -135,8 +135,8 @@ class _AuxiliaryUnitEditScreenState
           id: _auxiliaryCounter,
           unit: unit,
           conversionRate: productUnit.conversionRate,
-          initialSellingPrice: productUnit.sellingPrice,
-          initialWholesalePrice: productUnit.wholesalePrice,
+          initialSellingPrice: (productUnit.sellingPriceInCents ?? 0)/100,
+          initialWholesalePrice: (productUnit.wholesalePriceInCents ?? 0)/100,
         );
         print('🔍 控制器初始化后售价: ${auxiliaryUnit.retailPriceController.text}');
         print('🔍 控制器初始化后批发价: ${auxiliaryUnit.wholesalePriceController.text}');
@@ -350,7 +350,7 @@ class _AuxiliaryUnitEditScreenState
                 return null;
               },
               onChanged: (value) {
-                final rate = double.tryParse(value.trim());
+                final rate = int.tryParse(value.trim());
                 if (rate != null) {
                   auxiliaryUnit.conversionRate = rate;
                   ref
@@ -641,10 +641,10 @@ class _AuxiliaryUnitEditScreenState
     // 添加基本单位
     if (widget.baseUnitId != null) {
       final baseUnit = ProductUnit(
-        productUnitId: '${widget.productId ?? 'new'}_${widget.baseUnitId!}',
+        // productUnitId: '${widget.productId ?? 'new'}_${widget.baseUnitId!}',
         productId: widget.productId ?? 0,
         unitId: int.parse(widget.baseUnitId!),
-        conversionRate: 1.0,
+        conversionRate: 1,
       );
       productUnits.add(baseUnit);
       print('🔍 [DEBUG] ✅ 添加基本单位: ${baseUnit.productUnitId}');
@@ -673,29 +673,28 @@ class _AuxiliaryUnitEditScreenState
         print(
           'wholesalePriceController.text: "${aux.wholesalePriceController.text}"',
         );
-        final sellingPrice = aux.retailPriceController.text.trim().isNotEmpty
-            ? double.tryParse(aux.retailPriceController.text.trim())
+        final sellingPriceInCents = aux.retailPriceController.text.trim().isNotEmpty
+            ? int.tryParse(aux.retailPriceController.text.trim())
             : null;
-        final wholesalePrice =
+        final wholesalePriceInCents =
             aux.wholesalePriceController.text.trim().isNotEmpty
-            ? double.tryParse(aux.wholesalePriceController.text.trim())
+            ? int.tryParse(aux.wholesalePriceController.text.trim())
             : null;
-        print('解析后的sellingPrice: $sellingPrice');
-        print('解析后的wholesalePrice: $wholesalePrice');
+        print('解析后的sellingPrice: $sellingPriceInCents');
+        print('解析后的wholesalePrice: $wholesalePriceInCents');
         print('========================');
 
         final auxUnit = ProductUnit(
-          productUnitId: '${widget.productId ?? 'new'}_${aux.unit!.id}',
           productId: widget.productId ?? 0,
           unitId: aux.unit!.id!,
           conversionRate: aux.conversionRate,
-          sellingPrice: sellingPrice,
-          wholesalePrice: wholesalePrice,
+          sellingPriceInCents: sellingPriceInCents,
+          wholesalePriceInCents: wholesalePriceInCents,
           lastUpdated: DateTime.now(),
         );
         productUnits.add(auxUnit);
         print(
-          '🔍 [DEBUG]   ✅ 添加辅单位: ${auxUnit.productUnitId} 批发价: ${auxUnit.wholesalePrice}',
+          '🔍 [DEBUG]   ✅ 添加辅单位: ${auxUnit.productUnitId} 批发价: ${auxUnit.wholesalePriceInCents}',
         );
       } else {
         print('🔍 [DEBUG]   ❌ 跳过无效辅单位:');
@@ -780,7 +779,7 @@ class _AuxiliaryUnitEditScreenState
         print('unitName: ${auxData.unitName}, unitId: ${auxData.unitId}');
         print('conversionRate: ${auxData.conversionRate}');
         print('retailPrice: ${auxData.retailPrice}');
-        print('wholesalePrice: ${auxData.wholesalePrice}');
+        print('wholesalePriceInCents: ${auxData.wholesalePriceInCents}');
         print('barcode: ${auxData.barcode}');
         print('===============================================');
         Unit? unit;
@@ -804,7 +803,7 @@ class _AuxiliaryUnitEditScreenState
           unit: unit,
           conversionRate: auxData.conversionRate,
           initialSellingPrice: double.tryParse(auxData.retailPrice),
-          initialWholesalePrice: double.tryParse(auxData.wholesalePrice),
+          initialWholesalePrice: double.tryParse(auxData.wholesalePriceInCents),
         );
 
         auxiliaryUnit.unitController.text = auxData.unitName;
@@ -835,7 +834,7 @@ class _AuxiliaryUnitEditScreenState
 class _AuxiliaryUnit {
   final int id;
   Unit? unit;
-  double conversionRate;
+  int conversionRate;
   late TextEditingController unitController;
   late TextEditingController barcodeController;
   late TextEditingController retailPriceController;

@@ -46,21 +46,21 @@ abstract class IInventoryRepository {
   Future<bool> updateInventoryQuantity(
     int productId,
     String shopId,
-    double quantity,
+    int quantity,
   );
 
   /// 增加库存数量
   Future<bool> addInventoryQuantity(
     int productId,
     String shopId,
-    double amount,
+    int amount,
   );
 
   /// 减少库存数量
   Future<bool> subtractInventoryQuantity(
     int productId,
     String shopId,
-    double amount,
+    int amount,
   );
 
   /// 获取低库存产品列表

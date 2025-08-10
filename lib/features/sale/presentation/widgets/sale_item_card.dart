@@ -40,7 +40,7 @@ class _SaleItemCardState extends ConsumerState<SaleItemCard> {
         final item = ref
             .read(saleListProvider)
             .firstWhere((it) => it.id == widget.itemId);
-        _sellingPriceController.text = item.sellingPrice.toStringAsFixed(2);
+        _sellingPriceController.text = item.sellingPriceInCents.toStringAsFixed(2);
       }
     }
   }
@@ -86,12 +86,12 @@ class _SaleItemCardState extends ConsumerState<SaleItemCard> {
   }
 
   void _updateItem(SaleItem item) {
-    final sellingPrice = double.tryParse(_sellingPriceController.text) ?? 0.0;
-    final quantity = double.tryParse(_quantityController.text) ?? 0.0;
-    final amount = sellingPrice * quantity;
+    final sellingPriceInCents = (int.tryParse(_sellingPriceController.text) ?? 0) * 100;
+    final quantity = int.tryParse(_quantityController.text) ?? 0;
+    final amount = sellingPriceInCents / 100 * quantity;
 
     final updatedItem = item.copyWith(
-      sellingPrice: sellingPrice,
+      sellingPriceInCents: sellingPriceInCents,
       quantity: quantity,
       amount: amount,
     );
@@ -110,8 +110,8 @@ class _SaleItemCardState extends ConsumerState<SaleItemCard> {
     );
 
     if (!_sellingPriceFocusNode.hasFocus &&
-        _sellingPriceController.text != item.sellingPrice.toStringAsFixed(2)) {
-      _sellingPriceController.text = item.sellingPrice.toStringAsFixed(2);
+        _sellingPriceController.text != item.sellingPriceInCents.toStringAsFixed(2)) {
+      _sellingPriceController.text = item.sellingPriceInCents.toStringAsFixed(2);
     }
     if (widget.quantityFocusNode?.hasFocus == false &&
         _quantityController.text != item.quantity.toStringAsFixed(0)) {

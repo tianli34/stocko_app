@@ -95,7 +95,7 @@ class InventoryDao extends DatabaseAccessor<AppDatabase>
   Future<bool> updateInventoryQuantity(
     int productId,
     String shopId,
-    double quantity,
+    int quantity,
   ) async {
     final result =
         await (update(inventoryTable)..where(
@@ -118,7 +118,7 @@ class InventoryDao extends DatabaseAccessor<AppDatabase>
     return (select(inventoryTable)..where(
           (t) =>
               t.shopId.equals(shopId) &
-              t.quantity.isSmallerOrEqualValue(warningLevel.toDouble()),
+              t.quantity.isSmallerOrEqualValue(warningLevel),
         ))
         .get();
   }
@@ -135,20 +135,20 @@ class InventoryDao extends DatabaseAccessor<AppDatabase>
   Future<double> getTotalInventoryByShop(String shopId) async {
     final result =
         await (selectOnly(inventoryTable)
-              ..addColumns([inventoryTable.quantity.sum()])
+              ..addColumns([inventoryTable.quantity.sum().cast<double>()])
               ..where(inventoryTable.shopId.equals(shopId)))
             .getSingle();
-    return result.read(inventoryTable.quantity.sum()) ?? 0.0;
+    return result.read(inventoryTable.quantity.sum().cast<double>()) ?? 0.0;
   }
 
   /// 获取库存总数量（按产品）
   Future<double> getTotalInventoryByProduct(int productId) async {
     final result =
         await (selectOnly(inventoryTable)
-              ..addColumns([inventoryTable.quantity.sum()])
+              ..addColumns([inventoryTable.quantity.sum().cast<double>()])
               ..where(inventoryTable.productId.equals(productId)))
             .getSingle();
-    return result.read(inventoryTable.quantity.sum()) ?? 0.0;
+    return result.read(inventoryTable.quantity.sum().cast<double>()) ?? 0.0;
   }
 
   /// 检查库存是否存在

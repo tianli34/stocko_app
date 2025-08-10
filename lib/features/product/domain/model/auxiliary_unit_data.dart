@@ -14,7 +14,7 @@ class AuxiliaryUnitData {
   final String unitName;
 
   /// 换算率
-  final double conversionRate;
+  final int conversionRate;
 
   /// 条码
   final String barcode;
@@ -23,36 +23,36 @@ class AuxiliaryUnitData {
   final String retailPrice;
 
   /// 批发价
-  final String wholesalePrice;
+  final String wholesalePriceInCents;
 
   const AuxiliaryUnitData({
     required this.id,
     this.unitId,
     this.unitName = '',
-    this.conversionRate = 0.0,
+    this.conversionRate = 1,
     this.barcode = '',
     this.retailPrice = '',
-    this.wholesalePrice = '',
+    this.wholesalePriceInCents = '',
   });
 
   /// 创建空的辅单位数据
   const AuxiliaryUnitData.empty(this.id)
     : unitId = null,
       unitName = '',
-      conversionRate = 0.0,
+      conversionRate = 1,
       barcode = '',
       retailPrice = '',
-      wholesalePrice = '';
+      wholesalePriceInCents = '';
 
   /// 复制并更新指定字段
   AuxiliaryUnitData copyWith({
     int? id,
     int? unitId,
     String? unitName,
-    double? conversionRate,
+    int? conversionRate,
     String? barcode,
     String? retailPrice,
-    String? wholesalePrice,
+    String? wholesalePriceInCents,
   }) {
     return AuxiliaryUnitData(
       id: id ?? this.id,
@@ -61,7 +61,7 @@ class AuxiliaryUnitData {
       conversionRate: conversionRate ?? this.conversionRate,
       barcode: barcode ?? this.barcode,
       retailPrice: retailPrice ?? this.retailPrice,
-      wholesalePrice: wholesalePrice ?? this.wholesalePrice,
+      wholesalePriceInCents: wholesalePriceInCents ?? this.wholesalePriceInCents,
     );
   }
 
@@ -74,7 +74,7 @@ class AuxiliaryUnitData {
       'conversionRate': conversionRate,
       'barcode': barcode,
       'retailPrice': retailPrice,
-      'wholesalePrice': wholesalePrice,
+      'wholesalePriceInCents': wholesalePriceInCents,
     };
   }
 
@@ -84,10 +84,10 @@ class AuxiliaryUnitData {
       id: json['id'] as int,
       unitId: json['unitId'] as int?,
       unitName: json['unitName'] as String? ?? '',
-      conversionRate: (json['conversionRate'] as num?)?.toDouble() ?? 0.0,
+      conversionRate: (json['conversionRate']) ?? 1,
       barcode: json['barcode'] as String? ?? '',
       retailPrice: json['retailPrice'] as String? ?? '',
-      wholesalePrice: json['wholesalePrice'] as String? ?? '',
+      wholesalePriceInCents: json['wholesalePriceInCents'] as String? ?? '',
     );
   }
 
@@ -108,7 +108,7 @@ class AuxiliaryUnitData {
         other.conversionRate == conversionRate &&
         other.barcode == barcode &&
         other.retailPrice == retailPrice &&
-        other.wholesalePrice == wholesalePrice;
+        other.wholesalePriceInCents == wholesalePriceInCents;
   }
 
   @override
@@ -120,7 +120,7 @@ class AuxiliaryUnitData {
       conversionRate,
       barcode,
       retailPrice,
-      wholesalePrice,
+      wholesalePriceInCents,
     );
   }
 
@@ -128,6 +128,6 @@ class AuxiliaryUnitData {
   String toString() {
     return 'AuxiliaryUnitData(id: $id, unitId: $unitId, unitName: $unitName, '
         'conversionRate: $conversionRate, barcode: $barcode, retailPrice: $retailPrice, '
-        'wholesalePrice: $wholesalePrice)';
+        'wholesalePriceInCents: $wholesalePriceInCents)';
   }
 }

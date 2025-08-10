@@ -18,7 +18,7 @@ class InventoryTransactionsTable extends Table {
   TextColumn get type => text().named('type')();
 
   /// 变动数量
-  RealColumn get quantity => real().named('quantity')();
+  IntColumn get quantity => integer().named('quantity')();
 
   /// 外键 - 店铺ID
   TextColumn get shopId => text().named('shop_id')();

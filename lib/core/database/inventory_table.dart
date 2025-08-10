@@ -15,7 +15,7 @@ class InventoryTable extends Table {
       integer().named('product_id').references(ProductsTable, #id)();
 
   /// 库存数量
-  RealColumn get quantity => real().named('quantity')();
+  IntColumn get quantity => integer().named('quantity')();
 
   /// 外键 - 店铺ID
   TextColumn get shopId => text().named('shop_id')();

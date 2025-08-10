@@ -7,7 +7,7 @@ part 'barcode.g.dart';
 abstract class Barcode with _$Barcode {
   const factory Barcode({
     required String id, // 主键
-    required String productUnitId, // 外键，指向 ProductUnit
+    required int productUnitId, // 外键，指向 ProductUnit
     required String barcode, // 条码值
     DateTime? createdAt, // 创建时间
     DateTime? updatedAt, // 最后更新时间

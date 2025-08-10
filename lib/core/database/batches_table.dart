@@ -14,7 +14,7 @@ class BatchesTable extends Table {
   DateTimeColumn get productionDate => dateTime().named('production_date')();
 
   /// 初始数量，同一批次可累加
-  RealColumn get initialQuantity => real().named('initial_quantity')();
+  IntColumn get initialQuantity => integer().named('initial_quantity')();
 
   /// 外键 - 店铺ID
   TextColumn get shopId => text().named('shop_id')();

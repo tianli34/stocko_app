@@ -20,7 +20,7 @@ class InventoryService {
     required int productId,
     required String shopId,
     required String batchNumber,
-    required double quantity,
+    required int quantity,
     DateTime? time,
   }) async {
     try {
@@ -69,7 +69,7 @@ class InventoryService {
   Future<bool> outbound({
     required int productId,
     required String shopId,
-    required double quantity,
+    required int quantity,
     DateTime? time,
   }) async {
     try {
@@ -112,7 +112,7 @@ class InventoryService {
   Future<bool> adjust({
     required int productId,
     required String shopId,
-    required double adjustQuantity,
+    required int adjustQuantity,
     DateTime? time,
   }) async {
     try {
@@ -258,13 +258,13 @@ class InventoryService {
       await _inventoryRepository.updateInventoryQuantity(
         intProductId,
         shopId,
-        quantity.toDouble(),
+        quantity,
       );
     } else {
       // 如果记录不存在，则创建新的库存记录
       final newInventory = Inventory.create(
         productId: intProductId,
-        quantity: quantity.toDouble(),
+        quantity: quantity,
         shopId: shopId,
         // 假设新记录的批号为空字符串
         batchNumber: '',

@@ -1149,7 +1149,7 @@ class _ProductAddEditScreenState extends ConsumerState<ProductAddEditScreen> {
         auxiliaryBarcodeData = _auxiliaryUnitBarcodes!
             .map(
               (item) => AuxiliaryUnitBarcodeData(
-                productUnitId: item['productUnitId']!,
+                productUnitId: int.parse(item['productUnitId']!),
                 barcode: item['barcode']!,
               ),
             )

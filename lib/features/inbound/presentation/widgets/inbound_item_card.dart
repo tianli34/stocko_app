@@ -117,7 +117,7 @@ class _InboundItemCardState extends ConsumerState<InboundItemCard> {
 
   void _updateItem(InboundItem item, {DateTime? newProductionDate}) {
     final unitPrice = double.tryParse(_unitPriceController.text) ?? 0.0;
-    final quantity = double.tryParse(_quantityController.text) ?? 0.0;
+    final quantity = int.tryParse(_quantityController.text) ?? 0;
     final amount = unitPrice * quantity;
 
     if (!_isUpdatingFromAmount) {
@@ -138,7 +138,7 @@ class _InboundItemCardState extends ConsumerState<InboundItemCard> {
 
   void _updateFromAmount(InboundItem item) {
     final amount = double.tryParse(_amountController.text) ?? 0.0;
-    final quantity = double.tryParse(_quantityController.text) ?? 1.0;
+    final quantity = int.tryParse(_quantityController.text) ?? 1;
 
     if (quantity > 0) {
       final unitPrice = amount / quantity;

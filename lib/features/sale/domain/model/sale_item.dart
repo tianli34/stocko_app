@@ -7,8 +7,8 @@ class SaleItem {
   final int unitId;
   final String unitName;
   final String? batchId;
-  final double sellingPrice; // 从 unitPrice 改为 sellingPrice
-  final double quantity;
+  final int sellingPriceInCents; // 从 unitPrice 改为 sellingPriceInCents
+  final int quantity;
   final double amount;
   const SaleItem({
     required this.id,
@@ -17,7 +17,7 @@ class SaleItem {
     required this.unitId,
     required this.unitName,
     this.batchId,
-    required this.sellingPrice,
+    required this.sellingPriceInCents,
     required this.quantity,
     required this.amount,
   });
@@ -30,8 +30,8 @@ class SaleItem {
     int? unitId,
     String? unitName,
     String? batchId,
-    double? sellingPrice,
-    double? quantity,
+    int? sellingPriceInCents,
+    int? quantity,
     double? amount,
   }) {
     return SaleItem(
@@ -41,7 +41,7 @@ class SaleItem {
       unitId: unitId ?? this.unitId,
       unitName: unitName ?? this.unitName,
       batchId: batchId ?? this.batchId,
-      sellingPrice: sellingPrice ?? this.sellingPrice,
+      sellingPriceInCents: sellingPriceInCents ?? this.sellingPriceInCents,
       quantity: quantity ?? this.quantity,
       amount: amount ?? this.amount,
     );
@@ -54,8 +54,8 @@ class SaleItem {
     required int unitId,
     required String unitName,
     String? batchId,
-    required double sellingPrice,
-    required double quantity,
+    required int sellingPriceInCents,
+    required int quantity,
   }) {
     final now = DateTime.now();
     return SaleItem(
@@ -65,24 +65,24 @@ class SaleItem {
       unitId: unitId,
       unitName: unitName,
       batchId: batchId,
-      sellingPrice: sellingPrice,
+      sellingPriceInCents: sellingPriceInCents,
       quantity: quantity,
-      amount: sellingPrice * quantity,
+      amount: sellingPriceInCents/100 * quantity,
     );
   }
 
   /// 更新数量并重新计算金额
-  SaleItem updateQuantity(double newQuantity) {
-    return copyWith(quantity: newQuantity, amount: sellingPrice * newQuantity);
+  SaleItem updateQuantity(int newQuantity) {
+    return copyWith(quantity: newQuantity, amount: sellingPriceInCents/100 * newQuantity);
   }
 
   /// 更新销售价并重新计算金额
   SaleItem updateSellingPrice(double newSellingPrice) {
-    return copyWith(sellingPrice: newSellingPrice, amount: newSellingPrice * quantity);
+    return copyWith(sellingPriceInCents: (newSellingPrice * 100).toInt(), amount: newSellingPrice * quantity);
   }
 
   /// 获取格式化的销售价显示
-  String get formattedSellingPrice => '¥${sellingPrice.toStringAsFixed(2)}';
+  String get formattedSellingPrice => '¥${sellingPriceInCents.toStringAsFixed(2)}';
 
   /// 获取格式化的金额显示
   String get formattedAmount => '¥${amount.toStringAsFixed(2)}';
@@ -93,7 +93,7 @@ class SaleItem {
 
   @override
   String toString() {
-    return 'SaleItem(id: $id, productName: $productName, quantity: $quantity, sellingPrice: $sellingPrice, amount: $amount)';
+    return 'SaleItem(id: $id, productName: $productName, quantity: $quantity, sellingPriceInCents: $sellingPriceInCents, amount: $amount)';
   }
 
   @override

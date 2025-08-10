@@ -10,7 +10,7 @@ abstract class Inventory with _$Inventory {
   const factory Inventory({
     required String id,
     required int productId,
-    required double quantity,
+    required int quantity,
     required String shopId,
     required String batchNumber, // 批次号（外键）
     DateTime? createdAt,
@@ -24,7 +24,7 @@ abstract class Inventory with _$Inventory {
   /// 创建新库存记录
   factory Inventory.create({
     required int productId,
-    required double quantity,
+    required int quantity,
     required String shopId,
     required String batchNumber,
   }) {
@@ -41,17 +41,17 @@ abstract class Inventory with _$Inventory {
   }
 
   /// 更新库存数量
-  Inventory updateQuantity(double newQuantity) {
+  Inventory updateQuantity(int newQuantity) {
     return copyWith(quantity: newQuantity, updatedAt: DateTime.now());
   }
 
   /// 增加库存
-  Inventory addQuantity(double amount) {
+  Inventory addQuantity(int amount) {
     return updateQuantity(quantity + amount);
   }
 
   /// 减少库存
-  Inventory subtractQuantity(double amount) {
+  Inventory subtractQuantity(int amount) {
     return updateQuantity(quantity - amount);
   }
 

@@ -2,7 +2,7 @@
 
 cd E:\stocko_app\
 git add .
-git commit -m "0808 16 622 导航栏"
+git commit -m "0809 3 621 unitid to int"
 git push
 
 

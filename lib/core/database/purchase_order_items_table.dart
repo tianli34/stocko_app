@@ -28,7 +28,7 @@ class PurchaseOrderItemsTable extends Table {
   RealColumn get unitPrice => real().named('unit_price')();
 
   /// 数量
-  RealColumn get quantity => real().named('quantity')();
+  IntColumn get quantity => integer().named('quantity')();
 
   /// 生产日期
   DateTimeColumn get productionDate =>

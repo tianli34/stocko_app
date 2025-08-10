@@ -101,7 +101,7 @@ class ProductRepository implements IProductRepository {
         Product product,
         int unitId,
         String unitName,
-        double? wholesalePrice
+        int? wholesalePriceInCents
       })
     >
   >
@@ -115,7 +115,7 @@ class ProductRepository implements IProductRepository {
                   product: _dataToProduct(e.product),
                   unitId: e.unitId,
                   unitName: e.unitName,
-                  wholesalePrice: e.wholesalePrice,
+                  wholesalePriceInCents: e.wholesalePriceInCents,
                 ),
               )
               .toList(),
@@ -183,7 +183,7 @@ class ProductRepository implements IProductRepository {
       Product product,
       int unitId,
       String unitName,
-      double? wholesalePrice
+      int? wholesalePriceInCents
     })?
   >
   getProductWithUnitByBarcode(String barcode) async {
@@ -195,7 +195,7 @@ class ProductRepository implements IProductRepository {
         product: _dataToProduct(result.product),
         unitId: result.unitId,
         unitName: result.unitName,
-        wholesalePrice: result.wholesalePrice,
+        wholesalePriceInCents: result.wholesalePriceInCents,
       );
     } catch (e) {
       throw Exception('根据条码查询产品及单位失败: $e');

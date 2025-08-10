@@ -101,50 +101,6 @@ class SaleOrderCard extends ConsumerWidget {
     return '${dateTime.year}-${dateTime.month.toString().padLeft(2, '0')}-${dateTime.day.toString().padLeft(2, '0')} ${dateTime.hour.toString().padLeft(2, '0')}:${dateTime.minute.toString().padLeft(2, '0')}';
   }
 
-  String _getStatusText(String status) {
-    switch (status) {
-      case 'credit':
-        return '赊账';
-      case 'preset':
-        return '已完成';
-      case 'settled':
-        return '已结清';
-      case 'cancelled':
-        return '已取消';
-      default:
-        return status;
-    }
-  }
-
-  Color _getStatusColor(String status) {
-    switch (status) {
-      case 'credit':
-        return Colors.orange;
-      case 'preset':
-        return Colors.green;
-      case 'settled':
-        return Colors.green;
-      case 'cancelled':
-        return Colors.red;
-      default:
-        return Colors.grey;
-    }
-  }
-
-  Color _getStatusBackgroundColor(String status) {
-    switch (status) {
-      case 'credit':
-        return Colors.orange.withOpacity(0.8);
-      case 'preset':
-        return Colors.green.withOpacity(0.8);
-      case 'settled':
-        return Colors.green.withOpacity(0.8);
-      case 'cancelled':
-        return Colors.red.withOpacity(0.8);
-      default:
-        return Colors.grey.withOpacity(0.8);
-    }
-  }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {

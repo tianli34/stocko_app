@@ -15,8 +15,8 @@ class UnitConverter {
   ///
   /// 返回换算后的基础单位数量
   /// 如果找不到对应的单位配置，返回原数量
-  static double convertToBaseUnit(
-    double quantity,
+  static int convertToBaseUnit(
+    int quantity,
     Unit unit,
     List<ProductUnit> allUnits,
   ) {
@@ -38,7 +38,7 @@ class UnitConverter {
   ///
   /// 返回格式化的字符串，如 "1 箱 5 瓶" 或 "15 瓶"
   static String formatStockForDisplay(
-    double stockInBaseUnit,
+    int stockInBaseUnit,
     List<ProductUnit> allUnits,
     Map<String, Unit> unitMap,
   ) {
@@ -51,7 +51,7 @@ class UnitConverter {
       ..sort((a, b) => b.conversionRate.compareTo(a.conversionRate));
 
     final List<String> parts = [];
-    double remainingStock = stockInBaseUnit;
+    int remainingStock = stockInBaseUnit;
 
     for (int i = 0; i < sortedUnits.length; i++) {
       final productUnit = sortedUnits[i];
@@ -76,7 +76,7 @@ class UnitConverter {
         parts.add('$wholeUnits ${unit.name}');
         // 计算剩余的基础单位数量
         remainingStock -= productUnit.calculateBaseQuantity(
-          wholeUnits.toDouble(),
+          wholeUnits,
         );
       }
     }
@@ -91,8 +91,8 @@ class UnitConverter {
   /// [allUnits] 产品的所有单位配置列表
   ///
   /// 返回目标单位的库存数量
-  static double getStockInUnit(
-    double stockInBaseUnit,
+  static int getStockInUnit(
+    int stockInBaseUnit,
     Unit targetUnit,
     List<ProductUnit> allUnits,
   ) {
@@ -136,7 +136,7 @@ class UnitConverter {
   }
 
   /// 格式化数字显示（去除不必要的小数点）
-  static String _formatNumber(double number) {
+  static String _formatNumber(int number) {
     if (number == number.truncateToDouble()) {
       return number.truncate().toString();
     } else {

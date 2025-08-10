@@ -30,7 +30,7 @@ class BatchDao extends DatabaseAccessor<AppDatabase> with _$BatchDaoMixin {
   Future<void> createBatch({
     required int productId,
     required DateTime productionDate,
-    required double initialQuantity,
+    required int initialQuantity,
     required String shopId,
   }) async {
     final batchNumber = generateBatchNumber(productId, productionDate);
@@ -66,7 +66,7 @@ class BatchDao extends DatabaseAccessor<AppDatabase> with _$BatchDaoMixin {
   /// 用于同一批次多次入库时的数量累加
   Future<void> updateBatchQuantity(
     String batchNumber,
-    double newInitialQuantity,
+    int newInitialQuantity,
   ) {
     return (update(
       batchesTable,

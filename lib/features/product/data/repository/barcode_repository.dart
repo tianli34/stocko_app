@@ -58,7 +58,10 @@ class BarcodeRepository implements IBarcodeRepository {
   }
 
   @override
-  Future<List<Barcode>> getBarcodesByProductUnitId(String productUnitId) async {
+  Future<List<Barcode>> getBarcodesByProductUnitId(int? productUnitId) async {
+    if (productUnitId == null) {
+      return [];
+    }
     try {
       final dataList = await _barcodeDao.getBarcodesByProductUnitId(
         productUnitId,
@@ -82,7 +85,7 @@ class BarcodeRepository implements IBarcodeRepository {
   }
 
   @override
-  Stream<List<Barcode>> watchBarcodesByProductUnitId(String productUnitId) {
+  Stream<List<Barcode>> watchBarcodesByProductUnitId(int productUnitId) {
     try {
       return _barcodeDao
           .watchBarcodesByProductUnitId(productUnitId)
@@ -116,7 +119,7 @@ class BarcodeRepository implements IBarcodeRepository {
   }
 
   @override
-  Future<int> deleteBarcodesByProductUnitId(String productUnitId) async {
+  Future<int> deleteBarcodesByProductUnitId(int productUnitId) async {
     try {
       print('🗃️ 仓储层：删除产品单位的所有条码，产品单位ID: $productUnitId');
       return await _barcodeDao.deleteBarcodesByProductUnitId(productUnitId);
@@ -138,7 +141,7 @@ class BarcodeRepository implements IBarcodeRepository {
 
   @override
   Future<bool> productUnitHasBarcode(
-    String productUnitId,
+    int productUnitId,
     String barcode,
   ) async {
     try {

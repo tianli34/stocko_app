@@ -35,7 +35,7 @@ abstract class IProductRepository {
         Product product,
         int unitId,
         String unitName,
-        double? wholesalePrice
+        int? wholesalePriceInCents
       })
     >
   >
@@ -74,7 +74,7 @@ abstract class IProductRepository {
       Product product,
       int unitId,
       String unitName,
-      double? wholesalePrice
+      int? wholesalePriceInCents
     })?
   >
   getProductWithUnitByBarcode(String barcode);

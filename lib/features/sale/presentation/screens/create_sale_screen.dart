@@ -117,7 +117,7 @@ class _CreateSaleScreenState extends ConsumerState<CreateSaleScreen> {
           Product product,
           int unitId,
           String unitName,
-          double? wholesalePrice,
+          int? wholesalePriceInCents,
         })
       >
       productsWithUnit = await ref.read(allProductsWithUnitProvider.future);
@@ -133,7 +133,7 @@ class _CreateSaleScreenState extends ConsumerState<CreateSaleScreen> {
               product: p.product,
               unitId: p.unitId,
               unitName: p.unitName,
-              sellingPrice: p.product.effectivePrice,
+              sellingPriceInCents: (p.product.effectivePrice! * 100).toInt(),
             );
       }
     } catch (e) {
@@ -419,7 +419,7 @@ class _CreateSaleScreenState extends ConsumerState<CreateSaleScreen> {
               unitId: result.unitId,
               unitName: result.unitName,
               barcode: barcode,
-              sellingPrice: result.product.effectivePrice,
+              sellingPriceInCents: (result.product.effectivePrice! * 100).toInt(),
             );
       } else {
         // 如果没有找到产品，显示对话框
@@ -460,7 +460,7 @@ class _CreateSaleScreenState extends ConsumerState<CreateSaleScreen> {
               unitId: result.unitId,
               unitName: result.unitName,
               barcode: barcode,
-              sellingPrice: result.product.effectivePrice,
+              sellingPriceInCents: (result.product.effectivePrice! * 100).toInt(),
             );
         _lastScannedBarcode = barcode; // 仅在成功时更新上一个条码
         // 成功添加后给予一个更明确的提示
@@ -530,7 +530,7 @@ class _CreateSaleScreenState extends ConsumerState<CreateSaleScreen> {
         );
         return false;
       }
-      if (_currentMode == SaleMode.sale && item.sellingPrice < 0) {
+      if (_currentMode == SaleMode.sale && item.sellingPriceInCents < 0) {
         showAppSnackBar(
           context,
           message: '货品"${item.productName}"的单价不能为负数',
@@ -539,7 +539,7 @@ class _CreateSaleScreenState extends ConsumerState<CreateSaleScreen> {
         return false;
       }
       // 采购模式下，单价不能为0
-      if (_currentMode == SaleMode.sale && item.sellingPrice == 0) {
+      if (_currentMode == SaleMode.sale && item.sellingPriceInCents == 0) {
         showAppSnackBar(
           context,
           message: '货品"${item.productName}"的单价不能为0',

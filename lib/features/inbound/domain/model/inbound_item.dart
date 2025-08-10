@@ -7,7 +7,7 @@ class InboundItem {
   final int unitId;
   final String unitName;
   final double unitPrice;
-  final double quantity;
+  final int quantity;
   final double amount;
   final DateTime? productionDate;
 
@@ -31,7 +31,7 @@ class InboundItem {
     int? unitId,
     String? unitName,
     double? unitPrice,
-    double? quantity,
+    int? quantity,
     double? amount,
     DateTime? productionDate,
   }) {
@@ -55,7 +55,7 @@ class InboundItem {
     required int unitId,
     required String unitName,
     required double unitPrice,
-    required double quantity,
+    required int quantity,
     DateTime? productionDate,
   }) {
     final now = DateTime.now();
@@ -73,7 +73,7 @@ class InboundItem {
   }
 
   /// 更新数量并重新计算金额
-  InboundItem updateQuantity(double newQuantity) {
+  InboundItem updateQuantity(int newQuantity) {
     return copyWith(quantity: newQuantity, amount: unitPrice * newQuantity);
   }
 

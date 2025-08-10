@@ -168,7 +168,7 @@ class InventoryRepository implements IInventoryRepository {
   Future<bool> updateInventoryQuantity(
     int productId,
     String shopId,
-    double quantity,
+    int quantity,
   ) async {
     try {
       return await _inventoryDao.updateInventoryQuantity(
@@ -186,7 +186,7 @@ class InventoryRepository implements IInventoryRepository {
   Future<bool> addInventoryQuantity(
     int productId,
     String shopId,
-    double amount,
+    int amount,
   ) async {
     try {
       final current = await getInventoryByProductAndShop(productId, shopId);
@@ -208,7 +208,7 @@ class InventoryRepository implements IInventoryRepository {
   Future<bool> subtractInventoryQuantity(
     int productId,
     String shopId,
-    double amount,
+    int amount,
   ) async {
     try {
       final current = await getInventoryByProductAndShop(productId, shopId);

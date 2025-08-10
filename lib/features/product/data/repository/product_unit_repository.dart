@@ -39,7 +39,7 @@ class ProductUnitRepository implements IProductUnitRepository {
   }
 
   @override
-  Future<ProductUnit?> getProductUnitById(String productUnitId) async {
+  Future<ProductUnit?> getProductUnitById(int productUnitId) async {
     try {
       final data = await _productUnitDao.getProductUnitById(productUnitId);
       return data != null ? _dataToProductUnit(data) : null;
@@ -101,7 +101,7 @@ class ProductUnitRepository implements IProductUnitRepository {
   }
 
   @override
-  Future<int> deleteProductUnit(String productUnitId) async {
+  Future<int> deleteProductUnit(int productUnitId) async {
     try {
       print('🗃️ 仓储层：删除产品单位，ID: $productUnitId');
       return await _productUnitDao.deleteProductUnit(productUnitId);
@@ -204,36 +204,38 @@ class ProductUnitRepository implements IProductUnitRepository {
   }
 
   /// 将ProductUnit模型转换为数据库Companion
-  ProductUnitsTableCompanion _productUnitToCompanion(ProductUnit productUnit) {
+  ProductUnitCompanion _productUnitToCompanion(ProductUnit productUnit) {
     print('==================【批发价调试】==================');
     print('ProductUnit ID: ${productUnit.productUnitId}');
-    print('SELLING PRICE: ${productUnit.sellingPrice}');
-    print('WHOLESALE PRICE: ${productUnit.wholesalePrice}');
+    print('SELLING PRICE: ${productUnit.sellingPriceInCents}');
+    print('WHOLESALE PRICE: ${productUnit.wholesalePriceInCents}');
     print(
       'productId: ${productUnit.productId}, unitId: ${productUnit.unitId}, conversionRate: ${productUnit.conversionRate}',
     );
     print('=================================================');
-    return ProductUnitsTableCompanion(
-      productUnitId: Value(productUnit.productUnitId),
+    return ProductUnitCompanion(
+      productUnitId: productUnit.productUnitId == null
+          ? const Value.absent()
+          : Value(productUnit.productUnitId!),
       productId: Value(productUnit.productId),
       unitId: Value(productUnit.unitId),
       conversionRate: Value(productUnit.conversionRate),
-      sellingPrice: productUnit.sellingPrice != null
-          ? Value(productUnit.sellingPrice!)
+      sellingPriceInCents: productUnit.sellingPriceInCents != null
+          ? Value(productUnit.sellingPriceInCents!)
           : const Value.absent(),
-      wholesalePrice: productUnit.wholesalePrice != null
-          ? Value(productUnit.wholesalePrice!)
+      wholesalePriceInCents: productUnit.wholesalePriceInCents != null
+          ? Value(productUnit.wholesalePriceInCents!)
           : const Value.absent(),
       lastUpdated: Value(productUnit.lastUpdated ?? DateTime.now()),
     );
   }
 
   /// 将数据库数据转换为ProductUnit模型
-  ProductUnit _dataToProductUnit(ProductUnitsTableData data) {
+  ProductUnit _dataToProductUnit(ProductUnitData data) {
     print('==================【批发价回显调试】==================');
     print('ProductUnit ID: ${data.productUnitId}');
-    print('SELLING PRICE: ${data.sellingPrice}');
-    print('WHOLESALE PRICE: ${data.wholesalePrice}');
+    print('SELLING PRICE: ${data.sellingPriceInCents}');
+    print('WHOLESALE PRICE: ${data.wholesalePriceInCents}');
     print(
       'productId: ${data.productId}, unitId: ${data.unitId}, conversionRate: ${data.conversionRate}',
     );
@@ -243,8 +245,8 @@ class ProductUnitRepository implements IProductUnitRepository {
       productId: data.productId,
       unitId: data.unitId,
       conversionRate: data.conversionRate,
-      sellingPrice: data.sellingPrice,
-      wholesalePrice: data.wholesalePrice,
+      sellingPriceInCents: data.sellingPriceInCents,
+      wholesalePriceInCents: data.wholesalePriceInCents,
       lastUpdated: data.lastUpdated,
     );
   }

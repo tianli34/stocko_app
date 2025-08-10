@@ -19,7 +19,7 @@ class InboundReceiptItemsTable extends Table {
       integer().named('product_id').references(ProductsTable, #id)();
 
   /// 本次入库数量
-  RealColumn get quantity => real().named('quantity')();
+  IntColumn get quantity => integer().named('quantity')();
 
   /// 外键 - 单位ID（入库时使用的单位）
   IntColumn get unitId => integer().named('unit_id').references(Unit, #id)();
@@ -32,8 +32,7 @@ class InboundReceiptItemsTable extends Table {
   TextColumn get locationId => text().named('location_id').nullable()();
 
   /// 采购数量（来自采购单的原始数量，用于显示对比）
-  RealColumn get purchaseQuantity =>
-      real().named('purchase_quantity').nullable()();
+  IntColumn get purchaseQuantity => integer().named('purchase_quantity').nullable()();
 
   /// 外键 - 采购单ID（如果来自采购单）
   TextColumn get purchaseOrderId =>

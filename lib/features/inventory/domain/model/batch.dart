@@ -6,7 +6,7 @@ class Batch {
   final DateTime productionDate;
 
   /// 初始数量，同一批次可累加
-  final double initialQuantity;
+  final int initialQuantity;
 
   final String shopId;
   final DateTime createdAt;
@@ -39,7 +39,7 @@ class Batch {
   factory Batch.create({
     required int productId,
     required DateTime productionDate,
-    required double initialQuantity,
+    required int initialQuantity,
     required String shopId,
   }) {
     final now = DateTime.now();
@@ -59,7 +59,7 @@ class Batch {
     String? batchNumber,
     int? productId,
     DateTime? productionDate,
-    double? initialQuantity,
+    int? initialQuantity,
     String? shopId,
     DateTime? createdAt,
     DateTime? updatedAt,

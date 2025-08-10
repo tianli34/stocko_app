@@ -18,7 +18,7 @@ import '../../application/provider/unit_edit_form_providers.dart';
 
 /// 辅单位条码数据
 class AuxiliaryUnitBarcodeData {
-  final String productUnitId;
+  final int productUnitId;
   final String barcode;
 
   const AuxiliaryUnitBarcodeData({
@@ -235,10 +235,9 @@ class ProductAddEditController {
     // 添加基础单位
     list.add(
       ProductUnit(
-        productUnitId: 'pu_${product.id}_${product.unitId!}',
         productId: product.id,
         unitId: product.unitId!,
-        conversionRate: 1.0,
+        conversionRate: 1,
       ),
     );
 
@@ -270,15 +269,14 @@ class ProductAddEditController {
       if (unit != null && unit.id != null) {
         list.add(
           ProductUnit(
-            productUnitId: 'pu_${product.id}_${unit.id}',
             productId: product.id,
             unitId: unit.id!,
             conversionRate: auxUnit.conversionRate,
-            sellingPrice: auxUnit.retailPrice.trim().isNotEmpty
-                ? double.tryParse(auxUnit.retailPrice.trim())
+            sellingPriceInCents: auxUnit.retailPrice.trim().isNotEmpty
+                ? int.tryParse(auxUnit.retailPrice.trim())
                 : null,
-            wholesalePrice: auxUnit.wholesalePrice.trim().isNotEmpty
-                ? double.tryParse(auxUnit.wholesalePrice.trim())
+            wholesalePriceInCents: auxUnit.wholesalePriceInCents.trim().isNotEmpty
+                ? int.tryParse(auxUnit.wholesalePriceInCents.trim())
                 : null,
           ),
         );
@@ -334,7 +332,7 @@ class ProductAddEditController {
     await ctrl.addBarcode(
       Barcode(
         id: id,
-        productUnitId: baseProductUnit.productUnitId, // 使用正确的productUnitId
+        productUnitId: baseProductUnit.productUnitId!, // 使用正确的productUnitId
         barcode: code,
         createdAt: DateTime.now(),
         updatedAt: DateTime.now(),
@@ -409,13 +407,13 @@ class ProductAddEditController {
               '数据不一致：在产品单位列表中找不到单位 ${finalTargetUnit.name} (换算率: ${auxUnit.conversionRate})');
         }
 
-        if (matchingProductUnit.productUnitId.isNotEmpty) {
+        if ((matchingProductUnit.productUnitId ?? 0) > 0) {
           final id =
               'barcode_${product.id}_${matchingProductUnit.productUnitId}_${DateTime.now().millisecondsSinceEpoch}';
           barcodes.add(
             Barcode(
               id: id,
-              productUnitId: matchingProductUnit.productUnitId,
+              productUnitId: matchingProductUnit.productUnitId!,
               barcode: code,
               createdAt: DateTime.now(),
               updatedAt: DateTime.now(),

@@ -142,7 +142,7 @@ class _CreateInboundScreenState extends ConsumerState<CreateInboundScreen> {
           Product product,
           int unitId,
           String unitName,
-          double? wholesalePrice
+          int? wholesalePriceInCents
         })
       > productsWithUnit = await ref.read(allProductsWithUnitProvider.future);
 
@@ -157,7 +157,7 @@ class _CreateInboundScreenState extends ConsumerState<CreateInboundScreen> {
               product: p.product,
               unitId: p.unitId,
               unitName: p.unitName,
-              wholesalePrice: p.wholesalePrice,
+              wholesalePriceInCents: p.wholesalePriceInCents,
             );
       }
     } catch (e) {
@@ -315,7 +315,7 @@ class _CreateInboundScreenState extends ConsumerState<CreateInboundScreen> {
               unitId: result.unitId,
               unitName: result.unitName,
               barcode: barcode,
-              wholesalePrice: result.wholesalePrice,
+              wholesalePriceInCents: result.wholesalePriceInCents,
             );
       } else {
         // 如果没有找到产品，显示对话框
@@ -356,7 +356,7 @@ class _CreateInboundScreenState extends ConsumerState<CreateInboundScreen> {
               unitId: result.unitId,
               unitName: result.unitName,
               barcode: barcode,
-              wholesalePrice: result.wholesalePrice,
+              wholesalePriceInCents: result.wholesalePriceInCents,
             );
         _lastScannedBarcode = barcode; // 仅在成功时更新上一个条码
         // 成功添加后给予一个更明确的提示

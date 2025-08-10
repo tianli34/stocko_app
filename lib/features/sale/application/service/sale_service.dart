@@ -38,7 +38,7 @@ class SaleService {
         unitId: item.unitId,
         batchId: item.batchId,
         quantity: item.quantity.toInt(),
-        unitPrice: item.sellingPrice,
+        unitPrice: item.sellingPriceInCents/100,
         totalPrice: item.amount,
       );
     }).toList();

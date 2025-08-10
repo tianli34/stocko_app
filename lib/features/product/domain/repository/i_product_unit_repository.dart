@@ -10,7 +10,7 @@ abstract class IProductUnitRepository {
   Future<void> addMultipleProductUnits(List<ProductUnit> productUnits);
 
   /// 根据产品单位ID获取产品单位
-  Future<ProductUnit?> getProductUnitById(String productUnitId);
+  Future<ProductUnit?> getProductUnitById(int productUnitId);
   /// 根据产品ID获取所有产品单位
   Future<List<ProductUnit>> getProductUnitsByProductId(int productId);
 
@@ -24,7 +24,7 @@ abstract class IProductUnitRepository {
   Future<bool> updateProductUnit(ProductUnit productUnit);
 
   /// 删除产品单位
-  Future<int> deleteProductUnit(String productUnitId);
+  Future<int> deleteProductUnit(int productUnitId);
 
   /// 删除产品的所有单位
   Future<int> deleteProductUnitsByProductId(int productId);

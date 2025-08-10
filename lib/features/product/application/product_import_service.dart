@@ -152,10 +152,10 @@ class ProductImportService {
         for (final productData in rawProductsData) {
           // 使用基础时间戳和偏移量生成唯一的ID
           final productId = baseTimestamp + idOffset;
-          final productPackUnitId = (baseTimestamp + idOffset + 1).toString();
-          final packBarcodeId = (baseTimestamp + idOffset + 2).toString();
-          final productCartonUnitId = (baseTimestamp + idOffset + 3).toString();
-          final cartonBarcodeId = (baseTimestamp + idOffset + 4).toString();
+          final productPackUnitId = baseTimestamp + idOffset + 1;
+          final packBarcodeId = baseTimestamp + idOffset + 2;
+          final productCartonUnitId = baseTimestamp + idOffset + 3;
+          final cartonBarcodeId = baseTimestamp + idOffset + 4;
 
           final productName = productData['货品名称'] as String;
           final brand = productData['品牌'] as String;
@@ -167,7 +167,7 @@ class ProductImportService {
           final cartonWholesalePrice = _parsePrice(
             productData['批发价'] as String,
           );
-          const conversionRate = 10.0;
+          const conversionRate = 10;
 
           // 插入商品主记录
           batch.insert(
@@ -186,14 +186,14 @@ class ProductImportService {
 
           // 插入“包”的单位和条码记录
           batch.insert(
-            db.productUnitsTable,
-            ProductUnitsTableCompanion.insert(
-              productUnitId: productPackUnitId, // 使用新ID
+            db.productUnit,
+            ProductUnitCompanion.insert(
+              productUnitId: productPackUnitId as Value<int>, // 使用新ID
               productId: productId,
               unitId: packUnitId,
-              conversionRate: 1.0,
-              sellingPrice: Value(cartonSuggestedRetailPrice / conversionRate),
-              wholesalePrice: Value(cartonWholesalePrice / conversionRate),
+              conversionRate: 1,
+              sellingPriceInCents: Value((cartonSuggestedRetailPrice*100 / conversionRate) as int),
+              wholesalePriceInCents: Value((cartonWholesalePrice*100 / conversionRate) as int),
             ),
           );
           final packBarcode = productData['包条码'] as String?;
@@ -201,7 +201,7 @@ class ProductImportService {
             batch.insert(
               db.barcodesTable,
               BarcodesTableCompanion.insert(
-                id: packBarcodeId, // 使用新ID
+                id: packBarcodeId as String, // 使用新ID
                 productUnitId: productPackUnitId,
                 barcode: packBarcode,
               ),
@@ -210,14 +210,14 @@ class ProductImportService {
 
           // 插入“条”的单位和条码记录
           batch.insert(
-            db.productUnitsTable,
-            ProductUnitsTableCompanion.insert(
-              productUnitId: productCartonUnitId, // 使用新ID
+            db.productUnit,
+            ProductUnitCompanion.insert(
+              productUnitId: productCartonUnitId as Value<int>, // 使用新ID
               productId: productId,
               unitId: cartonUnitId,
               conversionRate: conversionRate,
-              sellingPrice: Value(cartonSuggestedRetailPrice),
-              wholesalePrice: Value(cartonWholesalePrice),
+              sellingPriceInCents: Value((cartonSuggestedRetailPrice*100) as int),
+              wholesalePriceInCents: Value((cartonWholesalePrice*100) as int),
             ),
           );
           final cartonBarcode = productData['条条码'] as String?;
@@ -225,7 +225,7 @@ class ProductImportService {
             batch.insert(
               db.barcodesTable,
               BarcodesTableCompanion.insert(
-                id: cartonBarcodeId, // 使用新ID
+                id: cartonBarcodeId as String, // 使用新ID
                 productUnitId: productCartonUnitId,
                 barcode: cartonBarcode,
               ),

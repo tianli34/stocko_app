@@ -112,7 +112,7 @@ class ProductOperationsNotifier extends AsyncNotifier<void> {
       Product product,
       int unitId,
       String unitName,
-      double? wholesalePrice
+      int? wholesalePriceInCents
     })?
   >
   getProductWithUnitByBarcode(String barcode) async {
@@ -269,7 +269,7 @@ final allProductsWithUnitProvider =
           Product product,
           int unitId,
           String unitName,
-          double? wholesalePrice
+          int? wholesalePriceInCents
         })
       >
     >((ref) {

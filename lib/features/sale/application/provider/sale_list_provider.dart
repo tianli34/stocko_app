@@ -36,14 +36,14 @@ class SaleListNotifier extends StateNotifier<List<SaleItem>> {
   /// [product] - 要添加的货品对象
   /// [unitName] - 单位名称
   /// [barcode] - 条码
-  /// [sellingPrice] - 销售价
+  /// [sellingPriceInCents] - 销售价
   void addOrUpdateItem({
     required Product product,
     required int unitId,
     String? unitName,
     String? barcode,
     String? batchId,
-    double? sellingPrice,
+    int? sellingPriceInCents,
   }) {
     final actualUnitName = unitName ?? '未知单位';
     // 优先通过条码匹配，其次通过货品ID和单位匹配
@@ -59,7 +59,7 @@ class SaleListNotifier extends StateNotifier<List<SaleItem>> {
       final existingItem = state[existingItemIndex];
       final updatedItem = existingItem.copyWith(
         quantity: existingItem.quantity + 1,
-        amount: (existingItem.quantity + 1) * existingItem.sellingPrice,
+        amount: (existingItem.quantity + 1) * existingItem.sellingPriceInCents/100,
       );
       updateItem(updatedItem);
     } else {
@@ -75,9 +75,9 @@ class SaleListNotifier extends StateNotifier<List<SaleItem>> {
         unitId: unitId,
         unitName: actualUnitName,
         batchId: batchId,
-        sellingPrice: sellingPrice ?? 0.0,
+        sellingPriceInCents: sellingPriceInCents ?? 0,
         quantity: 1,
-        amount: sellingPrice ?? 0.0,
+        amount: (sellingPriceInCents ?? 0.0) / 100, // 转换为元
       );
       addItem(newItem);
     }

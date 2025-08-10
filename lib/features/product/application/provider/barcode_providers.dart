@@ -155,7 +155,7 @@ class BarcodeController extends StateNotifier<BarcodeControllerState> {
   }
 
   /// 删除产品单位的所有条码
-  Future<void> deleteBarcodesByProductUnitId(String productUnitId) async {
+  Future<void> deleteBarcodesByProductUnitId(int productUnitId) async {
     state = state.copyWith(status: BarcodeOperationStatus.loading);
 
     try {
@@ -189,7 +189,7 @@ class BarcodeController extends StateNotifier<BarcodeControllerState> {
   }
 
   /// 根据产品单位ID获取所有条码
-  Future<List<Barcode>> getBarcodesByProductUnitId(String productUnitId) async {
+  Future<List<Barcode>> getBarcodesByProductUnitId(int? productUnitId) async {
     try {
       return await _repository.getBarcodesByProductUnitId(productUnitId);
     } catch (e) {
@@ -234,7 +234,7 @@ final barcodeControllerProvider =
 
 /// 根据产品单位ID获取条码列表的 Provider
 final barcodesByProductUnitIdProvider =
-    StreamProvider.family<List<Barcode>, String>((ref, productUnitId) {
+    StreamProvider.family<List<Barcode>, int>((ref, productUnitId) {
       final repository = ref.watch(barcodeRepositoryProvider);
       return repository.watchBarcodesByProductUnitId(productUnitId);
     });

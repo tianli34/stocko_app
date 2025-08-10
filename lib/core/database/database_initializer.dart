@@ -389,7 +389,7 @@ class DatabaseInitializer {
   Future<void> initializeDefaultProductUnits() async {
     try {
       final count = await (_database.select(
-        _database.productUnitsTable,
+        _database.productUnit,
       )..limit(1)).get();
 
       if (count.isNotEmpty) {
@@ -398,39 +398,39 @@ class DatabaseInitializer {
       }
 
       final defaultProductUnits = [
-        ProductUnitsTableCompanion.insert(
-          productUnitId: 'pu_rice_kg',
+        ProductUnitCompanion.insert(
+          productUnitId: const Value(1),
           productId: 1,
           unitId: 2,
-          conversionRate: 1.0, // 基础单位
+          conversionRate: 1, // 基础单位
           lastUpdated: Value(DateTime.now()),
         ),
-        ProductUnitsTableCompanion.insert(
-          productUnitId: 'pu_flour_kg',
+        ProductUnitCompanion.insert(
+          productUnitId: const Value(2),
           productId: 2,
           unitId: 2,
-          conversionRate: 1.0, // 基础单位
+          conversionRate: 1, // 基础单位
           lastUpdated: Value(DateTime.now()),
         ),
-        ProductUnitsTableCompanion.insert(
-          productUnitId: 'pu_cola_bottle',
+        ProductUnitCompanion.insert(
+          productUnitId: const Value(3),
           productId: 3,
           unitId: 4,
-          conversionRate: 1.0, // 基础单位
+          conversionRate: 1, // 基础单位
           lastUpdated: Value(DateTime.now()),
         ),
-        ProductUnitsTableCompanion.insert(
-          productUnitId: 'pu_water_bottle',
+        ProductUnitCompanion.insert(
+          productUnitId: const Value(4),
           productId: 4, // 修改为整数ID
           unitId: 4,
-          conversionRate: 1.0, // 基础单位
+          conversionRate: 1, // 基础单位
           lastUpdated: Value(DateTime.now()),
         ),
       ];
 
       await _database.transaction(() async {
         for (final productUnit in defaultProductUnits) {
-          await _database.into(_database.productUnitsTable).insert(productUnit);
+          await _database.into(_database.productUnit).insert(productUnit);
         }
       });
 
@@ -455,28 +455,28 @@ class DatabaseInitializer {
       final defaultBarcodes = [
         BarcodesTableCompanion.insert(
           id: 'bc_rice',
-          productUnitId: 'pu_rice_kg',
+          productUnitId: 1,
           barcode: '1234567890123',
           
           updatedAt: Value(DateTime.now()),
         ),
         BarcodesTableCompanion.insert(
           id: 'bc_flour',
-          productUnitId: 'pu_flour_kg',
+          productUnitId: 2,
           barcode: '1234567890124',
           
           updatedAt: Value(DateTime.now()),
         ),
         BarcodesTableCompanion.insert(
           id: 'bc_cola',
-          productUnitId: 'pu_cola_bottle',
+          productUnitId: 3,
           barcode: '1234567890125',
           
           updatedAt: Value(DateTime.now()),
         ),
         BarcodesTableCompanion.insert(
           id: 'bc_water',
-          productUnitId: 'pu_water_bottle',
+          productUnitId: 4,
           barcode: '1234567890126',
           
           updatedAt: Value(DateTime.now()),
@@ -546,7 +546,7 @@ class DatabaseInitializer {
 
       // 删除基础数据表
       await _database.delete(_database.barcodesTable).go();
-      await _database.delete(_database.productUnitsTable).go();
+      await _database.delete(_database.productUnit).go();
       await _database.delete(_database.productsTable).go();
       await _database.delete(_database.shopsTable).go();
       await _database.delete(_database.categoriesTable).go();

@@ -11,7 +11,7 @@ abstract class InventoryTransaction with _$InventoryTransaction {
     required String id,
     required int productId,
     required String type,
-    required double quantity,
+    required int quantity,
     required String shopId,
     required DateTime time,
     String? batchId, // 批次号（外键）
@@ -42,7 +42,7 @@ abstract class InventoryTransaction with _$InventoryTransaction {
   /// 创建入库流水
   factory InventoryTransaction.createInbound({
     required int productId,
-    required double quantity,
+    required int quantity,
     required String shopId,
     DateTime? time,
     String? batchId,
@@ -63,7 +63,7 @@ abstract class InventoryTransaction with _$InventoryTransaction {
   /// 创建出库流水
   factory InventoryTransaction.createOutbound({
     required int productId,
-    required double quantity,
+    required int quantity,
     required String shopId,
     DateTime? time,
     String? batchId,
@@ -84,7 +84,7 @@ abstract class InventoryTransaction with _$InventoryTransaction {
   /// 创建调整流水
   factory InventoryTransaction.createAdjustment({
     required int productId,
-    required double quantity,
+    required int quantity,
     required String shopId,
     DateTime? time,
     String? batchId,

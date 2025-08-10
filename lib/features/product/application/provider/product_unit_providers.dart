@@ -123,7 +123,7 @@ class ProductUnitController extends StateNotifier<ProductUnitControllerState> {
   }
 
   /// 删除产品单位
-  Future<void> deleteProductUnit(String productUnitId, int productId) async {
+  Future<void> deleteProductUnit(int productUnitId, int productId) async {
     state = state.copyWith(status: ProductUnitOperationStatus.loading);
 
     try {

@@ -16,13 +16,13 @@ abstract class IBarcodeRepository {
   Future<Barcode?> getBarcodeByValue(String barcode);
 
   /// 根据产品单位ID获取所有条码
-  Future<List<Barcode>> getBarcodesByProductUnitId(String productUnitId);
+  Future<List<Barcode>> getBarcodesByProductUnitId(int? productUnitId);
 
   /// 获取所有条码
   Future<List<Barcode>> getAllBarcodes();
 
   /// 监听产品单位的条码变化
-  Stream<List<Barcode>> watchBarcodesByProductUnitId(String productUnitId);
+  Stream<List<Barcode>> watchBarcodesByProductUnitId(int productUnitId);
 
   /// 更新条码
   Future<bool> updateBarcode(Barcode barcode);
@@ -31,13 +31,13 @@ abstract class IBarcodeRepository {
   Future<int> deleteBarcode(String id);
 
   /// 删除产品单位的所有条码
-  Future<int> deleteBarcodesByProductUnitId(String productUnitId);
+  Future<int> deleteBarcodesByProductUnitId(int productUnitId);
 
   /// 检查条码是否已存在
   Future<bool> barcodeExists(String barcode);
 
   /// 检查产品单位是否已有该条码
-  Future<bool> productUnitHasBarcode(String productUnitId, String barcode);
+  Future<bool> productUnitHasBarcode(int productUnitId, String barcode);
 
   /// 更新或插入条码
   Future<void> upsertBarcode(Barcode barcode);

@@ -40,7 +40,7 @@ class BarcodeDao extends DatabaseAccessor<AppDatabase> with _$BarcodeDaoMixin {
 
   /// 根据产品单位ID获取所有条码
   Future<List<BarcodesTableData>> getBarcodesByProductUnitId(
-    String productUnitId,
+    int productUnitId,
   ) async {
     return await (select(
       db.barcodesTable,
@@ -54,7 +54,7 @@ class BarcodeDao extends DatabaseAccessor<AppDatabase> with _$BarcodeDaoMixin {
 
   /// 监听产品单位的条码变化
   Stream<List<BarcodesTableData>> watchBarcodesByProductUnitId(
-    String productUnitId,
+    int productUnitId,
   ) {
     return (select(
       db.barcodesTable,
@@ -77,7 +77,7 @@ class BarcodeDao extends DatabaseAccessor<AppDatabase> with _$BarcodeDaoMixin {
   }
 
   /// 删除产品单位的所有条码
-  Future<int> deleteBarcodesByProductUnitId(String productUnitId) async {
+  Future<int> deleteBarcodesByProductUnitId(int productUnitId) async {
     return await (delete(
       db.barcodesTable,
     )..where((tbl) => tbl.productUnitId.equals(productUnitId))).go();
@@ -95,7 +95,7 @@ class BarcodeDao extends DatabaseAccessor<AppDatabase> with _$BarcodeDaoMixin {
 
   /// 检查产品单位是否已有该条码
   Future<bool> productUnitHasBarcode(
-    String productUnitId,
+    int productUnitId,
     String barcode,
   ) async {
     final result =

@@ -10,7 +10,7 @@ class BarcodesTable extends Table {
   TextColumn get id => text().named('id')();
 
   /// 外键 - 产品单位ID，关联到product_units表
-  TextColumn get productUnitId => text().named('product_unit_id')();
+  IntColumn get productUnitId => integer().named('product_unit_id')();
 
   /// 条码值
   TextColumn get barcode => text().named('barcode')();
