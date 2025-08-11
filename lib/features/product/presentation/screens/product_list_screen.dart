@@ -160,14 +160,14 @@ class ProductListScreen extends ConsumerWidget {
     final productsAsyncValue = ref.watch(filteredProductsProvider);
     final selectedCategoryId = ref.watch(selectedCategoryIdProvider);
     final searchQuery = ref.watch(searchQueryProvider);
-    final allCategories = ref.watch(categoriesProvider);
+    final allCategories = ref.watch(categoryListProvider).categories;
 
 
     String? categoryName;
     if (selectedCategoryId != null) {
       final category = allCategories.firstWhere(
         (c) => c.id == selectedCategoryId,
-        orElse: () => const Category(id: '', name: '未知分类'),
+        orElse: () => const CategoryModel(id: -1, name: '未知分类'),
       );
       categoryName = category.name;
     }
@@ -211,7 +211,7 @@ class ProductListScreen extends ConsumerWidget {
             icon: const Icon(Icons.filter_list),
             tooltip: '按分类筛选',
             onPressed: () async {
-              final selectedCategory = await Navigator.push<Category>(
+              final selectedCategory = await Navigator.push<CategoryModel>(
                 context,
                 MaterialPageRoute(
                   builder: (context) => const CategorySelectionScreen(),

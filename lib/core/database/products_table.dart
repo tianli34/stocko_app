@@ -7,7 +7,7 @@ class ProductsTable extends Table {
   TextColumn get name => text()(); // 名称必须
   TextColumn get sku => text().nullable()();
   TextColumn get image => text().nullable()(); // 图片
-  TextColumn get categoryId => text().nullable()(); // 类别ID
+  IntColumn get categoryId => integer().nullable()(); // 类别ID
   IntColumn get unitId => integer().nullable()(); // 单位ID
   TextColumn get specification => text().nullable()(); // 型号/规格
   TextColumn get brand => text().nullable()(); // 品牌

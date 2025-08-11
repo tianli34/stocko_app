@@ -6,81 +6,81 @@ part 'category_dao.g.dart';
 
 /// 类别数据访问对象 (DAO)
 /// 专门负责类别相关的数据库操作
-@DriftAccessor(tables: [CategoriesTable])
+@DriftAccessor(tables: [Category])
 class CategoryDao extends DatabaseAccessor<AppDatabase>
     with _$CategoryDaoMixin {
   CategoryDao(super.db);
 
   /// 添加类别
-  Future<int> insertCategory(CategoriesTableCompanion companion) async {
-    return await into(db.categoriesTable).insert(companion);
+  Future<int> insertCategory(CategoryCompanion companion) async {
+    return await into(db.category).insert(companion);
   }
 
   /// 根据ID获取类别
-  Future<CategoriesTableData?> getCategoryById(String id) async {
+  Future<CategoryData?> getCategoryById(int id) async {
     return await (select(
-      db.categoriesTable,
+      db.category,
     )..where((tbl) => tbl.id.equals(id))).getSingleOrNull();
   }
 
   /// 获取所有类别
-  Future<List<CategoriesTableData>> getAllCategories() async {
-    return await select(db.categoriesTable).get();
+  Future<List<CategoryData>> getAllCategories() async {
+    return await select(db.category).get();
   }
 
   /// 监听所有类别变化
-  Stream<List<CategoriesTableData>> watchAllCategories() {
-    return select(db.categoriesTable).watch();
+  Stream<List<CategoryData>> watchAllCategories() {
+    return select(db.category).watch();
   }
 
   /// 根据父类别ID获取子类别
-  Future<List<CategoriesTableData>> getCategoriesByParentId(
-    String? parentId,
+  Future<List<CategoryData>> getCategoriesByParentId(
+    int? parentId,
   ) async {
     if (parentId == null) {
       // 获取根类别（没有父类别的类别）
       return await (select(
-        db.categoriesTable,
+        db.category,
       )..where((tbl) => tbl.parentId.isNull())).get();
     } else {
       // 获取指定父类别的子类别
       return await (select(
-        db.categoriesTable,
+        db.category,
       )..where((tbl) => tbl.parentId.equals(parentId))).get();
     }
   }
 
   /// 监听根类别变化（没有父类别的类别）
-  Stream<List<CategoriesTableData>> watchRootCategories() {
+  Stream<List<CategoryData>> watchRootCategories() {
     return (select(
-      db.categoriesTable,
+      db.category,
     )..where((tbl) => tbl.parentId.isNull())).watch();
   }
 
   /// 监听指定父类别的子类别变化
-  Stream<List<CategoriesTableData>> watchCategoriesByParentId(String parentId) {
+  Stream<List<CategoryData>> watchCategoriesByParentId(int parentId) {
     return (select(
-      db.categoriesTable,
+      db.category,
     )..where((tbl) => tbl.parentId.equals(parentId))).watch();
   }
 
   /// 更新类别
-  Future<bool> updateCategory(CategoriesTableCompanion companion) async {
-    final result = await update(db.categoriesTable).replace(companion);
+  Future<bool> updateCategory(CategoryCompanion companion) async {
+    final result = await update(db.category).replace(companion);
     return result;
   }
 
   /// 删除类别
-  Future<int> deleteCategory(String id) async {
+  Future<int> deleteCategory(int id) async {
     return await (delete(
-      db.categoriesTable,
+      db.category,
     )..where((tbl) => tbl.id.equals(id))).go();
   }
 
   /// 检查类别是否有子类别
-  Future<bool> hasSubCategories(String categoryId) async {
+  Future<bool> hasSubCategories(int categoryId) async {
     final count = await (select(
-      db.categoriesTable,
+      db.category,
     )..where((tbl) => tbl.parentId.equals(categoryId))).get();
     return count.isNotEmpty;
   }
@@ -88,10 +88,10 @@ class CategoryDao extends DatabaseAccessor<AppDatabase>
   /// 检查类别名称是否已存在（在同一父类别下）
   Future<bool> isCategoryNameExists(
     String name,
-    String? parentId, {
-    String? excludeId,
+    int? parentId, {
+    int? excludeId,
   }) async {
-    var query = select(db.categoriesTable)
+    var query = select(db.category)
       ..where((tbl) => tbl.name.equals(name));
 
     if (parentId == null) {
@@ -109,9 +109,9 @@ class CategoryDao extends DatabaseAccessor<AppDatabase>
   }
 
   /// 获取类别层级路径（从根到指定类别）
-  Future<List<CategoriesTableData>> getCategoryPath(String categoryId) async {
-    final path = <CategoriesTableData>[];
-    String? currentId = categoryId;
+  Future<List<CategoryData>> getCategoryPath(int categoryId) async {
+    final path = <CategoryData>[];
+    int? currentId = categoryId;
 
     while (currentId != null) {
       final category = await getCategoryById(currentId);

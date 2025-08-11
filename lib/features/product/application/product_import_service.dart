@@ -10,9 +10,9 @@ class ProductImportService {
   ProductImportService(this.db);
 
   /// 根据名称和可选的父ID查找或创建一个分类，并返回其ID。
-  Future<String> _getOrCreateCategory(String name, {String? parentId}) async {
+  Future<int> _getOrCreateCategory(String name, {int? parentId}) async {
     // 1. 尝试查找已存在的分类
-    final query = db.select(db.categoriesTable)
+    final query = db.select(db.category)
       ..where((tbl) => tbl.name.equals(name));
 
     if (parentId == null) {
@@ -27,14 +27,12 @@ class ProductImportService {
       return existingCategory.id; // 2. 如果找到，返回其ID
     } else {
       // 3. 如果没找到，创建一个新的
-      final newId = DateTime.now().millisecondsSinceEpoch.toString();
-      final companion = CategoriesTableCompanion.insert(
-        id: newId,
+      final companion = CategoryCompanion.insert(
         name: name,
         parentId: Value(parentId),
       );
-      await db.into(db.categoriesTable).insert(companion);
-      return newId;
+      final newCategory = await db.into(db.category).insertReturning(companion);
+      return newCategory.id;
     }
   }
 
@@ -82,7 +80,7 @@ class ProductImportService {
     final rootCategoryId = await _getOrCreateCategory(rootCategoryName);
 
     // 2.2 然后将文件中的品牌作为“烟”的子分类
-    final categoryIdMap = <String, String>{};
+    final categoryIdMap = <String, int>{};
     for (final name in categoryNames) {
       // 将品牌作为二级分类，父级是“烟”
       categoryIdMap[name] =
@@ -188,12 +186,14 @@ class ProductImportService {
           batch.insert(
             db.productUnit,
             ProductUnitCompanion.insert(
-              productUnitId: productPackUnitId as Value<int>, // 使用新ID
+              productUnitId: Value(productPackUnitId), // 使用新ID
               productId: productId,
               unitId: packUnitId,
               conversionRate: 1,
-              sellingPriceInCents: Value((cartonSuggestedRetailPrice*100 / conversionRate) as int),
-              wholesalePriceInCents: Value((cartonWholesalePrice*100 / conversionRate) as int),
+              sellingPriceInCents:
+                  Value((cartonSuggestedRetailPrice * 100 / conversionRate).toInt()),
+              wholesalePriceInCents:
+                  Value((cartonWholesalePrice * 100 / conversionRate).toInt()),
             ),
           );
           final packBarcode = productData['包条码'] as String?;
@@ -201,7 +201,7 @@ class ProductImportService {
             batch.insert(
               db.barcode,
               BarcodeCompanion.insert(
-                id: packBarcodeId as Value<int>, // 使用新ID
+                id: Value(packBarcodeId), // 使用新ID
                 productUnitId: productPackUnitId,
                 barcodeValue: packBarcode,
               ),
@@ -212,12 +212,14 @@ class ProductImportService {
           batch.insert(
             db.productUnit,
             ProductUnitCompanion.insert(
-              productUnitId: productCartonUnitId as Value<int>, // 使用新ID
+              productUnitId: Value(productCartonUnitId), // 使用新ID
               productId: productId,
               unitId: cartonUnitId,
               conversionRate: conversionRate,
-              sellingPriceInCents: Value((cartonSuggestedRetailPrice*100) as int),
-              wholesalePriceInCents: Value((cartonWholesalePrice*100) as int),
+              sellingPriceInCents:
+                  Value((cartonSuggestedRetailPrice * 100).toInt()),
+              wholesalePriceInCents:
+                  Value((cartonWholesalePrice * 100).toInt()),
             ),
           );
           final cartonBarcode = productData['条条码'] as String?;
@@ -225,7 +227,7 @@ class ProductImportService {
             batch.insert(
               db.barcode,
               BarcodeCompanion.insert(
-                id: cartonBarcodeId as Value<int>, // 使用新ID
+                id: Value(cartonBarcodeId), // 使用新ID
                 productUnitId: productCartonUnitId,
                 barcodeValue: cartonBarcode,
               ),

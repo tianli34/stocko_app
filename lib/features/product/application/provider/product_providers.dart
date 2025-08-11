@@ -193,7 +193,7 @@ final productByBarcodeProvider = FutureProvider.family<Product?, String>((
 final allProductsProvider = productListStreamProvider;
 
 /// 用于存储当前选中的分类ID
-final selectedCategoryIdProvider = StateProvider<String?>((ref) => null);
+final selectedCategoryIdProvider = StateProvider<int?>((ref) => null);
 
 /// 用于存储当前的搜索关键字
 final searchQueryProvider = StateProvider<String>((ref) => '');
@@ -203,23 +203,26 @@ final filteredProductsProvider = Provider<AsyncValue<List<Product>>>((ref) {
   final selectedCategoryId = ref.watch(selectedCategoryIdProvider);
   final searchQuery = ref.watch(searchQueryProvider);
   final productsAsyncValue = ref.watch(allProductsProvider);
-  final allCategories = ref.watch(categoriesProvider);
+  final allCategories = ref.watch(categoryListProvider).categories;
 
   return productsAsyncValue.when(
     data: (products) {
       var filteredList = products;
 
       // 默认筛选：如果未选择任何分类，则默认不显示“烟”类别及其所有子类别
-      if (selectedCategoryId == null || selectedCategoryId.isEmpty) {
+      if (selectedCategoryId == null) {
         // 查找所有后代ID的辅助函数
-        Set<String> getAllDescendantIds(
-            String parentId, List<Category> categories) {
-          final Set<String> descendantIds = {};
+        Set<int> getAllDescendantIds(
+            int parentId, List<CategoryModel> categories) {
+          final Set<int> descendantIds = {};
           final children =
               categories.where((c) => c.parentId == parentId).toList();
           for (final child in children) {
-            descendantIds.add(child.id);
-            descendantIds.addAll(getAllDescendantIds(child.id, categories));
+            if (child.id != null) {
+              descendantIds.add(child.id!);
+              descendantIds.addAll(
+                  getAllDescendantIds(child.id!, categories));
+            }
           }
           return descendantIds;
         }
@@ -227,9 +230,11 @@ final filteredProductsProvider = Provider<AsyncValue<List<Product>>>((ref) {
         try {
           final tobaccoCategory =
               allCategories.firstWhere((c) => c.name == '烟');
-          final idsToExclude = {tobaccoCategory.id};
-          idsToExclude
-              .addAll(getAllDescendantIds(tobaccoCategory.id, allCategories));
+          final idsToExclude = {tobaccoCategory.id!};
+          if (tobaccoCategory.id != null) {
+            idsToExclude.addAll(
+                getAllDescendantIds(tobaccoCategory.id!, allCategories));
+          }
 
           filteredList = filteredList
               .where((p) => !idsToExclude.contains(p.categoryId))
@@ -240,7 +245,7 @@ final filteredProductsProvider = Provider<AsyncValue<List<Product>>>((ref) {
       }
 
       // 按分类筛选
-      if (selectedCategoryId != null && selectedCategoryId.isNotEmpty) {
+      if (selectedCategoryId != null) {
         filteredList = filteredList
             .where((p) => p.categoryId == selectedCategoryId)
             .toList();

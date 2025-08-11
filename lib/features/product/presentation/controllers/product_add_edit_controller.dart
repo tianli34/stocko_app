@@ -31,7 +31,7 @@ class AuxiliaryUnitBarcodeData {
 class ProductFormData {
   final int? productId;
   final String name;
-  final String? selectedCategoryId;
+  final int? selectedCategoryId;
   final String newCategoryName;
   final int? selectedUnitId;
   final String newUnitName;
@@ -99,26 +99,31 @@ class ProductAddEditController {
   Future<ProductOperationResult> submitForm(ProductFormData data) async {
     try {
       // 1. 处理类别
-      String? categoryId = data.selectedCategoryId;
-      if ((categoryId == null || categoryId.isEmpty) &&
-          data.newCategoryName.trim().isNotEmpty) {
-        final categories = ref.read(categoriesProvider);
+      int? categoryId = data.selectedCategoryId;
+      if ((categoryId == null) && data.newCategoryName.trim().isNotEmpty) {
+        final categoryNotifier = ref.read(categoryListProvider.notifier);
+        await categoryNotifier.loadCategories();
+        final categories = ref.read(categoryListProvider).categories;
         final existingCat = categories.firstWhere(
           (c) =>
               c.name.toLowerCase() == data.newCategoryName.trim().toLowerCase(),
-          orElse: () => const Category(id: '', name: ''),
+          orElse: () => const CategoryModel(id: -1, name: ''),
         );
-        if (existingCat.id.isNotEmpty) {
+        if (existingCat.id != -1) {
           categoryId = existingCat.id;
         } else {
           final service = ref.read(categoryServiceProvider);
-          categoryId = service.generateCategoryId();
           await service.addCategory(
-            id: categoryId,
             name: data.newCategoryName.trim(),
           );
           // 立即刷新类别缓存，确保新类别在编辑时可见
-          await ref.read(categoryListProvider.notifier).loadCategories();
+          ref.invalidate(categoryListProvider);
+          // 再次获取以找到新创建的类别ID
+          await categoryNotifier.loadCategories();
+          final newCategories = ref.read(categoryListProvider).categories;
+          categoryId = newCategories
+              .firstWhere((c) => c.name == data.newCategoryName.trim())
+              .id;
         }
       }
 

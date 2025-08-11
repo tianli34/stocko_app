@@ -7,7 +7,6 @@ import '../../features/product/presentation/screens/product_list_screen.dart';
 import '../../features/product/presentation/screens/product_add_edit_screen.dart';
 import '../../features/product/presentation/screens/product_detail_screen.dart';
 import '../../features/product/presentation/screens/category_selection_screen.dart';
-import '../../features/product/presentation/pages/category_test_page.dart';
 import '../../features/product/application/provider/product_providers.dart';
 import '../../features/database/presentation/screens/database_viewer_screen.dart';
 import '../../features/debug/screens/database_management_screen.dart';
@@ -228,11 +227,6 @@ final routerProvider = Provider<GoRouter>((ref) {
         name: 'categories',
         builder: (context, state) => const CategorySelectionScreen(isSelectionMode: false),
         routes: [
-          GoRoute(
-            path: 'test',
-            name: 'category-test',
-            builder: (context, state) => const CategoryTestPage(),
-          ),
         ],
       ),
       GoRoute(

@@ -58,7 +58,7 @@ class _ProductAddEditScreenState extends ConsumerState<ProductAddEditScreen> {
   final FocusNode _shelfLifeFocusNode = FocusNode();
 
   // 表单状态
-  String? _selectedCategoryId; // 添加类别选择状态
+  int? _selectedCategoryId; // 添加类别选择状态
   int? _selectedUnitId; // 添加单位选择状态
   String? _selectedImagePath; // 添加图片路径状态
   List<ProductUnit>? _productUnits; // 存储单位配置数据
@@ -115,7 +115,7 @@ class _ProductAddEditScreenState extends ConsumerState<ProductAddEditScreen> {
       text: product?.shelfLife?.toString() ?? '',
     );
     _remarksController = TextEditingController(text: product?.remarks ?? '');
-    _selectedCategoryId = product?.categoryId; // 初始化类别选择    // 初始化单位选择
+    _selectedCategoryId = product?.categoryId; // 初始化类别选择
     _selectedUnitId = product?.unitId; // 不设置默认值，允许为空
     _selectedImagePath = product?.image; // 初始化图片路径
     _shelfLifeUnit = product?.shelfLifeUnit ?? 'months'; // 正确初始化保质期单位
@@ -209,7 +209,7 @@ class _ProductAddEditScreenState extends ConsumerState<ProductAddEditScreen> {
   @override
   Widget build(BuildContext context) {
     final operationsState = ref.watch(productOperationsProvider);
-    final categories = ref.watch(categoriesProvider); // 获取类别列表
+    final categories = ref.watch(categoryListProvider).categories;
     final unitsAsyncValue = ref.watch(allUnitsProvider); // 获取单位列表
     final isEdit = widget.product != null;
     return GestureDetector(
@@ -406,7 +406,8 @@ class _ProductAddEditScreenState extends ConsumerState<ProductAddEditScreen> {
                     // 类别选择
                     Row(
                       children: [
-                        Expanded(child: _buildCategoryDropdown(categories)),
+                        Expanded(
+                            child: _buildCategoryDropdown(categories)),
                         const SizedBox(width: 8),
                         IconButton(
                           onPressed: () =>
@@ -579,26 +580,26 @@ class _ProductAddEditScreenState extends ConsumerState<ProductAddEditScreen> {
   }
 
   /// 构建类别TypeAhead输入框
-  Widget _buildCategoryDropdown(List<Category> categories) {
+  Widget _buildCategoryDropdown(List<CategoryModel> categories) {
     // 确保控制器在第一次构建时有正确的文本
     if (_categoryController.text.isEmpty && _selectedCategoryId != null) {
       final category = categories.firstWhere(
         (cat) => cat.id == _selectedCategoryId,
-        orElse: () => const Category(id: '', name: ''),
+        orElse: () => const CategoryModel(name: ''),
       );
-      if (category.id.isNotEmpty) {
+      if (category.id != null) {
         // 只需要在从外部数据源赋值时处理一次即可
         _categoryController.text = category.name.replaceAll(' ', '');
       }
     }
 
-    return TypeAheadField<Category>(
+    return TypeAheadField<CategoryModel>(
       controller: _categoryController,
       suggestionsCallback: (pattern) {
         // pattern 来自控制器，已经被 formatter 处理过，所以不含空格
         if (pattern.isEmpty) {
           return Future.value([
-            const Category(id: 'null', name: '未分类'),
+            const CategoryModel(name: '未分类'),
             ...categories,
           ]);
         }
@@ -615,15 +616,15 @@ class _ProductAddEditScreenState extends ConsumerState<ProductAddEditScreen> {
             .toList();
 
         if (filtered.isEmpty || pattern == '未分类') {
-          filtered.insert(0, const Category(id: 'null', name: '未分类'));
+          filtered.insert(0, const CategoryModel(name: '未分类'));
         }
 
         return Future.value(filtered);
       },
-      itemBuilder: (context, Category suggestion) {
+      itemBuilder: (context, CategoryModel suggestion) {
         return ListTile(title: Text(suggestion.name));
       },
-      onSelected: (Category suggestion) {
+      onSelected: (CategoryModel suggestion) {
         setState(() {
           if (suggestion.id == 'null') {
             _selectedCategoryId = null;
@@ -651,7 +652,7 @@ class _ProductAddEditScreenState extends ConsumerState<ProductAddEditScreen> {
               final categories = ref.read(categoriesProvider);
               final selectedCategory = categories.firstWhere(
                 (cat) => cat.id == _selectedCategoryId,
-                orElse: () => const Category(id: '', name: ''),
+                orElse: () => const CategoryModel(name: ''),
               );
               // 比较时，只需处理数据源的空格即可
               if (value != selectedCategory.name.replaceAll(' ', '') &&
@@ -940,8 +941,8 @@ class _ProductAddEditScreenState extends ConsumerState<ProductAddEditScreen> {
     // 在导航前刷新类别数据，确保显示最新的类别列表
     await ref.read(categoryListProvider.notifier).loadCategories();
 
-    final Category? selectedCategory = await Navigator.of(context)
-        .push<Category>(
+    final CategoryModel? selectedCategory = await Navigator.of(context)
+        .push<CategoryModel>(
           MaterialPageRoute(
             builder: (context) => CategorySelectionScreen(
               selectedCategoryId: _selectedCategoryId,

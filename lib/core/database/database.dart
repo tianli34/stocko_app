@@ -48,7 +48,7 @@ part 'database.g.dart';
 @DriftDatabase(
   tables: [
     ProductsTable,
-    CategoriesTable,
+    Category,
     Unit,
     ProductUnit,
     ShopsTable,
@@ -166,7 +166,7 @@ class AppDatabase extends _$AppDatabase {
       }
       if (from == 2 && to == 3) {
         // 从版本2升级到版本3：添加类别表
-        await m.createTable(categoriesTable);
+        await m.createTable(category);
       }
       if (from == 3 && to == 4) {
         // 从版本3升级到版本4：添加单位表
@@ -193,7 +193,7 @@ class AppDatabase extends _$AppDatabase {
       // 处理从旧版本直接升级到版本7的情况
       if (from < 7 && to == 7) {
         // 确保所有表都存在
-        if (from < 3) await m.createTable(categoriesTable);
+        if (from < 3) await m.createTable(category);
         if (from < 4) await m.createTable(unit);
         if (from < 5) await m.createTable(productUnit);
         if (from < 6) await m.createTable(shopsTable);
@@ -209,29 +209,29 @@ class AppDatabase extends _$AppDatabase {
       if (from == 1 && to == 3) {
         // 从版本1直接升级到版本3
         await m.recreateAllViews();
-        await m.createTable(categoriesTable);
+        await m.createTable(category);
       }
       if (from == 1 && to == 4) {
         // 从版本1直接升级到版本4
         await m.recreateAllViews();
-        await m.createTable(categoriesTable);
+        await m.createTable(category);
         await m.createTable(unit);
       }
       if (from == 1 && to == 5) {
         // 从版本1直接升级到版本5
         await m.recreateAllViews();
-        await m.createTable(categoriesTable);
+        await m.createTable(category);
         await m.createTable(unit);
         await m.createTable(productUnit);
       }
       if (from == 2 && to == 4) {
         // 从版本2直接升级到版本4
-        await m.createTable(categoriesTable);
+        await m.createTable(category);
         await m.createTable(unit);
       }
       if (from == 2 && to == 5) {
         // 从版本2升级到版本5
-        await m.createTable(categoriesTable);
+        await m.createTable(category);
         await m.createTable(unit);
         await m.createTable(productUnit);
       }

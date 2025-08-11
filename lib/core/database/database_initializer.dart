@@ -68,7 +68,7 @@ class DatabaseInitializer {
   Future<void> initializeDefaultCategories() async {
     try {
       final count = await (_database.select(
-        _database.categoriesTable,
+        _database.category,
       )..limit(1)).get();
 
       if (count.isNotEmpty) {
@@ -77,29 +77,23 @@ class DatabaseInitializer {
       }
 
       final defaultCategories = [
-        CategoriesTableCompanion.insert(
-          id: 'cat_food',
+        CategoryCompanion.insert(
+          id: const Value(1),
           name: '食品',
-          
-          updatedAt: Value(DateTime.now()),
         ),
-        CategoriesTableCompanion.insert(
-          id: 'cat_beverage',
+        CategoryCompanion.insert(
+          id: const Value(2),
           name: '饮料',
-          
-          updatedAt: Value(DateTime.now()),
         ),
-        CategoriesTableCompanion.insert(
-          id: 'cat_daily',
+        CategoryCompanion.insert(
+          id: const Value(3),
           name: '日用品',
-          
-          updatedAt: Value(DateTime.now()),
         ),
       ];
 
       await _database.transaction(() async {
         for (final category in defaultCategories) {
-          await _database.into(_database.categoriesTable).insert(category);
+          await _database.into(_database.category).insert(category);
         }
       });
 
@@ -178,7 +172,7 @@ class DatabaseInitializer {
         ProductsTableCompanion.insert(
           id: const Value(1),
           name: '大米',
-          categoryId: const Value('cat_food'),
+          categoryId: const Value(1),
           unitId: const Value(2),
           retailPrice: const Value(2.5),
           suggestedRetailPrice: const Value(3.0),
@@ -192,7 +186,7 @@ class DatabaseInitializer {
         ProductsTableCompanion.insert(
           id: const Value(2),
           name: '面粉',
-          categoryId: const Value('cat_food'),
+          categoryId: const Value(1),
           unitId: const Value(2),
           retailPrice: const Value(3.0),
           suggestedRetailPrice: const Value(3.5),
@@ -206,7 +200,7 @@ class DatabaseInitializer {
         ProductsTableCompanion.insert(
           id: const Value(3),
           name: '可乐',
-          categoryId: const Value('cat_beverage'),
+          categoryId: const Value(2),
           unitId: const Value(4),
           retailPrice: const Value(1.5),
           suggestedRetailPrice: const Value(2.0),
@@ -220,7 +214,7 @@ class DatabaseInitializer {
         ProductsTableCompanion.insert(
           id: const Value(4),
           name: '矿泉水',
-          categoryId: const Value('cat_beverage'),
+          categoryId: const Value(2),
           unitId: const Value(4),
           retailPrice: const Value(1.0),
           suggestedRetailPrice: const Value(1.5),
@@ -234,7 +228,7 @@ class DatabaseInitializer {
         ProductsTableCompanion.insert(
           id: const Value(5),
           name: '面条',
-          categoryId: const Value('cat_food'),
+          categoryId: const Value(1),
           unitId: const Value(2),
           retailPrice: const Value(4.0),
           suggestedRetailPrice: const Value(4.5),
@@ -248,7 +242,7 @@ class DatabaseInitializer {
         ProductsTableCompanion.insert(
           id: const Value(6),
           name: '牛奶',
-          categoryId: const Value('cat_beverage'),
+          categoryId: const Value(2),
           unitId: const Value(3),
           retailPrice: const Value(5.0),
           suggestedRetailPrice: const Value(6.0),
@@ -262,7 +256,7 @@ class DatabaseInitializer {
         ProductsTableCompanion.insert(
           id: const Value(7),
           name: '牙膏',
-          categoryId: const Value('cat_daily'),
+          categoryId: const Value(3),
           unitId: const Value(1),
           retailPrice: const Value(8.0),
           suggestedRetailPrice: const Value(10.0),
@@ -276,7 +270,7 @@ class DatabaseInitializer {
         ProductsTableCompanion.insert(
           id: const Value(8),
           name: '酱油',
-          categoryId: const Value('cat_food'),
+          categoryId: const Value(1),
           unitId: const Value(4),
           retailPrice: const Value(7.5),
           suggestedRetailPrice: const Value(8.0),
@@ -290,7 +284,7 @@ class DatabaseInitializer {
         ProductsTableCompanion.insert(
           id: const Value(9),
           name: '卫生纸',
-          categoryId: const Value('cat_daily'),
+          categoryId: const Value(3),
           unitId: const Value(5),
           retailPrice: const Value(12.0),
           suggestedRetailPrice: const Value(15.0),
@@ -304,7 +298,7 @@ class DatabaseInitializer {
         ProductsTableCompanion.insert(
           id: const Value(10),
           name: '啤酒',
-          categoryId: const Value('cat_beverage'),
+          categoryId: const Value(2),
           unitId: const Value(4),
           retailPrice: const Value(4.5),
           suggestedRetailPrice: const Value(6.0),
@@ -318,7 +312,7 @@ class DatabaseInitializer {
         ProductsTableCompanion.insert(
           id: const Value(11),
           name: '洗发水',
-          categoryId: const Value('cat_daily'),
+          categoryId: const Value(3),
           unitId: const Value(4),
           retailPrice: const Value(25.0),
           suggestedRetailPrice: const Value(30.0),
@@ -332,7 +326,7 @@ class DatabaseInitializer {
         ProductsTableCompanion.insert(
           id: const Value(12),
           name: '鸡蛋',
-          categoryId: const Value('cat_food'),
+          categoryId: const Value(1),
           unitId: const Value(3),
           retailPrice: const Value(15.0),
           suggestedRetailPrice: const Value(18.0),
@@ -346,7 +340,7 @@ class DatabaseInitializer {
         ProductsTableCompanion.insert(
           id: const Value(13),
           name: '食盐',
-          categoryId: const Value('cat_food'),
+          categoryId: const Value(1),
           unitId: const Value(5),
           retailPrice: const Value(2.0),
           suggestedRetailPrice: const Value(3.0),
@@ -360,7 +354,7 @@ class DatabaseInitializer {
         ProductsTableCompanion.insert(
           id: const Value(14),
           name: '抽纸',
-          categoryId: const Value('cat_daily'),
+          categoryId: const Value(3),
           unitId: const Value(5),
           retailPrice: const Value(8.0),
           suggestedRetailPrice: const Value(10.0),
@@ -541,7 +535,7 @@ class DatabaseInitializer {
       await _database.delete(_database.productUnit).go();
       await _database.delete(_database.productsTable).go();
       await _database.delete(_database.shopsTable).go();
-      await _database.delete(_database.categoriesTable).go();
+      await _database.delete(_database.category).go();
       await _database.delete(_database.unit).go();
     });
 

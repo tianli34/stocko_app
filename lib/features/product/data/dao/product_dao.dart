@@ -96,7 +96,7 @@ class ProductDao extends DatabaseAccessor<AppDatabase> with _$ProductDaoMixin {
 
   /// 根据条件查询产品
   Future<List<ProductsTableData>> getProductsByCondition({
-    String? categoryId,
+    int? categoryId,
     String? status,
     String? keyword,
   }) async {
@@ -122,7 +122,7 @@ class ProductDao extends DatabaseAccessor<AppDatabase> with _$ProductDaoMixin {
   }
 
   /// 监听指定类别的产品
-  Stream<List<ProductsTableData>> watchProductsByCategory(String categoryId) {
+  Stream<List<ProductsTableData>> watchProductsByCategory(int categoryId) {
     return (select(
       db.productsTable,
     )..where((tbl) => tbl.categoryId.equals(categoryId))).watch();

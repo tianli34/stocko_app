@@ -304,7 +304,7 @@ class DatabaseManagementScreen extends ConsumerWidget {
 
   Future<void> _showCategoriesData(BuildContext context, WidgetRef ref) async {
     final database = ref.read(appDatabaseProvider);
-    final categories = await database.select(database.categoriesTable).get();
+    final categories = await database.select(database.category).get();
 
     if (context.mounted) {
       showDialog(
@@ -320,7 +320,7 @@ class DatabaseManagementScreen extends ConsumerWidget {
                 final category = categories[index];
                 return ListTile(
                   title: Text(category.name),
-                  trailing: Text(category.id),
+                  trailing: Text(category.id.toString()),
                 );
               },
             ),

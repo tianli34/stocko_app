@@ -16,9 +16,9 @@ class CategoryService {
 
   /// 添加新类别
   Future<void> addCategory({
-    required String id,
+    int? id,
     required String name,
-    String? parentId,
+    int? parentId,
   }) async {
     // 验证类别名称
     if (name.trim().isEmpty) {
@@ -35,17 +35,16 @@ class CategoryService {
     }
 
     // 如果有父类别，验证父类别是否存在
-    if (parentId != null && parentId.isNotEmpty) {
+    if (parentId != null && parentId>0) {
       final parentCategory = await _repository.getCategoryById(parentId);
       if (parentCategory == null) {
         throw Exception('父类别不存在');
       }
     }
 
-    final category = Category(
-      id: id,
+    final category = CategoryModel(
       name: name.trim(),
-      parentId: parentId?.isNotEmpty == true ? parentId : null,
+      parentId: parentId,
     );
 
     await _repository.addCategory(category);
@@ -53,9 +52,9 @@ class CategoryService {
 
   /// 更新类别
   Future<void> updateCategory({
-    required String id,
+    required int id,
     required String name,
-    String? parentId,
+    int? parentId,
   }) async {
     // 验证类别是否存在
     final existingCategory = await _repository.getCategoryById(id);
@@ -79,7 +78,7 @@ class CategoryService {
     }
 
     // 如果有父类别，验证父类别是否存在且不是自己或子类别
-    if (parentId != null && parentId.isNotEmpty) {
+    if (parentId != null && parentId>0) {
       if (parentId == id) {
         throw Exception('不能将自己设为父类别');
       }
@@ -96,17 +95,16 @@ class CategoryService {
       }
     }
 
-    final updatedCategory = Category(
-      id: id,
+    final updatedCategory = CategoryModel(
       name: name.trim(),
-      parentId: parentId?.isNotEmpty == true ? parentId : null,
+      parentId: parentId,
     );
 
     await _repository.updateCategory(updatedCategory);
   }
 
   /// 删除类别 - 仅删除当前类别（保留子类和产品）
-  Future<void> deleteCategoryOnly(String id) async {
+  Future<void> deleteCategoryOnly(int id) async {
     // 验证类别是否存在
     final category = await _repository.getCategoryById(id);
     if (category == null) {
@@ -153,7 +151,7 @@ class CategoryService {
     if (subCategories.isNotEmpty) {
       for (final subCategory in subCategories) {
         // 将子类别的父级设置为当前类别的父级
-        final updatedSubCategory = Category(
+        final updatedSubCategory = CategoryModel(
           id: subCategory.id,
           name: subCategory.name,
           parentId: category.parentId, // 继承当前类别的父级
@@ -167,7 +165,7 @@ class CategoryService {
   }
 
   /// 级联删除类别及所有关联内容
-  Future<void> deleteCategoryCascade(String id) async {
+  Future<void> deleteCategoryCascade(int id) async {
     // 验证类别是否存在
     final category = await _repository.getCategoryById(id);
     if (category == null) {
@@ -192,7 +190,7 @@ class CategoryService {
     }
 
     // 按层级从深到浅删除类别（先删除子类别，再删除父类别）
-    final categoryLevels = <int, List<Category>>{};
+    final categoryLevels = <int, List<CategoryModel>>{};
 
     // 为当前类别和所有子类别计算层级
     final currentCategory = category;
@@ -201,9 +199,11 @@ class CategoryService {
     categoryLevels.putIfAbsent(currentLevel, () => []).add(currentCategory);
 
     for (final subCategory in allSubCategories) {
-      final path = await _repository.getCategoryPath(subCategory.id);
-      final level = path.length;
-      categoryLevels.putIfAbsent(level, () => []).add(subCategory);
+      if (subCategory.id != null) {
+        final path = await _repository.getCategoryPath(subCategory.id!);
+        final level = path.length;
+        categoryLevels.putIfAbsent(level, () => []).add(subCategory);
+      }
     }
 
     // 从最深层开始删除
@@ -212,15 +212,17 @@ class CategoryService {
 
     for (final level in sortedLevels) {
       for (final categoryToDelete in categoryLevels[level]!) {
-        await _repository.deleteCategory(categoryToDelete.id);
+        if (categoryToDelete.id != null) {
+          await _repository.deleteCategory(categoryToDelete.id!);
+        }
       }
     }
   }
 
   /// 递归获取所有后代类别
-  Future<List<Category>> _getAllDescendantCategories(String parentId) async {
+  Future<List<CategoryModel>> _getAllDescendantCategories(int parentId) async {
     final allCategories = await _repository.getAllCategories();
-    final result = <Category>[];
+    final result = <CategoryModel>[];
 
     // 获取直接子类别
     final directSubCategories = allCategories
@@ -230,61 +232,63 @@ class CategoryService {
     for (final subCategory in directSubCategories) {
       result.add(subCategory);
       // 递归获取子类别的子类别
-      final descendants = await _getAllDescendantCategories(subCategory.id);
-      result.addAll(descendants);
+      if (subCategory.id != null) {
+        final descendants = await _getAllDescendantCategories(subCategory.id!);
+        result.addAll(descendants);
+      }
     }
 
     return result;
   }
 
   /// 兼容原有的删除方法（保持向后兼容）
-  Future<void> deleteCategory(String id) async {
+  Future<void> deleteCategory(int id) async {
     // 默认使用级联删除模式
     await deleteCategoryCascade(id);
   }
 
   /// 获取所有类别
-  Future<List<Category>> getAllCategories() async {
+  Future<List<CategoryModel>> getAllCategories() async {
     return await _repository.getAllCategories();
   }
 
   /// 获取根类别
-  Future<List<Category>> getRootCategories() async {
+  Future<List<CategoryModel>> getRootCategories() async {
     return await _repository.getRootCategories();
   }
 
   /// 获取子类别
-  Future<List<Category>> getSubCategories(String parentId) async {
+  Future<List<CategoryModel>> getSubCategories(int parentId) async {
     return await _repository.getCategoriesByParentId(parentId);
   }
 
   /// 获取类别路径
-  Future<List<Category>> getCategoryPath(String categoryId) async {
+  Future<List<CategoryModel>> getCategoryPath(int categoryId) async {
     return await _repository.getCategoryPath(categoryId);
   }
 
   /// 监听所有类别变化
-  Stream<List<Category>> watchAllCategories() {
+  Stream<List<CategoryModel>> watchAllCategories() {
     return _repository.watchAllCategories();
   }
 
   /// 监听根类别变化
-  Stream<List<Category>> watchRootCategories() {
+  Stream<List<CategoryModel>> watchRootCategories() {
     return _repository.watchRootCategories();
   }
 
   /// 监听子类别变化
-  Stream<List<Category>> watchSubCategories(String parentId) {
+  Stream<List<CategoryModel>> watchSubCategories(int parentId) {
     return _repository.watchCategoriesByParentId(parentId);
   }
 
-  /// 生成新的类别ID
-  String generateCategoryId() {
-    return 'cat_${DateTime.now().millisecondsSinceEpoch}';
-  }
+  // /// 生成新的类别ID
+  // String generateCategoryId() {
+  //   return 'cat_${DateTime.now().millisecondsSinceEpoch}';
+  // }
 }
 
-/// Category Service Provider
+/// CategoryModel Service Provider
 final categoryServiceProvider = Provider<CategoryService>((ref) {
   final repository = ref.watch(categoryRepositoryProvider);
   final productRepository = ref.watch(productRepositoryProvider);

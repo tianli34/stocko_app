@@ -51,7 +51,7 @@ abstract class IProductRepository {
   /// [keyword] 关键字
   /// 返回符合条件的产品列表
   Future<List<Product>> getProductsByCondition({
-    String? categoryId,
+    int? categoryId,
     String? status,
     String? keyword,
   });
@@ -59,7 +59,7 @@ abstract class IProductRepository {
   /// 监听指定类别的产品
   /// [categoryId] 类别ID
   /// 返回指定类别产品的数据流
-  Stream<List<Product>> watchProductsByCategory(String categoryId);
+  Stream<List<Product>> watchProductsByCategory(int categoryId);
 
   /// 根据条码查询产品
   /// [barcode] 条码

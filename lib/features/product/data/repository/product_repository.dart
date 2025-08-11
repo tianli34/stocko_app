@@ -138,7 +138,7 @@ class ProductRepository implements IProductRepository {
   /// 根据条件查询产品
   @override
   Future<List<Product>> getProductsByCondition({
-    String? categoryId,
+    int? categoryId,
     String? status,
     String? keyword,
   }) async {
@@ -156,7 +156,7 @@ class ProductRepository implements IProductRepository {
 
   /// 监听指定类别的产品
   @override
-  Stream<List<Product>> watchProductsByCategory(String categoryId) {
+  Stream<List<Product>> watchProductsByCategory(int categoryId) {
     return _productDao
         .watchProductsByCategory(categoryId)
         .map((data) => data.map(_dataToProduct).toList())

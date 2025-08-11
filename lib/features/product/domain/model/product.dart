@@ -10,7 +10,7 @@ abstract class Product with _$Product {
     required String name, // 名称必须
     String? sku,
     String? image, // 图片
-    String? categoryId, // 类别ID (关联分类表)
+    int? categoryId, // 类别ID (关联分类表)
     int? unitId, // 单位ID (关联单位表)
     String? specification, // 型号/规格
     String? brand, // 品牌
