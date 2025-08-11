@@ -10,7 +10,7 @@ enum BarcodeOperationStatus { initial, loading, success, error }
 class BarcodeControllerState {
   final BarcodeOperationStatus status;
   final String? errorMessage;
-  final List<Barcode>? lastOperatedBarcodes;
+  final List<BarcodeModel>? lastOperatedBarcodes;
 
   const BarcodeControllerState({
     this.status = BarcodeOperationStatus.initial,
@@ -21,7 +21,7 @@ class BarcodeControllerState {
   BarcodeControllerState copyWith({
     BarcodeOperationStatus? status,
     String? errorMessage,
-    List<Barcode>? lastOperatedBarcodes,
+    List<BarcodeModel>? lastOperatedBarcodes,
   }) {
     return BarcodeControllerState(
       status: status ?? this.status,
@@ -42,16 +42,16 @@ class BarcodeController extends StateNotifier<BarcodeControllerState> {
   BarcodeController(this._repository) : super(const BarcodeControllerState());
 
   /// 添加条码
-  Future<void> addBarcode(Barcode barcode) async {
+  Future<void> addBarcode(BarcodeModel barcode) async {
     state = state.copyWith(status: BarcodeOperationStatus.loading);
 
     try {
       // 检查条码是否已存在
-      final exists = await _repository.barcodeExists(barcode.barcode);
+      final exists = await _repository.barcodeExists(barcode.barcodeValue);
       if (exists) {
         state = state.copyWith(
           status: BarcodeOperationStatus.error,
-          errorMessage: '条码 ${barcode.barcode} 已存在',
+          errorMessage: '条码 ${barcode.barcodeValue} 已存在',
         );
         return;
       }
@@ -71,7 +71,7 @@ class BarcodeController extends StateNotifier<BarcodeControllerState> {
   }
 
   /// 批量添加条码
-  Future<void> addMultipleBarcodes(List<Barcode> barcodes) async {
+  Future<void> addMultipleBarcodes(List<BarcodeModel> barcodes) async {
     if (barcodes.isEmpty) return;
 
     state = state.copyWith(status: BarcodeOperationStatus.loading);
@@ -79,11 +79,11 @@ class BarcodeController extends StateNotifier<BarcodeControllerState> {
     try {
       // 检查是否有重复的条码
       for (final barcode in barcodes) {
-        final exists = await _repository.barcodeExists(barcode.barcode);
+        final exists = await _repository.barcodeExists(barcode.barcodeValue);
         if (exists) {
           state = state.copyWith(
             status: BarcodeOperationStatus.error,
-            errorMessage: '条码 ${barcode.barcode} 已存在',
+            errorMessage: '条码 ${barcode.barcodeValue} 已存在',
           );
           return;
         }
@@ -104,7 +104,7 @@ class BarcodeController extends StateNotifier<BarcodeControllerState> {
   }
 
   /// 更新条码
-  Future<void> updateBarcode(Barcode barcode) async {
+  Future<void> updateBarcode(BarcodeModel barcode) async {
     state = state.copyWith(status: BarcodeOperationStatus.loading);
 
     try {
@@ -130,7 +130,7 @@ class BarcodeController extends StateNotifier<BarcodeControllerState> {
   }
 
   /// 删除条码
-  Future<void> deleteBarcode(String id) async {
+  Future<void> deleteBarcode(int id) async {
     state = state.copyWith(status: BarcodeOperationStatus.loading);
 
     try {
@@ -176,7 +176,7 @@ class BarcodeController extends StateNotifier<BarcodeControllerState> {
   }
 
   /// 根据条码值获取条码信息
-  Future<Barcode?> getBarcodeByValue(String barcode) async {
+  Future<BarcodeModel?> getBarcodeByValue(String barcode) async {
     try {
       return await _repository.getBarcodeByValue(barcode);
     } catch (e) {
@@ -189,7 +189,7 @@ class BarcodeController extends StateNotifier<BarcodeControllerState> {
   }
 
   /// 根据产品单位ID获取所有条码
-  Future<List<Barcode>> getBarcodesByProductUnitId(int? productUnitId) async {
+  Future<List<BarcodeModel>> getBarcodesByProductUnitId(int? productUnitId) async {
     try {
       return await _repository.getBarcodesByProductUnitId(productUnitId);
     } catch (e) {
@@ -234,13 +234,13 @@ final barcodeControllerProvider =
 
 /// 根据产品单位ID获取条码列表的 Provider
 final barcodesByProductUnitIdProvider =
-    StreamProvider.family<List<Barcode>, int>((ref, productUnitId) {
+    StreamProvider.family<List<BarcodeModel>, int>((ref, productUnitId) {
       final repository = ref.watch(barcodeRepositoryProvider);
       return repository.watchBarcodesByProductUnitId(productUnitId);
     });
 
 /// 获取所有条码的 Provider
-final allBarcodesProvider = FutureProvider<List<Barcode>>((ref) async {
+final allBarcodesProvider = FutureProvider<List<BarcodeModel>>((ref) async {
   final repository = ref.watch(barcodeRepositoryProvider);
   return repository.getAllBarcodes();
 });

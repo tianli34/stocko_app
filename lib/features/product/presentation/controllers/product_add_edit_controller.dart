@@ -328,14 +328,10 @@ class ProductAddEditController {
     );
 
     final ctrl = ref.read(barcodeControllerProvider.notifier);
-    final id = 'barcode_${product.id}_${DateTime.now().millisecondsSinceEpoch}';
     await ctrl.addBarcode(
-      Barcode(
-        id: id,
+      BarcodeModel(
         productUnitId: baseProductUnit.productUnitId!, // 使用正确的productUnitId
-        barcode: code,
-        createdAt: DateTime.now(),
-        updatedAt: DateTime.now(),
+        barcodeValue: code,
       ),
     );
   }
@@ -367,7 +363,7 @@ class ProductAddEditController {
     );
 
     final ctrl = ref.read(barcodeControllerProvider.notifier);
-    final barcodes = <Barcode>[];
+    final barcodes = <BarcodeModel>[];
 
     for (final auxUnit in auxiliaryUnits) {
       final code = auxUnit.barcode.trim();
@@ -408,15 +404,12 @@ class ProductAddEditController {
         }
 
         if ((matchingProductUnit.productUnitId ?? 0) > 0) {
-          final id =
-              'barcode_${product.id}_${matchingProductUnit.productUnitId}_${DateTime.now().millisecondsSinceEpoch}';
+          
           barcodes.add(
-            Barcode(
-              id: id,
+            BarcodeModel(
+              
               productUnitId: matchingProductUnit.productUnitId!,
-              barcode: code,
-              createdAt: DateTime.now(),
-              updatedAt: DateTime.now(),
+              barcodeValue: code,
             ),
           );
           print(

@@ -151,9 +151,9 @@ class _ProductAddEditScreenState extends ConsumerState<ProductAddEditScreen> {
         if (barcodes.isNotEmpty && mounted) {
           // 使用第一个条码作为主条码
           setState(() {
-            _barcodeController.text = barcodes.first.barcode;
+            _barcodeController.text = barcodes.first.barcodeValue;
           });
-          print('🔧 ProductAddEditScreen: 加载现有主条码: ${barcodes.first.barcode}');
+          print('🔧 ProductAddEditScreen: 加载现有主条码: ${barcodes.first.barcodeValue}');
         }
       }
     } catch (e) {

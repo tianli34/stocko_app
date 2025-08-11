@@ -130,12 +130,12 @@ class ProductImportService {
 
     if (allBarcodes.isNotEmpty) {
       final existingBarcodes = await (db.select(
-        db.barcodesTable,
-      )..where((t) => t.barcode.isIn(allBarcodes))).get();
+        db.barcode,
+      )..where((t) => t.barcodeValue.isIn(allBarcodes))).get();
 
       if (existingBarcodes.isNotEmpty) {
         final existingBarcodeValues = existingBarcodes
-            .map((b) => b.barcode)
+            .map((b) => b.barcodeValue)
             .join(', ');
         return '导入失败：以下条码已存在于数据库中: $existingBarcodeValues。请修正数据后重试。';
       }
@@ -199,11 +199,11 @@ class ProductImportService {
           final packBarcode = productData['包条码'] as String?;
           if (packBarcode != null && packBarcode.isNotEmpty) {
             batch.insert(
-              db.barcodesTable,
-              BarcodesTableCompanion.insert(
-                id: packBarcodeId as String, // 使用新ID
+              db.barcode,
+              BarcodeCompanion.insert(
+                id: packBarcodeId as Value<int>, // 使用新ID
                 productUnitId: productPackUnitId,
-                barcode: packBarcode,
+                barcodeValue: packBarcode,
               ),
             );
           }
@@ -223,11 +223,11 @@ class ProductImportService {
           final cartonBarcode = productData['条条码'] as String?;
           if (cartonBarcode != null && cartonBarcode.isNotEmpty) {
             batch.insert(
-              db.barcodesTable,
-              BarcodesTableCompanion.insert(
-                id: cartonBarcodeId as String, // 使用新ID
+              db.barcode,
+              BarcodeCompanion.insert(
+                id: cartonBarcodeId as Value<int>, // 使用新ID
                 productUnitId: productCartonUnitId,
-                barcode: cartonBarcode,
+                barcodeValue: cartonBarcode,
               ),
             );
           }

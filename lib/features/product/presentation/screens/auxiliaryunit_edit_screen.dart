@@ -148,7 +148,7 @@ class _AuxiliaryUnitEditScreenState
           productUnit.productUnitId,
         );
         if (barcodes.isNotEmpty) {
-          auxiliaryUnit.barcodeController.text = barcodes.first.barcode;
+          auxiliaryUnit.barcodeController.text = barcodes.first.barcodeValue;
         }
 
         tempAuxiliaryUnits.add(auxiliaryUnit);

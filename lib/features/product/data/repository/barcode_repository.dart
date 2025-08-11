@@ -13,7 +13,7 @@ class BarcodeRepository implements IBarcodeRepository {
   BarcodeRepository(AppDatabase database) : _barcodeDao = database.barcodeDao;
 
   @override
-  Future<int> addBarcode(Barcode barcode) async {
+  Future<int> addBarcode(BarcodeModel barcode) async {
     try {
       print('🗃️ 仓储层：添加条码，ID: ${barcode.id}');
       return await _barcodeDao.insertBarcode(_barcodeToCompanion(barcode));
@@ -24,7 +24,7 @@ class BarcodeRepository implements IBarcodeRepository {
   }
 
   @override
-  Future<void> addMultipleBarcodes(List<Barcode> barcodes) async {
+  Future<void> addMultipleBarcodes(List<BarcodeModel> barcodes) async {
     try {
       print('🗃️ 仓储层：批量添加条码，数量: ${barcodes.length}');
       final companions = barcodes.map(_barcodeToCompanion).toList();
@@ -36,7 +36,7 @@ class BarcodeRepository implements IBarcodeRepository {
   }
 
   @override
-  Future<Barcode?> getBarcodeById(String id) async {
+  Future<BarcodeModel?> getBarcodeById(int id) async {
     try {
       final data = await _barcodeDao.getBarcodeById(id);
       return data != null ? _dataToBarcode(data) : null;
@@ -47,7 +47,7 @@ class BarcodeRepository implements IBarcodeRepository {
   }
 
   @override
-  Future<Barcode?> getBarcodeByValue(String barcode) async {
+  Future<BarcodeModel?> getBarcodeByValue(String barcode) async {
     try {
       final data = await _barcodeDao.getBarcodeByValue(barcode);
       return data != null ? _dataToBarcode(data) : null;
@@ -58,7 +58,7 @@ class BarcodeRepository implements IBarcodeRepository {
   }
 
   @override
-  Future<List<Barcode>> getBarcodesByProductUnitId(int? productUnitId) async {
+  Future<List<BarcodeModel>> getBarcodesByProductUnitId(int? productUnitId) async {
     if (productUnitId == null) {
       return [];
     }
@@ -74,7 +74,7 @@ class BarcodeRepository implements IBarcodeRepository {
   }
 
   @override
-  Future<List<Barcode>> getAllBarcodes() async {
+  Future<List<BarcodeModel>> getAllBarcodes() async {
     try {
       final dataList = await _barcodeDao.getAllBarcodes();
       return dataList.map(_dataToBarcode).toList();
@@ -85,7 +85,7 @@ class BarcodeRepository implements IBarcodeRepository {
   }
 
   @override
-  Stream<List<Barcode>> watchBarcodesByProductUnitId(int productUnitId) {
+  Stream<List<BarcodeModel>> watchBarcodesByProductUnitId(int productUnitId) {
     try {
       return _barcodeDao
           .watchBarcodesByProductUnitId(productUnitId)
@@ -97,7 +97,7 @@ class BarcodeRepository implements IBarcodeRepository {
   }
 
   @override
-  Future<bool> updateBarcode(Barcode barcode) async {
+  Future<bool> updateBarcode(BarcodeModel barcode) async {
     try {
       print('🗃️ 仓储层：更新条码，ID: ${barcode.id}');
       return await _barcodeDao.updateBarcode(_barcodeToCompanion(barcode));
@@ -108,7 +108,7 @@ class BarcodeRepository implements IBarcodeRepository {
   }
 
   @override
-  Future<int> deleteBarcode(String id) async {
+  Future<int> deleteBarcode(int id) async {
     try {
       print('🗃️ 仓储层：删除条码，ID: $id');
       return await _barcodeDao.deleteBarcode(id);
@@ -153,7 +153,7 @@ class BarcodeRepository implements IBarcodeRepository {
   }
 
   @override
-  Future<void> upsertBarcode(Barcode barcode) async {
+  Future<void> upsertBarcode(BarcodeModel barcode) async {
     try {
       print('🗃️ 仓储层：更新或插入条码，ID: ${barcode.id}');
       await _barcodeDao.upsertBarcode(_barcodeToCompanion(barcode));
@@ -164,7 +164,7 @@ class BarcodeRepository implements IBarcodeRepository {
   }
 
   @override
-  Future<void> upsertMultipleBarcodes(List<Barcode> barcodes) async {
+  Future<void> upsertMultipleBarcodes(List<BarcodeModel> barcodes) async {
     try {
       print('🗃️ 仓储层：批量更新或插入条码，数量: ${barcodes.length}');
       final companions = barcodes.map(_barcodeToCompanion).toList();
@@ -176,31 +176,24 @@ class BarcodeRepository implements IBarcodeRepository {
   }
 
   /// 将Barcode模型转换为数据库Companion
-  BarcodesTableCompanion _barcodeToCompanion(Barcode barcode) {
-    return BarcodesTableCompanion(
-      id: Value(barcode.id),
+  BarcodeCompanion _barcodeToCompanion(BarcodeModel barcode) {
+    return BarcodeCompanion(
       productUnitId: Value(barcode.productUnitId),
-      barcode: Value(barcode.barcode),
-      createdAt: barcode.createdAt != null
-          ? Value(barcode.createdAt!)
-          : const Value.absent(),
-      updatedAt: Value(barcode.updatedAt ?? DateTime.now()),
+      barcodeValue: Value(barcode.barcodeValue),
     );
   }
 
   /// 将数据库数据转换为Barcode模型
-  Barcode _dataToBarcode(BarcodesTableData data) {
-    return Barcode(
+  BarcodeModel _dataToBarcode(BarcodeData data) {
+    return BarcodeModel(
       id: data.id,
       productUnitId: data.productUnitId,
-      barcode: data.barcode,
-      createdAt: data.createdAt,
-      updatedAt: data.updatedAt,
+      barcodeValue: data.barcodeValue,
     );
   }
 }
 
-/// Barcode Repository Provider
+/// BarcodeModel Repository Provider
 final barcodeRepositoryProvider = Provider<IBarcodeRepository>((ref) {
   final database = ref.watch(appDatabaseProvider);
   return BarcodeRepository(database);

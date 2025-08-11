@@ -493,7 +493,7 @@ class DatabaseManagementScreen extends ConsumerWidget {
 
   Future<void> _showBarcodesData(BuildContext context, WidgetRef ref) async {
     final database = ref.read(appDatabaseProvider);
-    final barcodes = await database.select(database.barcodesTable).get();
+    final barcodes = await database.select(database.barcode).get();
 
     if (context.mounted) {
       showDialog(
@@ -511,18 +511,12 @@ class DatabaseManagementScreen extends ConsumerWidget {
                 return Card(
                   margin: const EdgeInsets.symmetric(vertical: 4),
                   child: ListTile(
-                    title: Text('条码: ${barcode.barcode}'),
+                    title: Text('条码: ${barcode.barcodeValue}'),
                     subtitle: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text('条码ID: ${barcode.id}'),
                         Text('产品单位ID: ${barcode.productUnitId}'),
-                        Text(
-                          '创建时间: ${barcode.createdAt.toString().substring(0, 16)}',
-                        ),
-                        Text(
-                          '更新时间: ${barcode.updatedAt.toString().substring(0, 16)}',
-                        ),
                       ],
                     ),
                     isThreeLine: true,

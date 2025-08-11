@@ -444,7 +444,7 @@ class DatabaseInitializer {
   Future<void> initializeDefaultBarcodes() async {
     try {
       final count = await (_database.select(
-        _database.barcodesTable,
+        _database.barcode,
       )..limit(1)).get();
 
       if (count.isNotEmpty) {
@@ -453,39 +453,31 @@ class DatabaseInitializer {
       }
 
       final defaultBarcodes = [
-        BarcodesTableCompanion.insert(
-          id: 'bc_rice',
+        BarcodeCompanion.insert(
           productUnitId: 1,
-          barcode: '1234567890123',
+          barcodeValue: '1234567890123',
           
-          updatedAt: Value(DateTime.now()),
         ),
-        BarcodesTableCompanion.insert(
-          id: 'bc_flour',
+        BarcodeCompanion.insert(
           productUnitId: 2,
-          barcode: '1234567890124',
+          barcodeValue: '1234567890124',
           
-          updatedAt: Value(DateTime.now()),
         ),
-        BarcodesTableCompanion.insert(
-          id: 'bc_cola',
+        BarcodeCompanion.insert(
           productUnitId: 3,
-          barcode: '1234567890125',
+          barcodeValue: '1234567890125',
           
-          updatedAt: Value(DateTime.now()),
         ),
-        BarcodesTableCompanion.insert(
-          id: 'bc_water',
+        BarcodeCompanion.insert(
           productUnitId: 4,
-          barcode: '1234567890126',
+          barcodeValue: '1234567890126',
           
-          updatedAt: Value(DateTime.now()),
         ),
       ];
 
       await _database.transaction(() async {
         for (final barcode in defaultBarcodes) {
-          await _database.into(_database.barcodesTable).insert(barcode);
+          await _database.into(_database.barcode).insert(barcode);
         }
       });
 
@@ -545,7 +537,7 @@ class DatabaseInitializer {
       await _database.delete(_database.suppliersTable).go();
 
       // 删除基础数据表
-      await _database.delete(_database.barcodesTable).go();
+      await _database.delete(_database.barcode).go();
       await _database.delete(_database.productUnit).go();
       await _database.delete(_database.productsTable).go();
       await _database.delete(_database.shopsTable).go();

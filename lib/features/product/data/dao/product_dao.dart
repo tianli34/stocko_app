@@ -10,7 +10,7 @@ part 'product_dao.g.dart';
 /// 产品数据访问对象 (DAO)
 /// 专门负责产品相关的数据库操作
 @DriftAccessor(
-  tables: [ProductsTable, BarcodesTable, ProductUnit, Unit],
+  tables: [ProductsTable, Barcode, ProductUnit, Unit],
 )
 class ProductDao extends DatabaseAccessor<AppDatabase> with _$ProductDaoMixin {
   ProductDao(super.db);
@@ -182,8 +182,8 @@ class ProductDao extends DatabaseAccessor<AppDatabase> with _$ProductDaoMixin {
   Future<ProductsTableData?> getProductByBarcode(String barcode) async {
     // 首先在条码表中找到对应的产品单位ID
     final barcodeResult = await (select(
-      db.barcodesTable,
-    )..where((tbl) => tbl.barcode.equals(barcode))).getSingleOrNull();
+      db.barcode,
+    )..where((tbl) => tbl.barcodeValue.equals(barcode))).getSingleOrNull();
 
     if (barcodeResult == null) {
       return null; // 条码不存在
@@ -219,8 +219,8 @@ class ProductDao extends DatabaseAccessor<AppDatabase> with _$ProductDaoMixin {
   getProductWithUnitByBarcode(String barcode) async {
     // 首先在条码表中找到对应的产品单位ID
     final barcodeResult = await (select(
-      db.barcodesTable,
-    )..where((tbl) => tbl.barcode.equals(barcode))).getSingleOrNull();
+      db.barcode,
+    )..where((tbl) => tbl.barcodeValue.equals(barcode))).getSingleOrNull();
 
     if (barcodeResult == null) {
       return null; // 条码不存在

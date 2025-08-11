@@ -5,7 +5,6 @@ import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as p;
 import 'dart:io';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-
 import 'products_table.dart';
 import 'categories_table.dart';
 import 'units_table.dart';
@@ -63,7 +62,7 @@ part 'database.g.dart';
     InboundReceiptItemsTable,
     PurchaseOrdersTable,
     PurchaseOrderItemsTable,
-    BarcodesTable, // 新增条码表
+    Barcode, // 新增条码表
     Customers,
     SalesTransactionsTable,
     SalesTransactionItemsTable,
@@ -139,7 +138,7 @@ class AppDatabase extends _$AppDatabase {
       }
       if (from < 11 && to >= 11) {
         // 添加条码表
-        await m.createTable(barcodesTable);
+        await m.createTable(barcode);
         // 创建条码表的索引
         await customStatement(
           'CREATE INDEX IF NOT EXISTS idx_barcodes_barcode ON barcodes(barcode);',
