@@ -7,13 +7,13 @@ class BatchesTable extends Table {
   @override
   String get tableName => 'batches';
 
-  /// 主键 - 批次号（系统自动生成的生产日期数字格式，如20250523）
+  /// 主键 - 批次号
   TextColumn get batchNumber => text().named('batch_number')();
 
   /// 生产日期
   DateTimeColumn get productionDate => dateTime().named('production_date')();
 
-  /// 初始数量，同一批次可累加
+  /// 初始数量，同一批次的初始数量可累加
   IntColumn get initialQuantity => integer().named('initial_quantity')();
 
   /// 外键 - 店铺ID
@@ -21,7 +21,7 @@ class BatchesTable extends Table {
 
   /// 外键 - 货品ID
   IntColumn get productId =>
-      integer().named('product_id').references(ProductsTable, #id)();
+      integer().named('product_id').references(Product, #id)();
 
   /// 创建时间
   DateTimeColumn get createdAt =>

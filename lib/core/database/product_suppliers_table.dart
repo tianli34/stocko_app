@@ -13,7 +13,7 @@ class ProductSuppliersTable extends Table {
 
   /// 商品ID - 外键关联到products表
   IntColumn get productId =>
-      integer().named('product_id').references(ProductsTable, #id)();
+      integer().named('product_id').references(Product, #id)();
 
   /// 供应商ID - 外键关联到suppliers表
   TextColumn get supplierId => text().named('supplier_id')();

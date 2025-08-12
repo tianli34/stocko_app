@@ -13,13 +13,13 @@ import 'unit_selection_screen.dart';
 
 class AuxiliaryUnitEditScreen extends ConsumerStatefulWidget {
   final int? productId;
-  final String? baseUnitId;
+  final String baseUnitId;
   final String? baseUnitName;
 
   const AuxiliaryUnitEditScreen({
     super.key,
     this.productId,
-    this.baseUnitId,
+    required this.baseUnitId,
     this.baseUnitName,
   });
 
@@ -639,19 +639,15 @@ class _AuxiliaryUnitEditScreenState
     final List<ProductUnit> productUnits = [];
 
     // 添加基本单位
-    if (widget.baseUnitId != null) {
-      final baseUnit = ProductUnit(
-        // productUnitId: '${widget.productId ?? 'new'}_${widget.baseUnitId!}',
-        productId: widget.productId ?? 0,
-        unitId: int.parse(widget.baseUnitId!),
-        conversionRate: 1,
-      );
-      productUnits.add(baseUnit);
-      print('🔍 [DEBUG] ✅ 添加基本单位: ${baseUnit.productUnitId}');
-    } else {
-      print('🔍 [DEBUG] ❌ 警告: 基本单位ID为null');
-    }
-
+    final baseUnit = ProductUnit(
+      // productUnitId: '${widget.productId ?? 'new'}_${widget.baseUnitId!}',
+      productId: widget.productId ?? 0,
+      unitId: int.parse(widget.baseUnitId),
+      conversionRate: 1,
+    );
+    productUnits.add(baseUnit);
+    print('🔍 [DEBUG] ✅ 添加基本单位: ${baseUnit.productUnitId}');
+  
     // 处理辅单位
     for (int i = 0; i < _auxiliaryUnits.length; i++) {
       final aux = _auxiliaryUnits[i];
@@ -741,7 +737,7 @@ class _AuxiliaryUnitEditScreenState
     final productUnits = _buildProductUnits();
     final auxiliaryBarcodes = _buildAuxiliaryUnitBarcodes();
 
-    if (productUnits.isNotEmpty && widget.baseUnitId != null) {
+    if (productUnits.isNotEmpty) {
       print('🔍 数据有效，返回产品单位数据');
 
       // 返回包含产品单位和条码信息的数据
@@ -778,7 +774,7 @@ class _AuxiliaryUnitEditScreenState
         print('AuxiliaryUnitData ID: ${auxData.id}');
         print('unitName: ${auxData.unitName}, unitId: ${auxData.unitId}');
         print('conversionRate: ${auxData.conversionRate}');
-        print('retailPrice: ${auxData.retailPrice}');
+        print('retailPriceInCents: ${auxData.retailPriceInCents}');
         print('wholesalePriceInCents: ${auxData.wholesalePriceInCents}');
         print('barcode: ${auxData.barcode}');
         print('===============================================');
@@ -802,7 +798,7 @@ class _AuxiliaryUnitEditScreenState
           id: auxData.id,
           unit: unit,
           conversionRate: auxData.conversionRate,
-          initialSellingPrice: double.tryParse(auxData.retailPrice),
+          initialSellingPrice: double.tryParse(auxData.retailPriceInCents),
           initialWholesalePrice: double.tryParse(auxData.wholesalePriceInCents),
         );
 

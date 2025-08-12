@@ -25,7 +25,7 @@ import '../controllers/product_add_edit_controller.dart';
 /// 货品添加/编辑页面
 /// 表单页面，提交时调用 ref.read(productOperationsProvider.notifier).addProduct(...)
 class ProductAddEditScreen extends ConsumerStatefulWidget {
-  final Product? product; // 如果传入货品则为编辑模式，否则为新增模式
+  final ProductModel? product; // 如果传入货品则为编辑模式，否则为新增模式
 
   const ProductAddEditScreen({super.key, this.product});
 
@@ -99,13 +99,19 @@ class _ProductAddEditScreenState extends ConsumerState<ProductAddEditScreen> {
     _nameController = TextEditingController(text: product?.name ?? '');
     _barcodeController = TextEditingController(text: ''); // 条码将在异步方法中加载
     _retailPriceController = TextEditingController(
-      text: product?.retailPrice?.toString() ?? '',
+      text: product?.retailPrice != null
+          ? product!.retailPrice!.yuan.toStringAsFixed(2)
+          : '',
     );
     _promotionalPriceController = TextEditingController(
-      text: product?.promotionalPrice?.toString() ?? '',
+      text: product?.promotionalPrice != null
+          ? product!.promotionalPrice!.yuan.toStringAsFixed(2)
+          : '',
     );
     _suggestedRetailPriceController = TextEditingController(
-      text: product?.suggestedRetailPrice?.toString() ?? '',
+      text: product?.suggestedRetailPrice != null
+          ? product!.suggestedRetailPrice!.yuan.toStringAsFixed(2)
+          : '',
     );
     // 初始化新增的控制器
     _stockWarningValueController = TextEditingController(
@@ -116,9 +122,9 @@ class _ProductAddEditScreenState extends ConsumerState<ProductAddEditScreen> {
     );
     _remarksController = TextEditingController(text: product?.remarks ?? '');
     _selectedCategoryId = product?.categoryId; // 初始化类别选择
-    _selectedUnitId = product?.unitId; // 不设置默认值，允许为空
+    _selectedUnitId = product?.baseUnitId; // 使用 baseUnitId
     _selectedImagePath = product?.image; // 初始化图片路径
-    _shelfLifeUnit = product?.shelfLifeUnit ?? 'months'; // 正确初始化保质期单位
+    _shelfLifeUnit = product?.shelfLifeUnit.name ?? 'months'; // 使用枚举名称
     _enableBatchManagement =
         product?.enableBatchManagement ?? false; // 初始化批次管理开关
   }
@@ -133,7 +139,7 @@ class _ProductAddEditScreenState extends ConsumerState<ProductAddEditScreen> {
         productUnitControllerProvider.notifier,
       );
       final productUnits = await productUnitController
-          .getProductUnitsByProductId(widget.product!.id);
+          .getProductUnitsByProductId(widget.product!.id!);
 
       if (productUnits.isNotEmpty) {
         // 找到基础单位（换算率为1.0的单位）
@@ -275,7 +281,7 @@ class _ProductAddEditScreenState extends ConsumerState<ProductAddEditScreen> {
                     _buildTextField(
                       controller: _nameController,
                       label: '名称',
-                      required: true,
+                      isRequired: true,
                       focusNode: _nameFocusNode,
                       onFieldSubmitted: (_) => _unitFocusNode.requestFocus(),
                     ),
@@ -530,8 +536,7 @@ class _ProductAddEditScreenState extends ConsumerState<ProductAddEditScreen> {
           ),
         ),
       ),
-    ),
-   );
+    ));
   }
 
   /// 构建文本输入框
@@ -539,7 +544,7 @@ class _ProductAddEditScreenState extends ConsumerState<ProductAddEditScreen> {
     required TextEditingController controller,
     required String label,
     String? hint,
-    bool required = false,
+    bool isRequired = false,
     IconData? icon,
     TextInputType? keyboardType,
     String? prefixText,
@@ -554,7 +559,7 @@ class _ProductAddEditScreenState extends ConsumerState<ProductAddEditScreen> {
       maxLines: maxLines,
       onFieldSubmitted: onFieldSubmitted,
       decoration: InputDecoration(
-        labelText: required ? '$label *' : label,
+        labelText: isRequired ? '$label *' : label,
         hintText: hint,
         prefixIcon: icon != null ? Icon(icon) : null,
         prefixText: prefixText,
@@ -568,7 +573,7 @@ class _ProductAddEditScreenState extends ConsumerState<ProductAddEditScreen> {
           borderSide: BorderSide(color: Theme.of(context).primaryColor),
         ),
       ),
-      validator: required
+      validator: isRequired
           ? (value) {
               if (value == null || value.trim().isEmpty) {
                 return '$label不能为空';
@@ -626,7 +631,7 @@ class _ProductAddEditScreenState extends ConsumerState<ProductAddEditScreen> {
       },
       onSelected: (CategoryModel suggestion) {
         setState(() {
-          if (suggestion.id == 'null') {
+          if (suggestion.id == null) {
             _selectedCategoryId = null;
             _categoryController.text = '未分类';
           } else {
@@ -919,7 +924,7 @@ class _ProductAddEditScreenState extends ConsumerState<ProductAddEditScreen> {
               final operations = ref.read(productOperationsProvider.notifier);
 
               // 执行删除操作
-              await operations.deleteProduct(widget.product!.id);
+              await operations.deleteProduct(widget.product!.id!);
 
               // 强制刷新列表确保UI立即更新
               ref.invalidate(allProductsProvider);
@@ -1022,9 +1027,9 @@ class _ProductAddEditScreenState extends ConsumerState<ProductAddEditScreen> {
         print('🔧 ProductAddEditScreen: 处理单位信息失败: $e');
       }
     } // 如果没有输入单位名称，使用空的基础单位信息进入单位管理
-    // 用户可以在单位管理页面中创建和配置单位
+    // 用户可以在单位管理页面创建和配置单位
     if (baseUnitName.isEmpty) {
-      baseUnitName = ''; // 空的基础单位名称，允许用户在单位管理页面中创建
+      baseUnitName = ''; // 空的基础单位名称，允许用户在单位管理页面创建
       baseUnitId = null; // 没有预设的单位ID
       print('🔧 ProductAddEditScreen: 没有预设单位，进入单位管理页面创建');
     }
@@ -1167,11 +1172,11 @@ class _ProductAddEditScreenState extends ConsumerState<ProductAddEditScreen> {
         newUnitName: _unitController.text.trim(),
         imagePath: _selectedImagePath,
         barcode: _barcodeController.text.trim(),
-        retailPrice: double.tryParse(_retailPriceController.text.trim()),
-        promotionalPrice: double.tryParse(
+        retailPriceInCents: double.tryParse(_retailPriceController.text.trim()),
+        promotionalPriceInCents: double.tryParse(
           _promotionalPriceController.text.trim(),
         ),
-        suggestedRetailPrice: double.tryParse(
+        suggestedRetailPriceInCents: double.tryParse(
           _suggestedRetailPriceController.text.trim(),
         ),
         stockWarningValue: int.tryParse(

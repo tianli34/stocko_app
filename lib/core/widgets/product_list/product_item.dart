@@ -6,13 +6,13 @@ import '../../widgets/cached_image_widget.dart';
 import 'package:flutter/services.dart';
 
 class ProductItem extends ConsumerStatefulWidget {
-  final Product item;
+  final ProductModel item;
   final String mode;
   final bool isSelected;
   final Function(dynamic)? onToggleSelect;
-  final Function(Product)? onEdit;
-  final Function(Product)? onDelete;
-  final Function(Product)? onAdjustInventory;
+  final Function(ProductModel)? onEdit;
+  final Function(ProductModel)? onDelete;
+  final Function(ProductModel)? onAdjustInventory;
   final VoidCallback? onHideActions;
 
   const ProductItem({
@@ -44,18 +44,18 @@ class _ProductItemState extends ConsumerState<ProductItem> {
   @override
   void didUpdateWidget(covariant ProductItem oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (widget.item.unitId != oldWidget.item.unitId) {
+    if (widget.item.baseUnitId != oldWidget.item.baseUnitId) {
       _unitLoaded = false;
       _loadUnitName();
     }
   }
 
   Future<void> _loadUnitName() async {
-    if (widget.item.unitId != null && !_unitLoaded) {
+    if (!_unitLoaded) {
       try {
         final unit = await ref
             .read(unitControllerProvider.notifier)
-            .getUnitById(widget.item.unitId as int);
+            .getUnitById(widget.item.baseUnitId);
         if (mounted) {
           setState(() {
             _unitName = unit?.name;

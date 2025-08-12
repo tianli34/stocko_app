@@ -4,7 +4,7 @@ import 'package:stocko_app/core/widgets/full_screen_image_viewer.dart';
 import 'package:stocko_app/features/product/domain/model/product.dart';
 
 class ProductDetailsDialog extends StatelessWidget {
-  final Product product;
+  final ProductModel product;
 
   const ProductDetailsDialog({super.key, required this.product});
 
@@ -87,7 +87,7 @@ class ProductDetailsDialog extends StatelessWidget {
               _buildDetailItem(
                 context,
                 '价格',
-                '￥${product.effectivePrice!.toStringAsFixed(2)}',
+                product.effectivePrice!.format(),
               ),
 
             if (product.stockWarningValue != null)
@@ -191,8 +191,8 @@ class ProductDetailsDialog extends StatelessWidget {
   }
 
   /// 获取产品的保质期单位
-  String _getProductShelfLifeUnit(Product product) {
-    // 返回产品实际的保质期单位
-    return product.shelfLifeUnit;
+  String _getProductShelfLifeUnit(ProductModel product) {
+    // 将枚举转换为字符串键
+    return product.shelfLifeUnit.name;
   }
 }

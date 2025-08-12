@@ -18,7 +18,7 @@ class ProductOperationsNotifier extends AsyncNotifier<void> {
   }
 
   /// 添加产品
-  Future<void> addProduct(Product product) async {
+  Future<void> addProduct(ProductModel product) async {
     state = const AsyncValue.loading();
 
     state = await AsyncValue.guard(() async {
@@ -31,9 +31,9 @@ class ProductOperationsNotifier extends AsyncNotifier<void> {
   }
 
   /// 更新产品
-  Future<void> updateProduct(Product product) async {
+  Future<void> updateProduct(ProductModel product) async {
     // 检查产品ID是否为空
-    if (product.id <= 0) {
+    if (product.id == null || product.id! <= 0) {
       state = AsyncValue.error(Exception('产品ID不能为空'), StackTrace.current);
       return;
     }
@@ -79,7 +79,7 @@ class ProductOperationsNotifier extends AsyncNotifier<void> {
   }
 
   /// 根据ID获取产品
-  Future<Product?> getProductById(int productId) async {
+  Future<ProductModel?> getProductById(int productId) async {
     try {
       final repository = ref.read(productRepositoryProvider);
       return await repository.getProductById(productId);
@@ -93,7 +93,7 @@ class ProductOperationsNotifier extends AsyncNotifier<void> {
   }
 
   /// 根据条码获取产品
-  Future<Product?> getProductByBarcode(String barcode) async {
+  Future<ProductModel?> getProductByBarcode(String barcode) async {
     try {
       final repository = ref.read(productRepositoryProvider);
       return await repository.getProductByBarcode(barcode);
@@ -109,7 +109,7 @@ class ProductOperationsNotifier extends AsyncNotifier<void> {
   /// 根据条码获取产品及其单位信息
   Future<
     ({
-      Product product,
+      ProductModel product,
       int unitId,
       String unitName,
       int? wholesalePriceInCents
@@ -127,9 +127,9 @@ class ProductOperationsNotifier extends AsyncNotifier<void> {
 }
 
 /// 产品列表 StreamNotifier
-class ProductListNotifier extends StreamNotifier<List<Product>> {
+class ProductListNotifier extends StreamNotifier<List<ProductModel>> {
   @override
-  Stream<List<Product>> build() {
+  Stream<List<ProductModel>> build() {
     final repository = ref.watch(productRepositoryProvider);
     return repository.watchAllProducts().map((products) {
       final sortedProducts = List.of(products);
@@ -167,12 +167,12 @@ final productOperationsProvider =
     });
 
 final productListStreamProvider =
-    StreamNotifierProvider<ProductListNotifier, List<Product>>(() {
+    StreamNotifierProvider<ProductListNotifier, List<ProductModel>>(() {
       return ProductListNotifier();
     });
 
 /// 根据ID获取产品
-final productByIdProvider = FutureProvider.family<Product?, int>((
+final productByIdProvider = FutureProvider.family<ProductModel?, int>((
   ref,
   productId,
 ) async {
@@ -181,7 +181,7 @@ final productByIdProvider = FutureProvider.family<Product?, int>((
 });
 
 /// 根据条码获取产品
-final productByBarcodeProvider = FutureProvider.family<Product?, String>((
+final productByBarcodeProvider = FutureProvider.family<ProductModel?, String>((
   ref,
   barcode,
 ) async {
@@ -199,7 +199,7 @@ final selectedCategoryIdProvider = StateProvider<int?>((ref) => null);
 final searchQueryProvider = StateProvider<String>((ref) => '');
 
 /// 提供根据分类筛选和关键字搜索后的产品列表
-final filteredProductsProvider = Provider<AsyncValue<List<Product>>>((ref) {
+final filteredProductsProvider = Provider<AsyncValue<List<ProductModel>>>((ref) {
   final selectedCategoryId = ref.watch(selectedCategoryIdProvider);
   final searchQuery = ref.watch(searchQueryProvider);
   final productsAsyncValue = ref.watch(allProductsProvider);
@@ -271,7 +271,7 @@ final allProductsWithUnitProvider =
     StreamProvider<
       List<
         ({
-          Product product,
+          ProductModel product,
           int unitId,
           String unitName,
           int? wholesalePriceInCents

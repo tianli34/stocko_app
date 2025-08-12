@@ -132,8 +132,8 @@ class _DatabaseViewerScreenState extends ConsumerState<DatabaseViewerScreen>
                         if (product.categoryId != null)
                           Text('类别ID: ${product.categoryId}'),
                         if (product.retailPrice != null)
-                          Text('零售价: ¥${product.retailPrice}'),
-                        Text('状态: ${product.status}'),
+                          Text('零售价: ${product.retailPrice!.format()}'),
+                        Text('状态: ${product.status}')
                       ],
                     ),
                     isThreeLine: true,
@@ -258,16 +258,12 @@ class _DatabaseViewerScreenState extends ConsumerState<DatabaseViewerScreen>
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const Icon(
-                      Icons.error_outline,
-                      size: 64,
-                      color: Colors.red,
-                    ),
+                    const Icon(Icons.error_outline, size: 64, color: Colors.red),
                     const SizedBox(height: 16),
                     Text('加载单位数据失败: ${snapshot.error}'),
                     const SizedBox(height: 16),
                     ElevatedButton(
-                      onPressed: () => setState(() {}),
+                      onPressed: _refreshData,
                       child: const Text('重试'),
                     ),
                   ],
@@ -282,11 +278,7 @@ class _DatabaseViewerScreenState extends ConsumerState<DatabaseViewerScreen>
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Icon(
-                      Icons.straighten_outlined,
-                      size: 64,
-                      color: Colors.grey,
-                    ),
+                    Icon(Icons.straighten_outlined, size: 64, color: Colors.grey),
                     SizedBox(height: 16),
                     Text('暂无单位数据'),
                   ],
@@ -299,15 +291,11 @@ class _DatabaseViewerScreenState extends ConsumerState<DatabaseViewerScreen>
               itemBuilder: (context, index) {
                 final unit = units[index];
                 return Card(
-                  margin: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 4,
-                  ),
+                  margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
                   child: ListTile(
                     leading: CircleAvatar(child: Text('${index + 1}')),
                     title: Text(unit.name),
                     subtitle: Text('ID: ${unit.id}'),
-                    trailing: const Icon(Icons.straighten),
                   ),
                 );
               },
@@ -318,14 +306,14 @@ class _DatabaseViewerScreenState extends ConsumerState<DatabaseViewerScreen>
     );
   }
 
-  /// 构建产品单位关联数据页面
+  /// 构建产品单位数据页面
   Widget _buildProductUnitsTab() {
     return Consumer(
       builder: (context, ref, child) {
-        final productUnitRepository = ref.watch(productUnitRepositoryProvider);
+        final repo = ref.watch(productUnitRepositoryProvider);
 
         return FutureBuilder(
-          future: productUnitRepository.getAllProductUnits(),
+          future: repo.getAllProductUnits(),
           builder: (context, snapshot) {
             if (snapshot.connectionState == ConnectionState.waiting) {
               return const Center(child: CircularProgressIndicator());
@@ -336,16 +324,12 @@ class _DatabaseViewerScreenState extends ConsumerState<DatabaseViewerScreen>
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const Icon(
-                      Icons.error_outline,
-                      size: 64,
-                      color: Colors.red,
-                    ),
+                    const Icon(Icons.error_outline, size: 64, color: Colors.red),
                     const SizedBox(height: 16),
                     Text('加载产品单位数据失败: ${snapshot.error}'),
                     const SizedBox(height: 16),
                     ElevatedButton(
-                      onPressed: () => setState(() {}),
+                      onPressed: _refreshData,
                       child: const Text('重试'),
                     ),
                   ],
@@ -360,9 +344,9 @@ class _DatabaseViewerScreenState extends ConsumerState<DatabaseViewerScreen>
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Icon(Icons.link_outlined, size: 64, color: Colors.grey),
+                    Icon(Icons.link_off, size: 64, color: Colors.grey),
                     SizedBox(height: 16),
-                    Text('暂无产品单位关联数据'),
+                    Text('暂无产品单位数据'),
                   ],
                 ),
               );
@@ -371,30 +355,24 @@ class _DatabaseViewerScreenState extends ConsumerState<DatabaseViewerScreen>
             return ListView.builder(
               itemCount: productUnits.length,
               itemBuilder: (context, index) {
-                final productUnit = productUnits[index];
+                final pu = productUnits[index];
                 return Card(
-                  margin: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 4,
-                  ),
+                  margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
                   child: ListTile(
                     leading: CircleAvatar(child: Text('${index + 1}')),
-                    title: Text('产品单位关联'),
+                    title: Text('产品ID: ${pu.productId}'),
                     subtitle: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text('关联ID: ${productUnit.productUnitId}'),
-                        Text('产品ID: ${productUnit.productId}'),
-                        Text('单位ID: ${productUnit.unitId}'),
-                        Text('换算率: ${productUnit.conversionRate}'),
-                        if (productUnit.sellingPriceInCents != null)
-                          Text('售价: ¥${productUnit.sellingPriceInCents}'),
-                        // if (productUnit.wholesalePriceInCents != null)
-                        Text('批发价: ¥${productUnit.wholesalePriceInCents}'),
+                        Text('产品单位ID: ${pu.productUnitId ?? '-'}'),
+                        Text('单位ID: ${pu.unitId}'),
+                        Text('换算率: ${pu.conversionRate}'),
+                        if (pu.sellingPriceInCents != null)
+                          Text('售价(分): ${pu.sellingPriceInCents}'),
+                        if (pu.wholesalePriceInCents != null)
+                          Text('批发价(分): ${pu.wholesalePriceInCents}'),
                       ],
                     ),
-                    trailing: const Icon(Icons.link),
-                    isThreeLine: true,
                   ),
                 );
               },
@@ -405,44 +383,37 @@ class _DatabaseViewerScreenState extends ConsumerState<DatabaseViewerScreen>
     );
   }
 
-  /// 构建缓存的圆形头像
-  Widget _buildCachedCircleAvatar(String imagePath, int fallbackNumber) {
+  Widget _buildCachedCircleAvatar(String imagePath, int index) {
     return GestureDetector(
-      onTap: () {
-        Navigator.of(context).push(
-          PageRouteBuilder(
-            pageBuilder: (context, animation, secondaryAnimation) =>
-                FullScreenImageViewer(
-                  imagePath: imagePath,
-                  heroTag: 'database_avatar_$imagePath',
-                ),
-            transitionsBuilder:
-                (context, animation, secondaryAnimation, child) {
-                  return FadeTransition(opacity: animation, child: child);
-                },
-            transitionDuration: const Duration(milliseconds: 300),
-            reverseTransitionDuration: const Duration(milliseconds: 200),
-          ),
-        );
-      },
+      onTap: () => _showFullScreenImage(context, imagePath),
       child: Hero(
-        tag: 'database_avatar_$imagePath',
-        child: SizedBox(
-          width: 40,
-          height: 40,
-          child: ClipOval(
-            child: CachedImageWidget(
-              imagePath: imagePath,
-              width: 40,
-              height: 40,
-              fit: BoxFit.cover,
-              enableCache: true,
-              quality: 70, // 头像使用较低质量
-              placeholder: CircleAvatar(child: Text('$fallbackNumber')),
-              errorWidget: CircleAvatar(child: Text('$fallbackNumber')),
-            ),
+        tag: 'db_viewer_image_$imagePath',
+        child: ClipOval(
+          child: CachedImageWidget(
+            imagePath: imagePath,
+            width: 40,
+            height: 40,
+            fit: BoxFit.cover,
           ),
         ),
+      ),
+    );
+  }
+
+  /// 显示全屏图片查看器
+  void _showFullScreenImage(BuildContext context, String imagePath) {
+    Navigator.of(context).push(
+      PageRouteBuilder(
+        pageBuilder: (context, animation, secondaryAnimation) =>
+            FullScreenImageViewer(
+              imagePath: imagePath,
+              heroTag: 'db_viewer_image_$imagePath',
+            ),
+        transitionsBuilder: (context, animation, secondaryAnimation, child) {
+          return FadeTransition(opacity: animation, child: child);
+        },
+        transitionDuration: const Duration(milliseconds: 300),
+        reverseTransitionDuration: const Duration(milliseconds: 200),
       ),
     );
   }

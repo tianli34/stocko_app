@@ -18,14 +18,14 @@ class PurchaseOrderWithItems {
 /// 采购订单明细及其关联产品信息的数据类
 class PurchaseOrderItemWithDetails {
   final PurchaseOrderItemsTableData item;
-  final ProductsTableData product;
+  final ProductData product;
 
   PurchaseOrderItemWithDetails({required this.item, required this.product});
 }
 
 /// 采购订单数据访问对象 (DAO)
 @DriftAccessor(
-  tables: [PurchaseOrdersTable, PurchaseOrderItemsTable, ProductsTable],
+  tables: [PurchaseOrdersTable, PurchaseOrderItemsTable, Product],
 )
 class PurchaseDao extends DatabaseAccessor<AppDatabase>
     with _$PurchaseDaoMixin {
@@ -101,8 +101,8 @@ class PurchaseDao extends DatabaseAccessor<AppDatabase>
           db.purchaseOrderItemsTable,
         )..where((tbl) => tbl.purchaseOrderId.equals(orderId))).join([
           innerJoin(
-            db.productsTable,
-            db.productsTable.id.equalsExp(db.purchaseOrderItemsTable.productId),
+            db.product,
+            db.product.id.equalsExp(db.purchaseOrderItemsTable.productId),
           ),
         ]).watch();
 
@@ -111,7 +111,7 @@ class PurchaseDao extends DatabaseAccessor<AppDatabase>
         final detailedItems = rows.map((row) {
           return PurchaseOrderItemWithDetails(
             item: row.readTable(db.purchaseOrderItemsTable),
-            product: row.readTable(db.productsTable),
+            product: row.readTable(db.product),
           );
         }).toList();
         return PurchaseOrderWithItems(order: order, items: detailedItems);

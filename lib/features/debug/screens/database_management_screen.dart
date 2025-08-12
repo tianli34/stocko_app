@@ -372,7 +372,7 @@ class DatabaseManagementScreen extends ConsumerWidget {
 
   Future<void> _showProductsData(BuildContext context, WidgetRef ref) async {
     final database = ref.read(appDatabaseProvider);
-    final products = await database.select(database.productsTable).get();
+    final products = await database.select(database.product).get();
 
     if (context.mounted) {
       showDialog(

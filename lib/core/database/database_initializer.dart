@@ -160,7 +160,7 @@ class DatabaseInitializer {
   Future<void> initializeDefaultProducts() async {
     try {
       final count = await (_database.select(
-        _database.productsTable,
+        _database.product,
       )..limit(1)).get();
 
       if (count.isNotEmpty) {
@@ -168,208 +168,11 @@ class DatabaseInitializer {
         return;
       }
 
-      final defaultProducts = [
-        ProductsTableCompanion.insert(
-          id: const Value(1),
-          name: '大米',
-          categoryId: const Value(1),
-          unitId: const Value(2),
-          retailPrice: const Value(2.5),
-          suggestedRetailPrice: const Value(3.0),
-          stockWarningValue: const Value(10),
-          shelfLife: const Value(365),
-          shelfLifeUnit: const Value('days'),
-          enableBatchManagement: const Value(false),
-          status: const Value('active'),
-          lastUpdated: Value(DateTime.now()),
-        ),
-        ProductsTableCompanion.insert(
-          id: const Value(2),
-          name: '面粉',
-          categoryId: const Value(1),
-          unitId: const Value(2),
-          retailPrice: const Value(3.0),
-          suggestedRetailPrice: const Value(3.5),
-          stockWarningValue: const Value(5),
-          shelfLife: const Value(180),
-          shelfLifeUnit: const Value('days'),
-          enableBatchManagement: const Value(false),
-          status: const Value('active'),
-          lastUpdated: Value(DateTime.now()),
-        ),
-        ProductsTableCompanion.insert(
-          id: const Value(3),
-          name: '可乐',
-          categoryId: const Value(2),
-          unitId: const Value(4),
-          retailPrice: const Value(1.5),
-          suggestedRetailPrice: const Value(2.0),
-          stockWarningValue: const Value(20),
-          shelfLife: const Value(365),
-          shelfLifeUnit: const Value('days'),
-          enableBatchManagement: const Value(false),
-          status: const Value('active'),
-          lastUpdated: Value(DateTime.now()),
-        ),
-        ProductsTableCompanion.insert(
-          id: const Value(4),
-          name: '矿泉水',
-          categoryId: const Value(2),
-          unitId: const Value(4),
-          retailPrice: const Value(1.0),
-          suggestedRetailPrice: const Value(1.5),
-          stockWarningValue: const Value(30),
-          shelfLife: const Value(730),
-          shelfLifeUnit: const Value('days'),
-          enableBatchManagement: const Value(true), // 启用批次管理
-          status: const Value('active'),
-          lastUpdated: Value(DateTime.now()),
-        ),
-        ProductsTableCompanion.insert(
-          id: const Value(5),
-          name: '面条',
-          categoryId: const Value(1),
-          unitId: const Value(2),
-          retailPrice: const Value(4.0),
-          suggestedRetailPrice: const Value(4.5),
-          stockWarningValue: const Value(8),
-          shelfLife: const Value(180),
-          shelfLifeUnit: const Value('days'),
-          enableBatchManagement: const Value(false),
-          status: const Value('active'),
-          lastUpdated: Value(DateTime.now()),
-        ),
-        ProductsTableCompanion.insert(
-          id: const Value(6),
-          name: '牛奶',
-          categoryId: const Value(2),
-          unitId: const Value(3),
-          retailPrice: const Value(5.0),
-          suggestedRetailPrice: const Value(6.0),
-          stockWarningValue: const Value(15),
-          shelfLife: const Value(7),
-          shelfLifeUnit: const Value('days'),
-          enableBatchManagement: const Value(false),
-          status: const Value('active'),
-          lastUpdated: Value(DateTime.now()),
-        ),
-        ProductsTableCompanion.insert(
-          id: const Value(7),
-          name: '牙膏',
-          categoryId: const Value(3),
-          unitId: const Value(1),
-          retailPrice: const Value(8.0),
-          suggestedRetailPrice: const Value(10.0),
-          stockWarningValue: const Value(5),
-          shelfLife: const Value(730),
-          shelfLifeUnit: const Value('days'),
-          enableBatchManagement: const Value(false),
-          status: const Value('active'),
-          lastUpdated: Value(DateTime.now()),
-        ),
-        ProductsTableCompanion.insert(
-          id: const Value(8),
-          name: '酱油',
-          categoryId: const Value(1),
-          unitId: const Value(4),
-          retailPrice: const Value(7.5),
-          suggestedRetailPrice: const Value(8.0),
-          stockWarningValue: const Value(10),
-          shelfLife: const Value(365),
-          shelfLifeUnit: const Value('days'),
-          enableBatchManagement: const Value(false),
-          status: const Value('active'),
-          lastUpdated: Value(DateTime.now()),
-        ),
-        ProductsTableCompanion.insert(
-          id: const Value(9),
-          name: '卫生纸',
-          categoryId: const Value(3),
-          unitId: const Value(5),
-          retailPrice: const Value(12.0),
-          suggestedRetailPrice: const Value(15.0),
-          stockWarningValue: const Value(5),
-          shelfLife: const Value(1095),
-          shelfLifeUnit: const Value('days'),
-          enableBatchManagement: const Value(false),
-          status: const Value('active'),
-          lastUpdated: Value(DateTime.now()),
-        ),
-        ProductsTableCompanion.insert(
-          id: const Value(10),
-          name: '啤酒',
-          categoryId: const Value(2),
-          unitId: const Value(4),
-          retailPrice: const Value(4.5),
-          suggestedRetailPrice: const Value(6.0),
-          stockWarningValue: const Value(20),
-          shelfLife: const Value(180),
-          shelfLifeUnit: const Value('days'),
-          enableBatchManagement: const Value(false),
-          status: const Value('active'),
-          lastUpdated: Value(DateTime.now()),
-        ),
-        ProductsTableCompanion.insert(
-          id: const Value(11),
-          name: '洗发水',
-          categoryId: const Value(3),
-          unitId: const Value(4),
-          retailPrice: const Value(25.0),
-          suggestedRetailPrice: const Value(30.0),
-          stockWarningValue: const Value(8),
-          shelfLife: const Value(365),
-          shelfLifeUnit: const Value('days'),
-          enableBatchManagement: const Value(false),
-          status: const Value('active'),
-          lastUpdated: Value(DateTime.now()),
-        ),
-        ProductsTableCompanion.insert(
-          id: const Value(12),
-          name: '鸡蛋',
-          categoryId: const Value(1),
-          unitId: const Value(3),
-          retailPrice: const Value(15.0),
-          suggestedRetailPrice: const Value(18.0),
-          stockWarningValue: const Value(10),
-          shelfLife: const Value(30),
-          shelfLifeUnit: const Value('days'),
-          enableBatchManagement: const Value(false),
-          status: const Value('active'),
-          lastUpdated: Value(DateTime.now()),
-        ),
-        ProductsTableCompanion.insert(
-          id: const Value(13),
-          name: '食盐',
-          categoryId: const Value(1),
-          unitId: const Value(5),
-          retailPrice: const Value(2.0),
-          suggestedRetailPrice: const Value(3.0),
-          stockWarningValue: const Value(5),
-          shelfLife: const Value(730),
-          shelfLifeUnit: const Value('days'),
-          enableBatchManagement: const Value(false),
-          status: const Value('active'),
-          lastUpdated: Value(DateTime.now()),
-        ),
-        ProductsTableCompanion.insert(
-          id: const Value(14),
-          name: '抽纸',
-          categoryId: const Value(3),
-          unitId: const Value(5),
-          retailPrice: const Value(8.0),
-          suggestedRetailPrice: const Value(10.0),
-          stockWarningValue: const Value(15),
-          shelfLife: const Value(1095),
-          shelfLifeUnit: const Value('days'),
-          enableBatchManagement: const Value(false),
-          status: const Value('active'),
-          lastUpdated: Value(DateTime.now()),
-        ),
-      ];
+      final defaultProducts = [];
 
       await _database.transaction(() async {
         for (final product in defaultProducts) {
-          await _database.into(_database.productsTable).insert(product);
+          await _database.into(_database.product).insert(product);
         }
       });
 
@@ -533,7 +336,7 @@ class DatabaseInitializer {
       // 删除基础数据表
       await _database.delete(_database.barcode).go();
       await _database.delete(_database.productUnit).go();
-      await _database.delete(_database.productsTable).go();
+      await _database.delete(_database.product).go();
       await _database.delete(_database.shopsTable).go();
       await _database.delete(_database.category).go();
       await _database.delete(_database.unit).go();

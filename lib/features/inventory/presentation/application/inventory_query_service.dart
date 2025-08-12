@@ -102,13 +102,14 @@ class InventoryQueryService {
             if (unit != null) {
               unitName = unit.name;
             }
-          } else if (product.unitId != null) {
+          } else {
             // 如果没有配置产品单位，使用产品主表的单位
-            final unit = unitMap[product.unitId!];
+            final unit = unitMap[product.baseUnitId];
             if (unit != null) {
               unitName = unit.name;
             }
           }
+        
         } catch (e) {
           print('📦 库存查询服务：获取单位失败: $e');
         }

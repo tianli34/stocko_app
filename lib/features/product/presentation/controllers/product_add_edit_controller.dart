@@ -37,9 +37,10 @@ class ProductFormData {
   final String newUnitName;
   final String? imagePath;
   final String barcode;
-  final double? retailPrice;
-  final double? promotionalPrice;
-  final double? suggestedRetailPrice;
+  // 价格（元）
+  final double? retailPriceInCents;
+  final double? promotionalPriceInCents;
+  final double? suggestedRetailPriceInCents;
   final int? stockWarningValue;
   final int? shelfLife;
   final String shelfLifeUnit;
@@ -57,9 +58,9 @@ class ProductFormData {
     this.newUnitName = '',
     this.imagePath,
     this.barcode = '',
-    this.retailPrice,
-    this.promotionalPrice,
-    this.suggestedRetailPrice,
+    this.retailPriceInCents,
+    this.promotionalPriceInCents,
+    this.suggestedRetailPriceInCents,
     this.stockWarningValue,
     this.shelfLife,
     this.shelfLifeUnit = 'months',
@@ -74,11 +75,11 @@ class ProductFormData {
 class ProductOperationResult {
   final bool success;
   final String? message;
-  final Product? product;
+  final ProductModel? product;
 
   const ProductOperationResult._(this.success, {this.message, this.product});
 
-  factory ProductOperationResult.success({String? message, Product? product}) =>
+  factory ProductOperationResult.success({String? message, ProductModel? product}) =>
       ProductOperationResult._(true, message: message, product: product);
 
   factory ProductOperationResult.failure(String message) =>
@@ -160,19 +161,23 @@ class ProductAddEditController {
       await _processAuxiliaryUnits(data.productUnits);
 
       // 3. 构建产品对象
-      final product = Product(
+      Money? toMoney(double? yuan) =>
+          yuan == null ? null : Money((yuan * 100).round());
+
+      final product = ProductModel(
         id: data.productId ?? DateTime.now().millisecondsSinceEpoch,
         // 确保id为整数类型
         name: data.name.trim(),
         image: data.imagePath,
         categoryId: categoryId,
-        unitId: unitId,
-        retailPrice: data.retailPrice,
-        promotionalPrice: data.promotionalPrice,
-        suggestedRetailPrice: data.suggestedRetailPrice,
+        baseUnitId: unitId,
+        // 可选字段按需传入
+        suggestedRetailPrice: toMoney(data.suggestedRetailPriceInCents),
+        retailPrice: toMoney(data.retailPriceInCents),
+        promotionalPrice: toMoney(data.promotionalPriceInCents),
         stockWarningValue: data.stockWarningValue,
         shelfLife: data.shelfLife,
-        shelfLifeUnit: data.shelfLifeUnit,
+        shelfLifeUnit: ShelfLifeUnit.values.byName(data.shelfLifeUnit),
         enableBatchManagement: data.enableBatchManagement,
         remarks: data.remarks?.trim(),
         lastUpdated: DateTime.now(),
@@ -212,7 +217,7 @@ class ProductAddEditController {
 
   /// 保存或替换产品单位配置
   Future<void> _saveProductUnits(
-    Product product,
+    ProductModel product,
     List<ProductUnit>? units,
   ) async {
     print('🔍 [DEBUG] ==================== 开始保存产品单位 ====================');
@@ -240,8 +245,8 @@ class ProductAddEditController {
     // 添加基础单位
     list.add(
       ProductUnit(
-        productId: product.id,
-        unitId: product.unitId!,
+        productId: product.id!,
+        unitId: product.baseUnitId,
         conversionRate: 1,
       ),
     );
@@ -274,11 +279,11 @@ class ProductAddEditController {
       if (unit != null && unit.id != null) {
         list.add(
           ProductUnit(
-            productId: product.id,
+            productId: product.id!,
             unitId: unit.id!,
             conversionRate: auxUnit.conversionRate,
-            sellingPriceInCents: auxUnit.retailPrice.trim().isNotEmpty
-                ? int.tryParse(auxUnit.retailPrice.trim())
+            sellingPriceInCents: auxUnit.retailPriceInCents.trim().isNotEmpty
+                ? int.tryParse(auxUnit.retailPriceInCents.trim())
                 : null,
             wholesalePriceInCents: auxUnit.wholesalePriceInCents.trim().isNotEmpty
                 ? int.tryParse(auxUnit.wholesalePriceInCents.trim())
@@ -305,7 +310,7 @@ class ProductAddEditController {
     }
 
     try {
-      await ctrl.replaceProductUnits(product.id, list);
+      await ctrl.replaceProductUnits(product.id!, list);
       print('🔍 [DEBUG] ✅ 产品单位保存成功');
     } catch (e) {
       print('🔍 [DEBUG] ❌ 产品单位保存失败: $e');
@@ -316,7 +321,7 @@ class ProductAddEditController {
   }
 
   /// 保存主条码
-  Future<void> _saveMainBarcode(Product product, String barcode) async {
+  Future<void> _saveMainBarcode(ProductModel product, String barcode) async {
     final code = barcode.trim();
     if (code.isEmpty) return;
 
@@ -325,7 +330,7 @@ class ProductAddEditController {
       productUnitControllerProvider.notifier,
     );
     final productUnits = await productUnitController.getProductUnitsByProductId(
-      product.id,
+      product.id!,
     );
     final baseProductUnit = productUnits.firstWhere(
       (pu) => pu.conversionRate == 1.0,
@@ -343,7 +348,7 @@ class ProductAddEditController {
 
   /// 保存辅单位条码
   Future<void> _saveAuxiliaryUnitBarcodes(
-    Product product,
+    ProductModel product,
     List<AuxiliaryUnitBarcodeData>? auxiliaryBarcodes,
   ) async {
     print('🔍 [DEBUG] ==================== 开始保存辅单位条码 ====================');
@@ -364,7 +369,7 @@ class ProductAddEditController {
       productUnitControllerProvider.notifier,
     );
     final productUnits = await productUnitController.getProductUnitsByProductId(
-      product.id,
+      product.id!,
     );
 
     final ctrl = ref.read(barcodeControllerProvider.notifier);

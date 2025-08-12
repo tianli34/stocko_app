@@ -169,16 +169,13 @@ class ProductImportService {
 
           // 插入商品主记录
           batch.insert(
-            db.productsTable,
-            ProductsTableCompanion.insert(
+            db.product,
+             ProductCompanion.insert(
               id: Value(productId), // 使用新ID
               name: productName,
               brand: Value(brand),
               categoryId: Value(categoryId),
-              unitId: Value(packUnitId), // 基础单位ID是“包”
-              suggestedRetailPrice: Value(
-                cartonSuggestedRetailPrice / conversionRate,
-              ),
+              baseUnitId: packUnitId, // 基础单位ID是“包”
             ),
           );
 

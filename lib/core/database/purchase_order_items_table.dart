@@ -19,7 +19,7 @@ class PurchaseOrderItemsTable extends Table {
 
   /// 外键 - 货品ID
   IntColumn get productId =>
-      integer().named('product_id').references(ProductsTable, #id)();
+      integer().named('product_id').references(Product, #id)();
 
   /// 外键 - 单位ID
   IntColumn get unitId => integer().named('unit_id').references(Unit, #id)();

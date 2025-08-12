@@ -12,7 +12,7 @@ class InventoryTransactionsTable extends Table {
 
   /// 外键 - 产品ID
   IntColumn get productId =>
-      integer().named('product_id').references(ProductsTable, #id)();
+      integer().named('product_id').references(Product, #id)();
 
   /// 流水类型（入库、出库等）
   TextColumn get type => text().named('type')();

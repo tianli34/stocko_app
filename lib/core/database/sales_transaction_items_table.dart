@@ -7,7 +7,7 @@ import 'sales_transactions_table.dart';
 class SalesTransactionItemsTable extends Table {
   IntColumn get id => integer().autoIncrement()();
   IntColumn get salesTransactionId => integer().references(SalesTransactionsTable, #id)();
-  IntColumn get productId => integer().references(ProductsTable, #id)();
+  IntColumn get productId => integer().references(Product, #id)();
   IntColumn get unitId => integer().named('unit_id').references(Unit, #id)();
   IntColumn get quantity => integer()();
   RealColumn get unitPrice => real()();

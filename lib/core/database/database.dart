@@ -42,12 +42,13 @@ import '../../features/product/data/dao/barcode_dao.dart';
 import '../../features/sale/data/dao/customer_dao.dart';
 import '../../features/sale/data/dao/sales_transaction_dao.dart';
 import '../../features/sale/data/dao/sales_transaction_item_dao.dart';
+import '../../features/product/domain/model/product.dart';
 
 part 'database.g.dart';
 
 @DriftDatabase(
   tables: [
-    ProductsTable,
+    Product,
     Category,
     Unit,
     ProductUnit,

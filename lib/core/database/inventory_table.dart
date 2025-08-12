@@ -12,7 +12,7 @@ class InventoryTable extends Table {
 
   /// 外键 - 货品ID
   IntColumn get productId =>
-      integer().named('product_id').references(ProductsTable, #id)();
+      integer().named('product_id').references(Product, #id)();
 
   /// 库存数量
   IntColumn get quantity => integer().named('quantity')();

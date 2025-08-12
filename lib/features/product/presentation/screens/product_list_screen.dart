@@ -16,7 +16,7 @@ class ProductListScreen extends ConsumerWidget {
   Future<void> _showDeleteConfirmDialog(
     BuildContext context,
     WidgetRef ref,
-    Product product,
+    ProductModel product,
   ) async {
     final confirmed = await showDialog<bool>(
       context: context,
@@ -39,20 +39,20 @@ class ProductListScreen extends ConsumerWidget {
     if (confirmed == true) {
       await ref
           .read(productOperationsProvider.notifier)
-          .deleteProduct(product.id);
+          .deleteProduct(product.id!);
     }
   }
 
   Future<void> _showAdjustInventoryDialog(
     BuildContext context,
     WidgetRef ref,
-    Product product,
+    ProductModel product,
   ) async {
     final quantityController = TextEditingController();
     // FIXME: Hardcoded shopId. In a real app, this should come from user session or selection.
     const shopId = 'default_shop';
     final inventory =
-        await ref.read(inventoryServiceProvider).getInventory(product.id, shopId);
+        await ref.read(inventoryServiceProvider).getInventory(product.id!, shopId);
     if (inventory != null) {
       quantityController.text = inventory.quantity.toStringAsFixed(0);
     }
@@ -237,12 +237,12 @@ class ProductListScreen extends ConsumerWidget {
               (a, b) =>
                   (b.lastUpdated ??
                           DateTime.fromMillisecondsSinceEpoch(
-                            b.id,
+                            b.id ?? 0,
                           ))
                       .compareTo(
                         a.lastUpdated ??
                             DateTime.fromMillisecondsSinceEpoch(
-                              a.id,
+                              a.id ?? 0,
                             ),
                       ),
             );

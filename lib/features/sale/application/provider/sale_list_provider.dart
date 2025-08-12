@@ -38,7 +38,7 @@ class SaleListNotifier extends StateNotifier<List<SaleItem>> {
   /// [barcode] - 条码
   /// [sellingPriceInCents] - 销售价
   void addOrUpdateItem({
-    required Product product,
+    required ProductModel product,
     required int unitId,
     String? unitName,
     String? barcode,
@@ -51,7 +51,7 @@ class SaleListNotifier extends StateNotifier<List<SaleItem>> {
       if (barcode != null && item.id.contains('item_${barcode}_')) {
         return true;
       }
-      return item.productId == product.id && item.unitId == unitId;
+      return item.productId == product.id! && item.unitId == unitId;
     });
 
     if (existingItemIndex != -1) {
@@ -66,11 +66,11 @@ class SaleListNotifier extends StateNotifier<List<SaleItem>> {
       // 如果是新货品，创建新的销售项
       final itemId = barcode != null
           ? 'item_${barcode}_${DateTime.now().millisecondsSinceEpoch}'
-          : 'item_${product.id}_${unitId}_${DateTime.now().millisecondsSinceEpoch}';
+          : 'item_${product.id!}_${unitId}_${DateTime.now().millisecondsSinceEpoch}';
 
       final newItem = SaleItem(
         id: itemId,
-        productId: product.id,
+        productId: product.id!,
         productName: product.name,
         unitId: unitId,
         unitName: actualUnitName,

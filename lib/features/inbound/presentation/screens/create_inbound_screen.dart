@@ -139,7 +139,7 @@ class _CreateInboundScreenState extends ConsumerState<CreateInboundScreen> {
       // 我们都能在获取到数据后再执行后续逻辑，从而修复首次加载时数据未就绪的bug。
       final List<
         ({
-          Product product,
+          ProductModel product,
           int unitId,
           String unitName,
           int? wholesalePriceInCents

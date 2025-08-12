@@ -12,7 +12,7 @@ class ProductRepository implements IProductRepository {
 
   ProductRepository(AppDatabase database) : _productDao = database.productDao;
   @override
-  Future<int> addProduct(Product product) async {
+  Future<int> addProduct(ProductModel product) async {
     try {
       print('🗃️ 仓储层：添加产品，ID: ${product.id}, 名称: ${product.name}');
       await _productDao.insertProduct(
@@ -27,9 +27,9 @@ class ProductRepository implements IProductRepository {
   }
 
   @override
-  Future<bool> updateProduct(Product product) async {
+  Future<bool> updateProduct(ProductModel product) async {
     // 检查产品ID是否为空
-    if (product.id <= 0) {
+    if (product.id == null || product.id! <= 0) {
       throw Exception('产品ID不能为空');
     }
 
@@ -75,7 +75,7 @@ class ProductRepository implements IProductRepository {
   }
 
   @override
-  Future<Product?> getProductById(int id) async {
+  Future<ProductModel?> getProductById(int id) async {
     try {
       final result = await _productDao.getProductById(id);
       return result != null ? _dataToProduct(result) : null;
@@ -85,7 +85,7 @@ class ProductRepository implements IProductRepository {
   }
 
   @override
-  Stream<List<Product>> watchAllProducts() {
+  Stream<List<ProductModel>> watchAllProducts() {
     return _productDao
         .watchAllProducts()
         .map((data) => data.map(_dataToProduct).toList())
@@ -98,7 +98,7 @@ class ProductRepository implements IProductRepository {
   Stream<
     List<
       ({
-        Product product,
+        ProductModel product,
         int unitId,
         String unitName,
         int? wholesalePriceInCents
@@ -126,7 +126,7 @@ class ProductRepository implements IProductRepository {
   }
 
   @override
-  Future<List<Product>> getAllProducts() async {
+  Future<List<ProductModel>> getAllProducts() async {
     try {
       final data = await _productDao.getAllProducts();
       return data.map(_dataToProduct).toList();
@@ -137,7 +137,7 @@ class ProductRepository implements IProductRepository {
 
   /// 根据条件查询产品
   @override
-  Future<List<Product>> getProductsByCondition({
+  Future<List<ProductModel>> getProductsByCondition({
     int? categoryId,
     String? status,
     String? keyword,
@@ -156,7 +156,7 @@ class ProductRepository implements IProductRepository {
 
   /// 监听指定类别的产品
   @override
-  Stream<List<Product>> watchProductsByCategory(int categoryId) {
+  Stream<List<ProductModel>> watchProductsByCategory(int categoryId) {
     return _productDao
         .watchProductsByCategory(categoryId)
         .map((data) => data.map(_dataToProduct).toList())
@@ -167,7 +167,7 @@ class ProductRepository implements IProductRepository {
 
   /// 根据条码查询产品
   @override
-  Future<Product?> getProductByBarcode(String barcode) async {
+  Future<ProductModel?> getProductByBarcode(String barcode) async {
     try {
       final result = await _productDao.getProductByBarcode(barcode);
       return result != null ? _dataToProduct(result) : null;
@@ -180,7 +180,7 @@ class ProductRepository implements IProductRepository {
   @override
   Future<
     ({
-      Product product,
+      ProductModel product,
       int unitId,
       String unitName,
       int? wholesalePriceInCents
@@ -203,7 +203,7 @@ class ProductRepository implements IProductRepository {
   }
 
   /// 获取库存预警产品
-  Future<List<Product>> getStockWarningProducts() async {
+  Future<List<ProductModel>> getStockWarningProducts() async {
     try {
       final data = await _productDao.getStockWarningProducts();
       return data.map(_dataToProduct).toList();
@@ -213,7 +213,7 @@ class ProductRepository implements IProductRepository {
   }
 
   /// 批量添加产品
-  Future<void> addMultipleProducts(List<Product> products) async {
+  Future<void> addMultipleProducts(List<ProductModel> products) async {
     try {
       final companions = products.map(_productToCompanion).toList();
       await _productDao.insertMultipleProducts(companions);
@@ -223,7 +223,7 @@ class ProductRepository implements IProductRepository {
   }
 
   /// 批量更新产品
-  Future<void> updateMultipleProducts(List<Product> products) async {
+  Future<void> updateMultipleProducts(List<ProductModel> products) async {
     try {
       final companions = products.map(_productToCompanion).toList();
       await _productDao.updateMultipleProducts(companions);
@@ -251,16 +251,18 @@ class ProductRepository implements IProductRepository {
   }
 
   /// 将Product模型转换为数据库Companion
-  ProductsTableCompanion _productToCompanion(Product product) {
-    return ProductsTableCompanion(
-      id: Value(product.id),
+  ProductCompanion _productToCompanion(ProductModel product) {
+    return ProductCompanion(
+      // 自增ID：插入时应当缺省，更新时需要提供
+      id: product.id == null ? const Value.absent() : Value(product.id!),
       name: Value(product.name),
       sku: Value(product.sku),
       image: Value(product.image),
       categoryId: Value(product.categoryId),
-      unitId: Value(product.unitId),
+      baseUnitId: Value(product.baseUnitId),
       specification: Value(product.specification),
       brand: Value(product.brand),
+      // Money 字段，直接映射对应列名
       suggestedRetailPrice: Value(product.suggestedRetailPrice),
       retailPrice: Value(product.retailPrice),
       promotionalPrice: Value(product.promotionalPrice),
@@ -275,14 +277,14 @@ class ProductRepository implements IProductRepository {
   }
 
   /// 将数据库数据转换为Product模型
-  Product _dataToProduct(ProductsTableData data) {
-    return Product(
+  ProductModel _dataToProduct(ProductData data) {
+    return ProductModel(
       id: data.id, // 直接使用int类型的id
       name: data.name,
       sku: data.sku,
       image: data.image,
       categoryId: data.categoryId,
-      unitId: data.unitId,
+      baseUnitId: data.baseUnitId,
       specification: data.specification,
       brand: data.brand,
       suggestedRetailPrice: data.suggestedRetailPrice,
@@ -315,7 +317,7 @@ final productRepositoryProvider = Provider<IProductRepository>((ref) {
 });
 
 /// Provider to get a single product by its ID.
-final productByIdProvider = FutureProvider.family<Product?, int>((
+final productByIdProvider = FutureProvider.family<ProductModel?, int>((
   ref,
   id,
 ) async {

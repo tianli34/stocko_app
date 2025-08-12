@@ -1,89 +1,101 @@
+// ignore_for_file: invalid_annotation_target
 import 'package:freezed_annotation/freezed_annotation.dart';
+import 'package:intl/intl.dart';
 
 part 'product.freezed.dart';
 part 'product.g.dart';
 
-@freezed
-abstract class Product with _$Product {
-  const factory Product({
-    required int id, // ID现在是必需的
-    required String name, // 名称必须
-    String? sku,
-    String? image, // 图片
-    int? categoryId, // 类别ID (关联分类表)
-    int? unitId, // 单位ID (关联单位表)
-    String? specification, // 型号/规格
-    String? brand, // 品牌
-    double? suggestedRetailPrice, // 建议零售价
-    double? retailPrice, // 零售价
-    double? promotionalPrice, // 促销价
-    int? stockWarningValue, // 库存预警值
-    int? shelfLife, // 保质期(天数) - 修复：添加了缺失的换行符
-    @Default('months') String shelfLifeUnit, // 保质期单位 (days, months, years)
-    @Default(false) bool enableBatchManagement, // 批量管理开关，默认为false
-    @Default('active') String status, // 状态，默认为 'active'
-    String? remarks, // 备注
-    DateTime? lastUpdated, // 最后更新日期
-  }) = _Product;
+// 帮助函数，用于 JSON 转换
+int? _intFromJson(dynamic value) {
+  if (value == null) return null;
+  if (value is int) return value;
+  if (value is String) return int.tryParse(value);
+  return null;
+}
 
-  const Product._();
+/// 价格封装类（单位为分）
+@JsonSerializable()
+class Money {
+  final int cents;
+  const Money(this.cents);
 
-  factory Product.fromJson(Map<String, dynamic> json) =>
-      _$ProductFromJson(json..['id'] = json['id'] is String ? int.tryParse(json['id']) ?? 0 : json['id']..['unitId'] = json['unitId'] is String ? int.tryParse(json['unitId']) ?? 0 : json['unitId']);
+  double get yuan => cents / 100;
 
-  // 获取有效价格（促销价 > 零售价 > 建议零售价）
-  double? get effectivePrice {
-    return promotionalPrice ?? retailPrice ?? suggestedRetailPrice;
+  String format({String symbol = '¥', String locale = 'zh_CN'}) {
+    final cacheKey = '$locale|$symbol';
+    final formatter = _formatterCache.putIfAbsent(
+      cacheKey,
+      () => NumberFormat.currency(locale: locale, symbol: symbol, decimalDigits: 2),
+    );
+    return formatter.format(yuan);
   }
 
-  // 是否有促销价
+  static final _formatterCache = <String, NumberFormat>{};
+
+  factory Money.fromJson(Map<String, dynamic> json) => _$MoneyFromJson(json);
+  Map<String, dynamic> toJson() => _$MoneyToJson(this);
+}
+
+/// 保质期单位
+@JsonEnum(alwaysCreate: true)
+enum ShelfLifeUnit { days, months, years }
+
+/// 产品状态
+@JsonEnum(alwaysCreate: true)
+enum ProductStatus { active, inactive }
+
+@freezed
+abstract class ProductModel with _$ProductModel {
+  const factory ProductModel({
+    @JsonKey(fromJson: _intFromJson) int? id,
+    required String name,
+    String? sku,
+    String? image,
+    required int baseUnitId,
+    @JsonKey(fromJson: _intFromJson) int? categoryId,
+    String? specification,
+    String? brand,
+    Money? suggestedRetailPrice,
+    Money? retailPrice,
+    Money? promotionalPrice,
+    int? stockWarningValue,
+    int? shelfLife,
+    @Default(ShelfLifeUnit.months) ShelfLifeUnit shelfLifeUnit,
+    @Default(false) bool enableBatchManagement,
+    @Default(ProductStatus.active) ProductStatus status,
+    String? remarks,
+    DateTime? lastUpdated,
+  }) = _ProductModel;
+
+  factory ProductModel.fromJson(Map<String, dynamic> json) =>
+      _$ProductModelFromJson(json);
+
+  const ProductModel._();
+
+  /// 获取有效价格（促销价 > 零售价 > 建议零售价）
+  Money? get effectivePrice =>
+      promotionalPrice ?? retailPrice ?? suggestedRetailPrice;
+
+  /// 是否有促销价
   bool get hasPromotionalPrice => promotionalPrice != null;
 
-  // 是否需要库存预警
+  /// 是否需要库存预警 (优化后)
   bool isStockWarning(int currentStock) {
-    return stockWarningValue != null && currentStock <= stockWarningValue!;
-  }
-
-  // 是否有效（状态为活跃）
-  bool get isActive => status == 'active';
-
-  // 是否已过期（如果有保质期）
-  bool get isExpired {
-    if (shelfLife == null || lastUpdated == null) return false;
-
-    Duration duration;
-    switch (shelfLifeUnit.toLowerCase()) {
-      case 'days':
-        duration = Duration(days: shelfLife!);
-        break;
-      case 'months':
-        duration = Duration(days: shelfLife! * 30); // 近似计算
-        break;
-      case 'years':
-        duration = Duration(days: shelfLife! * 365); // 近似计算
-        break;
-      default:
-        duration = Duration(days: shelfLife!);
+    final limit = stockWarningValue;
+    if (limit == null || limit <= 0) {
+      return false;
     }
-
-    final expiryDate = lastUpdated!.add(duration);
-    return DateTime.now().isAfter(expiryDate);
+    return currentStock <= limit;
   }
 
-  // 获取格式化的价格显示
-  String get formattedPrice {
-    final price = effectivePrice;
-    if (price == null) return '价格待定';
-    return '¥${price.toStringAsFixed(2)}';
-  }
+  /// 是否有效（状态为活跃）
+  bool get isActive => status == ProductStatus.active;
 
-  // 复制并更新最后更新时间
-  Product updateTimestamp() {
-    return copyWith(lastUpdated: DateTime.now());
-  }
+  /// 获取格式化的价格显示
+  String get formattedPrice => effectivePrice?.format() ?? '价格待定';
 
-  /// 将字符串ID转换为整数
-  static int parseId(String id) {
-    return int.tryParse(id) ?? 0;
+  /// 复制并更新最后更新时间（统一用 UTC）
+  ProductModel updateTimestamp() {
+    return copyWith(lastUpdated: DateTime.now().toUtc());
   }
 }

@@ -115,10 +115,10 @@ class UnitEditFormNotifier extends Notifier<UnitEditFormState> {
   }
 
   /// 更新辅单位的建议零售价
-  void updateAuxiliaryUnitRetailPrice(int id, String retailPrice) {
+  void updateAuxiliaryUnitRetailPrice(int id, String retailPriceInCents) {
     final updatedUnits = state.auxiliaryUnits.map((unit) {
       if (unit.id == id) {
-        return unit.copyWith(retailPrice: retailPrice);
+        return unit.copyWith(retailPriceInCents: retailPriceInCents);
       }
       return unit;
     }).toList();
@@ -172,7 +172,7 @@ class UnitEditFormNotifier extends Notifier<UnitEditFormState> {
             unitName: auxUnit.unitController?.text as String? ?? '',
             conversionRate: auxUnit.conversionRate ?? 1,
             barcode: auxUnit.barcodeController?.text as String? ?? '',
-            retailPrice: auxUnit.retailPriceController?.text as String? ?? '',
+            retailPriceInCents: auxUnit.retailPriceController?.text as String? ?? '',
             wholesalePriceInCents:
                 auxUnit.wholesalePriceController?.text as String? ?? '',
           ),

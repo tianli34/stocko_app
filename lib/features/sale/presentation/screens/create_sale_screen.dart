@@ -109,12 +109,9 @@ class _CreateSaleScreenState extends ConsumerState<CreateSaleScreen> {
 
     try {
       // 核心修复：
-      // 使用 `ref.read(provider.future)` 来异步等待数据加载完成。
-      // 这可以确保无论 `allProductsWithUnitProvider` 是否已缓存数据，
-      // 我们都能在获取到数据后再执行后续逻辑，从而修复首次加载时数据未就绪的bug。
       final List<
         ({
-          Product product,
+          ProductModel product,
           int unitId,
           String unitName,
           int? wholesalePriceInCents,
@@ -127,13 +124,14 @@ class _CreateSaleScreenState extends ConsumerState<CreateSaleScreen> {
           .toList();
 
       for (final p in selectedProducts) {
+        final price = p.product.effectivePrice;
         ref
             .read(saleListProvider.notifier)
             .addOrUpdateItem(
               product: p.product,
               unitId: p.unitId,
               unitName: p.unitName,
-              sellingPriceInCents: (p.product.effectivePrice! * 100).toInt(),
+              sellingPriceInCents: price != null ? price.cents : 0,
             );
       }
     } catch (e) {
@@ -412,14 +410,12 @@ class _CreateSaleScreenState extends ConsumerState<CreateSaleScreen> {
       Navigator.of(context).pop();
 
       if (result != null) {
-        ref
-            .read(saleListProvider.notifier)
-            .addOrUpdateItem(
+        final price = result.product.effectivePrice;
+        ref.read(saleListProvider.notifier).addOrUpdateItem(
               product: result.product,
               unitId: result.unitId,
               unitName: result.unitName,
-              barcode: barcode,
-              sellingPriceInCents: (result.product.effectivePrice! * 100).toInt(),
+              sellingPriceInCents: price != null ? price.cents : 0,
             );
       } else {
         // 如果没有找到产品，显示对话框
@@ -453,14 +449,12 @@ class _CreateSaleScreenState extends ConsumerState<CreateSaleScreen> {
       if (!mounted) return;
 
       if (result != null) {
-        ref
-            .read(saleListProvider.notifier)
-            .addOrUpdateItem(
+        final price = result.product.effectivePrice;
+        ref.read(saleListProvider.notifier).addOrUpdateItem(
               product: result.product,
               unitId: result.unitId,
               unitName: result.unitName,
-              barcode: barcode,
-              sellingPriceInCents: (result.product.effectivePrice! * 100).toInt(),
+              sellingPriceInCents: price != null ? price.cents : 0,
             );
         _lastScannedBarcode = barcode; // 仅在成功时更新上一个条码
         // 成功添加后给予一个更明确的提示

@@ -2,7 +2,7 @@
 
 cd E:\stocko_app\
 git add .
-git commit -m "0811 598 Category 表更新"
+git commit -m "0812 596 Product 表更新"
 git push
 
 

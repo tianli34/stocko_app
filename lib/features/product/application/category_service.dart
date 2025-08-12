@@ -124,16 +124,17 @@ class CategoryService {
 
       for (final product in relatedProducts) {
         // 将产品的类别设置为当前类别的父类别（如果有），否则设为null
-        final updatedProduct = Product(
+        final updatedProduct = ProductModel(
           id: product.id,
           name: product.name,
           // barcode 字段已移除，条码现在由独立的条码表管理
           sku: product.sku,
           image: product.image,
           categoryId: category.parentId, // 转移到父类别或设为null
-          unitId: product.unitId,
+          baseUnitId: product.baseUnitId,
           specification: product.specification,
           brand: product.brand,
+          // 使用 Money 字段而非 *InCents
           suggestedRetailPrice: product.suggestedRetailPrice,
           retailPrice: product.retailPrice,
           promotionalPrice: product.promotionalPrice,
@@ -184,7 +185,9 @@ class CategoryService {
           categoryId: categoryId,
         );
         for (final product in relatedProducts) {
-          await _productRepository.deleteProduct(product.id);
+          if (product.id != null) {
+            await _productRepository.deleteProduct(product.id!);
+          }
         }
       }
     }

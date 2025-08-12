@@ -16,7 +16,7 @@ class InboundReceiptItemsTable extends Table {
 
   /// 外键 - 商品ID
   IntColumn get productId =>
-      integer().named('product_id').references(ProductsTable, #id)();
+      integer().named('product_id').references(Product, #id)();
 
   /// 本次入库数量
   IntColumn get quantity => integer().named('quantity')();
