@@ -1,6 +1,5 @@
 import 'package:drift/drift.dart';
 import 'products_table.dart';
-import 'batches_table.dart';
 import 'units_table.dart';
 import 'sales_transactions_table.dart';
 
@@ -14,6 +13,6 @@ class SalesTransactionItemsTable extends Table {
   RealColumn get totalPrice => real()();
   
   /// 批次ID（外键引用batches.batchNumber），可为空
-  TextColumn get batchId => text().named('batch_id').nullable().references(BatchesTable, #batchNumber)();
+  TextColumn get batchId => text().named('batch_id').nullable().references(Batch, #batchNumber)();
 
 }

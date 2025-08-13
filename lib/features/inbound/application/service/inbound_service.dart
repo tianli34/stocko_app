@@ -7,7 +7,6 @@ import '../../../inbound/data/dao/inbound_receipt_dao.dart';
 import '../../../inbound/data/dao/inbound_item_dao.dart';
 import '../../../purchase/data/dao/product_supplier_dao.dart';
 import '../../../inventory/application/inventory_service.dart';
-import '../../../inventory/domain/model/batch.dart';
 import '../../domain/model/inbound_item.dart';
 import '../../../purchase/domain/repository/i_supplier_repository.dart';
 import '../../../purchase/domain/model/supplier.dart';
@@ -171,32 +170,15 @@ class InboundService {
       // 检查产品是否启用批次管理
       final product = await _database.productDao.getProductById(item.productId);
 
-      if (product?.enableBatchManagement == true &&
-          item.productionDate != null) {
-        final batchNumber = Batch.generateBatchNumber(
-          item.productId,
-          item.productionDate!,
+      if (product?.enableBatchManagement == true && item.productionDate != null) {
+        // 使用 ON CONFLICT DO UPDATE 的方式累加数量
+        await _batchDao.upsertBatchIncrement(
+          productId: item.productId,
+          productionDate: item.productionDate!,
+          shopId: shopId,
+          increment: item.quantity,
         );
-
-        // 检查批次是否已存在
-        final existingBatch = await _batchDao.getBatchByNumber(batchNumber);
-
-        if (existingBatch != null) {
-          // 如果批次已存在，累加初始数量
-          final newInitialQuantity =
-              existingBatch.initialQuantity + item.quantity;
-          await _batchDao.updateBatchQuantity(batchNumber, newInitialQuantity);
-          print('📦 批次 $batchNumber 数量累加: ${item.quantity}');
-        } else {
-          // 如果批次不存在，创建新批次
-          await _batchDao.createBatch(
-            productId: item.productId,
-            productionDate: item.productionDate!,
-            initialQuantity: item.quantity,
-            shopId: shopId,
-          );
-          print('📦 新建批次 $batchNumber: ${item.quantity}');
-        }
+        print('📦 批次(商品:${item.productId}, 日期:${item.productionDate}, 店铺:$shopId) 数量累计 +${item.quantity}');
       }
     }
   }
@@ -310,6 +292,17 @@ class InboundService {
       final product = await _database.productDao.getProductById(item.productId);
       final unitId = await _getUnitIdFromUnitName(item.unitName);
 
+      // 若启用批次管理并且有生产日期，则查找对应批次号
+      int? resolvedBatchNumber;
+      if (item.productionDate != null && product?.enableBatchManagement == true) {
+        final batchRow = await _batchDao.getBatchByBusinessKey(
+          productId: item.productId,
+          productionDate: item.productionDate!,
+          shopId: shopId,
+        );
+        resolvedBatchNumber = batchRow?.batchNumber;
+      }
+
       final itemCompanion = InboundReceiptItemsTableCompanion(
         id: drift.Value('item_${now.millisecondsSinceEpoch}_${item.id}'),
         receiptId: drift.Value(receiptId),
@@ -320,12 +313,8 @@ class InboundService {
         locationId: const drift.Value.absent(), // 采购入库暂不指定货位
         purchaseQuantity: drift.Value(item.quantity),
         purchaseOrderId: drift.Value(purchaseOrderId?.toString()),
-        batchNumber:
-            item.productionDate != null &&
-                product?.enableBatchManagement == true
-            ? drift.Value(
-                Batch.generateBatchNumber(item.productId, item.productionDate!),
-              )
+        batchNumber: resolvedBatchNumber != null
+            ? drift.Value(resolvedBatchNumber.toString())
             : const drift.Value.absent(),
       );
       itemCompanions.add(itemCompanion);
@@ -346,15 +335,24 @@ class InboundService {
       final product = await _database.productDao.getProductById(item.productId);
 
       // 根据产品批次管理设置决定批次号生成策略
-      final batchNumber =
-          item.productionDate != null && product?.enableBatchManagement == true
-          ? Batch.generateBatchNumber(item.productId, item.productionDate!)
-          : 'BATCH_${DateTime.now().millisecondsSinceEpoch}_${item.id}';
+      String batchNumberStr;
+      if (item.productionDate != null && product?.enableBatchManagement == true) {
+        final batchRow = await _batchDao.getBatchByBusinessKey(
+          productId: item.productId,
+          productionDate: item.productionDate!,
+          shopId: shopId,
+        );
+        // 若找不到（极小概率），兜底用临时批号
+        batchNumberStr = (batchRow?.batchNumber.toString()) ??
+            'BATCH_${DateTime.now().millisecondsSinceEpoch}_${item.id}';
+      } else {
+        batchNumberStr = 'BATCH_${DateTime.now().millisecondsSinceEpoch}_${item.id}';
+      }
 
       final success = await _inventoryService.inbound(
         productId: item.productId,
         shopId: shopId,
-        batchNumber: batchNumber,
+        batchNumber: batchNumberStr,
         quantity: item.quantity,
         time: DateTime.now(),
       );

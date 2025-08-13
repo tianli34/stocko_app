@@ -538,7 +538,7 @@ class DatabaseManagementScreen extends ConsumerWidget {
 
   Future<void> _showBatchesData(BuildContext context, WidgetRef ref) async {
     final database = ref.read(appDatabaseProvider);
-    final batches = await database.select(database.batchesTable).get();
+    final batches = await database.select(database.productBatch).get();
 
     if (context.mounted) {
       showDialog(
@@ -561,7 +561,7 @@ class DatabaseManagementScreen extends ConsumerWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text('产品ID: ${batch.productId}'),
-                        Text('初始数量: ${batch.initialQuantity}'),
+                        Text('totalInboundQuantity: ${batch.totalInboundQuantity}'),
                         Text(
                           '生产日期: ${batch.productionDate.toString().substring(0, 10)}',
                         ),

@@ -330,7 +330,7 @@ class DatabaseInitializer {
       await _database.delete(_database.purchaseOrdersTable).go();
       await _database.delete(_database.inventoryTransactionsTable).go();
       await _database.delete(_database.inventoryTable).go();
-      await _database.delete(_database.batchesTable).go();
+      await _database.delete(_database.productBatch).go();
       await _database.delete(_database.suppliersTable).go();
 
       // 删除基础数据表

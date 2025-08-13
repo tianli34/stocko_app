@@ -1,36 +1,53 @@
 import 'package:drift/drift.dart';
 import 'products_table.dart';
+import 'shops_table.dart';
 
 /// 批次表
-/// 存储产品批次信息，包括批次号、生产日期、数量等
-class BatchesTable extends Table {
-  @override
-  String get tableName => 'batches';
-
-  /// 主键 - 批次号
-  TextColumn get batchNumber => text().named('batch_number')();
-
-  /// 生产日期
-  DateTimeColumn get productionDate => dateTime().named('production_date')();
-
-  /// 初始数量，同一批次的初始数量可累加
-  IntColumn get initialQuantity => integer().named('initial_quantity')();
-
-  /// 外键 - 店铺ID
-  TextColumn get shopId => text().named('shop_id')();
+class ProductBatch extends Table {
+  /// 主键 - 批次号，无业务意义
+  IntColumn get batchNumber => integer().autoIncrement()();
 
   /// 外键 - 货品ID
-  IntColumn get productId =>
-      integer().named('product_id').references(Product, #id)();
+  IntColumn get productId => integer()
+      .references(
+        Product,
+        #id,
+        onDelete: KeyAction.restrict,
+        onUpdate: KeyAction.cascade,
+      )();
 
-  /// 创建时间
-  DateTimeColumn get createdAt =>
-      dateTime().named('created_at').withDefault(currentDateAndTime)();
+  /// 生产日期
+  DateTimeColumn get productionDate => dateTime()();
 
-  /// 最后更新时间
-  DateTimeColumn get updatedAt =>
-      dateTime().named('updated_at').withDefault(currentDateAndTime)();
+  /// 累计入库数量，非负
+  IntColumn get totalInboundQuantity =>
+      integer().named('total_inbound_quantity')();
 
+  /// 外键 - 店铺ID
+  TextColumn get shopId => text()
+      .withLength(min: 1, max: 64)
+      .references(
+        ShopsTable,
+        #id,
+        onDelete: KeyAction.restrict,
+        onUpdate: KeyAction.cascade,
+      )();
+
+  /// 创建时间（由数据库默认生成）
+  DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
+
+  /// 最后更新时间（注意：不会自动在更新时刷新，需要应用层或触发器维护）
+  DateTimeColumn get updatedAt => dateTime().withDefault(currentDateAndTime)();
+
+  /// 业务唯一键：同一店铺、同一产品、同一生产日期只能有一个批次
   @override
-  Set<Column> get primaryKey => {batchNumber};
+  List<Set<Column>> get uniqueKeys => [
+        {productId, productionDate, shopId},
+      ];
+
+  /// 表级约束：数量非负
+  @override
+  List<String> get customConstraints => [
+        'CHECK(total_inbound_quantity >= 0)'
+      ];
 }
