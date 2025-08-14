@@ -1,36 +1,38 @@
 import 'package:drift/drift.dart';
 import 'products_table.dart';
+import 'shops_table.dart';
+import 'batches_table.dart';
 
 /// 库存表
 /// 存储产品在各店铺的库存信息
-class InventoryTable extends Table {
-  @override
-  String get tableName => 'inventory';
-
+class Stock extends Table {
   /// 主键 - 库存ID
-  TextColumn get id => text().named('id')();
+  IntColumn get id => integer().autoIncrement()();
 
   /// 外键 - 货品ID
-  IntColumn get productId =>
-      integer().named('product_id').references(Product, #id)();
-
-  /// 库存数量
-  IntColumn get quantity => integer().named('quantity')();
-
-  /// 外键 - 店铺ID
-  TextColumn get shopId => text().named('shop_id')();
+  IntColumn get productId => integer().references(Product, #id)();
 
   /// 外键 - 批次号
-  TextColumn get batchNumber => text().named('batch_number')();
+  IntColumn get batchNumber =>
+      integer().references(ProductBatch, #batchNumber).nullable()();
+
+  /// 库存数量
+  IntColumn get quantity => integer()();
+
+  /// 外键 - 店铺ID
+  TextColumn get shopId => text().references(ShopsTable, #id)();
 
   /// 创建时间
-  DateTimeColumn get createdAt =>
-      dateTime().named('created_at').withDefault(currentDateAndTime)();
+  DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
 
   /// 最后更新时间
-  DateTimeColumn get updatedAt =>
-      dateTime().named('updated_at').withDefault(currentDateAndTime)();
+  DateTimeColumn get updatedAt => dateTime().withDefault(currentDateAndTime)();
 
   @override
-  Set<Column> get primaryKey => {id};
+  List<String> get customConstraints => [
+    // 1. 针对有批次号的库存：(产品, 店铺, 批次号) 联合唯一
+    'UNIQUE (product_id, shop_id, batch_number) WHERE batch_number IS NOT NULL',
+    // 2. 针对无批次号的库存：(产品, 店铺) 联合唯一
+    'UNIQUE (product_id, shop_id) WHERE batch_number IS NULL',
+  ];
 }

@@ -328,8 +328,8 @@ class DatabaseInitializer {
       await _database.delete(_database.inboundReceiptsTable).go();
       await _database.delete(_database.purchaseOrderItemsTable).go();
       await _database.delete(_database.purchaseOrdersTable).go();
-      await _database.delete(_database.inventoryTransactionsTable).go();
-      await _database.delete(_database.inventoryTable).go();
+      await _database.delete(_database.inventoryTransaction).go();
+      await _database.delete(_database.stock).go();
       await _database.delete(_database.productBatch).go();
       await _database.delete(_database.suppliersTable).go();
 

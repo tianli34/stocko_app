@@ -6,7 +6,7 @@ import 'package:stocko_app/features/product/application/provider/product_provide
 import 'package:stocko_app/features/inventory/presentation/widgets/inbound_record_card.dart';
 
 class OutboundRecordCard extends ConsumerWidget {
-  final InventoryTransaction record;
+  final InventoryTransactionModel record;
 
   const OutboundRecordCard({super.key, required this.record});
 
@@ -16,7 +16,9 @@ class OutboundRecordCard extends ConsumerWidget {
     final shopAsync = ref.watch(shopByIdProvider(record.shopId));
 
     final dateFormatter = DateFormat('yyyy-MM-dd HH:mm');
-    final formattedDate = dateFormatter.format(record.time);
+    final formattedDate = record.createdAt != null
+        ? dateFormatter.format(record.createdAt!)
+        : '未知日期';
 
     return Card(
       elevation: 2,

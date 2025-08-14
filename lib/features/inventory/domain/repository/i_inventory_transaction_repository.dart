@@ -4,31 +4,31 @@ import '../model/inventory_transaction.dart';
 /// 定义库存流水相关的业务操作规范
 abstract class IInventoryTransactionRepository {
   /// 添加库存流水记录
-  Future<int> addTransaction(InventoryTransaction transaction);
+  Future<int> addTransaction(InventoryTransactionModel transaction);
 
   /// 根据ID获取库存流水
-  Future<InventoryTransaction?> getTransactionById(String id);
+  Future<InventoryTransactionModel?> getTransactionById(int id);
 
   /// 获取所有库存流水
-  Future<List<InventoryTransaction>> getAllTransactions();
+  Future<List<InventoryTransactionModel>> getAllTransactions();
 
   /// 根据产品ID获取流水记录
-  Future<List<InventoryTransaction>> getTransactionsByProduct(int productId);
+  Future<List<InventoryTransactionModel>> getTransactionsByProduct(int productId);
 
   /// 根据店铺ID获取流水记录
-  Future<List<InventoryTransaction>> getTransactionsByShop(String shopId);
+  Future<List<InventoryTransactionModel>> getTransactionsByShop(String shopId);
 
   /// 根据流水类型获取记录
-  Future<List<InventoryTransaction>> getTransactionsByType(String type);
+  Future<List<InventoryTransactionModel>> getTransactionsByType(String type);
 
   /// 根据产品和店铺获取流水记录
-  Future<List<InventoryTransaction>> getTransactionsByProductAndShop(
+  Future<List<InventoryTransactionModel>> getTransactionsByProductAndShop(
     int productId,
     String shopId,
   );
 
   /// 根据时间范围获取流水记录
-  Future<List<InventoryTransaction>> getTransactionsByDateRange(
+  Future<List<InventoryTransactionModel>> getTransactionsByDateRange(
     DateTime startDate,
     DateTime endDate, {
     String? shopId,
@@ -36,21 +36,21 @@ abstract class IInventoryTransactionRepository {
   });
 
   /// 监听所有库存流水变化
-  Stream<List<InventoryTransaction>> watchAllTransactions();
+  Stream<List<InventoryTransactionModel>> watchAllTransactions();
 
   /// 监听指定产品的流水变化
-  Stream<List<InventoryTransaction>> watchTransactionsByProduct(
+  Stream<List<InventoryTransactionModel>> watchTransactionsByProduct(
     int productId,
   );
 
   /// 监听指定店铺的流水变化
-  Stream<List<InventoryTransaction>> watchTransactionsByShop(String shopId);
+  Stream<List<InventoryTransactionModel>> watchTransactionsByShop(String shopId);
 
   /// 更新库存流水
-  Future<bool> updateTransaction(InventoryTransaction transaction);
+  Future<bool> updateTransaction(InventoryTransactionModel transaction);
 
   /// 删除库存流水记录
-  Future<int> deleteTransaction(String id);
+  Future<int> deleteTransaction(int id);
 
   /// 根据产品删除相关流水
   Future<int> deleteTransactionsByProduct(int productId);
@@ -59,19 +59,19 @@ abstract class IInventoryTransactionRepository {
   Future<int> deleteTransactionsByShop(String shopId);
 
   /// 获取入库流水记录
-  Future<List<InventoryTransaction>> getInboundTransactions({
+  Future<List<InventoryTransactionModel>> getInboundTransactions({
     String? shopId,
     int? productId,
   });
 
   /// 获取出库流水记录
-  Future<List<InventoryTransaction>> getOutboundTransactions({
+  Future<List<InventoryTransactionModel>> getOutboundTransactions({
     String? shopId,
     int? productId,
   });
 
   /// 获取调整流水记录
-  Future<List<InventoryTransaction>> getAdjustmentTransactions({
+  Future<List<InventoryTransactionModel>> getAdjustmentTransactions({
     String? shopId,
     int? productId,
   });
@@ -85,7 +85,7 @@ abstract class IInventoryTransactionRepository {
   });
 
   /// 获取最近的流水记录
-  Future<List<InventoryTransaction>> getRecentTransactions(
+  Future<List<InventoryTransactionModel>> getRecentTransactions(
     int limit, {
     String? shopId,
     int? productId,

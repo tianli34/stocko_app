@@ -4,40 +4,40 @@ import '../model/inventory.dart';
 /// 定义库存相关的业务操作规范
 abstract class IInventoryRepository {
   /// 添加库存记录
-  Future<int> addInventory(Inventory inventory);
+  Future<int> addInventory(StockModel inventory);
 
   /// 根据ID获取库存
-  Future<Inventory?> getInventoryById(String id);
+  Future<StockModel?> getInventoryById(int id);
 
   /// 根据产品ID和店铺ID获取库存
-  Future<Inventory?> getInventoryByProductAndShop(
+  Future<StockModel?> getInventoryByProductAndShop(
     int productId,
     String shopId,
   );
 
   /// 获取所有库存
-  Future<List<Inventory>> getAllInventory();
+  Future<List<StockModel>> getAllInventory();
 
   /// 根据店铺ID获取库存列表
-  Future<List<Inventory>> getInventoryByShop(String shopId);
+  Future<List<StockModel>> getInventoryByShop(String shopId);
 
   /// 根据产品ID获取库存列表
-  Future<List<Inventory>> getInventoryByProduct(int productId);
+  Future<List<StockModel>> getInventoryByProduct(int productId);
 
   /// 监听所有库存变化
-  Stream<List<Inventory>> watchAllInventory();
+  Stream<List<StockModel>> watchAllInventory();
 
   /// 监听指定店铺的库存变化
-  Stream<List<Inventory>> watchInventoryByShop(String shopId);
+  Stream<List<StockModel>> watchInventoryByShop(String shopId);
 
   /// 监听指定产品的库存变化
-  Stream<List<Inventory>> watchInventoryByProduct(int productId);
+  Stream<List<StockModel>> watchInventoryByProduct(int productId);
 
   /// 更新库存
-  Future<bool> updateInventory(Inventory inventory);
+  Future<bool> updateInventory(StockModel inventory);
 
   /// 删除库存记录
-  Future<int> deleteInventory(String id);
+  Future<int> deleteInventory(int id);
 
   /// 根据产品和店铺删除库存
   Future<int> deleteInventoryByProductAndShop(int productId, String shopId);
@@ -64,10 +64,10 @@ abstract class IInventoryRepository {
   );
 
   /// 获取低库存产品列表
-  Future<List<Inventory>> getLowStockInventory(String shopId, int warningLevel);
+  Future<List<StockModel>> getLowStockInventory(String shopId, int warningLevel);
 
   /// 获取缺货产品列表
-  Future<List<Inventory>> getOutOfStockInventory(String shopId);
+  Future<List<StockModel>> getOutOfStockInventory(String shopId);
 
   /// 获取库存总数量（按店铺）
   Future<double> getTotalInventoryByShop(String shopId);

@@ -15,7 +15,7 @@ class InventoryTransactionRepository
     : _transactionDao = database.inventoryTransactionDao;
 
   @override
-  Future<int> addTransaction(InventoryTransaction transaction) async {
+  Future<int> addTransaction(InventoryTransactionModel transaction) async {
     try {
       print('📋 仓储层：添加库存流水记录，ID: ${transaction.id}');
       return await _transactionDao.insertTransaction(
@@ -28,7 +28,7 @@ class InventoryTransactionRepository
   }
 
   @override
-  Future<InventoryTransaction?> getTransactionById(String id) async {
+  Future<InventoryTransactionModel?> getTransactionById(int id) async {
     try {
       final data = await _transactionDao.getTransactionById(id);
       return data != null ? _dataToTransaction(data) : null;
@@ -39,7 +39,7 @@ class InventoryTransactionRepository
   }
 
   @override
-  Future<List<InventoryTransaction>> getAllTransactions() async {
+  Future<List<InventoryTransactionModel>> getAllTransactions() async {
     try {
       final dataList = await _transactionDao.getAllTransactions();
       return dataList.map(_dataToTransaction).toList();
@@ -50,7 +50,7 @@ class InventoryTransactionRepository
   }
 
   @override
-  Future<List<InventoryTransaction>> getTransactionsByProduct(
+  Future<List<InventoryTransactionModel>> getTransactionsByProduct(
     int productId,
   ) async {
     try {
@@ -65,7 +65,7 @@ class InventoryTransactionRepository
   }
 
   @override
-  Future<List<InventoryTransaction>> getTransactionsByShop(
+  Future<List<InventoryTransactionModel>> getTransactionsByShop(
     String shopId,
   ) async {
     try {
@@ -78,7 +78,7 @@ class InventoryTransactionRepository
   }
 
   @override
-  Future<List<InventoryTransaction>> getTransactionsByType(String type) async {
+  Future<List<InventoryTransactionModel>> getTransactionsByType(String type) async {
     try {
       final dataList = await _transactionDao.getTransactionsByType(type);
       return dataList.map(_dataToTransaction).toList();
@@ -89,7 +89,7 @@ class InventoryTransactionRepository
   }
 
   @override
-  Future<List<InventoryTransaction>> getTransactionsByProductAndShop(
+  Future<List<InventoryTransactionModel>> getTransactionsByProductAndShop(
     int productId,
     String shopId,
   ) async {
@@ -106,7 +106,7 @@ class InventoryTransactionRepository
   }
 
   @override
-  Future<List<InventoryTransaction>> getTransactionsByDateRange(
+  Future<List<InventoryTransactionModel>> getTransactionsByDateRange(
     DateTime startDate,
     DateTime endDate, {
     String? shopId,
@@ -127,7 +127,7 @@ class InventoryTransactionRepository
   }
 
   @override
-  Stream<List<InventoryTransaction>> watchAllTransactions() {
+  Stream<List<InventoryTransactionModel>> watchAllTransactions() {
     try {
       return _transactionDao.watchAllTransactions().map(
         (dataList) => dataList.map(_dataToTransaction).toList(),
@@ -139,7 +139,7 @@ class InventoryTransactionRepository
   }
 
   @override
-  Stream<List<InventoryTransaction>> watchTransactionsByProduct(
+  Stream<List<InventoryTransactionModel>> watchTransactionsByProduct(
     int productId,
   ) {
     try {
@@ -153,7 +153,7 @@ class InventoryTransactionRepository
   }
 
   @override
-  Stream<List<InventoryTransaction>> watchTransactionsByShop(String shopId) {
+  Stream<List<InventoryTransactionModel>> watchTransactionsByShop(String shopId) {
     try {
       return _transactionDao
           .watchTransactionsByShop(shopId)
@@ -165,7 +165,7 @@ class InventoryTransactionRepository
   }
 
   @override
-  Future<bool> updateTransaction(InventoryTransaction transaction) async {
+  Future<bool> updateTransaction(InventoryTransactionModel transaction) async {
     try {
       print('📋 仓储层：更新库存流水，ID: ${transaction.id}');
       return await _transactionDao.updateTransaction(
@@ -178,7 +178,7 @@ class InventoryTransactionRepository
   }
 
   @override
-  Future<int> deleteTransaction(String id) async {
+  Future<int> deleteTransaction(int id) async {
     try {
       print('📋 仓储层：删除库存流水记录，ID: $id');
       return await _transactionDao.deleteTransaction(id);
@@ -209,27 +209,27 @@ class InventoryTransactionRepository
   }
 
   @override
-  Future<List<InventoryTransaction>> getInboundTransactions({
+  Future<List<InventoryTransactionModel>> getInboundTransactions({
     String? shopId,
     int? productId,
   }) async {
-    return getTransactionsByType(InventoryTransaction.typeIn);
+    return getTransactionsByType(InventoryTransactionType.inbound.name);
   }
 
   @override
-  Future<List<InventoryTransaction>> getOutboundTransactions({
+  Future<List<InventoryTransactionModel>> getOutboundTransactions({
     String? shopId,
     int? productId,
   }) async {
-    return getTransactionsByType(InventoryTransaction.typeOut);
+    return getTransactionsByType(InventoryTransactionType.outbound.name);
   }
 
   @override
-  Future<List<InventoryTransaction>> getAdjustmentTransactions({
+  Future<List<InventoryTransactionModel>> getAdjustmentTransactions({
     String? shopId,
     int? productId,
   }) async {
-    return getTransactionsByType(InventoryTransaction.typeAdjust);
+    return getTransactionsByType(InventoryTransactionType.adjustment.name);
   }
 
   @override
@@ -249,8 +249,8 @@ class InventoryTransactionRepository
 
       final summary = <String, double>{};
       for (final transaction in transactions) {
-        summary[transaction.type] =
-            (summary[transaction.type] ?? 0.0) + transaction.quantity;
+        summary[transaction.type.name] =
+            (summary[transaction.type.name] ?? 0.0) + transaction.quantity;
       }
 
       return summary;
@@ -261,7 +261,7 @@ class InventoryTransactionRepository
   }
 
   @override
-  Future<List<InventoryTransaction>> getRecentTransactions(
+  Future<List<InventoryTransactionModel>> getRecentTransactions(
     int limit, {
     String? shopId,
     int? productId,
@@ -298,16 +298,15 @@ class InventoryTransactionRepository
   }
 
   /// 将InventoryTransaction模型转换为数据库Companion对象
-  InventoryTransactionsTableCompanion _transactionToCompanion(
-    InventoryTransaction transaction,
+  InventoryTransactionCompanion _transactionToCompanion(
+    InventoryTransactionModel transaction,
   ) {
-    return InventoryTransactionsTableCompanion(
-      id: Value(transaction.id),
+    return InventoryTransactionCompanion(
+      id: transaction.id == null ? const Value.absent() : Value(transaction.id!),
       productId: Value(transaction.productId),
-      type: Value(transaction.type),
+      transactionType: Value(transaction.type.name),
       quantity: Value(transaction.quantity),
       shopId: Value(transaction.shopId),
-      time: Value(transaction.time),
       createdAt: transaction.createdAt != null
           ? Value(transaction.createdAt!)
           : const Value.absent(),
@@ -315,14 +314,13 @@ class InventoryTransactionRepository
   }
 
   /// 将数据库数据转换为InventoryTransaction模型
-  InventoryTransaction _dataToTransaction(InventoryTransactionsTableData data) {
-    return InventoryTransaction(
+  InventoryTransactionModel _dataToTransaction(InventoryTransactionData data) {
+    return InventoryTransactionModel(
       id: data.id,
       productId: data.productId,
-      type: data.type,
+      type: InventoryTransactionType.values.byName(data.transactionType),
       quantity: data.quantity,
       shopId: data.shopId,
-      time: data.time,
       createdAt: data.createdAt,
     );
   }

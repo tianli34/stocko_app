@@ -19,7 +19,7 @@ class InventoryService {
   Future<bool> inbound({
     required int productId,
     required String shopId,
-    required String batchNumber,
+    int? batchNumber,
     required int quantity,
     DateTime? time,
   }) async {
@@ -32,7 +32,7 @@ class InventoryService {
 
       if (inventory == null) {
         // 如果库存不存在，创建新库存记录
-        inventory = Inventory.create(
+        inventory = StockModel.create(
           productId: productId,
           quantity: quantity,
           shopId: shopId,
@@ -49,11 +49,10 @@ class InventoryService {
       }
 
       // 记录入库流水
-      final transaction = InventoryTransaction.createInbound(
+      final transaction = InventoryTransactionModel.createInbound(
         productId: productId,
         quantity: quantity,
         shopId: shopId,
-        time: time,
       );
       await _transactionRepository.addTransaction(transaction);
 
@@ -92,11 +91,10 @@ class InventoryService {
       );
 
       // 记录出库流水
-      final transaction = InventoryTransaction.createOutbound(
+      final transaction = InventoryTransactionModel.createOutbound(
         productId: productId,
         quantity: quantity,
         shopId: shopId,
-        time: time,
       );
       await _transactionRepository.addTransaction(transaction);
 
@@ -142,11 +140,10 @@ class InventoryService {
       );
 
       // 记录调整流水
-      final transaction = InventoryTransaction.createAdjustment(
+      final transaction = InventoryTransactionModel.createAdjustment(
         productId: productId,
         quantity: adjustQuantity,
         shopId: shopId,
-        time: time,
       );
       await _transactionRepository.addTransaction(transaction);
 
@@ -158,7 +155,7 @@ class InventoryService {
   }
 
   /// 获取库存信息
-  Future<Inventory?> getInventory(int productId, String shopId) async {
+  Future<StockModel?> getInventory(int productId, String shopId) async {
     return await _inventoryRepository.getInventoryByProductAndShop(
       productId,
       shopId,
@@ -166,17 +163,17 @@ class InventoryService {
   }
 
   /// 获取店铺所有库存
-  Future<List<Inventory>> getShopInventory(String shopId) async {
+  Future<List<StockModel>> getShopInventory(String shopId) async {
     return await _inventoryRepository.getInventoryByShop(shopId);
   }
 
   /// 获取产品在所有店铺的库存
-  Future<List<Inventory>> getProductInventory(int productId) async {
+  Future<List<StockModel>> getProductInventory(int productId) async {
     return await _inventoryRepository.getInventoryByProduct(productId);
   }
 
   /// 获取低库存预警列表
-  Future<List<Inventory>> getLowStockInventory(
+  Future<List<StockModel>> getLowStockInventory(
     String shopId,
     int warningLevel,
   ) async {
@@ -187,12 +184,12 @@ class InventoryService {
   }
 
   /// 获取缺货产品列表
-  Future<List<Inventory>> getOutOfStockInventory(String shopId) async {
+  Future<List<StockModel>> getOutOfStockInventory(String shopId) async {
     return await _inventoryRepository.getOutOfStockInventory(shopId);
   }
 
   /// 获取库存流水
-  Future<List<InventoryTransaction>> getTransactions({
+  Future<List<InventoryTransactionModel>> getTransactions({
     int? productId,
     String? shopId,
     String? type,
@@ -262,12 +259,11 @@ class InventoryService {
       );
     } else {
       // 如果记录不存在，则创建新的库存记录
-      final newInventory = Inventory.create(
+      final newInventory = StockModel.create(
         productId: intProductId,
         quantity: quantity,
         shopId: shopId,
-        // 假设新记录的批号为空字符串
-        batchNumber: '',
+        batchNumber:null,
       );
       await _inventoryRepository.addInventory(newInventory);
     }

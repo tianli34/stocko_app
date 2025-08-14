@@ -31,7 +31,7 @@ abstract class IInboundItemRepository {
   Future<List<InboundItem>> getInboundItemsByProductId(int productId);
 
   /// 根据批次号获取入库明细
-  Future<List<InboundItem>> getInboundItemsByBatchNumber(String batchNumber);
+  Future<List<InboundItem>> getInboundItemsByBatchNumber(int batchNumber);
 
   /// 根据货位ID获取入库明细
   Future<List<InboundItem>> getInboundItemsByLocationId(String locationId);

@@ -12,7 +12,7 @@ abstract class SalesTransactionItem with _$SalesTransactionItem {
     required int salesTransactionId,
     required int productId,
     required int unitId,
-    String? batchId,
+    int? batchNumber,
     required int quantity,
     required double unitPrice,
     required double totalPrice,
@@ -27,7 +27,7 @@ abstract class SalesTransactionItem with _$SalesTransactionItem {
   bool get isValidUnitId => unitId > 0;
 
   /// 验证批次ID的有效性（如果提供了批次ID）
-  bool get isValidBatchId => batchId == null || batchId!.isNotEmpty;
+  bool get isValidBatchId => batchNumber == null;
 
   /// 验证数量的有效性
   bool get isValidQuantity => quantity > 0;
@@ -59,7 +59,7 @@ abstract class SalesTransactionItem with _$SalesTransactionItem {
   bool get isValidSalesTransactionId => salesTransactionId > 0;
 
   /// 批次引用关系验证 - 检查是否为批次相关商品
-  bool get isBatchRelated => batchId != null && batchId!.isNotEmpty;
+  bool get isBatchRelated => batchNumber != null;
 
   /// 获取验证错误信息列表
   List<String> get validationErrors {
@@ -77,7 +77,7 @@ abstract class SalesTransactionItem with _$SalesTransactionItem {
       errors.add('单位ID不能为空');
     }
 
-    if (!isValidBatchId && batchId != null) {
+    if (!isValidBatchId && batchNumber != null) {
       errors.add('批次ID不能为空字符串');
     }
 
@@ -106,22 +106,22 @@ abstract class SalesTransactionItem with _$SalesTransactionItem {
     print('  - salesTransactionId: $transactionId (type: ${transactionId.runtimeType})');
     print('  - productId: $productId (type: ${productId.runtimeType})');
     print('  - unitId: $unitId (type: ${unitId.runtimeType})');
-    print('  - batchId: ${batchId ?? "null"} (type: ${batchId?.runtimeType})');
+    print('  - batchNumber: ${batchNumber ?? "null"} (type: ${batchNumber?.runtimeType})');
     print('  - quantity: $quantity (type: ${quantity.runtimeType})');
     print('  - unitPrice: $unitPrice (type: ${unitPrice.runtimeType})');
     print('  - totalPrice: $totalPrice (type: ${totalPrice.runtimeType})');
 
     // 修复：对于新记录，应该让数据库自动生成ID，而不是手动设置为null
     print('🔍 [DEBUG] ID is null: ${id == null}');
-    print('🔍 [DEBUG] batchId is null: ${batchId == null}');
+    print('🔍 [DEBUG] batchNumber is null: ${batchNumber == null}');
     
     // 检查类型转换
     if (id != null && id is! int) {
       print('🔍 [ERROR] ID type mismatch: expected int, got ${id.runtimeType}');
     }
     
-    if (batchId != null && batchId is! String) {
-      print('🔍 [ERROR] batchId type mismatch: expected String, got ${batchId.runtimeType}');
+    if (batchNumber != null && batchNumber is! int) {
+      print('🔍 [ERROR] batchNumber type mismatch: expected int, got ${batchNumber.runtimeType}');
     }
 
     try {
@@ -130,7 +130,7 @@ abstract class SalesTransactionItem with _$SalesTransactionItem {
         salesTransactionId: Value(transactionId),
         productId: Value(productId),
         unitId: Value(unitId),
-        batchId: batchId != null ? Value(batchId!) : const Value.absent(),
+        batchNumber: batchNumber != null ? Value(batchNumber!) : const Value.absent(),
         quantity: Value(quantity),
         unitPrice: Value(unitPrice),
         totalPrice: Value(totalPrice),
@@ -152,7 +152,7 @@ abstract class SalesTransactionItem with _$SalesTransactionItem {
       salesTransactionId: data.salesTransactionId,
       productId: data.productId,
       unitId: data.unitId,
-      batchId: data.batchId,
+      batchNumber: data.batchNumber,
       quantity: data.quantity,
       unitPrice: data.unitPrice,
       totalPrice: data.totalPrice,
@@ -166,7 +166,7 @@ abstract class SalesTransactionItem with _$SalesTransactionItem {
     required int salesTransactionId,
     required int productId,
     required int unitId,
-    String? batchId,
+    int? batchNumberParam,
     required int quantity,
     required double unitPrice,
     required double totalPrice,
@@ -176,7 +176,7 @@ abstract class SalesTransactionItem with _$SalesTransactionItem {
       salesTransactionId: salesTransactionId,
       productId: productId,
       unitId: unitId,
-      batchId: batchId,
+      batchNumber: batchNumberParam,
       quantity: quantity,
       unitPrice: unitPrice,
       totalPrice: totalPrice,

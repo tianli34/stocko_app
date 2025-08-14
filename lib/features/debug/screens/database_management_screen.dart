@@ -718,8 +718,8 @@ class DatabaseManagementScreen extends ConsumerWidget {
                           Text('数量: ${salesTransactionItem.quantity}'),
                           Text('单价: ¥${salesTransactionItem.unitPrice.toStringAsFixed(2)}'),
                           Text('总价: ¥${salesTransactionItem.totalPrice.toStringAsFixed(2)}'),
-                          if (salesTransactionItem.batchId != null && salesTransactionItem.batchId!.isNotEmpty)
-                            Text('批次ID: ${salesTransactionItem.batchId}'),
+                          if (salesTransactionItem.batchNumber != null)
+                            Text('批次ID: ${salesTransactionItem.batchNumber}'),
                         ],
                       ),
                       isThreeLine: true,

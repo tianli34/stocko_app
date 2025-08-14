@@ -36,7 +36,7 @@ class SaleService {
         salesTransactionId: 0, // Will be replaced later
         productId: item.productId,
         unitId: item.unitId,
-        batchId: item.batchId,
+        batchNumber: item.batchId != null ? int.tryParse(item.batchId!) : null,
         quantity: item.quantity.toInt(),
         unitPrice: item.sellingPriceInCents/100,
         totalPrice: item.amount,
@@ -69,7 +69,7 @@ class SaleService {
           productId: item.productId,
           shopId: shopId,
           quantity: item.quantity,
-          batchNumber: 'RETURN',
+          // TODO: Handle return with batch number properly
           time: now,
         );
       }

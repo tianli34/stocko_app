@@ -56,8 +56,8 @@ part 'database.g.dart';
     SuppliersTable,
     ProductSuppliersTable,
     ProductBatch,
-    InventoryTable,
-    InventoryTransactionsTable,
+    Stock,
+    InventoryTransaction,
     LocationsTable,
     InboundReceiptsTable,
     InboundReceiptItemsTable,
@@ -185,8 +185,8 @@ class AppDatabase extends _$AppDatabase {
         // 从版本6升级到版本7：添加所有缺失的表
         await m.createTable(suppliersTable);
         await m.createTable(productBatch);
-        await m.createTable(inventoryTable);
-        await m.createTable(inventoryTransactionsTable);
+        await m.createTable(stock);
+        await m.createTable(inventoryTransaction);
         await m.createTable(locationsTable);
         await m.createTable(inboundReceiptsTable);
         await m.createTable(inboundReceiptItemsTable);
@@ -200,8 +200,8 @@ class AppDatabase extends _$AppDatabase {
         if (from < 6) await m.createTable(shopsTable);
         await m.createTable(suppliersTable);
         await m.createTable(productBatch);
-        await m.createTable(inventoryTable);
-        await m.createTable(inventoryTransactionsTable);
+        await m.createTable(stock);
+        await m.createTable(inventoryTransaction);
         await m.createTable(locationsTable);
         await m.createTable(inboundReceiptsTable);
         await m.createTable(inboundReceiptItemsTable);

@@ -170,7 +170,8 @@ class InboundService {
       // 检查产品是否启用批次管理
       final product = await _database.productDao.getProductById(item.productId);
 
-      if (product?.enableBatchManagement == true && item.productionDate != null) {
+      if (product?.enableBatchManagement == true &&
+          item.productionDate != null) {
         // 使用 ON CONFLICT DO UPDATE 的方式累加数量
         await _batchDao.upsertBatchIncrement(
           productId: item.productId,
@@ -178,7 +179,9 @@ class InboundService {
           shopId: shopId,
           increment: item.quantity,
         );
-        print('📦 批次(商品:${item.productId}, 日期:${item.productionDate}, 店铺:$shopId) 数量累计 +${item.quantity}');
+        print(
+          '📦 批次(商品:${item.productId}, 日期:${item.productionDate}, 店铺:$shopId) 数量累计 +${item.quantity}',
+        );
       }
     }
   }
@@ -294,7 +297,8 @@ class InboundService {
 
       // 若启用批次管理并且有生产日期，则查找对应批次号
       int? resolvedBatchNumber;
-      if (item.productionDate != null && product?.enableBatchManagement == true) {
+      if (item.productionDate != null &&
+          product?.enableBatchManagement == true) {
         final batchRow = await _batchDao.getBatchByBusinessKey(
           productId: item.productId,
           productionDate: item.productionDate!,
@@ -335,33 +339,35 @@ class InboundService {
       final product = await _database.productDao.getProductById(item.productId);
 
       // 根据产品批次管理设置决定批次号生成策略
-      String batchNumberStr;
-      if (item.productionDate != null && product?.enableBatchManagement == true) {
+      int? batchNumber;
+      if (item.productionDate != null &&
+          product?.enableBatchManagement == true) {
         final batchRow = await _batchDao.getBatchByBusinessKey(
           productId: item.productId,
           productionDate: item.productionDate!,
           shopId: shopId,
         );
-        // 若找不到（极小概率），兜底用临时批号
-        batchNumberStr = (batchRow?.batchNumber.toString()) ??
-            'BATCH_${DateTime.now().millisecondsSinceEpoch}_${item.id}';
-      } else {
-        batchNumberStr = 'BATCH_${DateTime.now().millisecondsSinceEpoch}_${item.id}';
+        batchNumber = batchRow?.batchNumber;
+
+        if (batchNumber == null) {
+          print('⚠️ 未找到批次号，跳过库存更新: ${item.productName}');
+          continue; // 跳过当前循环
+        }
+
+        final success = await _inventoryService.inbound(
+          productId: item.productId,
+          shopId: shopId,
+          batchNumber: batchNumber,
+          quantity: item.quantity,
+          time: DateTime.now(),
+        );
+
+        if (!success) {
+          throw Exception('商品 ${item.productName} 库存更新失败');
+        }
+
+        print('✅ 商品 ${item.productName} 库存更新完成');
       }
-
-      final success = await _inventoryService.inbound(
-        productId: item.productId,
-        shopId: shopId,
-        batchNumber: batchNumberStr,
-        quantity: item.quantity,
-        time: DateTime.now(),
-      );
-
-      if (!success) {
-        throw Exception('商品 ${item.productName} 库存更新失败');
-      }
-
-      print('✅ 商品 ${item.productName} 库存更新完成');
     }
   }
 

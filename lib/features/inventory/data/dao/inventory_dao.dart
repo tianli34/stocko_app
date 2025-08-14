@@ -4,88 +4,88 @@ import '../../../../core/database/inventory_table.dart';
 
 part 'inventory_dao.g.dart';
 
-@DriftAccessor(tables: [InventoryTable])
+@DriftAccessor(tables: [Stock])
 class InventoryDao extends DatabaseAccessor<AppDatabase>
     with _$InventoryDaoMixin {
   InventoryDao(super.db);
 
   /// 插入库存记录
-  Future<int> insertInventory(InventoryTableCompanion inventory) {
-    return into(inventoryTable).insert(inventory);
+  Future<int> insertInventory(StockCompanion inventory) {
+    return into(stock).insert(inventory);
   }
 
   /// 根据ID获取库存
-  Future<InventoryTableData?> getInventoryById(String id) {
+  Future<StockData?> getInventoryById(int id) {
     return (select(
-      inventoryTable,
+      stock,
     )..where((t) => t.id.equals(id))).getSingleOrNull();
   }
 
   /// 根据产品ID和店铺ID获取库存
-  Future<InventoryTableData?> getInventoryByProductAndShop(
+  Future<StockData?> getInventoryByProductAndShop(
     int productId,
     String shopId,
   ) {
-    return (select(inventoryTable)..where(
+    return (select(stock)..where(
           (t) => t.productId.equals(productId) & t.shopId.equals(shopId),
         ))
         .getSingleOrNull();
   }
 
   /// 获取所有库存
-  Future<List<InventoryTableData>> getAllInventory() {
-    return select(inventoryTable).get();
+  Future<List<StockData>> getAllInventory() {
+    return select(stock).get();
   }
 
   /// 根据店铺ID获取库存列表
-  Future<List<InventoryTableData>> getInventoryByShop(String shopId) {
+  Future<List<StockData>> getInventoryByShop(String shopId) {
     return (select(
-      inventoryTable,
+      stock,
     )..where((t) => t.shopId.equals(shopId))).get();
   }
 
   /// 根据产品ID获取库存列表
-  Future<List<InventoryTableData>> getInventoryByProduct(int productId) {
+  Future<List<StockData>> getInventoryByProduct(int productId) {
     return (select(
-      inventoryTable,
+      stock,
     )..where((t) => t.productId.equals(productId))).get();
   }
 
   /// 监听所有库存变化
-  Stream<List<InventoryTableData>> watchAllInventory() {
-    return select(inventoryTable).watch();
+  Stream<List<StockData>> watchAllInventory() {
+    return select(stock).watch();
   }
 
   /// 监听指定店铺的库存变化
-  Stream<List<InventoryTableData>> watchInventoryByShop(String shopId) {
+  Stream<List<StockData>> watchInventoryByShop(String shopId) {
     return (select(
-      inventoryTable,
+      stock,
     )..where((t) => t.shopId.equals(shopId))).watch();
   }
 
   /// 监听指定产品的库存变化
-  Stream<List<InventoryTableData>> watchInventoryByProduct(int productId) {
+  Stream<List<StockData>> watchInventoryByProduct(int productId) {
     return (select(
-      inventoryTable,
+      stock,
     )..where((t) => t.productId.equals(productId))).watch();
   }
 
   /// 更新库存
-  Future<bool> updateInventory(InventoryTableCompanion inventory) async {
+  Future<bool> updateInventory(StockCompanion inventory) async {
     final result = await (update(
-      inventoryTable,
+      stock,
     )..where((t) => t.id.equals(inventory.id.value))).write(inventory);
     return result > 0;
   }
 
   /// 删除库存记录
-  Future<int> deleteInventory(String id) {
-    return (delete(inventoryTable)..where((t) => t.id.equals(id))).go();
+  Future<int> deleteInventory(int id) {
+    return (delete(stock)..where((t) => t.id.equals(id))).go();
   }
 
   /// 根据产品和店铺删除库存
   Future<int> deleteInventoryByProductAndShop(int productId, String shopId) {
-    return (delete(inventoryTable)..where(
+    return (delete(stock)..where(
           (t) => t.productId.equals(productId) & t.shopId.equals(shopId),
         ))
         .go();
@@ -98,11 +98,11 @@ class InventoryDao extends DatabaseAccessor<AppDatabase>
     int quantity,
   ) async {
     final result =
-        await (update(inventoryTable)..where(
+        await (update(stock)..where(
               (t) => t.productId.equals(productId) & t.shopId.equals(shopId),
             ))
             .write(
-              InventoryTableCompanion(
+              StockCompanion(
                 quantity: Value(quantity),
                 updatedAt: Value(DateTime.now()),
               ),
@@ -111,11 +111,11 @@ class InventoryDao extends DatabaseAccessor<AppDatabase>
   }
 
   /// 获取低库存产品列表
-  Future<List<InventoryTableData>> getLowStockInventory(
+  Future<List<StockData>> getLowStockInventory(
     String shopId,
     int warningLevel,
   ) {
-    return (select(inventoryTable)..where(
+    return (select(stock)..where(
           (t) =>
               t.shopId.equals(shopId) &
               t.quantity.isSmallerOrEqualValue(warningLevel),
@@ -124,8 +124,8 @@ class InventoryDao extends DatabaseAccessor<AppDatabase>
   }
 
   /// 获取缺货产品列表
-  Future<List<InventoryTableData>> getOutOfStockInventory(String shopId) {
-    return (select(inventoryTable)..where(
+  Future<List<StockData>> getOutOfStockInventory(String shopId) {
+    return (select(stock)..where(
           (t) => t.shopId.equals(shopId) & t.quantity.isSmallerOrEqualValue(0),
         ))
         .get();
@@ -134,21 +134,21 @@ class InventoryDao extends DatabaseAccessor<AppDatabase>
   /// 获取库存总数量（按店铺）
   Future<double> getTotalInventoryByShop(String shopId) async {
     final result =
-        await (selectOnly(inventoryTable)
-              ..addColumns([inventoryTable.quantity.sum().cast<double>()])
-              ..where(inventoryTable.shopId.equals(shopId)))
+        await (selectOnly(stock)
+              ..addColumns([stock.quantity.sum().cast<double>()])
+              ..where(stock.shopId.equals(shopId)))
             .getSingle();
-    return result.read(inventoryTable.quantity.sum().cast<double>()) ?? 0.0;
+    return result.read(stock.quantity.sum().cast<double>()) ?? 0.0;
   }
 
   /// 获取库存总数量（按产品）
   Future<double> getTotalInventoryByProduct(int productId) async {
     final result =
-        await (selectOnly(inventoryTable)
-              ..addColumns([inventoryTable.quantity.sum().cast<double>()])
-              ..where(inventoryTable.productId.equals(productId)))
+        await (selectOnly(stock)
+              ..addColumns([stock.quantity.sum().cast<double>()])
+              ..where(stock.productId.equals(productId)))
             .getSingle();
-    return result.read(inventoryTable.quantity.sum().cast<double>()) ?? 0.0;
+    return result.read(stock.quantity.sum().cast<double>()) ?? 0.0;
   }
 
   /// 检查库存是否存在

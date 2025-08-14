@@ -83,11 +83,11 @@ class InboundItemDao extends DatabaseAccessor<AppDatabase>
 
   /// 根据批次号获取入库明细
   Future<List<InboundReceiptItemsTableData>> getInboundItemsByBatchNumber(
-    String batchNumber,
+    int batchNumber,
   ) {
     return (select(
       inboundReceiptItemsTable,
-    )..where((t) => t.batchNumber.equals(batchNumber))).get();
+    )..where((t) => t.batchNumber.equals(batchNumber.toString()))).get();
   }
 
   /// 根据货位ID获取入库明细

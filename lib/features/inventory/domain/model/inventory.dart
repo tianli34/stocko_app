@@ -6,31 +6,31 @@ part 'inventory.g.dart';
 /// 库存领域模型
 /// 表示产品在店铺的库存信息
 @freezed
-abstract class Inventory with _$Inventory {
-  const factory Inventory({
-    required String id,
+abstract class StockModel with _$StockModel {
+  const factory StockModel({
+    int? id,
     required int productId,
     required int quantity,
     required String shopId,
-    required String batchNumber, // 批次号（外键）
+    int? batchNumber,
     DateTime? createdAt,
     DateTime? updatedAt,
-  }) = _Inventory;
+  }) = _StockModel;
 
-  const Inventory._();
-  factory Inventory.fromJson(Map<String, dynamic> json) =>
-      _$InventoryFromJson(json);
+  const StockModel._();
+  factory StockModel.fromJson(Map<String, dynamic> json) =>
+      _$StockModelFromJson(json);
 
   /// 创建新库存记录
-  factory Inventory.create({
+  factory StockModel.create({
     required int productId,
     required int quantity,
     required String shopId,
-    required String batchNumber,
+    int? batchNumber,
   }) {
     final now = DateTime.now();
-    return Inventory(
-      id: 'inventory_${now.millisecondsSinceEpoch}',
+    return StockModel(
+      id: null,
       productId: productId,
       quantity: quantity,
       shopId: shopId,
@@ -41,37 +41,7 @@ abstract class Inventory with _$Inventory {
   }
 
   /// 更新库存数量
-  Inventory updateQuantity(int newQuantity) {
+  StockModel updateQuantity(int newQuantity) {
     return copyWith(quantity: newQuantity, updatedAt: DateTime.now());
-  }
-
-  /// 增加库存
-  Inventory addQuantity(int amount) {
-    return updateQuantity(quantity + amount);
-  }
-
-  /// 减少库存
-  Inventory subtractQuantity(int amount) {
-    return updateQuantity(quantity - amount);
-  }
-
-  /// 是否库存不足
-  bool isLowStock(int warningLevel) {
-    return quantity <= warningLevel;
-  }
-
-  /// 是否库存为零
-  bool get isOutOfStock => quantity <= 0;
-
-  /// 是否来自同一批次
-  bool isSameBatch(String otherBatchNumber) {
-    return batchNumber == otherBatchNumber;
-  }
-
-  /// 根据批次号生成库存ID
-  /// 格式：inventory_批次号_时间戳
-  static String generateInventoryIdWithBatch(String batchNumber) {
-    final now = DateTime.now();
-    return 'inventory_${batchNumber}_${now.millisecondsSinceEpoch}';
   }
 }

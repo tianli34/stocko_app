@@ -11,27 +11,26 @@ final inventoryTransactionDaoProvider =
 
 /// Provider to watch all outbound records, returning the full data objects.
 final outboundRecordsProvider =
-    FutureProvider<List<InventoryTransaction>>((ref) async {
+    FutureProvider<List<InventoryTransactionModel>>((ref) async {
   final dao = ref.watch(inventoryTransactionDaoProvider);
   final transactionsData = await dao.getAllTransactions();
   
   // Convert TableData to Domain Model
   final transactions = transactionsData.map((data) {
-    return InventoryTransaction(
+    return InventoryTransactionModel(
       id: data.id,
       productId: data.productId,
-      type: data.type,
+      type: InventoryTransactionType.values.firstWhere((e) => e.name == data.transactionType),
       quantity: data.quantity,
       shopId: data.shopId,
-      time: data.time,
-      batchId: data.batchId,
+      batchNumber: data.batchNumber,
       createdAt: data.createdAt,
     );
   }).toList();
 
   // Filter for outbound records
   final outboundTransactions = transactions
-      .where((t) => t.type == InventoryTransaction.typeOut)
+      .where((t) => t.isOutbound)
       .toList();
       
   // Sort by creation date descending

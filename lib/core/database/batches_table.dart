@@ -19,7 +19,7 @@ class ProductBatch extends Table {
   /// 生产日期
   DateTimeColumn get productionDate => dateTime()();
 
-  /// 累计入库数量，非负
+  /// 累计入库数量，非负，即同一批次的货品数量
   IntColumn get totalInboundQuantity =>
       integer().named('total_inbound_quantity')();
 
