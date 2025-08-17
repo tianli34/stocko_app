@@ -2,19 +2,18 @@ import 'package:drift/drift.dart';
 import 'products_table.dart';
 import 'shops_table.dart';
 
-/// 批次表
+/// 批次表,不用表名 Batch，因为Batch 是 Drift 的保留字
 class ProductBatch extends Table {
-  /// 主键 - 批次号，无业务意义
-  IntColumn get batchNumber => integer().autoIncrement()();
+  /// 主键
+  IntColumn get id => integer().autoIncrement()();
 
   /// 外键 - 货品ID
-  IntColumn get productId => integer()
-      .references(
-        Product,
-        #id,
-        onDelete: KeyAction.restrict,
-        onUpdate: KeyAction.cascade,
-      )();
+  IntColumn get productId => integer().references(
+    Product,
+    #id,
+    onDelete: KeyAction.restrict,
+    onUpdate: KeyAction.cascade,
+  )();
 
   /// 生产日期
   DateTimeColumn get productionDate => dateTime()();
@@ -24,10 +23,9 @@ class ProductBatch extends Table {
       integer().named('total_inbound_quantity')();
 
   /// 外键 - 店铺ID
-  TextColumn get shopId => text()
-      .withLength(min: 1, max: 64)
+  IntColumn get shopId => integer()
       .references(
-        ShopsTable,
+        Shop,
         #id,
         onDelete: KeyAction.restrict,
         onUpdate: KeyAction.cascade,
@@ -42,12 +40,10 @@ class ProductBatch extends Table {
   /// 业务唯一键：同一店铺、同一产品、同一生产日期只能有一个批次
   @override
   List<Set<Column>> get uniqueKeys => [
-        {productId, productionDate, shopId},
-      ];
+    {productId, productionDate, shopId},
+  ];
 
   /// 表级约束：数量非负
   @override
-  List<String> get customConstraints => [
-        'CHECK(total_inbound_quantity >= 0)'
-      ];
+  List<String> get customConstraints => ['CHECK(total_inbound_quantity >= 0)'];
 }

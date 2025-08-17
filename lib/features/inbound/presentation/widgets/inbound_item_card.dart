@@ -4,7 +4,6 @@ import '../../../product/application/provider/product_providers.dart';
 import '../../../../core/widgets/custom_date_picker.dart';
 import '../../../../core/widgets/cached_image_widget.dart';
 import '../../application/provider/inbound_list_provider.dart';
-import '../../domain/model/inbound_item.dart';
 
 /// 入库单商品项卡片
 /// 显示商品信息、价格、数量和金额输入等
@@ -49,7 +48,7 @@ class _InboundItemCardState extends ConsumerState<InboundItemCard> {
         final item = ref
             .read(inboundListProvider)
             .firstWhere((it) => it.id == widget.itemId);
-        _unitPriceController.text = item.unitPrice.toStringAsFixed(2);
+        _unitPriceController.text = (item.unitPriceInCents / 100).toStringAsFixed(2);
       }
     }
   }
@@ -75,7 +74,7 @@ class _InboundItemCardState extends ConsumerState<InboundItemCard> {
         final item = ref
             .read(inboundListProvider)
             .firstWhere((it) => it.id == widget.itemId);
-        _amountController.text = item.amount.toStringAsFixed(2);
+        _amountController.text = (item.amountInCents / 100).toStringAsFixed(2);
       }
     }
   }
@@ -115,41 +114,37 @@ class _InboundItemCardState extends ConsumerState<InboundItemCard> {
     super.dispose();
   }
 
-  void _updateItem(InboundItem item, {DateTime? newProductionDate}) {
-    final unitPrice = double.tryParse(_unitPriceController.text) ?? 0.0;
+  void _updateItem(InboundItemState item, {DateTime? newProductionDate}) {
+    final unitPrice = (double.tryParse(_unitPriceController.text) ?? 0.0) * 100;
     final quantity = int.tryParse(_quantityController.text) ?? 0;
-    final amount = unitPrice * quantity;
+    final amount = unitPrice * quantity / 100;
 
     if (!_isUpdatingFromAmount) {
-      _amountController.text = amount.toStringAsFixed(2);
+      _amountController.text = (amount / 100).toStringAsFixed(2);
     }
 
     final updatedItem = item.copyWith(
-      unitPrice: unitPrice,
+      unitPriceInCents: unitPrice.toInt(),
       quantity: quantity,
-      amount: _isUpdatingFromAmount
-          ? (double.tryParse(_amountController.text) ?? amount)
-          : amount,
       productionDate: newProductionDate ?? item.productionDate,
     );
 
     ref.read(inboundListProvider.notifier).updateItem(updatedItem);
   }
 
-  void _updateFromAmount(InboundItem item) {
-    final amount = double.tryParse(_amountController.text) ?? 0.0;
+  void _updateFromAmount(InboundItemState item) {
+    final amount = (double.tryParse(_amountController.text) ?? 0.0) * 100;
     final quantity = int.tryParse(_quantityController.text) ?? 1;
 
     if (quantity > 0) {
-      final unitPrice = amount / quantity;
+      final unitPriceInCents = amount / quantity;
 
       _isUpdatingFromAmount = true;
-      _unitPriceController.text = unitPrice.toStringAsFixed(2);
+      _unitPriceController.text = (unitPriceInCents / 100).toStringAsFixed(2);
 
       final updatedItem = item.copyWith(
-        unitPrice: unitPrice,
+        unitPriceInCents: unitPriceInCents.toInt(),
         quantity: quantity,
-        amount: amount,
       );
 
       ref.read(inboundListProvider.notifier).updateItem(updatedItem);
@@ -158,7 +153,7 @@ class _InboundItemCardState extends ConsumerState<InboundItemCard> {
     }
   }
 
-  Future<void> _selectProductionDate(InboundItem item) async {
+  Future<void> _selectProductionDate(InboundItemState item) async {
     final DateTime? picked = await CustomDatePicker.show(
       context: context,
       initialDate: item.productionDate ?? DateTime.now(),
@@ -189,8 +184,8 @@ class _InboundItemCardState extends ConsumerState<InboundItemCard> {
     // --- 同步Controller与State ---
     // 只有在非焦点且文本不同时才更新，避免覆盖用户输入
     if (!_unitPriceFocusNode.hasFocus &&
-        _unitPriceController.text != item.unitPrice.toStringAsFixed(2)) {
-      _unitPriceController.text = item.unitPrice.toStringAsFixed(2);
+        _unitPriceController.text != (item.unitPriceInCents / 100).toStringAsFixed(2)) {
+      _unitPriceController.text = (item.unitPriceInCents / 100).toStringAsFixed(2);
     }
     if (widget.quantityFocusNode?.hasFocus == false &&
         _quantityController.text != item.quantity.toStringAsFixed(0)) {
@@ -198,8 +193,8 @@ class _InboundItemCardState extends ConsumerState<InboundItemCard> {
     }
     if (widget.amountFocusNode?.hasFocus == false &&
         !_isUpdatingFromAmount &&
-        _amountController.text != item.amount.toStringAsFixed(2)) {
-      _amountController.text = item.amount.toStringAsFixed(2);
+        _amountController.text != (item.amountInCents / 100).toStringAsFixed(2)) {
+      _amountController.text = (item.amountInCents / 100).toStringAsFixed(2);
     }
     // --------------------------
 

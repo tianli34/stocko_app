@@ -6,15 +6,14 @@ import 'package:stocko_app/core/database/database.dart';
 part 'sales_transaction.freezed.dart';
 part 'sales_transaction.g.dart';
 
-enum SalesStatus { preset,credit, settled, cancelled }
+enum SalesStatus { preset, credit, settled, cancelled }
 
 @freezed
 abstract class SalesTransaction with _$SalesTransaction {
   const factory SalesTransaction({
     int? id,
-    required int salesOrderNo, 
     required int customerId,
-    required String shopId,
+    required int shopId,
     required double totalAmount,
     required double actualAmount,
     @Default(SalesStatus.preset) SalesStatus status,
@@ -24,23 +23,21 @@ abstract class SalesTransaction with _$SalesTransaction {
     DateTime? updatedAt,
   }) = _SalesTransaction;
 
-  SalesTransactionsTableCompanion toTableCompanion() {
-    print('🔍 [DEBUG] Creating SalesTransactionsTableCompanion with:');
+  SalesTransactionCompanion toTableCompanion() {
+    print('🔍 [DEBUG] Creating SalesTransactionCompanion with:');
     print('  - id: ${id ?? 0}');
-    print('  - salesOrderNo: $salesOrderNo');
     print('  - customerId: $customerId');
     print('  - shopId: $shopId');
     print('  - totalAmount: $totalAmount');
     print('  - actualAmount: $actualAmount');
     print('  - status: ${status.toString().split('.').last}');
     print('  - remarks: $remarks');
-    
+
     // 修复：对于新记录，应该让数据库自动生成ID，而不是手动设置为0
     print('🔍 [DEBUG] ID is null: ${id == null}');
-    
-    return SalesTransactionsTableCompanion(
+
+    return SalesTransactionCompanion(
       id: id == null ? const Value.absent() : Value(id!),
-      salesOrderNo: Value(salesOrderNo),
       customerId: Value(customerId),
       shopId: Value(shopId),
       totalAmount: Value(totalAmount),
@@ -56,16 +53,15 @@ abstract class SalesTransaction with _$SalesTransaction {
       _$SalesTransactionFromJson(json);
 
   factory SalesTransaction.fromTableData(
-    SalesTransactionsTableData data, {
+    SalesTransactionData data, {
     List<SalesTransactionItem> items = const [],
   }) {
     return SalesTransaction(
       id: data.id,
-      salesOrderNo: data.salesOrderNo,
       customerId: data.customerId,
       totalAmount: data.totalAmount,
       actualAmount: data.totalAmount, // 假设实际金额等于总金额
-      shopId: 'shop_0', // 数据库中没有，暂时设为0
+      shopId: 0, // 数据库中没有，暂时设为0
       status: SalesStatus.values.firstWhere(
         (e) => e.toString().split('.').last == data.status,
         orElse: () => SalesStatus.preset,

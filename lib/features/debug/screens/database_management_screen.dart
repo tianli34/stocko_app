@@ -269,7 +269,7 @@ class DatabaseManagementScreen extends ConsumerWidget {
 
   Future<void> _showShopsData(BuildContext context, WidgetRef ref) async {
     final database = ref.read(appDatabaseProvider);
-    final shops = await database.select(database.shopsTable).get();
+    final shops = await database.select(database.shop).get();
 
     if (context.mounted) {
       showDialog(
@@ -286,7 +286,7 @@ class DatabaseManagementScreen extends ConsumerWidget {
                 return ListTile(
                   title: Text(shop.name),
                   subtitle: Text('经理: ${shop.manager}'),
-                  trailing: Text(shop.id),
+                  // trailing: Text(shop.id),
                 );
               },
             ),
@@ -407,7 +407,7 @@ class DatabaseManagementScreen extends ConsumerWidget {
 
   Future<void> _showSuppliersData(BuildContext context, WidgetRef ref) async {
     final database = ref.read(appDatabaseProvider);
-    final suppliers = await database.select(database.suppliersTable).get();
+    final suppliers = await database.select(database.supplier).get();
 
     if (context.mounted) {
       showDialog(
@@ -426,7 +426,7 @@ class DatabaseManagementScreen extends ConsumerWidget {
                   subtitle: Text(
                     '创建时间: ${supplier.createdAt.toString().substring(0, 16)}',
                   ),
-                  trailing: Text(supplier.id),
+                  trailing: Text(supplier.id.toString()),
                 );
               },
             ),
@@ -444,7 +444,7 @@ class DatabaseManagementScreen extends ConsumerWidget {
 
   Future<void> _showPurchasesData(BuildContext context, WidgetRef ref) async {
     final database = ref.read(appDatabaseProvider);
-    final purchases = await database.select(database.purchaseOrdersTable).get();
+    final purchases = await database.select(database.purchaseOrder).get();
 
     if (context.mounted) {
       showDialog(
@@ -462,14 +462,14 @@ class DatabaseManagementScreen extends ConsumerWidget {
                 return Card(
                   margin: const EdgeInsets.symmetric(vertical: 4),
                   child: ListTile(
-                    title: Text('采购单号: ${purchase.purchaseOrderNumber}'),
+                    title: Text('采购单号: ${purchase.id}'),
                     subtitle: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text('供应商ID: ${purchase.supplierId}'),
                         Text('店铺ID: ${purchase.shopId}'),
                         Text(
-                          '采购日期: ${purchase.purchaseDate.toString().substring(0, 16)}',
+                          '采购日期: ${purchase.createdAt.toString().substring(0, 16)}',
                         ),
                         Text('状态: ${purchase.status}'),
                       ],
@@ -516,7 +516,7 @@ class DatabaseManagementScreen extends ConsumerWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text('条码ID: ${barcode.id}'),
-                        Text('产品单位ID: ${barcode.productUnitId}'),
+                        Text('产品单位ID: ${barcode.id}'),
                       ],
                     ),
                     isThreeLine: true,
@@ -556,7 +556,7 @@ class DatabaseManagementScreen extends ConsumerWidget {
                 return Card(
                   margin: const EdgeInsets.symmetric(vertical: 4),
                   child: ListTile(
-                    title: Text('批次号: ${batch.batchNumber}'),
+                    title: Text('批次号: ${batch.id}'),
                     subtitle: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -586,7 +586,7 @@ class DatabaseManagementScreen extends ConsumerWidget {
 
   Future<void> _showSalesTransactionsData(BuildContext context, WidgetRef ref) async {
     final database = ref.read(appDatabaseProvider);
-    final salesTransactions = await database.select(database.salesTransactionsTable).get();
+    final salesTransactions = await database.select(database.salesTransaction).get();
 
     if (context.mounted) {
       showDialog(
@@ -604,7 +604,7 @@ class DatabaseManagementScreen extends ConsumerWidget {
                 return Card(
                   margin: const EdgeInsets.symmetric(vertical: 4),
                   child: ListTile(
-                    title: Text('销售订单号: ${salesTransaction.salesOrderNo}'),
+                    title: Text('销售订单号: ${salesTransaction.id}'),
                     subtitle: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -688,7 +688,7 @@ class DatabaseManagementScreen extends ConsumerWidget {
   Future<void> _showSalesTransactionItemsData(BuildContext context, WidgetRef ref) async {
     try {
       final database = ref.read(appDatabaseProvider);
-      final salesTransactionItems = await database.select(database.salesTransactionItemsTable).get();
+      final salesTransactionItems = await database.select(database.salesTransactionItem).get();
       
       // 添加调试日志
       print('销售交易项数据查询结果: ${salesTransactionItems.length} 条记录');
@@ -714,12 +714,9 @@ class DatabaseManagementScreen extends ConsumerWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text('产品ID: ${salesTransactionItem.productId}'),
-                          Text('单位ID: ${salesTransactionItem.unitId}'),
                           Text('数量: ${salesTransactionItem.quantity}'),
-                          Text('单价: ¥${salesTransactionItem.unitPrice.toStringAsFixed(2)}'),
-                          Text('总价: ¥${salesTransactionItem.totalPrice.toStringAsFixed(2)}'),
-                          if (salesTransactionItem.batchNumber != null)
-                            Text('批次ID: ${salesTransactionItem.batchNumber}'),
+                          Text('价格(分): ${salesTransactionItem.priceInCents}'),
+                          Text('批次ID: ${salesTransactionItem.batchId ?? '无'}'),
                         ],
                       ),
                       isThreeLine: true,

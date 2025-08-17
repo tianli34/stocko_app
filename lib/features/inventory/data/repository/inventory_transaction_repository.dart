@@ -66,7 +66,7 @@ class InventoryTransactionRepository
 
   @override
   Future<List<InventoryTransactionModel>> getTransactionsByShop(
-    String shopId,
+    int shopId,
   ) async {
     try {
       final dataList = await _transactionDao.getTransactionsByShop(shopId);
@@ -91,7 +91,7 @@ class InventoryTransactionRepository
   @override
   Future<List<InventoryTransactionModel>> getTransactionsByProductAndShop(
     int productId,
-    String shopId,
+    int shopId,
   ) async {
     try {
       final dataList = await _transactionDao.getTransactionsByProductAndShop(
@@ -109,7 +109,7 @@ class InventoryTransactionRepository
   Future<List<InventoryTransactionModel>> getTransactionsByDateRange(
     DateTime startDate,
     DateTime endDate, {
-    String? shopId,
+    int? shopId,
     int? productId,
   }) async {
     try {
@@ -153,7 +153,7 @@ class InventoryTransactionRepository
   }
 
   @override
-  Stream<List<InventoryTransactionModel>> watchTransactionsByShop(String shopId) {
+  Stream<List<InventoryTransactionModel>> watchTransactionsByShop(int shopId) {
     try {
       return _transactionDao
           .watchTransactionsByShop(shopId)
@@ -199,7 +199,7 @@ class InventoryTransactionRepository
   }
 
   @override
-  Future<int> deleteTransactionsByShop(String shopId) async {
+  Future<int> deleteTransactionsByShop(int shopId) async {
     try {
       return await _transactionDao.deleteTransactionsByShop(shopId);
     } catch (e) {
@@ -210,7 +210,7 @@ class InventoryTransactionRepository
 
   @override
   Future<List<InventoryTransactionModel>> getInboundTransactions({
-    String? shopId,
+    int? shopId,
     int? productId,
   }) async {
     return getTransactionsByType(InventoryTransactionType.inbound.name);
@@ -218,7 +218,7 @@ class InventoryTransactionRepository
 
   @override
   Future<List<InventoryTransactionModel>> getOutboundTransactions({
-    String? shopId,
+    int? shopId,
     int? productId,
   }) async {
     return getTransactionsByType(InventoryTransactionType.outbound.name);
@@ -226,7 +226,7 @@ class InventoryTransactionRepository
 
   @override
   Future<List<InventoryTransactionModel>> getAdjustmentTransactions({
-    String? shopId,
+    int? shopId,
     int? productId,
   }) async {
     return getTransactionsByType(InventoryTransactionType.adjustment.name);
@@ -236,7 +236,7 @@ class InventoryTransactionRepository
   Future<Map<String, double>> getTransactionSummaryByDateRange(
     DateTime startDate,
     DateTime endDate, {
-    String? shopId,
+    int? shopId,
     int? productId,
   }) async {
     try {
@@ -263,7 +263,7 @@ class InventoryTransactionRepository
   @override
   Future<List<InventoryTransactionModel>> getRecentTransactions(
     int limit, {
-    String? shopId,
+    int? shopId,
     int? productId,
   }) async {
     try {
@@ -281,7 +281,7 @@ class InventoryTransactionRepository
 
   @override
   Future<int> getTransactionCount({
-    String? shopId,
+    int? shopId,
     int? productId,
     String? type,
   }) async {

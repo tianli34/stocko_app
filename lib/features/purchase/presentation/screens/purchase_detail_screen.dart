@@ -38,7 +38,7 @@ class PurchaseDetailScreen extends ConsumerWidget {
 
           final totalAmount = items.fold<double>(
             0,
-            (sum, item) => sum + (item.item.unitPrice * item.item.quantity),
+            (sum, item) => sum + (item.item.unitPriceInCents * item.item.quantity),
           );
           final totalQuantity = items.fold<double>(
             0,
@@ -73,7 +73,7 @@ class PurchaseDetailScreen extends ConsumerWidget {
 }
 
 class PurchaseDetailHeader extends ConsumerWidget {
-  final PurchaseOrdersTableData order;
+  final PurchaseOrderData order;
   final double totalAmount;
   final double totalQuantity;
 
@@ -104,13 +104,13 @@ class PurchaseDetailHeader extends ConsumerWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                '订单号: ${order.purchaseOrderNumber}',
+                '订单号: ${order.id}',
                 style: const TextStyle(
                   fontWeight: FontWeight.bold,
                   fontSize: 16,
                 ),
               ),
-              Text('日期: ${order.purchaseDate.toString().substring(0, 10)}'),
+              Text('日期: ${order.createdAt.toString().substring(0, 10)}'),
             ],
           ),
           const SizedBox(height: 8),
@@ -158,7 +158,7 @@ class PurchaseDetailItemCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final itemTotal = item.item.unitPrice * item.item.quantity;
+    final itemTotal = item.item.unitPriceInCents * item.item.quantity;
 
     // Use the product data from the joined query
     final product = item.product;
@@ -196,7 +196,7 @@ class PurchaseDetailItemCard extends ConsumerWidget {
             Row(
               children: [
                 Expanded(
-                  child: Text('单价: ￥${item.item.unitPrice.toStringAsFixed(2)}'),
+                  child: Text('单价: ￥${item.item.unitPriceInCents.toStringAsFixed(2)}'),
                 ),
                 Expanded(child: Text('数量: ${item.item.quantity.toInt()}')),
               ],

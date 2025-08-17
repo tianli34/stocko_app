@@ -8,7 +8,7 @@ part 'shop.g.dart';
 @freezed
 abstract class Shop with _$Shop {
   const factory Shop({
-    required String id,
+    int? id,
     required String name,
     required String manager,
     DateTime? createdAt,
@@ -23,7 +23,7 @@ abstract class Shop with _$Shop {
   factory Shop.create({required String name, required String manager}) {
     final now = DateTime.now();
     return Shop(
-      id: 'shop_${now.millisecondsSinceEpoch}',
+      id: null,
       name: name,
       manager: manager,
       createdAt: now,

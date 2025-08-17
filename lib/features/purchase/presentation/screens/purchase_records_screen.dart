@@ -14,20 +14,20 @@ final purchaseDaoProvider = Provider<PurchaseDao>((ref) {
 });
 
 // Provider to watch all purchase orders
-final purchaseOrdersProvider = StreamProvider<List<PurchaseOrdersTableData>>((
+final purchaseOrdersProvider = StreamProvider<List<PurchaseOrderData>>((
   ref,
 ) {
   final dao = ref.watch(purchaseDaoProvider);
   // Sort by purchase date descending
   return dao.watchAllPurchaseOrders().map(
     (orders) =>
-        orders..sort((a, b) => b.purchaseDate.compareTo(a.purchaseDate)),
+        orders..sort((a, b) => b.createdAt.compareTo(a.createdAt)),
   );
 });
 
 // Provider to get items for a specific order
 final purchaseOrderItemsProvider =
-    FutureProvider.family<List<PurchaseOrderItemsTableData>, int>((
+    FutureProvider.family<List<PurchaseOrderItemData>, int>((
       ref,
       orderId,
     ) {
@@ -87,7 +87,7 @@ class PurchaseRecordsScreen extends ConsumerWidget {
 }
 
 class PurchaseOrderCard extends ConsumerWidget {
-  final PurchaseOrdersTableData order;
+  final PurchaseOrderData order;
 
   const PurchaseOrderCard({super.key, required this.order});
 
@@ -101,13 +101,13 @@ class PurchaseOrderCard extends ConsumerWidget {
       child: InkWell(
         child: ExpansionTile(
           title: Text(
-            '订单号: ${order.purchaseOrderNumber}',
+            '订单号: ${order.id}',
             style: const TextStyle(fontWeight: FontWeight.bold),
           ),
           subtitle: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('日期: ${order.purchaseDate.toString().substring(0, 10)}'),
+              Text('日期: ${order.createdAt.toString().substring(0, 10)}'),
               suppliersAsync.when(
                 data: (suppliers) {
                   final supplier = suppliers
@@ -124,7 +124,7 @@ class PurchaseOrderCard extends ConsumerWidget {
             data: (items) {
               final totalAmount = items.fold<double>(
                 0,
-                (sum, item) => sum + (item.unitPrice * item.quantity),
+                (sum, item) => sum + (item.unitPriceInCents * item.quantity),
               );
               final totalQuantity = items.fold<double>(
                 0,
@@ -179,7 +179,7 @@ class PurchaseOrderCard extends ConsumerWidget {
 }
 
 class PurchaseOrderItemTile extends ConsumerWidget {
-  final PurchaseOrderItemsTableData item;
+  final PurchaseOrderItemData item;
 
   const PurchaseOrderItemTile({super.key, required this.item});
 
@@ -204,10 +204,10 @@ class PurchaseOrderItemTile extends ConsumerWidget {
         crossAxisAlignment: CrossAxisAlignment.end,
         children: [
           Text(
-            '￥${item.unitPrice.toStringAsFixed(2)} × ${item.quantity.toInt()}',
+            '￥${item.unitPriceInCents.toStringAsFixed(2)} × ${item.quantity.toInt()}',
           ),
           Text(
-            '￥${(item.unitPrice * item.quantity).toStringAsFixed(2)}',
+            '￥${(item.unitPriceInCents * item.quantity).toStringAsFixed(2)}',
             style: const TextStyle(fontWeight: FontWeight.bold),
           ),
         ],

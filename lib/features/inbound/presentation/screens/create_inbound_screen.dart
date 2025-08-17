@@ -10,7 +10,6 @@ import '../../../../core/constants/app_routes.dart';
 import '../../application/provider/inbound_list_provider.dart';
 import '../../../purchase/application/provider/supplier_providers.dart';
 import '../../application/service/inbound_service.dart';
-import '../../domain/model/inbound_item.dart';
 import '../../../purchase/domain/model/supplier.dart';
 import '../../../inventory/application/provider/shop_providers.dart';
 import '../../../inventory/domain/model/shop.dart';
@@ -114,7 +113,7 @@ class _CreateInboundScreenState extends ConsumerState<CreateInboundScreen> {
     }
   }
 
-  Future<DateTime?> _selectProductionDate(InboundItem item) async {
+  Future<DateTime?> _selectProductionDate(InboundItemState item) async {
     return await CustomDatePicker.show(
       context: context,
       initialDate: item.productionDate ?? DateTime.now(),
@@ -234,7 +233,7 @@ class _CreateInboundScreenState extends ConsumerState<CreateInboundScreen> {
     try {
       final inboundService = ref.read(inboundServiceProvider);
       final String source;
-      final String? supplierId;
+      final int? supplierId;
       final String? supplierName;
       final bool isPurchaseMode = _currentMode == InboundMode.purchase;
 
@@ -244,7 +243,7 @@ class _CreateInboundScreenState extends ConsumerState<CreateInboundScreen> {
           supplierId = _selectedSupplier!.id;
           supplierName = _selectedSupplier!.name;
         } else {
-          supplierId = 'supplier_${DateTime.now().millisecondsSinceEpoch}';
+          supplierId = null;
           supplierName = _supplierController.text.trim();
         }
       } else {
@@ -257,7 +256,7 @@ class _CreateInboundScreenState extends ConsumerState<CreateInboundScreen> {
       }
 
       final receiptNumber = await inboundService.processOneClickInbound(
-        shopId: _selectedShop!.id,
+        shopId: _selectedShop!.id!,
         inboundItems: ref.read(inboundListProvider),
         remarks: _remarksController.text.isNotEmpty
             ? _remarksController.text
@@ -420,13 +419,13 @@ class _CreateInboundScreenState extends ConsumerState<CreateInboundScreen> {
             message: '货品"${item.productName}"的数量必须大于0', isError: true);
         return false;
       }
-      if (_currentMode == InboundMode.purchase && item.unitPrice < 0) {
+      if (_currentMode == InboundMode.purchase && item.unitPriceInCents < 0) {
         showAppSnackBar(context,
             message: '货品"${item.productName}"的单价不能为负数', isError: true);
         return false;
       }
       // 采购模式下，单价不能为0
-      if (_currentMode == InboundMode.purchase && item.unitPrice == 0) {
+      if (_currentMode == InboundMode.purchase && item.unitPriceInCents == 0) {
         showAppSnackBar(context,
             message: '货品"${item.productName}"的单价不能为0', isError: true);
         return false;

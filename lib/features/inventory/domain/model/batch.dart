@@ -2,17 +2,17 @@
 /// 用于批次管理功能的数据模型
 class BatchModel {
   /// 主键 - 批次号，无业务意义
-  final int? batchNumber;
+  final int? id;
   final int productId;
   /// 仅使用到“日期”粒度（00:00:00），避免时间部分影响唯一性
   final DateTime productionDate;
   final int totalInboundQuantity;
-  final String shopId;
+  final int shopId;
   final DateTime createdAt;
   final DateTime updatedAt;
 
   const BatchModel({
-    this.batchNumber,
+    this.id,
     required this.productId,
     required this.productionDate,
     required this.totalInboundQuantity,
@@ -26,7 +26,7 @@ class BatchModel {
     required int productId,
     required DateTime productionDate,
     required int totalInboundQuantity,
-    required String shopId,
+    required int shopId,
   }) {
     final now = DateTime.now().toUtc();
     return BatchModel(
@@ -41,16 +41,16 @@ class BatchModel {
 
   /// 复制批次并更新指定字段
   BatchModel copyWith({
-    int? batchNumber,
+    int? id,
     int? productId,
     DateTime? productionDate,
     int? totalInboundQuantity,
-    String? shopId,
+    int? shopId,
     DateTime? createdAt,
     DateTime? updatedAt,
   }) {
     return BatchModel(
-      batchNumber: batchNumber ?? this.batchNumber,
+      id: id ?? this.id,
       productId: productId ?? this.productId,
       productionDate: productionDate != null
           ? _dateOnlyUtc(productionDate)
@@ -64,7 +64,7 @@ class BatchModel {
 
   /// JSON 序列化
   Map<String, dynamic> toJson() => {
-        'batchNumber': batchNumber,
+        'id': id,
         'productId': productId,
         'productionDate': productionDate.toIso8601String(),
         'totalInboundQuantity': totalInboundQuantity,
@@ -74,18 +74,18 @@ class BatchModel {
       };
 
   factory BatchModel.fromJson(Map<String, dynamic> json) => BatchModel(
-        batchNumber: json['batchNumber'] as int?,
+        id: json['id'] as int?,
         productId: json['productId'] as int,
         productionDate: _dateOnlyUtc(DateTime.parse(json['productionDate'] as String)),
         totalInboundQuantity: json['totalInboundQuantity'] as int,
-        shopId: json['shopId'] as String,
+        shopId: json['shopId'] as int,
         createdAt: DateTime.parse(json['createdAt'] as String),
         updatedAt: DateTime.parse(json['updatedAt'] as String),
       );
 
   @override
   String toString() {
-    return 'Batch(batchNumber: $batchNumber, productId: $productId, productionDate: $productionDate, totalInboundQuantity: $totalInboundQuantity, shopId: $shopId)';
+    return 'Batch(id: $id, productId: $productId, productionDate: $productionDate, totalInboundQuantity: $totalInboundQuantity, shopId: $shopId)';
   }
 
   @override
@@ -94,8 +94,8 @@ class BatchModel {
     if (other is! BatchModel) return false;
 
     // 若双方均有主键，则以主键判等
-    if (batchNumber != null && other.batchNumber != null) {
-      return batchNumber == other.batchNumber;
+    if (id != null && other.id != null) {
+      return id == other.id;
     }
 
     // 否则使用业务唯一键（产品+日期+店铺）判等
@@ -106,7 +106,7 @@ class BatchModel {
 
   @override
   int get hashCode {
-    if (batchNumber != null) return batchNumber.hashCode;
+    if (id != null) return id.hashCode;
     // 业务键哈希：确保与 == 一致
     final d = productionDate.toUtc();
     final dateOnly = DateTime.utc(d.year, d.month, d.day);

@@ -3,38 +3,31 @@ import 'customers_table.dart';
 import 'shops_table.dart';
 
 /// 销售交易表
-class SalesTransactionsTable extends Table {
-  @override
-  String get tableName => 'sales_transactions';
-
+class SalesTransaction extends Table {
   /// 主键 - 自增ID
   IntColumn get id => integer().autoIncrement()();
 
-  /// 销售订单号
-  IntColumn get salesOrderNo => integer().named('sales_order_no').unique()();
-
   /// 客户ID
-  IntColumn get customerId => integer().named('customer_id').references(Customers, #id)();
+  IntColumn get customerId => integer().references(Customers, #id)();
 
   /// 店铺ID
-  TextColumn get shopId => text().named('shop_id').references(ShopsTable, #id)();
+  IntColumn get shopId => integer().references(Shop, #id)();
 
   /// 总金额
-  RealColumn get totalAmount => real().named('total_amount')();
+  RealColumn get totalAmount => real()();
 
-  /// 实际金额
-  RealColumn get actualAmount => real().named('actual_amount')();
+  /// 实收金额
+  RealColumn get actualAmount => real()();
 
   /// 状态 (preset,credit, Settled, cancelled)
-  TextColumn get status => text().named('status').withDefault(const Constant('preset'))();
+  TextColumn get status => text().withDefault(const Constant('preset'))();
 
   /// 备注
-  TextColumn get remarks => text().named('remarks').nullable()();
+  TextColumn get remarks => text().nullable()();
 
   /// 创建时间
-  DateTimeColumn get createdAt => dateTime().named('created_at').withDefault(currentDateAndTime)();
+  DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
 
   /// 最后更新时间
-  DateTimeColumn get updatedAt => dateTime().named('updated_at').withDefault(currentDateAndTime)();
-
+  DateTimeColumn get updatedAt => dateTime().withDefault(currentDateAndTime)();
 }

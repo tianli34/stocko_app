@@ -53,8 +53,8 @@ abstract class InventoryTransactionModel with _$InventoryTransactionModel {
     required int productId,
     required InventoryTransactionType type,
     required int quantity,
-    required String shopId,
-    int? batchNumber, 
+    required int shopId,
+    int? batchId, 
     DateTime? createdAt,
   }) = _InventoryTransactionModel;
 
@@ -67,8 +67,8 @@ abstract class InventoryTransactionModel with _$InventoryTransactionModel {
   factory InventoryTransactionModel.createInbound({
     required int productId,
     required int quantity,
-    required String shopId,
-    int? batchNumber,
+    required int shopId,
+    int? batchId,
   }) {
     return InventoryTransactionModel(
       id: null,
@@ -76,7 +76,7 @@ abstract class InventoryTransactionModel with _$InventoryTransactionModel {
       type: InventoryTransactionType.inbound,
       quantity: quantity,
       shopId: shopId,
-      batchNumber: batchNumber,
+      batchId: batchId,
     );
   }
 
@@ -84,8 +84,8 @@ abstract class InventoryTransactionModel with _$InventoryTransactionModel {
   factory InventoryTransactionModel.createOutbound({
     required int productId,
     required int quantity,
-    required String shopId,
-    int? batchNumber,
+    required int shopId,
+    int? batchId,
   }) {
     return InventoryTransactionModel(
       id: null,
@@ -93,7 +93,7 @@ abstract class InventoryTransactionModel with _$InventoryTransactionModel {
       type: InventoryTransactionType.outbound,
       quantity: quantity,
       shopId: shopId,
-      batchNumber: batchNumber,
+      batchId: batchId,
     );
   }
 
@@ -101,8 +101,8 @@ abstract class InventoryTransactionModel with _$InventoryTransactionModel {
   factory InventoryTransactionModel.createAdjustment({
     required int productId,
     required int quantity,
-    required String shopId,
-    int? batchNumber,
+    required int shopId,
+    int? batchId,
   }) {
     return InventoryTransactionModel(
       id: null,
@@ -110,7 +110,7 @@ abstract class InventoryTransactionModel with _$InventoryTransactionModel {
       type: InventoryTransactionType.adjustment,
       quantity: quantity,
       shopId: shopId,
-      batchNumber: batchNumber,
+      batchId: batchId,
     );
   }
 

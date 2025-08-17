@@ -4,34 +4,34 @@ import '../model/inbound_receipt.dart';
 /// 定义入库单相关的业务操作规范
 abstract class IInboundReceiptRepository {
   /// 添加入库单
-  Future<int> addInboundReceipt(InboundReceipt receipt);
+  Future<int> addInboundReceipt(InboundReceiptModel receipt);
 
   /// 根据ID获取入库单
-  Future<InboundReceipt?> getInboundReceiptById(String id);
+  Future<InboundReceiptModel?> getInboundReceiptById(int id);
 
   /// 根据入库单号获取入库单
-  Future<InboundReceipt?> getInboundReceiptByNumber(String receiptNumber);
+  Future<InboundReceiptModel?> getInboundReceiptByNumber(String receiptNumber);
 
   /// 获取所有入库单
-  Future<List<InboundReceipt>> getAllInboundReceipts();
+  Future<List<InboundReceiptModel>> getAllInboundReceipts();
 
   /// 根据店铺ID获取入库单
-  Future<List<InboundReceipt>> getInboundReceiptsByShop(String shopId);
+  Future<List<InboundReceiptModel>> getInboundReceiptsByShop(int shopId);
 
   /// 根据状态获取入库单
-  Future<List<InboundReceipt>> getInboundReceiptsByStatus(String status);
+  Future<List<InboundReceiptModel>> getInboundReceiptsByStatus(String status);
 
   /// 监听所有入库单变化
-  Stream<List<InboundReceipt>> watchAllInboundReceipts();
+  Stream<List<InboundReceiptModel>> watchAllInboundReceipts();
 
   /// 监听指定店铺的入库单变化
-  Stream<List<InboundReceipt>> watchInboundReceiptsByShop(String shopId);
+  Stream<List<InboundReceiptModel>> watchInboundReceiptsByShop(int shopId);
 
   /// 更新入库单
-  Future<bool> updateInboundReceipt(InboundReceipt receipt);
+  Future<bool> updateInboundReceipt(InboundReceiptModel receipt);
 
   /// 删除入库单
-  Future<int> deleteInboundReceipt(String id);
+  Future<int> deleteInboundReceipt(int id);
 
   /// 生成新的入库单号
   Future<String> generateReceiptNumber(DateTime date);
@@ -43,7 +43,7 @@ abstract class IInboundReceiptRepository {
   Future<int> getInboundReceiptCount();
 
   /// 根据日期范围获取入库单
-  Future<List<InboundReceipt>> getInboundReceiptsByDateRange(
+  Future<List<InboundReceiptModel>> getInboundReceiptsByDateRange(
     DateTime startDate,
     DateTime endDate,
   );

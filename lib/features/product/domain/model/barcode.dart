@@ -7,7 +7,7 @@ part 'barcode.g.dart';
 abstract class BarcodeModel with _$BarcodeModel {
   const factory BarcodeModel({
     int? id, // 主键
-    required int productUnitId, // 外键，指向 ProductUnit
+    required int unitProductId, // 外键，指向 UnitProduct
     required String barcodeValue, // 条码值
   }) = _BarcodeModel;
 

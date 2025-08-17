@@ -12,14 +12,14 @@ abstract class IInventoryRepository {
   /// 根据产品ID和店铺ID获取库存
   Future<StockModel?> getInventoryByProductAndShop(
     int productId,
-    String shopId,
+    int shopId,
   );
 
   /// 获取所有库存
   Future<List<StockModel>> getAllInventory();
 
   /// 根据店铺ID获取库存列表
-  Future<List<StockModel>> getInventoryByShop(String shopId);
+  Future<List<StockModel>> getInventoryByShop(int shopId);
 
   /// 根据产品ID获取库存列表
   Future<List<StockModel>> getInventoryByProduct(int productId);
@@ -28,7 +28,7 @@ abstract class IInventoryRepository {
   Stream<List<StockModel>> watchAllInventory();
 
   /// 监听指定店铺的库存变化
-  Stream<List<StockModel>> watchInventoryByShop(String shopId);
+  Stream<List<StockModel>> watchInventoryByShop(int shopId);
 
   /// 监听指定产品的库存变化
   Stream<List<StockModel>> watchInventoryByProduct(int productId);
@@ -40,41 +40,41 @@ abstract class IInventoryRepository {
   Future<int> deleteInventory(int id);
 
   /// 根据产品和店铺删除库存
-  Future<int> deleteInventoryByProductAndShop(int productId, String shopId);
+  Future<int> deleteInventoryByProductAndShop(int productId, int shopId);
 
   /// 更新库存数量
   Future<bool> updateInventoryQuantity(
     int productId,
-    String shopId,
+    int shopId,
     int quantity,
   );
 
   /// 增加库存数量
   Future<bool> addInventoryQuantity(
     int productId,
-    String shopId,
+    int shopId,
     int amount,
   );
 
   /// 减少库存数量
   Future<bool> subtractInventoryQuantity(
     int productId,
-    String shopId,
+    int shopId,
     int amount,
   );
 
   /// 获取低库存产品列表
-  Future<List<StockModel>> getLowStockInventory(String shopId, int warningLevel);
+  Future<List<StockModel>> getLowStockInventory(int shopId, int warningLevel);
 
   /// 获取缺货产品列表
-  Future<List<StockModel>> getOutOfStockInventory(String shopId);
+  Future<List<StockModel>> getOutOfStockInventory(int shopId);
 
   /// 获取库存总数量（按店铺）
-  Future<double> getTotalInventoryByShop(String shopId);
+  Future<double> getTotalInventoryByShop(int shopId);
 
   /// 获取库存总数量（按产品）
   Future<double> getTotalInventoryByProduct(int productId);
 
   /// 检查库存是否存在
-  Future<bool> inventoryExists(int productId, String shopId);
+  Future<bool> inventoryExists(int productId, int shopId);
 }

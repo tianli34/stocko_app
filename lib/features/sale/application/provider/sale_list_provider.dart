@@ -1,20 +1,20 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../product/domain/model/product.dart';
-import '../../domain/model/sale_item.dart';
+import '../../domain/model/sale_cart_item.dart';
 
 /// 销售列表状态通知器
 ///
 /// 管理销售项列表的状态，并提供增、删、改、查等操作。
-class SaleListNotifier extends StateNotifier<List<SaleItem>> {
+class SaleListNotifier extends StateNotifier<List<SaleCartItem>> {
   SaleListNotifier() : super([]);
 
   /// 添加单个销售项到列表头部
-  void addItem(SaleItem item) {
+  void addItem(SaleCartItem item) {
     state = [item, ...state];
   }
 
   /// 添加多个销售项到列表头部
-  void addAllItems(List<SaleItem> items) {
+  void addAllItems(List<SaleCartItem> items) {
     state = [...items.reversed, ...state];
   }
 
@@ -24,7 +24,7 @@ class SaleListNotifier extends StateNotifier<List<SaleItem>> {
   }
 
   /// 更新指定的销售项
-  void updateItem(SaleItem updatedItem) {
+  void updateItem(SaleCartItem updatedItem) {
     state = [
       for (final item in state)
         if (item.id == updatedItem.id) updatedItem else item,
@@ -68,7 +68,7 @@ class SaleListNotifier extends StateNotifier<List<SaleItem>> {
           ? 'item_${barcode}_${DateTime.now().millisecondsSinceEpoch}'
           : 'item_${product.id!}_${unitId}_${DateTime.now().millisecondsSinceEpoch}';
 
-      final newItem = SaleItem(
+      final newItem = SaleCartItem(
         id: itemId,
         productId: product.id!,
         productName: product.name,
@@ -93,7 +93,7 @@ class SaleListNotifier extends StateNotifier<List<SaleItem>> {
 ///
 /// 这是UI层访问 [SaleListNotifier] 的入口。
 final saleListProvider =
-    StateNotifierProvider<SaleListNotifier, List<SaleItem>>(
+    StateNotifierProvider<SaleListNotifier, List<SaleCartItem>>(
       (ref) => SaleListNotifier(),
     );
 

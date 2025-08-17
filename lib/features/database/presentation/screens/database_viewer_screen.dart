@@ -364,7 +364,7 @@ class _DatabaseViewerScreenState extends ConsumerState<DatabaseViewerScreen>
                     subtitle: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text('产品单位ID: ${pu.productUnitId ?? '-'}'),
+                        Text('产品单位ID: ${pu.id ?? '-'}'),
                         Text('单位ID: ${pu.unitId}'),
                         Text('换算率: ${pu.conversionRate}'),
                         if (pu.sellingPriceInCents != null)

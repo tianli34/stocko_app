@@ -7,7 +7,7 @@ abstract class IShopRepository {
   Future<int> addShop(Shop shop);
 
   /// 根据ID获取店铺
-  Future<Shop?> getShopById(String id);
+  Future<Shop?> getShopById(int id);
 
   /// 根据名称获取店铺
   Future<Shop?> getShopByName(String name);
@@ -22,10 +22,10 @@ abstract class IShopRepository {
   Future<bool> updateShop(Shop shop);
 
   /// 删除店铺
-  Future<int> deleteShop(String id);
+  Future<int> deleteShop(int id);
 
   /// 检查店铺名称是否已存在
-  Future<bool> isShopNameExists(String name, [String? excludeId]);
+  Future<bool> isShopNameExists(String name, [int? excludeId]);
 
   /// 根据名称搜索店铺
   Future<List<Shop>> searchShopsByName(String searchTerm);

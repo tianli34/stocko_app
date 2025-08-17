@@ -11,8 +11,8 @@ abstract class StockModel with _$StockModel {
     int? id,
     required int productId,
     required int quantity,
-    required String shopId,
-    int? batchNumber,
+    required int shopId,
+    int? batchId,
     DateTime? createdAt,
     DateTime? updatedAt,
   }) = _StockModel;
@@ -25,8 +25,8 @@ abstract class StockModel with _$StockModel {
   factory StockModel.create({
     required int productId,
     required int quantity,
-    required String shopId,
-    int? batchNumber,
+    required int shopId,
+    int? batchId,
   }) {
     final now = DateTime.now();
     return StockModel(
@@ -34,7 +34,7 @@ abstract class StockModel with _$StockModel {
       productId: productId,
       quantity: quantity,
       shopId: shopId,
-      batchNumber: batchNumber,
+      batchId: batchId,
       createdAt: now,
       updatedAt: now,
     );

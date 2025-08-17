@@ -54,7 +54,7 @@ class ProductRepository implements IProductRepository {
       int barcodeTotal = 0;
       for (final unit in productUnits) {
         final barcodeResult = await barcodeDao.deleteBarcodesByProductUnitId(
-          unit.productUnitId,
+          unit.id,
         );
         barcodeTotal += barcodeResult;
       }

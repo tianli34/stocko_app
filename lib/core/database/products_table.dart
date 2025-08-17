@@ -4,8 +4,6 @@ import 'categories_table.dart';
 import 'units_table.dart';
 
 // --- 类型转换器 ---
-// When using .map, drift handles null values automatically.
-// The type converter should thus only deal with non-nullable values.
 class MoneyConverter extends TypeConverter<Money, int> {
   const MoneyConverter();
   @override

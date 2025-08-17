@@ -176,7 +176,6 @@ class InventoryQueryService {
           'categoryId': product.categoryId,
           'categoryName': categoryName ?? '未分类',
           'productId': inventory.productId,
-          'batchNumber': inventory.batchNumber,
         };
 
         result.add(inventoryItem);

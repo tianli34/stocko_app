@@ -1,16 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart';
 import '../../../../core/database/database.dart';
-import '../../../product/data/repository/product_repository.dart';
+import '../../../product/application/provider/product_providers.dart';
+import '../../application/provider/batch_providers.dart';
 
 class InboundRecordItemTile extends ConsumerWidget {
-  final InboundReceiptItemsTableData item;
+  final InboundItemData item;
 
   const InboundRecordItemTile({super.key, required this.item});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final productAsync = ref.watch(productByIdProvider(item.productId));
+    final batchAsync = ref.watch(batchByNumberProvider(item.id));
+
     return ListTile(
       contentPadding: const EdgeInsets.symmetric(horizontal: 32, vertical: 4),
       title: productAsync.when(
@@ -21,7 +25,7 @@ class InboundRecordItemTile extends ConsumerWidget {
           style: TextStyle(color: Theme.of(context).colorScheme.error),
         ),
       ),
-      subtitle: Text('批号: ${item.batchNumber ?? '无'}'),
+      subtitle: Text('批号: ${item.id}'),
       trailing: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         crossAxisAlignment: CrossAxisAlignment.end,
@@ -29,10 +33,19 @@ class InboundRecordItemTile extends ConsumerWidget {
           Text(
             '数量: ${item.quantity.toStringAsFixed(item.quantity.truncateToDouble() == item.quantity ? 0 : 2)}',
           ),
-          if (item.productionDate != null)
-            Text(
-              '生产日期: ${item.productionDate!.toString().substring(0, 10)}',
-              style: const TextStyle(fontSize: 12, color: Colors.grey),
+          batchAsync.when(
+              data: (batch) {
+                if (batch?.productionDate == null) return const SizedBox.shrink();
+                return Text(
+                  '生产日期: ${DateFormat('yyyy-MM-dd').format(batch!.productionDate)}',
+                  style: const TextStyle(fontSize: 12, color: Colors.grey),
+                );
+              },
+              loading: () => const SizedBox(
+                  width: 12,
+                  height: 12,
+                  child: CircularProgressIndicator(strokeWidth: 2)),
+              error: (e, s) => const SizedBox.shrink(),
             ),
         ],
       ),

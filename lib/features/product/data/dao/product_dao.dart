@@ -10,7 +10,7 @@ part 'product_dao.g.dart';
 /// 产品数据访问对象 (DAO)
 /// 专门负责产品相关的数据库操作
 @DriftAccessor(
-  tables: [Product, Barcode, ProductUnit, Unit],
+  tables: [Product, Barcode, UnitProduct, Unit],
 )
 class ProductDao extends DatabaseAccessor<AppDatabase> with _$ProductDaoMixin {
   ProductDao(super.db);
@@ -51,9 +51,9 @@ class ProductDao extends DatabaseAccessor<AppDatabase> with _$ProductDaoMixin {
   watchAllProductsWithUnit() {
     final query = select(db.product).join([
       leftOuterJoin(
-        db.productUnit,
-        db.productUnit.productId.equalsExp(db.product.id) &
-            db.productUnit.conversionRate.equals(1),
+        db.unitProduct,
+        db.unitProduct.productId.equalsExp(db.product.id) &
+            db.unitProduct.conversionRate.equals(1),
       ),
       leftOuterJoin(
         db.unit,
@@ -65,12 +65,12 @@ class ProductDao extends DatabaseAccessor<AppDatabase> with _$ProductDaoMixin {
       return rows.map((row) {
         final product = row.readTable(db.product);
         final unit = row.readTableOrNull(db.unit);
-        final productUnit = row.readTableOrNull(db.productUnit);
+        final unitProduct = row.readTableOrNull(db.unitProduct);
         return (
           product: product,
           unitId: unit?.id ?? 0,
           unitName: unit?.name ?? '未知单位',
-          wholesalePriceInCents: productUnit?.wholesalePriceInCents,
+          wholesalePriceInCents: unitProduct?.wholesalePriceInCents,
         );
       }).toList();
     });
@@ -191,8 +191,8 @@ class ProductDao extends DatabaseAccessor<AppDatabase> with _$ProductDaoMixin {
 
     // 然后在产品单位表中找到对应的产品ID
     final productUnitResult =
-        await (select(db.productUnit)..where(
-              (tbl) => tbl.productUnitId.equals(barcodeResult.productUnitId),
+        await (select(db.unitProduct)..where(
+              (tbl) => tbl.id.equals(barcodeResult.id),
             ))
             .getSingleOrNull();
 
@@ -228,18 +228,18 @@ class ProductDao extends DatabaseAccessor<AppDatabase> with _$ProductDaoMixin {
 
     // 联合查询产品单位表、产品表和单位表
     final query =
-        select(db.productUnit).join([
+        select(db.unitProduct).join([
           innerJoin(
             db.product,
-            db.product.id.equalsExp(db.productUnit.productId),
+            db.product.id.equalsExp(db.unitProduct.productId),
           ),
           innerJoin(
             db.unit,
-            db.unit.id.equalsExp(db.productUnit.unitId),
+            db.unit.id.equalsExp(db.unitProduct.unitId),
           ),
         ])..where(
-          db.productUnit.productUnitId.equals(
-            barcodeResult.productUnitId,
+          db.unitProduct.id.equals(
+            barcodeResult.id,
           ),
         );
 
@@ -250,13 +250,13 @@ class ProductDao extends DatabaseAccessor<AppDatabase> with _$ProductDaoMixin {
 
     final product = result.readTable(db.product);
     final unit = result.readTable(db.unit);
-    final productUnit = result.readTable(db.productUnit);
+    final unitProduct = result.readTable(db.unitProduct);
 
     return (
       product: product,
       unitId: unit.id,
       unitName: unit.name,
-      wholesalePriceInCents: productUnit.wholesalePriceInCents,
+      wholesalePriceInCents: unitProduct.wholesalePriceInCents,
     );
   }
 

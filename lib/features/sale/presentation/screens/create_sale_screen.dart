@@ -248,7 +248,7 @@ class _CreateSaleScreenState extends ConsumerState<CreateSaleScreen> {
 
       final receiptNumber = await saleService.processOneClickSale(
         salesOrderNo: DateTime.now().millisecondsSinceEpoch,
-        shopId: _selectedShop!.id,
+        shopId: _selectedShop!.id!,
         saleItems: ref.read(saleListProvider),
         remarks: _remarksController.text.isNotEmpty
             ? _remarksController.text
@@ -353,7 +353,7 @@ class _CreateSaleScreenState extends ConsumerState<CreateSaleScreen> {
 
       final receiptNumber = await saleService.processOneClickSale(
         salesOrderNo: DateTime.now().millisecondsSinceEpoch,
-        shopId: _selectedShop!.id,
+        shopId: _selectedShop!.id!,
         saleItems: ref.read(saleListProvider),
         remarks: _remarksController.text.isNotEmpty
             ? _remarksController.text

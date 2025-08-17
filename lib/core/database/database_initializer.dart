@@ -25,7 +25,7 @@ class DatabaseInitializer {
     try {
       // 检查是否已有数据
       final count = await (_database.select(
-        _database.shopsTable,
+        _database.shop,
       )..limit(1)).get();
 
       if (count.isNotEmpty) {
@@ -34,15 +34,15 @@ class DatabaseInitializer {
       }
 
       final defaultShops = [
-        ShopsTableCompanion.insert(
-          id: 'shop_branch_01',
+        ShopCompanion.insert(
+          id: Value(1),
           name: '长山的店',
           manager: 'changshan',
           
           updatedAt: Value(DateTime.now()),
         ),
-        ShopsTableCompanion.insert(
-          id: 'shop_branch_02',
+        ShopCompanion.insert(
+          id: Value(2),
           name: '田立的店',
           manager: 'tianli',
           
@@ -53,7 +53,7 @@ class DatabaseInitializer {
       // 使用事务批量插入
       await _database.transaction(() async {
         for (final shop in defaultShops) {
-          await _database.into(_database.shopsTable).insert(shop);
+          await _database.into(_database.shop).insert(shop);
         }
       });
 
@@ -100,6 +100,7 @@ class DatabaseInitializer {
       print('✅ 成功初始化 ${defaultCategories.length} 个默认类别');
     } catch (e) {
       print('❌ 初始化默认类别失败: $e');
+      rethrow;
     }
   }
 
@@ -153,6 +154,7 @@ class DatabaseInitializer {
       print('✅ 成功初始化 ${defaultUnits.length} 个默认单位');
     } catch (e) {
       print('❌ 初始化默认单位失败: $e');
+      rethrow;
     }
   }
 
@@ -168,7 +170,68 @@ class DatabaseInitializer {
         return;
       }
 
-      final defaultProducts = [];
+      final defaultProducts = [
+        ProductCompanion.insert(
+          id: const Value(1),
+          name: '可口可乐',
+          categoryId: const Value(2),
+          baseUnitId: 4, // 瓶
+        ),
+        ProductCompanion.insert(
+          id: const Value(2),
+          name: '康师傅冰红茶',
+          categoryId: const Value(2),
+          baseUnitId: 4, // 瓶
+        ),
+        ProductCompanion.insert(
+          id: const Value(3),
+          name: '农夫山泉',
+          categoryId: const Value(2),
+          baseUnitId: 4, // 瓶
+        ),
+        ProductCompanion.insert(
+          id: const Value(4),
+          name: '奥利奥',
+          categoryId: const Value(1),
+          baseUnitId: 5, // 包
+        ),
+        ProductCompanion.insert(
+          id: const Value(5),
+          name: '乐事薯片',
+          categoryId: const Value(1),
+          baseUnitId: 5, // 包
+        ),
+        ProductCompanion.insert(
+          id: const Value(6),
+          name: '统一老坛酸菜牛肉面',
+          categoryId: const Value(1),
+          baseUnitId: 5, // 包
+        ),
+        ProductCompanion.insert(
+          id: const Value(7),
+          name: '清风抽纸',
+          categoryId: const Value(3),
+          baseUnitId: 5, // 包
+        ),
+        ProductCompanion.insert(
+          id: const Value(8),
+          name: '高露洁牙膏',
+          categoryId: const Value(3),
+          baseUnitId: 1, // 个
+        ),
+        ProductCompanion.insert(
+          id: const Value(9),
+          name: '娃哈哈AD钙奶',
+          categoryId: const Value(2),
+          baseUnitId: 4, // 瓶
+        ),
+        ProductCompanion.insert(
+          id: const Value(10),
+          name: '达利园蛋黄派',
+          categoryId: const Value(1),
+          baseUnitId: 5, // 包
+        ),
+      ];
 
       await _database.transaction(() async {
         for (final product in defaultProducts) {
@@ -179,6 +242,7 @@ class DatabaseInitializer {
       print('✅ 成功初始化 ${defaultProducts.length} 个默认商品');
     } catch (e) {
       print('❌ 初始化默认商品失败: $e');
+      rethrow;
     }
   }
 
@@ -186,7 +250,7 @@ class DatabaseInitializer {
   Future<void> initializeDefaultProductUnits() async {
     try {
       final count = await (_database.select(
-        _database.productUnit,
+        _database.unitProduct,
       )..limit(1)).get();
 
       if (count.isNotEmpty) {
@@ -195,45 +259,98 @@ class DatabaseInitializer {
       }
 
       final defaultProductUnits = [
-        ProductUnitCompanion.insert(
-          productUnitId: const Value(1),
+        // 可口可乐, 瓶
+        UnitProductCompanion.insert(
+          id: const Value(1),
           productId: 1,
-          unitId: 2,
-          conversionRate: 1, // 基础单位
+          unitId: 4,
+          conversionRate: 1,
           lastUpdated: Value(DateTime.now()),
         ),
-        ProductUnitCompanion.insert(
-          productUnitId: const Value(2),
+        // 康师傅冰红茶, 瓶
+        UnitProductCompanion.insert(
+          id: const Value(2),
           productId: 2,
-          unitId: 2,
-          conversionRate: 1, // 基础单位
+          unitId: 4,
+          conversionRate: 1,
           lastUpdated: Value(DateTime.now()),
         ),
-        ProductUnitCompanion.insert(
-          productUnitId: const Value(3),
+        // 农夫山泉, 瓶
+        UnitProductCompanion.insert(
+          id: const Value(3),
           productId: 3,
           unitId: 4,
-          conversionRate: 1, // 基础单位
+          conversionRate: 1,
           lastUpdated: Value(DateTime.now()),
         ),
-        ProductUnitCompanion.insert(
-          productUnitId: const Value(4),
-          productId: 4, // 修改为整数ID
+        // 奥利奥, 包
+        UnitProductCompanion.insert(
+          id: const Value(4),
+          productId: 4,
+          unitId: 5,
+          conversionRate: 1,
+          lastUpdated: Value(DateTime.now()),
+        ),
+        // 乐事薯片, 包
+        UnitProductCompanion.insert(
+          id: const Value(5),
+          productId: 5,
+          unitId: 5,
+          conversionRate: 1,
+          lastUpdated: Value(DateTime.now()),
+        ),
+        // 统一老坛酸菜牛肉面, 包
+        UnitProductCompanion.insert(
+          id: const Value(6),
+          productId: 6,
+          unitId: 5,
+          conversionRate: 1,
+          lastUpdated: Value(DateTime.now()),
+        ),
+        // 清风抽纸, 包
+        UnitProductCompanion.insert(
+          id: const Value(7),
+          productId: 7,
+          unitId: 5,
+          conversionRate: 1,
+          lastUpdated: Value(DateTime.now()),
+        ),
+        // 高露洁牙膏, 个
+        UnitProductCompanion.insert(
+          id: const Value(8),
+          productId: 8,
+          unitId: 1,
+          conversionRate: 1,
+          lastUpdated: Value(DateTime.now()),
+        ),
+        // 娃哈哈AD钙奶, 瓶
+        UnitProductCompanion.insert(
+          id: const Value(9),
+          productId: 9,
           unitId: 4,
-          conversionRate: 1, // 基础单位
+          conversionRate: 1,
+          lastUpdated: Value(DateTime.now()),
+        ),
+        // 达利园蛋黄派, 包
+        UnitProductCompanion.insert(
+          id: const Value(10),
+          productId: 10,
+          unitId: 5,
+          conversionRate: 1,
           lastUpdated: Value(DateTime.now()),
         ),
       ];
 
       await _database.transaction(() async {
-        for (final productUnit in defaultProductUnits) {
-          await _database.into(_database.productUnit).insert(productUnit);
+        for (final unitProduct in defaultProductUnits) {
+          await _database.into(_database.unitProduct).insert(unitProduct);
         }
       });
 
       print('✅ 成功初始化 ${defaultProductUnits.length} 个默认产品单位');
     } catch (e) {
       print('❌ 初始化默认产品单位失败: $e');
+      rethrow;
     }
   }
 
@@ -250,26 +367,16 @@ class DatabaseInitializer {
       }
 
       final defaultBarcodes = [
-        BarcodeCompanion.insert(
-          productUnitId: 1,
-          barcodeValue: '1234567890123',
-          
-        ),
-        BarcodeCompanion.insert(
-          productUnitId: 2,
-          barcodeValue: '1234567890124',
-          
-        ),
-        BarcodeCompanion.insert(
-          productUnitId: 3,
-          barcodeValue: '1234567890125',
-          
-        ),
-        BarcodeCompanion.insert(
-          productUnitId: 4,
-          barcodeValue: '1234567890126',
-          
-        ),
+        BarcodeCompanion.insert(unitProductId: 1, barcodeValue: '6901234567890'), // 可口可乐
+        BarcodeCompanion.insert(unitProductId: 2, barcodeValue: '6901234567891'), // 康师傅冰红茶
+        BarcodeCompanion.insert(unitProductId: 3, barcodeValue: '6901234567892'), // 农夫山泉
+        BarcodeCompanion.insert(unitProductId: 4, barcodeValue: '6901234567893'), // 奥利奥
+        BarcodeCompanion.insert(unitProductId: 5, barcodeValue: '6901234567894'), // 乐事薯片
+        BarcodeCompanion.insert(unitProductId: 6, barcodeValue: '6901234567895'), // 统一老坛酸菜牛肉面
+        BarcodeCompanion.insert(unitProductId: 7, barcodeValue: '6901234567896'), // 清风抽纸
+        BarcodeCompanion.insert(unitProductId: 8, barcodeValue: '6901234567897'), // 高露洁牙膏
+        BarcodeCompanion.insert(unitProductId: 9, barcodeValue: '6901234567898'), // 娃哈哈AD钙奶
+        BarcodeCompanion.insert(unitProductId: 10, barcodeValue: '6901234567899'), // 达利园蛋黄派
       ];
 
       await _database.transaction(() async {
@@ -281,6 +388,7 @@ class DatabaseInitializer {
       print('✅ 成功初始化 ${defaultBarcodes.length} 个默认条码');
     } catch (e) {
       print('❌ 初始化默认条码失败: $e');
+      rethrow;
     }
   }
 
@@ -312,6 +420,7 @@ class DatabaseInitializer {
       print('✅ 成功初始化 ${defaultCustomers.length} 个默认客户');
     } catch (e) {
       print('❌ 初始化默认客户失败: $e');
+      rethrow;
     }
   }
 
@@ -319,25 +428,25 @@ class DatabaseInitializer {
   Future<void> resetAllData() async {
     await _database.transaction(() async {
       // 删除销售相关的表数据
-      await _database.delete(_database.salesTransactionItemsTable).go();
-      await _database.delete(_database.salesTransactionsTable).go();
+      await _database.delete(_database.salesTransactionItem).go();
+      await _database.delete(_database.salesTransaction).go();
       await _database.delete(_database.customers).go();
 
       // 删除业务数据表
-      await _database.delete(_database.inboundReceiptItemsTable).go();
-      await _database.delete(_database.inboundReceiptsTable).go();
-      await _database.delete(_database.purchaseOrderItemsTable).go();
-      await _database.delete(_database.purchaseOrdersTable).go();
+      await _database.delete(_database.inboundItem).go();
+      await _database.delete(_database.inboundReceipt).go();
+      await _database.delete(_database.purchaseOrderItem).go();
+      await _database.delete(_database.purchaseOrder).go();
       await _database.delete(_database.inventoryTransaction).go();
       await _database.delete(_database.stock).go();
       await _database.delete(_database.productBatch).go();
-      await _database.delete(_database.suppliersTable).go();
+      await _database.delete(_database.supplier).go();
 
       // 删除基础数据表
       await _database.delete(_database.barcode).go();
-      await _database.delete(_database.productUnit).go();
+      await _database.delete(_database.unitProduct).go();
       await _database.delete(_database.product).go();
-      await _database.delete(_database.shopsTable).go();
+      await _database.delete(_database.shop).go();
       await _database.delete(_database.category).go();
       await _database.delete(_database.unit).go();
     });

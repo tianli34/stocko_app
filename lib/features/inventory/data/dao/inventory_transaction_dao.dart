@@ -42,7 +42,7 @@ class InventoryTransactionDao extends DatabaseAccessor<AppDatabase>
 
   /// 根据店铺ID获取流水记录
   Future<List<InventoryTransactionData>> getTransactionsByShop(
-    String shopId,
+    int shopId,
   ) {
     return (select(inventoryTransaction)
           ..where((t) => t.shopId.equals(shopId))
@@ -63,7 +63,7 @@ class InventoryTransactionDao extends DatabaseAccessor<AppDatabase>
   /// 根据产品和店铺获取流水记录
   Future<List<InventoryTransactionData>> getTransactionsByProductAndShop(
     int productId,
-    String shopId,
+    int shopId,
   ) {
     return (select(inventoryTransaction)
           ..where(
@@ -77,7 +77,7 @@ class InventoryTransactionDao extends DatabaseAccessor<AppDatabase>
   Future<List<InventoryTransactionData>> getTransactionsByDateRange(
     DateTime startDate,
     DateTime endDate, {
-    String? shopId,
+    int? shopId,
     int? productId,
   }) {
     var query = select(inventoryTransaction)
@@ -113,7 +113,7 @@ class InventoryTransactionDao extends DatabaseAccessor<AppDatabase>
 
   /// 监听指定店铺的流水变化
   Stream<List<InventoryTransactionData>> watchTransactionsByShop(
-    String shopId,
+    int shopId,
   ) {
     return (select(inventoryTransaction)
           ..where((t) => t.shopId.equals(shopId))
@@ -146,7 +146,7 @@ class InventoryTransactionDao extends DatabaseAccessor<AppDatabase>
   }
 
   /// 根据店铺删除相关流水
-  Future<int> deleteTransactionsByShop(String shopId) {
+  Future<int> deleteTransactionsByShop(int shopId) {
     return (delete(
       inventoryTransaction,
     )..where((t) => t.shopId.equals(shopId))).go();
@@ -155,7 +155,7 @@ class InventoryTransactionDao extends DatabaseAccessor<AppDatabase>
   /// 获取最近的流水记录
   Future<List<InventoryTransactionData>> getRecentTransactions(
     int limit, {
-    String? shopId,
+    int? shopId,
     int? productId,
   }) {
     var query = select(inventoryTransaction);
@@ -176,7 +176,7 @@ class InventoryTransactionDao extends DatabaseAccessor<AppDatabase>
 
   /// 获取流水总数
   Future<int> getTransactionCount({
-    String? shopId,
+    int? shopId,
     int? productId,
     String? type,
   }) async {

@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../product/application/provider/product_providers.dart';
 import '../../../../core/widgets/cached_image_widget.dart';
 import '../../application/provider/sale_list_provider.dart';
-import '../../domain/model/sale_item.dart';
+import '../../domain/model/sale_cart_item.dart';
 
 /// 销售单商品项卡片
 /// 显示商品信息、价格、数量和金额输入等
@@ -85,14 +85,14 @@ class _SaleItemCardState extends ConsumerState<SaleItemCard> {
     super.dispose();
   }
 
-  void _updateItem(SaleItem item) {
+  void _updateItem(SaleCartItem item) {
     final sellingPriceInCents = (int.tryParse(_sellingPriceController.text) ?? 0) * 100;
     final quantity = int.tryParse(_quantityController.text) ?? 0;
     final amount = sellingPriceInCents / 100 * quantity;
 
     final updatedItem = item.copyWith(
       sellingPriceInCents: sellingPriceInCents,
-      quantity: quantity,
+      quantity: quantity.toDouble(),
       amount: amount,
     );
 

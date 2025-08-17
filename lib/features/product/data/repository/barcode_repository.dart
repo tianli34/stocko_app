@@ -58,13 +58,13 @@ class BarcodeRepository implements IBarcodeRepository {
   }
 
   @override
-  Future<List<BarcodeModel>> getBarcodesByProductUnitId(int? productUnitId) async {
-    if (productUnitId == null) {
+  Future<List<BarcodeModel>> getBarcodesByProductUnitId(int? id) async {
+    if (id == null) {
       return [];
     }
     try {
       final dataList = await _barcodeDao.getBarcodesByProductUnitId(
-        productUnitId,
+        id,
       );
       return dataList.map(_dataToBarcode).toList();
     } catch (e) {
@@ -85,10 +85,10 @@ class BarcodeRepository implements IBarcodeRepository {
   }
 
   @override
-  Stream<List<BarcodeModel>> watchBarcodesByProductUnitId(int productUnitId) {
+  Stream<List<BarcodeModel>> watchBarcodesByProductUnitId(int id) {
     try {
       return _barcodeDao
-          .watchBarcodesByProductUnitId(productUnitId)
+          .watchBarcodesByProductUnitId(id)
           .map((dataList) => dataList.map(_dataToBarcode).toList());
     } catch (e) {
       print('🗃️ 仓储层：监听产品单位条码失败: $e');
@@ -119,10 +119,10 @@ class BarcodeRepository implements IBarcodeRepository {
   }
 
   @override
-  Future<int> deleteBarcodesByProductUnitId(int productUnitId) async {
+  Future<int> deleteBarcodesByProductUnitId(int id) async {
     try {
-      print('🗃️ 仓储层：删除产品单位的所有条码，产品单位ID: $productUnitId');
-      return await _barcodeDao.deleteBarcodesByProductUnitId(productUnitId);
+      print('🗃️ 仓储层：删除产品单位的所有条码，产品单位ID: $id');
+      return await _barcodeDao.deleteBarcodesByProductUnitId(id);
     } catch (e) {
       print('🗃️ 仓储层：删除产品单位条码失败: $e');
       rethrow;
@@ -141,11 +141,11 @@ class BarcodeRepository implements IBarcodeRepository {
 
   @override
   Future<bool> productUnitHasBarcode(
-    int productUnitId,
+    int id,
     String barcode,
   ) async {
     try {
-      return await _barcodeDao.productUnitHasBarcode(productUnitId, barcode);
+      return await _barcodeDao.productUnitHasBarcode(id, barcode);
     } catch (e) {
       print('🗃️ 仓储层：检查产品单位是否有条码失败: $e');
       rethrow;
@@ -178,7 +178,8 @@ class BarcodeRepository implements IBarcodeRepository {
   /// 将Barcode模型转换为数据库Companion
   BarcodeCompanion _barcodeToCompanion(BarcodeModel barcode) {
     return BarcodeCompanion(
-      productUnitId: Value(barcode.productUnitId),
+      id: barcode.id == null ? const Value.absent() : Value(barcode.id!),
+      unitProductId: Value(barcode.unitProductId),
       barcodeValue: Value(barcode.barcodeValue),
     );
   }
@@ -187,7 +188,7 @@ class BarcodeRepository implements IBarcodeRepository {
   BarcodeModel _dataToBarcode(BarcodeData data) {
     return BarcodeModel(
       id: data.id,
-      productUnitId: data.productUnitId,
+      unitProductId: data.unitProductId,
       barcodeValue: data.barcodeValue,
     );
   }

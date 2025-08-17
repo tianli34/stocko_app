@@ -181,9 +181,9 @@ class ProductImportService {
 
           // 插入“包”的单位和条码记录
           batch.insert(
-            db.productUnit,
-            ProductUnitCompanion.insert(
-              productUnitId: Value(productPackUnitId), // 使用新ID
+            db.unitProduct,
+            UnitProductCompanion.insert(
+              id: Value(productPackUnitId), // 使用新ID
               productId: productId,
               unitId: packUnitId,
               conversionRate: 1,
@@ -199,7 +199,7 @@ class ProductImportService {
               db.barcode,
               BarcodeCompanion.insert(
                 id: Value(packBarcodeId), // 使用新ID
-                productUnitId: productPackUnitId,
+                unitProductId: productPackUnitId,
                 barcodeValue: packBarcode,
               ),
             );
@@ -207,9 +207,9 @@ class ProductImportService {
 
           // 插入“条”的单位和条码记录
           batch.insert(
-            db.productUnit,
-            ProductUnitCompanion.insert(
-              productUnitId: Value(productCartonUnitId), // 使用新ID
+            db.unitProduct,
+            UnitProductCompanion.insert(
+              id: Value(productCartonUnitId), // 使用新ID
               productId: productId,
               unitId: cartonUnitId,
               conversionRate: conversionRate,
@@ -225,7 +225,7 @@ class ProductImportService {
               db.barcode,
               BarcodeCompanion.insert(
                 id: Value(cartonBarcodeId), // 使用新ID
-                productUnitId: productCartonUnitId,
+                unitProductId: productCartonUnitId,
                 barcodeValue: cartonBarcode,
               ),
             );

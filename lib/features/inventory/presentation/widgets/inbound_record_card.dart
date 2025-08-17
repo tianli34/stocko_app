@@ -8,7 +8,7 @@ import 'inbound_record_item_tile.dart';
 // This might need to be created if it doesn't exist.
 // For now, let's create a simple one.
 final shopByIdProvider =
-    FutureProvider.family<ShopsTableData?, String>((ref, id) {
+    FutureProvider.family<ShopData?, int>((ref, id) {
   final database = ref.watch(appDatabaseProvider);
   return database.shopDao.getShopById(id);
 });
@@ -17,7 +17,7 @@ final shopByIdProvider =
 /// Inbound Record Card
 /// Displays a single inbound record with an expandable list of items.
 class InboundRecordCard extends ConsumerWidget {
-  final InboundReceiptsTableData record;
+  final InboundReceiptData record;
 
   const InboundRecordCard({super.key, required this.record});
 
@@ -35,7 +35,7 @@ class InboundRecordCard extends ConsumerWidget {
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: ExpansionTile(
         title: Text(
-          '单号: ${record.receiptNumber}',
+          '单号: ${record.id}',
           style: const TextStyle(fontWeight: FontWeight.bold),
         ),
         subtitle: Column(
@@ -47,8 +47,7 @@ class InboundRecordCard extends ConsumerWidget {
               loading: () => const Text('店铺: 加载中...'),
               error: (_, __) => const Text('店铺: 加载失败'),
             ),
-            if (record.source != null && record.source!.isNotEmpty)
-              Text('来源: ${record.source}'),
+            if (record.source.isNotEmpty) Text('来源: ${record.source}'),
           ],
         ),
         trailing: itemsAsync.when(

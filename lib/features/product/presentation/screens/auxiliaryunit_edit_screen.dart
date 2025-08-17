@@ -112,31 +112,31 @@ class _AuxiliaryUnitEditScreenState
     }
   }
 
-  Future<void> _loadAuxiliaryUnits(List<ProductUnit> auxiliaryUnits) async {
+  Future<void> _loadAuxiliaryUnits(List<UnitProduct> auxiliaryUnits) async {
     final List<_AuxiliaryUnit> tempAuxiliaryUnits = [];
 
-    for (final productUnit in auxiliaryUnits) {
+    for (final unitProduct in auxiliaryUnits) {
       try {
         print('=================【仓储层调试】=================');
-        print('ProductUnit ID: ${productUnit.productUnitId}');
-        print('SELLING PRICE: ${productUnit.sellingPriceInCents}');
-        print('WHOLESALE PRICE: ${productUnit.wholesalePriceInCents}');
+        print('UnitProduct ID: ${unitProduct.id}');
+        print('SELLING PRICE: ${unitProduct.sellingPriceInCents}');
+        print('WHOLESALE PRICE: ${unitProduct.wholesalePriceInCents}');
         print(
-          'productId: ${productUnit.productId}, unitId: ${productUnit.unitId}, conversionRate: ${productUnit.conversionRate}',
+          'productId: ${unitProduct.productId}, unitId: ${unitProduct.unitId}, conversionRate: ${unitProduct.conversionRate}',
         );
         print('==============================================');
         final allUnits = await ref.read(allUnitsProvider.future);
         final unit = allUnits.firstWhere(
-          (u) => u.id == productUnit.unitId,
+          (u) => u.id == unitProduct.unitId,
           orElse: () =>
-              throw Exception('Unit not found: ${productUnit.unitId}'),
+              throw Exception('Unit not found: ${unitProduct.unitId}'),
         );
         final auxiliaryUnit = _AuxiliaryUnit(
           id: _auxiliaryCounter,
           unit: unit,
-          conversionRate: productUnit.conversionRate,
-          initialSellingPrice: (productUnit.sellingPriceInCents ?? 0)/100,
-          initialWholesalePrice: (productUnit.wholesalePriceInCents ?? 0)/100,
+          conversionRate: unitProduct.conversionRate,
+          initialSellingPrice: (unitProduct.sellingPriceInCents ?? 0)/100,
+          initialWholesalePrice: (unitProduct.wholesalePriceInCents ?? 0)/100,
         );
         print('🔍 控制器初始化后售价: ${auxiliaryUnit.retailPriceController.text}');
         print('🔍 控制器初始化后批发价: ${auxiliaryUnit.wholesalePriceController.text}');
@@ -145,7 +145,7 @@ class _AuxiliaryUnitEditScreenState
 
         final barcodeController = ref.read(barcodeControllerProvider.notifier);
         final barcodes = await barcodeController.getBarcodesByProductUnitId(
-          productUnit.productUnitId,
+          unitProduct.id,
         );
         if (barcodes.isNotEmpty) {
           auxiliaryUnit.barcodeController.text = barcodes.first.barcodeValue;
@@ -629,24 +629,24 @@ class _AuxiliaryUnitEditScreenState
     }
   }
 
-  List<ProductUnit> _buildProductUnits() {
+  List<UnitProduct> _buildProductUnits() {
     print('🔍 [DEBUG] ==================== 开始构建产品单位 ====================');
     print('🔍 [DEBUG] 产品ID: ${widget.productId}');
     print('🔍 [DEBUG] 基本单位ID: ${widget.baseUnitId}');
     print('🔍 [DEBUG] 基本单位名称: ${widget.baseUnitName}');
     print('🔍 [DEBUG] 辅单位数量: ${_auxiliaryUnits.length}');
 
-    final List<ProductUnit> productUnits = [];
+    final List<UnitProduct> productUnits = [];
 
     // 添加基本单位
-    final baseUnit = ProductUnit(
-      // productUnitId: '${widget.productId ?? 'new'}_${widget.baseUnitId!}',
+    final baseUnit = UnitProduct(
+      // id: '${widget.productId ?? 'new'}_${widget.baseUnitId!}',
       productId: widget.productId ?? 0,
       unitId: int.parse(widget.baseUnitId),
       conversionRate: 1,
     );
     productUnits.add(baseUnit);
-    print('🔍 [DEBUG] ✅ 添加基本单位: ${baseUnit.productUnitId}');
+    print('🔍 [DEBUG] ✅ 添加基本单位: ${baseUnit.id}');
   
     // 处理辅单位
     for (int i = 0; i < _auxiliaryUnits.length; i++) {
@@ -680,7 +680,7 @@ class _AuxiliaryUnitEditScreenState
         print('解析后的wholesalePrice: $wholesalePriceInCents');
         print('========================');
 
-        final auxUnit = ProductUnit(
+        final auxUnit = UnitProduct(
           productId: widget.productId ?? 0,
           unitId: aux.unit!.id!,
           conversionRate: aux.conversionRate,
@@ -690,7 +690,7 @@ class _AuxiliaryUnitEditScreenState
         );
         productUnits.add(auxUnit);
         print(
-          '🔍 [DEBUG]   ✅ 添加辅单位: ${auxUnit.productUnitId} 批发价: ${auxUnit.wholesalePriceInCents}',
+          '🔍 [DEBUG]   ✅ 添加辅单位: ${auxUnit.id} 批发价: ${auxUnit.wholesalePriceInCents}',
         );
       } else {
         print('🔍 [DEBUG]   ❌ 跳过无效辅单位:');
@@ -708,7 +708,7 @@ class _AuxiliaryUnitEditScreenState
     for (int i = 0; i < productUnits.length; i++) {
       final pu = productUnits[i];
       print(
-        '🔍 [DEBUG] 产品单位 ${i + 1}: ${pu.productUnitId} (换算率: ${pu.conversionRate})',
+        '🔍 [DEBUG] 产品单位 ${i + 1}: ${pu.id} (换算率: ${pu.conversionRate})',
       );
     }
     print('🔍 [DEBUG] ==================== 构建完成 ====================');
@@ -723,7 +723,7 @@ class _AuxiliaryUnitEditScreenState
     for (final aux in _auxiliaryUnits) {
       if (aux.unit != null && aux.barcodeController.text.trim().isNotEmpty) {
         barcodes.add({
-          'productUnitId': '${widget.productId ?? 'new'}_${aux.unit!.id}',
+          'id': '${widget.productId ?? 'new'}_${aux.unit!.id}',
           'barcode': aux.barcodeController.text.trim(),
         });
       }

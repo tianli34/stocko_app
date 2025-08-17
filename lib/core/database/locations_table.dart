@@ -19,7 +19,7 @@ class LocationsTable extends Table {
   TextColumn get description => text().named('description').nullable()();
 
   /// 外键 - 店铺ID
-  TextColumn get shopId => text().named('shop_id')();
+  IntColumn get shopId => integer().named('shop_id')();
 
   /// 货位状态：active(活跃), inactive(停用)
   TextColumn get status =>

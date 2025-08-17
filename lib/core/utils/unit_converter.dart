@@ -18,16 +18,16 @@ class UnitConverter {
   static int convertToBaseUnit(
     int quantity,
     Unit unit,
-    List<ProductUnit> allUnits,
+    List<UnitProduct> allUnits,
   ) {
     // 查找对应的产品单位配置
-    final productUnit = allUnits.firstWhere(
+    final unitProduct = allUnits.firstWhere(
       (pu) => pu.unitId == unit.id,
       orElse: () => throw ArgumentError('找不到单位配置: ${unit.name}'),
     );
 
     // 使用换算率计算基础单位数量
-    return productUnit.calculateBaseQuantity(quantity);
+    return unitProduct.calculateBaseQuantity(quantity);
   }
 
   /// 将基础单位的库存量格式化成用户友好的字符串
@@ -39,7 +39,7 @@ class UnitConverter {
   /// 返回格式化的字符串，如 "1 箱 5 瓶" 或 "15 瓶"
   static String formatStockForDisplay(
     int stockInBaseUnit,
-    List<ProductUnit> allUnits,
+    List<UnitProduct> allUnits,
     Map<String, Unit> unitMap,
   ) {
     if (stockInBaseUnit <= 0) {
@@ -47,20 +47,20 @@ class UnitConverter {
     }
 
     // 按换算率从大到小排序（确保从大单位开始计算）
-    final sortedUnits = List<ProductUnit>.from(allUnits)
+    final sortedUnits = List<UnitProduct>.from(allUnits)
       ..sort((a, b) => b.conversionRate.compareTo(a.conversionRate));
 
     final List<String> parts = [];
     int remainingStock = stockInBaseUnit;
 
     for (int i = 0; i < sortedUnits.length; i++) {
-      final productUnit = sortedUnits[i];
-      final unit = unitMap[productUnit.unitId];
+      final unitProduct = sortedUnits[i];
+      final unit = unitMap[unitProduct.unitId];
 
       if (unit == null) continue;
 
       // 计算当前单位可以表示的数量
-      final unitQuantity = productUnit.calculateUnitQuantity(remainingStock);
+      final unitQuantity = unitProduct.calculateUnitQuantity(remainingStock);
 
       // 如果是最后一个单位，直接使用剩余数量
       if (i == sortedUnits.length - 1) {
@@ -75,7 +75,7 @@ class UnitConverter {
       if (wholeUnits > 0) {
         parts.add('$wholeUnits ${unit.name}');
         // 计算剩余的基础单位数量
-        remainingStock -= productUnit.calculateBaseQuantity(
+        remainingStock -= unitProduct.calculateBaseQuantity(
           wholeUnits,
         );
       }
@@ -94,14 +94,14 @@ class UnitConverter {
   static int getStockInUnit(
     int stockInBaseUnit,
     Unit targetUnit,
-    List<ProductUnit> allUnits,
+    List<UnitProduct> allUnits,
   ) {
-    final productUnit = allUnits.firstWhere(
+    final unitProduct = allUnits.firstWhere(
       (pu) => pu.unitId == targetUnit.id,
       orElse: () => throw ArgumentError('找不到单位配置: ${targetUnit.name}'),
     );
 
-    return productUnit.calculateUnitQuantity(stockInBaseUnit);
+    return unitProduct.calculateUnitQuantity(stockInBaseUnit);
   }
 
   /// 验证单位换算配置是否合理
@@ -110,7 +110,7 @@ class UnitConverter {
   ///
   /// 返回验证结果和错误信息
   static (bool isValid, String? errorMessage) validateUnitConfiguration(
-    List<ProductUnit> allUnits,
+    List<UnitProduct> allUnits,
   ) {
     if (allUnits.isEmpty) {
       return (false, '至少需要配置一个单位');
@@ -149,7 +149,7 @@ class UnitConverter {
   /// [allUnits] 产品的所有单位配置列表
   ///
   /// 返回基础单位，如果找不到则抛出异常
-  static ProductUnit findBaseUnit(List<ProductUnit> allUnits) {
+  static UnitProduct findBaseUnit(List<UnitProduct> allUnits) {
     return allUnits.firstWhere(
       (unit) => unit.conversionRate == 1.0,
       orElse: () => throw ArgumentError('找不到基础单位'),
@@ -166,7 +166,7 @@ class UnitConverter {
   /// - 正数：unit1 比 unit2 大
   /// - 负数：unit1 比 unit2 小
   /// - 0：unit1 和 unit2 相等
-  static int compareUnits(Unit unit1, Unit unit2, List<ProductUnit> allUnits) {
+  static int compareUnits(Unit unit1, Unit unit2, List<UnitProduct> allUnits) {
     final productUnit1 = allUnits.firstWhere(
       (pu) => pu.unitId == unit1.id,
       orElse: () => throw ArgumentError('找不到单位配置: ${unit1.name}'),

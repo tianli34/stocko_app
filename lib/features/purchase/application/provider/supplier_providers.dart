@@ -111,7 +111,7 @@ class SupplierController extends StateNotifier<SupplierControllerState> {
   }
 
   /// 删除供应商
-  Future<void> deleteSupplier(String id) async {
+  Future<void> deleteSupplier(int id) async {
     state = state.copyWith(status: SupplierOperationStatus.loading);
 
     try {
@@ -165,7 +165,7 @@ final allSuppliersProvider = StreamProvider<List<Supplier>>((ref) {
 });
 
 /// 根据ID获取供应商提供者
-final supplierByIdProvider = FutureProvider.family<Supplier?, String>((
+final supplierByIdProvider = FutureProvider.family<Supplier?, int>((
   ref,
   id,
 ) {
@@ -196,6 +196,9 @@ final supplierNameExistsProvider =
     FutureProvider.family<bool, Map<String, String?>>((ref, params) {
       final repository = ref.watch(supplierRepositoryProvider);
       final name = params['name']!;
-      final excludeId = params['excludeId'];
+      final excludeIdString = params['excludeId'];
+      final excludeId = excludeIdString == null || excludeIdString.isEmpty
+          ? null
+          : int.tryParse(excludeIdString);
       return repository.isSupplierNameExists(name, excludeId);
     });

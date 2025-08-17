@@ -23,7 +23,7 @@ final outboundRecordsProvider =
       type: InventoryTransactionType.values.firstWhere((e) => e.name == data.transactionType),
       quantity: data.quantity,
       shopId: data.shopId,
-      batchNumber: data.batchNumber,
+      batchId: data.batchId,
       createdAt: data.createdAt,
     );
   }).toList();

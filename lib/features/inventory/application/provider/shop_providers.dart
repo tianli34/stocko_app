@@ -107,7 +107,7 @@ class ShopController extends StateNotifier<ShopControllerState> {
   }
 
   /// 删除店铺
-  Future<void> deleteShop(String id) async {
+  Future<void> deleteShop(int id) async {
     state = state.copyWith(status: ShopOperationStatus.loading);
 
     try {
@@ -155,7 +155,7 @@ final allShopsProvider = StreamProvider<List<Shop>>((ref) {
 });
 
 /// 根据ID获取店铺提供者
-final shopByIdProvider = FutureProvider.family<Shop?, String>((ref, id) {
+final shopByIdProvider = FutureProvider.family<Shop?, int>((ref, id) {
   final repository = ref.watch(shopRepositoryProvider);
   return repository.getShopById(id);
 });
@@ -183,12 +183,15 @@ final shopNameExistsProvider =
     FutureProvider.family<bool, Map<String, String?>>((ref, params) {
       final repository = ref.watch(shopRepositoryProvider);
       final name = params['name']!;
-      final excludeId = params['excludeId'];
+      final excludeIdString = params['excludeId'];
+      final excludeId = excludeIdString == null || excludeIdString.isEmpty
+          ? null
+          : int.tryParse(excludeIdString);
       return repository.isShopNameExists(name, excludeId);
     });
 
 /// 当前选中的店铺ID提供者
-final selectedShopIdProvider = StateProvider<String?>((ref) => null);
+final selectedShopIdProvider = StateProvider<int?>((ref) => null);
 
 /// 当前活跃店铺提供者
 final activeShopProvider = Provider<Shop?>((ref) {

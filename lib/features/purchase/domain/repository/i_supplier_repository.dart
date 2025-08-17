@@ -7,7 +7,7 @@ abstract class ISupplierRepository {
   Future<int> addSupplier(Supplier supplier);
 
   /// 根据ID获取供应商
-  Future<Supplier?> getSupplierById(String id);
+  Future<Supplier?> getSupplierById(int id);
 
   /// 根据名称获取供应商
   Future<Supplier?> getSupplierByName(String name);
@@ -22,10 +22,10 @@ abstract class ISupplierRepository {
   Future<bool> updateSupplier(Supplier supplier);
 
   /// 删除供应商
-  Future<int> deleteSupplier(String id);
+  Future<int> deleteSupplier(int id);
 
   /// 检查供应商名称是否已存在
-  Future<bool> isSupplierNameExists(String name, [String? excludeId]);
+  Future<bool> isSupplierNameExists(String name, [int? excludeId]);
 
   /// 根据名称搜索供应商
   Future<List<Supplier>> searchSuppliersByName(String searchTerm);

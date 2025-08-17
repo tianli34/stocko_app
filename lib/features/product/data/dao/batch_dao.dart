@@ -15,7 +15,7 @@ class BatchDao extends DatabaseAccessor<AppDatabase> with _$BatchDaoMixin {
     required int productId,
     required DateTime productionDate,
     required int totalInboundQuantity,
-    required String shopId,
+    required int shopId,
   }) async {
     await into(db.productBatch).insert(
       ProductBatchCompanion.insert(
@@ -32,7 +32,7 @@ class BatchDao extends DatabaseAccessor<AppDatabase> with _$BatchDaoMixin {
   Future<void> upsertBatchIncrement({
     required int productId,
     required DateTime productionDate,
-    required String shopId,
+    required int shopId,
     required int increment,
   }) async {
     // 可选：将时间标准化为日期粒度（与唯一键语义一致）。
@@ -59,7 +59,7 @@ class BatchDao extends DatabaseAccessor<AppDatabase> with _$BatchDaoMixin {
   Future<ProductBatchData?> getBatchByBusinessKey({
     required int productId,
     required DateTime productionDate,
-    required String shopId,
+    required int shopId,
   }) {
     final d = productionDate.toUtc();
     final dateOnly = DateTime.utc(d.year, d.month, d.day);
@@ -76,35 +76,35 @@ class BatchDao extends DatabaseAccessor<AppDatabase> with _$BatchDaoMixin {
   }
 
   /// 根据店铺ID获取批次
-  Future<List<ProductBatchData>> getBatchesByShop(String shopId) {
+  Future<List<ProductBatchData>> getBatchesByShop(int shopId) {
     return (select(db.productBatch)..where((t) => t.shopId.equals(shopId))).get();
   }
 
   /// 根据批次号获取批次
-  Future<ProductBatchData?> getBatchByNumber(int batchNumber) {
+  Future<ProductBatchData?> getBatchByNumber(int id) {
     return (select(
       db.productBatch,
-    )..where((t) => t.batchNumber.equals(batchNumber))).getSingleOrNull();
+    )..where((t) => t.id.equals(id))).getSingleOrNull();
   }
 
   /// 更新批次初始数量
   /// 用于同一批次多次入库时的数量累加
   Future<void> updateBatchQuantity(
-    int batchNumber,
+    int id,
     int newInitialQuantity,
   ) {
     return (update(
       db.productBatch,
-    )..where((t) => t.batchNumber.equals(batchNumber))).write(
+    )..where((t) => t.id.equals(id))).write(
       ProductBatchCompanion(totalInboundQuantity: Value(newInitialQuantity)),
     );
   }
 
   /// 删除批次
-  Future<void> deleteBatch(int batchNumber) {
+  Future<void> deleteBatch(int id) {
     return (delete(
       db.productBatch,
-    )..where((t) => t.batchNumber.equals(batchNumber))).go();
+    )..where((t) => t.id.equals(id))).go();
   }
 
   /// 根据货品ID获取批次

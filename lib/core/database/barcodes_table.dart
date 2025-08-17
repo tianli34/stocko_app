@@ -8,9 +8,7 @@ class Barcode extends Table {
   IntColumn get id => integer().autoIncrement()();
 
   /// 外键 - 产品单位ID，关联到product_units表
-  IntColumn get productUnitId => integer()
-      .named('product_unit_id')
-      .references(ProductUnit, #productUnitId)();
+  IntColumn get unitProductId => integer().references(UnitProduct, #id)();
 
   /// 条码值
   TextColumn get barcodeValue => text().unique()();

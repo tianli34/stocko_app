@@ -18,8 +18,8 @@ class InventoryService {
   /// 增加库存数量并记录入库流水
   Future<bool> inbound({
     required int productId,
-    required String shopId,
-    int? batchNumber,
+    required int shopId,
+    int? batchId,
     required int quantity,
     DateTime? time,
   }) async {
@@ -36,7 +36,7 @@ class InventoryService {
           productId: productId,
           quantity: quantity,
           shopId: shopId,
-          batchNumber: batchNumber,
+          batchId: batchId,
         );
         await _inventoryRepository.addInventory(inventory);
       } else {
@@ -67,7 +67,7 @@ class InventoryService {
   /// 减少库存数量并记录出库流水
   Future<bool> outbound({
     required int productId,
-    required String shopId,
+    required int shopId,
     required int quantity,
     DateTime? time,
   }) async {
@@ -109,7 +109,7 @@ class InventoryService {
   /// 调整库存数量并记录调整流水
   Future<bool> adjust({
     required int productId,
-    required String shopId,
+    required int shopId,
     required int adjustQuantity,
     DateTime? time,
   }) async {
@@ -155,7 +155,7 @@ class InventoryService {
   }
 
   /// 获取库存信息
-  Future<StockModel?> getInventory(int productId, String shopId) async {
+  Future<StockModel?> getInventory(int productId, int shopId) async {
     return await _inventoryRepository.getInventoryByProductAndShop(
       productId,
       shopId,
@@ -163,7 +163,7 @@ class InventoryService {
   }
 
   /// 获取店铺所有库存
-  Future<List<StockModel>> getShopInventory(String shopId) async {
+  Future<List<StockModel>> getShopInventory(int shopId) async {
     return await _inventoryRepository.getInventoryByShop(shopId);
   }
 
@@ -174,7 +174,7 @@ class InventoryService {
 
   /// 获取低库存预警列表
   Future<List<StockModel>> getLowStockInventory(
-    String shopId,
+    int shopId,
     int warningLevel,
   ) async {
     return await _inventoryRepository.getLowStockInventory(
@@ -184,14 +184,14 @@ class InventoryService {
   }
 
   /// 获取缺货产品列表
-  Future<List<StockModel>> getOutOfStockInventory(String shopId) async {
+  Future<List<StockModel>> getOutOfStockInventory(int shopId) async {
     return await _inventoryRepository.getOutOfStockInventory(shopId);
   }
 
   /// 获取库存流水
   Future<List<InventoryTransactionModel>> getTransactions({
     int? productId,
-    String? shopId,
+    int? shopId,
     String? type,
     DateTime? startDate,
     DateTime? endDate,
@@ -226,50 +226,50 @@ class InventoryService {
 
     return await _transactionRepository.getAllTransactions();
   }
-/// 库存调整的业务逻辑
+  /// 库存调整的业务逻辑
   ///
   /// [productId] 产品ID
   /// [quantity] 调整后的数量
-  Future<void> adjustInventory(String productId, int quantity) async {
-    // 注意: 当前的 repository 需要一个 shopId，但方法签名中没有提供。
-    // 暂时使用一个默认值 'default_shop'。在实际应用中，这需要被解决。
-    const shopId = 'default_shop';
-
-    // 将 productId 从 String 转换为 int
-    final intProductId = int.tryParse(productId);
-    if (intProductId == null) {
-      // 或者以更合适的方式处理错误
-      print('无效的 productId 格式: $productId');
-      throw const FormatException('Invalid productId format');
-    }
-
+  /// [shopId] 店铺ID
+  Future<void> adjustInventory({
+    required int productId,
+    required int quantity,
+    required int shopId,
+  }) async {
     // 检查库存记录是否存在
     final inventory = await _inventoryRepository.getInventoryByProductAndShop(
-      intProductId,
+      productId,
       shopId,
     );
 
+    final currentQuantity = inventory?.quantity ?? 0;
+    final adjustQuantity = quantity - currentQuantity;
+
     if (inventory != null) {
       // 如果记录存在，则更新数量
-      // 注意: `updateInventoryQuantity` 应该将数量设置为新值，而不是增加/减少
       await _inventoryRepository.updateInventoryQuantity(
-        intProductId,
+        productId,
         shopId,
         quantity,
       );
     } else {
       // 如果记录不存在，则创建新的库存记录
       final newInventory = StockModel.create(
-        productId: intProductId,
+        productId: productId,
         quantity: quantity,
         shopId: shopId,
-        batchNumber:null,
+        batchId: null,
       );
       await _inventoryRepository.addInventory(newInventory);
     }
 
-    // 任务要求未提及为库存调整创建交易记录。
-    // 如果需要，应在此处创建并添加新的交易记录。
+    // 记录调整流水
+    final transaction = InventoryTransactionModel.createAdjustment(
+      productId: productId,
+      quantity: adjustQuantity,
+      shopId: shopId,
+    );
+    await _transactionRepository.addTransaction(transaction);
   }
 }
 

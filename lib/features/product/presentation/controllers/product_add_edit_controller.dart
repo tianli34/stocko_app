@@ -18,11 +18,11 @@ import '../../application/provider/unit_edit_form_providers.dart';
 
 /// 辅单位条码数据
 class AuxiliaryUnitBarcodeData {
-  final int productUnitId;
+  final int id;
   final String barcode;
 
   const AuxiliaryUnitBarcodeData({
-    required this.productUnitId,
+    required this.id,
     required this.barcode,
   });
 }
@@ -46,7 +46,7 @@ class ProductFormData {
   final String shelfLifeUnit;
   final bool enableBatchManagement;
   final String? remarks;
-  final List<ProductUnit>? productUnits;
+  final List<UnitProduct>? productUnits;
   final List<AuxiliaryUnitBarcodeData>? auxiliaryUnitBarcodes;
 
   const ProductFormData({
@@ -203,6 +203,8 @@ class ProductAddEditController {
       // 修复：在所有数据库操作（包括单位和条码）完成后，再次强制刷新产品列表，
       // 确保UI获取到包含最新单位信息的货品数据。
       ref.invalidate(allProductsProvider);
+      // 关键修复：同时使主条码的Provider失效，以便下次进入页面时能重新获取
+      ref.invalidate(mainBarcodeProvider(product.id!));
 
       return ProductOperationResult.success(
         message: data.productId == null
@@ -218,7 +220,7 @@ class ProductAddEditController {
   /// 保存或替换产品单位配置
   Future<void> _saveProductUnits(
     ProductModel product,
-    List<ProductUnit>? units,
+    List<UnitProduct>? units,
   ) async {
     print('🔍 [DEBUG] ==================== 开始保存产品单位 ====================');
     print('🔍 [DEBUG] 产品ID: ${product.id}');
@@ -229,7 +231,7 @@ class ProductAddEditController {
       for (int i = 0; i < units.length; i++) {
         final unit = units[i];
         print(
-          '🔍 [DEBUG] 单位 ${i + 1}: ${unit.productUnitId} (换算率: ${unit.conversionRate})',
+          '🔍 [DEBUG] 单位 ${i + 1}: ${unit.id} (换算率: ${unit.conversionRate})',
         );
       }
     }
@@ -240,11 +242,11 @@ class ProductAddEditController {
     print('🔍 [DEBUG] 表单中辅单位数量: ${auxiliaryUnits.length}');
 
     final ctrl = ref.read(productUnitControllerProvider.notifier);
-    final list = <ProductUnit>[];
+    final list = <UnitProduct>[];
 
     // 添加基础单位
     list.add(
-      ProductUnit(
+      UnitProduct(
         productId: product.id!,
         unitId: product.baseUnitId,
         conversionRate: 1,
@@ -278,7 +280,7 @@ class ProductAddEditController {
       // 因此，这是一个关键错误，需要抛出异常而不是静默失败。
       if (unit != null && unit.id != null) {
         list.add(
-          ProductUnit(
+          UnitProduct(
             productId: product.id!,
             unitId: unit.id!,
             conversionRate: auxUnit.conversionRate,
@@ -305,7 +307,7 @@ class ProductAddEditController {
     for (int i = 0; i < list.length; i++) {
       final unit = list[i];
       print(
-        '🔍 [DEBUG] 保存单位 ${i + 1}: ${unit.productUnitId} (换算率: ${unit.conversionRate})',
+        '🔍 [DEBUG] 保存单位 ${i + 1}: ${unit.id} (换算率: ${unit.conversionRate})',
       );
     }
 
@@ -323,27 +325,53 @@ class ProductAddEditController {
   /// 保存主条码
   Future<void> _saveMainBarcode(ProductModel product, String barcode) async {
     final code = barcode.trim();
-    if (code.isEmpty) return;
 
-    // 找到基础产品单位ID
-    final productUnitController = ref.read(
-      productUnitControllerProvider.notifier,
-    );
-    final productUnits = await productUnitController.getProductUnitsByProductId(
-      product.id!,
-    );
+    // 1. 找到基础产品单位ID
+    final productUnitController =
+        ref.read(productUnitControllerProvider.notifier);
+    final productUnits =
+        await productUnitController.getProductUnitsByProductId(product.id!);
     final baseProductUnit = productUnits.firstWhere(
       (pu) => pu.conversionRate == 1.0,
-      orElse: () => throw Exception('未找到基础产品单位'),
+      orElse: () => throw Exception('保存主条码失败：未找到基础产品单位。'),
     );
+    final baseUnitProductId = baseProductUnit.id!;
 
-    final ctrl = ref.read(barcodeControllerProvider.notifier);
-    await ctrl.addBarcode(
-      BarcodeModel(
-        productUnitId: baseProductUnit.productUnitId!, // 使用正确的productUnitId
-        barcodeValue: code,
-      ),
-    );
+    final barcodeCtrl = ref.read(barcodeControllerProvider.notifier);
+    final barcodesForBaseUnit =
+        await barcodeCtrl.getBarcodesByProductUnitId(baseUnitProductId);
+    final oldBarcode =
+        barcodesForBaseUnit.isNotEmpty ? barcodesForBaseUnit.first : null;
+
+    if (code.isEmpty) {
+      // 如果输入条码为空，且旧条码存在，则删除
+      if (oldBarcode != null) {
+        await barcodeCtrl.deleteBarcode(oldBarcode.id!);
+      }
+      return;
+    }
+
+    // 检查此条码是否已被其他货品单位使用
+    final existingBarcode = await barcodeCtrl.getBarcodeByValue(code);
+    if (existingBarcode != null &&
+        existingBarcode.unitProductId != baseUnitProductId) {
+      throw Exception('条码 "$code" 已被其他货品使用，无法重复添加。');
+    }
+
+    if (oldBarcode != null) {
+      // 如果基础单位已有条码，且值不同，则更新它
+      if (oldBarcode.barcodeValue != code) {
+        await barcodeCtrl.updateBarcode(oldBarcode.copyWith(barcodeValue: code));
+      }
+    } else {
+      // 如果基础单位没有条码，则添加新条码
+      await barcodeCtrl.addBarcode(
+        BarcodeModel(
+          unitProductId: baseUnitProductId,
+          barcodeValue: code,
+        ),
+      );
+    }
   }
 
   /// 保存辅单位条码
@@ -397,7 +425,7 @@ class ProductAddEditController {
 
       if (targetUnit != null) {
         final finalTargetUnit = targetUnit;
-        ProductUnit? matchingProductUnit;
+        UnitProduct? matchingProductUnit;
         try {
           matchingProductUnit = productUnits.firstWhere(
             (pu) =>
@@ -413,17 +441,17 @@ class ProductAddEditController {
               '数据不一致：在产品单位列表中找不到单位 ${finalTargetUnit.name} (换算率: ${auxUnit.conversionRate})');
         }
 
-        if ((matchingProductUnit.productUnitId ?? 0) > 0) {
+        if ((matchingProductUnit.id ?? 0) > 0) {
           
           barcodes.add(
             BarcodeModel(
               
-              productUnitId: matchingProductUnit.productUnitId!,
+              unitProductId: matchingProductUnit.id!,
               barcodeValue: code,
             ),
           );
           print(
-            '🔍 [DEBUG] ✅ 添加辅单位条码: ${auxUnit.unitName} -> $code (ProductUnitId: ${matchingProductUnit.productUnitId})',
+            '🔍 [DEBUG] ✅ 添加辅单位条码: ${auxUnit.unitName} -> $code (ProductUnitId: ${matchingProductUnit.id})',
           );
         } else {
           print(
@@ -446,7 +474,7 @@ class ProductAddEditController {
   }
 
   /// 处理辅单位 - 检查并插入新的辅单位到单位表
-  Future<void> _processAuxiliaryUnits(List<ProductUnit>? productUnits) async {
+  Future<void> _processAuxiliaryUnits(List<UnitProduct>? productUnits) async {
     print('🔍 [DEBUG] ==================== 开始处理辅单位 ====================');
 
     // 获取辅单位表单数据

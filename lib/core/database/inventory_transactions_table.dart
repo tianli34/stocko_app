@@ -25,11 +25,11 @@ class InventoryTransaction extends Table {
   IntColumn get quantity => integer()();
 
   /// 外键 - 店铺ID
-  TextColumn get shopId => text().references(ShopsTable, #id)();
+  IntColumn get shopId => integer().references(Shop, #id)();
 
   /// 外键 - 批次ID（可选）
-  IntColumn get batchNumber =>
-      integer().references(ProductBatch, #batchNumber).nullable()();
+  IntColumn get batchId =>
+      integer().references(ProductBatch, #id).nullable()();
 
   /// 流水时间
   DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();

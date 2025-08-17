@@ -11,11 +11,9 @@ abstract class SalesTransactionItem with _$SalesTransactionItem {
     int? id,
     required int salesTransactionId,
     required int productId,
-    required int unitId,
-    int? batchNumber,
+    int? batchId,
     required int quantity,
-    required double unitPrice,
-    required double totalPrice,
+    required int priceInCents,
   }) = _SalesTransactionItem;
 
   const SalesTransactionItem._();
@@ -23,43 +21,28 @@ abstract class SalesTransactionItem with _$SalesTransactionItem {
   /// 验证产品ID的有效性
   bool get isValidProductId => productId > 0;
 
-  /// 验证单位ID的有效性
-  bool get isValidUnitId => unitId > 0;
-
   /// 验证批次ID的有效性（如果提供了批次ID）
-  bool get isValidBatchId => batchNumber == null;
+  bool get isValidBatchId => batchId == null;
 
   /// 验证数量的有效性
   bool get isValidQuantity => quantity > 0;
 
   /// 验证单位价格的有效性
-  bool get isValidUnitPrice => unitPrice > 0;
-
-  /// 验证总价的有效性
-  bool get isValidTotalPrice => totalPrice > 0;
-
-  /// 验证总价是否等于数量乘以单位价格
-  bool get isValidPriceCalculation {
-    const epsilon = 0.001; // 定义一个小的容差值
-    return (totalPrice - (quantity * unitPrice)).abs() < epsilon;
-  }
+  bool get isValidPrice => priceInCents > 0;
 
   /// 验证所有必填字段的有效性
   bool get isValid =>
       isValidSalesTransactionId &&
       isValidProductId &&
-      isValidUnitId &&
       isValidBatchId &&
       isValidQuantity &&
-      isValidUnitPrice &&
-      isValidTotalPrice &&
-      isValidPriceCalculation;
+      isValidPrice;
 
   /// 验证销售交易ID的有效性
   bool get isValidSalesTransactionId => salesTransactionId > 0;
 
   /// 批次引用关系验证 - 检查是否为批次相关商品
-  bool get isBatchRelated => batchNumber != null;
+  bool get isBatchRelated => id != null;
 
   /// 获取验证错误信息列表
   List<String> get validationErrors {
@@ -73,11 +56,7 @@ abstract class SalesTransactionItem with _$SalesTransactionItem {
       errors.add('产品ID必须大于0');
     }
 
-    if (!isValidUnitId) {
-      errors.add('单位ID不能为空');
-    }
-
-    if (!isValidBatchId && batchNumber != null) {
+    if (!isValidBatchId && batchId != null) {
       errors.add('批次ID不能为空字符串');
     }
 
@@ -85,58 +64,46 @@ abstract class SalesTransactionItem with _$SalesTransactionItem {
       errors.add('数量必须大于0');
     }
 
-    if (!isValidUnitPrice) {
+    if (!isValidPrice) {
       errors.add('单位价格必须大于0');
-    }
-
-    if (!isValidTotalPrice) {
-      errors.add('总价必须大于0');
-    }
-
-    if (!isValidPriceCalculation) {
-      errors.add('总价必须等于数量 × 单位价格');
     }
 
     return errors;
   }
 
-  SalesTransactionItemsTableCompanion toTableCompanion(int transactionId) {
-    print('🔍 [DEBUG] Creating SalesTransactionItemsTableCompanion with:');
+  SalesTransactionItemCompanion toTableCompanion(int transactionId) {
+    print('🔍 [DEBUG] Creating SalesTransactionItemCompanion with:');
     print('  - id: ${id ?? "null"} (type: ${id?.runtimeType})');
-    print('  - salesTransactionId: $transactionId (type: ${transactionId.runtimeType})');
+    print(
+      '  - salesTransactionId: $transactionId (type: ${transactionId.runtimeType})',
+    );
     print('  - productId: $productId (type: ${productId.runtimeType})');
-    print('  - unitId: $unitId (type: ${unitId.runtimeType})');
-    print('  - batchNumber: ${batchNumber ?? "null"} (type: ${batchNumber?.runtimeType})');
+    print('  - batchId: ${batchId ?? "null"} (type: ${batchId?.runtimeType})');
     print('  - quantity: $quantity (type: ${quantity.runtimeType})');
-    print('  - unitPrice: $unitPrice (type: ${unitPrice.runtimeType})');
-    print('  - totalPrice: $totalPrice (type: ${totalPrice.runtimeType})');
+    print(
+      '  - priceInCents: $priceInCents (type: ${priceInCents.runtimeType})',
+    );
 
     // 修复：对于新记录，应该让数据库自动生成ID，而不是手动设置为null
     print('🔍 [DEBUG] ID is null: ${id == null}');
-    print('🔍 [DEBUG] batchNumber is null: ${batchNumber == null}');
-    
+    print('🔍 [DEBUG] id is null: ${id == null}');
+
     // 检查类型转换
     if (id != null && id is! int) {
       print('🔍 [ERROR] ID type mismatch: expected int, got ${id.runtimeType}');
     }
-    
-    if (batchNumber != null && batchNumber is! int) {
-      print('🔍 [ERROR] batchNumber type mismatch: expected int, got ${batchNumber.runtimeType}');
-    }
 
     try {
-      return SalesTransactionItemsTableCompanion(
+      return SalesTransactionItemCompanion(
         id: id == null ? const Value.absent() : Value(id as int),
         salesTransactionId: Value(transactionId),
         productId: Value(productId),
-        unitId: Value(unitId),
-        batchNumber: batchNumber != null ? Value(batchNumber!) : const Value.absent(),
+        batchId: batchId != null ? Value(batchId!) : const Value.absent(),
         quantity: Value(quantity),
-        unitPrice: Value(unitPrice),
-        totalPrice: Value(totalPrice),
+        priceInCents: Value(priceInCents),
       );
     } catch (e) {
-      print('🔍 [ERROR] Failed to create SalesTransactionItemsTableCompanion: $e');
+      print('🔍 [ERROR] Failed to create SalesTransactionItemCompanion: $e');
       rethrow;
     }
   }
@@ -144,18 +111,14 @@ abstract class SalesTransactionItem with _$SalesTransactionItem {
   factory SalesTransactionItem.fromJson(Map<String, dynamic> json) =>
       _$SalesTransactionItemFromJson(json);
 
-  factory SalesTransactionItem.fromTableData(
-    SalesTransactionItemsTableData data,
-  ) {
+  factory SalesTransactionItem.fromTableData(SalesTransactionItemData data) {
     return SalesTransactionItem(
       id: data.id,
       salesTransactionId: data.salesTransactionId,
       productId: data.productId,
-      unitId: data.unitId,
-      batchNumber: data.batchNumber,
+      batchId: data.batchId,
       quantity: data.quantity,
-      unitPrice: data.unitPrice,
-      totalPrice: data.totalPrice,
+      priceInCents: data.priceInCents.toInt(),
     );
   }
 
@@ -165,21 +128,17 @@ abstract class SalesTransactionItem with _$SalesTransactionItem {
     int? id,
     required int salesTransactionId,
     required int productId,
-    required int unitId,
-    int? batchNumberParam,
+    int? batchId,
     required int quantity,
-    required double unitPrice,
-    required double totalPrice,
+    required int priceInCents,
   }) {
     final item = SalesTransactionItem(
       id: id,
       salesTransactionId: salesTransactionId,
       productId: productId,
-      unitId: unitId,
-      batchNumber: batchNumberParam,
+      batchId: batchId,
       quantity: quantity,
-      unitPrice: unitPrice,
-      totalPrice: totalPrice,
+      priceInCents: priceInCents,
     );
 
     if (!item.isValid) {

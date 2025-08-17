@@ -24,6 +24,8 @@ import 'barcodes_table.dart'; // 新增条码表
 import 'customers_table.dart';
 import 'sales_transactions_table.dart';
 import 'sales_transaction_items_table.dart';
+import 'outbound_receipts_table.dart';
+import 'outbound_receipt_items_table.dart';
 import '../../features/product/data/dao/product_dao.dart';
 import '../../features/product/data/dao/category_dao.dart';
 import '../../features/product/data/dao/unit_dao.dart';
@@ -42,6 +44,8 @@ import '../../features/product/data/dao/barcode_dao.dart';
 import '../../features/sale/data/dao/customer_dao.dart';
 import '../../features/sale/data/dao/sales_transaction_dao.dart';
 import '../../features/sale/data/dao/sales_transaction_item_dao.dart';
+import '../../features/outbound/data/dao/outbound_receipt_dao.dart';
+import '../../features/outbound/data/dao/outbound_item_dao.dart';
 import '../../features/product/domain/model/product.dart';
 
 part 'database.g.dart';
@@ -51,22 +55,24 @@ part 'database.g.dart';
     Product,
     Category,
     Unit,
-    ProductUnit,
-    ShopsTable,
-    SuppliersTable,
+    UnitProduct,
+    Shop,
+    Supplier,
     ProductSuppliersTable,
     ProductBatch,
     Stock,
     InventoryTransaction,
     LocationsTable,
-    InboundReceiptsTable,
-    InboundReceiptItemsTable,
-    PurchaseOrdersTable,
-    PurchaseOrderItemsTable,
+    InboundReceipt,
+    InboundItem,
+    PurchaseOrder,
+    PurchaseOrderItem,
     Barcode, // 新增条码表
     Customers,
-    SalesTransactionsTable,
-    SalesTransactionItemsTable,
+    SalesTransaction,
+    SalesTransactionItem,
+    OutboundReceipt,
+    OutboundItem,
   ],
   daos: [
     ProductDao,
@@ -87,12 +93,14 @@ part 'database.g.dart';
     CustomerDao,
     SalesTransactionDao,
     SalesTransactionItemDao,
+    OutboundReceiptDao,
+    OutboundItemDao,
   ],
 )
 class AppDatabase extends _$AppDatabase {
   AppDatabase(super.e);
   @override
-  int get schemaVersion => 18; // 提升版本以应用新的迁移
+  int get schemaVersion => 21; // 提升版本以应用新的迁移
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -100,37 +108,128 @@ class AppDatabase extends _$AppDatabase {
       await m.createAll();
       // 创建条码表的条码值索引以提高查询性能
       await customStatement(
-        'CREATE INDEX IF NOT EXISTS idx_barcodes_barcode ON barcodes(barcode);',
+        'CREATE INDEX IF NOT EXISTS idx_barcode_barcode_value ON barcode(barcode_value);',
       );
       // 创建条码表的产品单位ID索引
       await customStatement(
-        'CREATE INDEX IF NOT EXISTS idx_barcodes_product_unit_id ON barcodes(product_unit_id);',
+        'CREATE INDEX IF NOT EXISTS idx_barcode_unit_product_id ON barcode(unit_product_id);',
+      );
+      // 采购单相关索引
+      await customStatement(
+        'CREATE INDEX IF NOT EXISTS idx_po_supplier ON purchase_order(supplier_id);',
+      );
+      await customStatement(
+        'CREATE INDEX IF NOT EXISTS idx_po_shop ON purchase_order(shop_id);',
+      );
+      await customStatement(
+        'CREATE INDEX IF NOT EXISTS idx_po_status ON purchase_order(status);',
+      );
+      await customStatement(
+        'CREATE INDEX IF NOT EXISTS idx_po_created ON purchase_order(created_at);',
+      );
+      await customStatement(
+        'CREATE INDEX IF NOT EXISTS idx_poi_po ON purchase_order_item(purchase_order_id);',
+      );
+      await customStatement(
+        'CREATE INDEX IF NOT EXISTS idx_poi_product ON purchase_order_item(product_id);',
+      );
+      await customStatement(
+        'CREATE UNIQUE INDEX IF NOT EXISTS poi_unique_with_date ON purchase_order_item(purchase_order_id, product_id, production_date) WHERE production_date IS NOT NULL;',
+      );
+      await customStatement(
+        'CREATE UNIQUE INDEX IF NOT EXISTS poi_unique_without_date ON purchase_order_item(purchase_order_id, product_id) WHERE production_date IS NULL;',
+      );
+      // 为库存表创建部分唯一索引
+      await customStatement(
+        'CREATE UNIQUE INDEX IF NOT EXISTS stock_unique_with_batch ON stock(product_id, shop_id, batch_id) WHERE batch_id IS NOT NULL;',
+      );
+      await customStatement(
+        'CREATE UNIQUE INDEX IF NOT EXISTS stock_unique_without_batch ON stock(product_id, shop_id) WHERE batch_id IS NULL;',
+      );
+      // 为入库单明细表创建部分唯一索引
+      await customStatement(
+        'CREATE UNIQUE INDEX IF NOT EXISTS inbound_item_unique_with_batch ON inbound_item(receipt_id, product_id, batch_id) WHERE batch_id IS NOT NULL;',
+      );
+      await customStatement(
+        'CREATE UNIQUE INDEX IF NOT EXISTS inbound_item_unique_without_batch ON inbound_item(receipt_id, product_id) WHERE batch_id IS NULL;',
+      );
+      // 为出库单明细表创建部分唯一索引
+      await customStatement(
+        'CREATE UNIQUE INDEX IF NOT EXISTS outbound_item_unique_with_batch ON outbound_item(receipt_id, product_id, batch_id) WHERE batch_id IS NOT NULL;',
+      );
+      await customStatement(
+        'CREATE UNIQUE INDEX IF NOT EXISTS outbound_item_unique_without_batch ON outbound_item(receipt_id, product_id) WHERE batch_id IS NULL;',
       );
     },
     onUpgrade: (Migrator m, int from, int to) async {
+      if (from < 21 && to >= 21) {
+        // 删除旧的唯一索引（如果存在）
+        await customStatement('DROP INDEX IF EXISTS poi_unique_line;');
+        // 创建新的条件唯一索引
+        await customStatement(
+          'CREATE UNIQUE INDEX IF NOT EXISTS poi_unique_with_date ON purchase_order_item(purchase_order_id, product_id, production_date) WHERE production_date IS NOT NULL;',
+        );
+        await customStatement(
+          'CREATE UNIQUE INDEX IF NOT EXISTS poi_unique_without_date ON purchase_order_item(purchase_order_id, product_id) WHERE production_date IS NULL;',
+        );
+
+        // 为出库单明细表创建部分唯一索引
+        await customStatement(
+          'CREATE UNIQUE INDEX IF NOT EXISTS outbound_item_unique_with_batch ON outbound_item(receipt_id, product_id, batch_id) WHERE batch_id IS NOT NULL;',
+        );
+        await customStatement(
+          'CREATE UNIQUE INDEX IF NOT EXISTS outbound_item_unique_without_batch ON outbound_item(receipt_id, product_id) WHERE batch_id IS NULL;',
+        );
+      }
+      if (from < 20 && to >= 20) {
+        await m.createTable(outboundReceipt);
+        await m.createTable(outboundItem);
+      }
       if (from < 17 && to >= 17) {
-        await m.createTable(salesTransactionsTable);
-        await m.createTable(salesTransactionItemsTable);
+        await m.createTable(salesTransaction);
+        await m.createTable(salesTransactionItem);
+      }
+      if (from < 19 && to >= 19) {
+        // 新增采购单/明细索引与唯一索引
+        await customStatement(
+          'CREATE INDEX IF NOT EXISTS idx_po_supplier ON purchase_order(supplier_id);',
+        );
+        await customStatement(
+          'CREATE INDEX IF NOT EXISTS idx_po_shop ON purchase_order(shop_id);',
+        );
+        await customStatement(
+          'CREATE INDEX IF NOT EXISTS idx_po_status ON purchase_order(status);',
+        );
+        await customStatement(
+          'CREATE INDEX IF NOT EXISTS idx_po_created ON purchase_order(created_at);',
+        );
+        await customStatement(
+          'CREATE INDEX IF NOT EXISTS idx_poi_po ON purchase_order_item(purchase_order_id);',
+        );
+        await customStatement(
+          'CREATE INDEX IF NOT EXISTS idx_poi_product ON purchase_order_item(product_id);',
+        );
+        // This is now handled by the migration to version 21
       }
       if (from < 18 && to >= 18) {
         // 为 sales_transaction_items 表的 unit_id 列添加明确的列名
         // 由于我们已经修改了表结构，需要重新创建表
-        await m.createTable(salesTransactionItemsTable);
+        await m.createTable(salesTransactionItem);
       }
       if (from < 16 && to >= 16) {
         await m.createTable(customers);
       }
       if (from < 15 && to >= 15) {
-        await m.addColumn(inboundReceiptsTable, inboundReceiptsTable.source);
+        await m.addColumn(inboundReceipt, inboundReceipt.source);
       }
       if (from < 14 && to >= 14) {
         await m.deleteTable('purchases');
-        await m.createTable(purchaseOrdersTable);
-        await m.createTable(purchaseOrderItemsTable);
+        await m.createTable(purchaseOrder);
+        await m.createTable(purchaseOrderItem);
       }
       if (from < 13 && to >= 13) {
         // 为 product_units 表添加 wholesale_price 列
-        await m.addColumn(productUnit, productUnit.wholesalePriceInCents);
+        await m.addColumn(unitProduct, unitProduct.wholesalePriceInCents);
       }
       if (from < 12 && to >= 12) {
         // 重建采购表以使 production_date 列可为空
@@ -142,10 +241,10 @@ class AppDatabase extends _$AppDatabase {
         await m.createTable(barcode);
         // 创建条码表的索引
         await customStatement(
-          'CREATE INDEX IF NOT EXISTS idx_barcodes_barcode ON barcodes(barcode);',
+          'CREATE INDEX IF NOT EXISTS idx_barcode_barcode_value ON barcode(barcode_value);',
         );
         await customStatement(
-          'CREATE INDEX IF NOT EXISTS idx_barcodes_product_unit_id ON barcodes(product_unit_id);',
+          'CREATE INDEX IF NOT EXISTS idx_barcode_unit_product_id ON barcode(unit_product_id);',
         );
       }
       if (from < 10 && to >= 10) {
@@ -175,36 +274,36 @@ class AppDatabase extends _$AppDatabase {
       }
       if (from == 4 && to == 5) {
         // 从版本4升级到版本5：添加产品单位表
-        await m.createTable(productUnit);
+        await m.createTable(unitProduct);
       }
       if (from == 5 && to == 6) {
         // 从版本5升级到版本6：添加店铺表
-        await m.createTable(shopsTable);
+        await m.createTable(shop);
       }
       if (from == 6 && to == 7) {
         // 从版本6升级到版本7：添加所有缺失的表
-        await m.createTable(suppliersTable);
+        await m.createTable(supplier);
         await m.createTable(productBatch);
         await m.createTable(stock);
         await m.createTable(inventoryTransaction);
         await m.createTable(locationsTable);
-        await m.createTable(inboundReceiptsTable);
-        await m.createTable(inboundReceiptItemsTable);
+        await m.createTable(inboundReceipt);
+        await m.createTable(inboundItem);
       }
       // 处理从旧版本直接升级到版本7的情况
       if (from < 7 && to == 7) {
         // 确保所有表都存在
         if (from < 3) await m.createTable(category);
         if (from < 4) await m.createTable(unit);
-        if (from < 5) await m.createTable(productUnit);
-        if (from < 6) await m.createTable(shopsTable);
-        await m.createTable(suppliersTable);
+        if (from < 5) await m.createTable(unitProduct);
+        if (from < 6) await m.createTable(shop);
+        await m.createTable(supplier);
         await m.createTable(productBatch);
         await m.createTable(stock);
         await m.createTable(inventoryTransaction);
         await m.createTable(locationsTable);
-        await m.createTable(inboundReceiptsTable);
-        await m.createTable(inboundReceiptItemsTable);
+        await m.createTable(inboundReceipt);
+        await m.createTable(inboundItem);
       }
       // 保留原有的迁移逻辑
       if (from == 1 && to == 3) {
@@ -223,7 +322,7 @@ class AppDatabase extends _$AppDatabase {
         await m.recreateAllViews();
         await m.createTable(category);
         await m.createTable(unit);
-        await m.createTable(productUnit);
+        await m.createTable(unitProduct);
       }
       if (from == 2 && to == 4) {
         // 从版本2直接升级到版本4
@@ -234,12 +333,12 @@ class AppDatabase extends _$AppDatabase {
         // 从版本2升级到版本5
         await m.createTable(category);
         await m.createTable(unit);
-        await m.createTable(productUnit);
+        await m.createTable(unitProduct);
       }
       if (from == 3 && to == 5) {
         // 从版本3升级到版本5
         await m.createTable(unit);
-        await m.createTable(productUnit);
+        await m.createTable(unitProduct);
       }
       // 在任何版本升级后都确保条码表索引存在（移除了产品表条码索引，因为产品表已无条码字段）
       // 注释掉：产品表已无条码字段

@@ -5,6 +5,8 @@ import '../../../../core/constants/app_routes.dart';
 import '../../../../core/widgets/product_list/product_list.dart';
 import '../../application/category_notifier.dart';
 import '../../../inventory/application/inventory_service.dart';
+import '../../../inventory/application/provider/shop_providers.dart';
+import '../../../inventory/domain/model/shop.dart';
 import '../../application/provider/product_providers.dart';
 import '../../domain/model/category.dart';
 import '../../domain/model/product.dart';
@@ -49,60 +51,106 @@ class ProductListScreen extends ConsumerWidget {
     ProductModel product,
   ) async {
     final quantityController = TextEditingController();
-    // FIXME: Hardcoded shopId. In a real app, this should come from user session or selection.
-    const shopId = 'default_shop';
-    final inventory =
-        await ref.read(inventoryServiceProvider).getInventory(product.id!, shopId);
+    final shops = await ref.read(allShopsProvider.future);
+    Shop? selectedShop = shops.isNotEmpty ? shops.first : null;
+
+    // ignore: use_build_context_synchronously
+    if (shops.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('没有可用的店铺，请先添加店铺')),
+      );
+      return;
+    }
+
+    final inventory = await ref
+        .read(inventoryServiceProvider)
+        .getInventory(product.id!, selectedShop!.id!);
     if (inventory != null) {
       quantityController.text = inventory.quantity.toStringAsFixed(0);
     }
 
-    final newQuantityString = await showDialog<String>(
+    final result = await showDialog<Map<String, dynamic>>(
       context: context,
-      builder: (context) => AlertDialog(
-        title: Text('调整库存: ${product.name}'),
-        content: TextField(
-          controller: quantityController,
-          keyboardType: TextInputType.number,
-          decoration: const InputDecoration(labelText: '新库存数量'),
-          autofocus: true,
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('取消'),
-          ),
-          TextButton(
-            onPressed: () {
-              Navigator.of(context).pop(quantityController.text);
-            },
-            child: const Text('确定'),
-          ),
-        ],
-      ),
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return AlertDialog(
+              title: Text('调整库存: ${product.name}'),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  DropdownButtonFormField<Shop>(
+                    value: selectedShop,
+                    decoration: const InputDecoration(labelText: '店铺'),
+                    items: shops.map((shop) {
+                      return DropdownMenuItem<Shop>(
+                        value: shop,
+                        child: Text(shop.name),
+                      );
+                    }).toList(),
+                    onChanged: (shop) {
+                      setState(() {
+                        selectedShop = shop;
+                      });
+                    },
+                  ),
+                  TextField(
+                    controller: quantityController,
+                    keyboardType: TextInputType.number,
+                    decoration: const InputDecoration(labelText: '新库存数量'),
+                    autofocus: true,
+                  ),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: const Text('取消'),
+                ),
+                TextButton(
+                  onPressed: () {
+                    Navigator.of(context).pop({
+                      'quantity': quantityController.text,
+                      'shop': selectedShop,
+                    });
+                  },
+                  child: const Text('确定'),
+                ),
+              ],
+            );
+          },
+        );
+      },
     );
 
-    if (newQuantityString != null && newQuantityString.isNotEmpty) {
-      final newQuantity = int.tryParse(newQuantityString);
-      if (newQuantity == null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('无效的数字格式')),
-        );
-        return;
-      }
+    if (result != null) {
+      final newQuantityString = result['quantity'] as String;
+      final shop = result['shop'] as Shop;
 
-      try {
-        await ref
-            .read(inventoryServiceProvider)
-            .adjustInventory(product.id.toString(), newQuantity);
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('库存调整成功')),
-        );
-        ref.invalidate(filteredProductsProvider); // Refresh the product list
-      } catch (e) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('库存调整失败: $e')),
-        );
+      if (newQuantityString.isNotEmpty) {
+        final newQuantity = int.tryParse(newQuantityString);
+        if (newQuantity == null) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('无效的数字格式')),
+          );
+          return;
+        }
+
+        try {
+          await ref.read(inventoryServiceProvider).adjustInventory(
+                productId: product.id!,
+                quantity: newQuantity,
+                shopId: shop.id!,
+              );
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('库存调整成功')),
+          );
+          ref.invalidate(filteredProductsProvider); // Refresh the product list
+        } catch (e) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('库存调整失败: $e')),
+          );
+        }
       }
     }
   }

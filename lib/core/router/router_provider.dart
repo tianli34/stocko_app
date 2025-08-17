@@ -49,45 +49,12 @@ final routerProvider = Provider<GoRouter>((ref) {
                 builder: (context, state) => const ProductListScreen(),
                 routes: [
                   GoRoute(
-                    path: 'new',
-                    name: 'product-new',
-                    builder: (context, state) => const ProductAddEditScreen(),
-                  ),
-                  GoRoute(
                     path: ':id',
                     name: 'product-detail',
                     builder: (context, state) {
                       final productId = int.parse(state.pathParameters['id']!);
                       return ProductDetailScreen(productId: productId);
                     },
-                    routes: [
-                      GoRoute(
-                        path: 'edit',
-                        name: 'product-edit',
-                        builder: (context, state) {
-                          final productId = int.parse(state.pathParameters['id']!);
-                          // 需要获取商品数据以传递给编辑页面
-                          return Consumer(
-                            builder: (context, ref, child) {
-                              final productsAsyncValue = ref.watch(allProductsProvider);
-                              return productsAsyncValue.when(
-                                data: (products) {
-                                  final product = products.where((p) => p.id == productId).firstOrNull;
-                                  return ProductAddEditScreen(product: product);
-                                },
-                                loading: () => const Scaffold(
-                                  body: Center(child: CircularProgressIndicator()),
-                                ),
-                                error: (error, stackTrace) => Scaffold(
-                                  appBar: AppBar(title: const Text('错误')),
-                                  body: Center(child: Text('加载商品失败: $error')),
-                                ),
-                              );
-                            },
-                          );
-                        },
-                      ),
-                    ],
                   ),
                 ],
               ),
@@ -222,6 +189,38 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
 
       // 其余（不在底部导航中的）功能路由
+      GoRoute(
+        path: '/product/new',
+        name: 'product-new',
+        builder: (context, state) => const ProductAddEditScreen(),
+      ),
+      GoRoute(
+        path: '/product/:id/edit',
+        name: 'product-edit',
+        builder: (context, state) {
+          final productId = int.parse(state.pathParameters['id']!);
+          // 需要获取商品数据以传递给编辑页面
+          return Consumer(
+            builder: (context, ref, child) {
+              final productsAsyncValue = ref.watch(allProductsProvider);
+              return productsAsyncValue.when(
+                data: (products) {
+                  final product =
+                      products.where((p) => p.id == productId).firstOrNull;
+                  return ProductAddEditScreen(product: product);
+                },
+                loading: () => const Scaffold(
+                  body: Center(child: CircularProgressIndicator()),
+                ),
+                error: (error, stackTrace) => Scaffold(
+                  appBar: AppBar(title: const Text('错误')),
+                  body: Center(child: Text('加载商品失败: $error')),
+                ),
+              );
+            },
+          );
+        },
+      ),
       GoRoute(
         path: AppRoutes.categories,
         name: 'categories',

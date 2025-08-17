@@ -10,25 +10,25 @@ abstract class ILocationRepository {
   Future<Location?> getLocationById(String id);
 
   /// 根据编码获取货位
-  Future<Location?> getLocationByCode(String code, String shopId);
+  Future<Location?> getLocationByCode(String code, int shopId);
 
   /// 获取所有货位
   Future<List<Location>> getAllLocations();
 
   /// 根据店铺ID获取货位
-  Future<List<Location>> getLocationsByShop(String shopId);
+  Future<List<Location>> getLocationsByShop(int shopId);
 
   /// 根据状态获取货位
   Future<List<Location>> getLocationsByStatus(String status);
 
   /// 获取活跃货位
-  Future<List<Location>> getActiveLocationsByShop(String shopId);
+  Future<List<Location>> getActiveLocationsByShop(int shopId);
 
   /// 监听所有货位变化
   Stream<List<Location>> watchAllLocations();
 
   /// 监听指定店铺的货位变化
-  Stream<List<Location>> watchLocationsByShop(String shopId);
+  Stream<List<Location>> watchLocationsByShop(int shopId);
 
   /// 更新货位
   Future<bool> updateLocation(Location location);
@@ -39,8 +39,8 @@ abstract class ILocationRepository {
   /// 检查货位编码是否已存在（同一店铺内）
   Future<bool> isLocationCodeExists(
     String code,
-    String shopId, [
-    String? excludeId,
+    int shopId, [
+    int? excludeId,
   ]);
 
   /// 根据名称搜索货位

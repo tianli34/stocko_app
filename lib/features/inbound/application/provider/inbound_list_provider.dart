@@ -1,20 +1,76 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../product/domain/model/product.dart';
-import '../../domain/model/inbound_item.dart';
+
+/// Represents an item in the inbound list UI.
+/// This is a view model that combines data from Product, Unit,
+/// and the temporary inbound state.
+class InboundItemState {
+  /// A unique identifier for the item in the UI list, generated on the client.
+  final String id;
+  final int productId;
+  final String productName;
+  final int unitId;
+  final String unitName;
+  final int quantity;
+  final int unitPriceInCents;
+  final DateTime? productionDate;
+  final String? barcode;
+
+  InboundItemState({
+    required this.id,
+    required this.productId,
+    required this.productName,
+    required this.unitId,
+    required this.unitName,
+    required this.quantity,
+    required this.unitPriceInCents,
+    this.productionDate,
+    this.barcode,
+  });
+
+  /// Total amount for this item line, in cents.
+  int get amountInCents => quantity * unitPriceInCents;
+
+  InboundItemState copyWith({
+    String? id,
+    int? productId,
+    String? productName,
+    int? unitId,
+    String? unitName,
+    int? quantity,
+    int? unitPriceInCents,
+    DateTime? productionDate,
+    String? barcode,
+    bool clearProductionDate = false,
+  }) {
+    return InboundItemState(
+      id: id ?? this.id,
+      productId: productId ?? this.productId,
+      productName: productName ?? this.productName,
+      unitId: unitId ?? this.unitId,
+      unitName: unitName ?? this.unitName,
+      quantity: quantity ?? this.quantity,
+      unitPriceInCents: unitPriceInCents ?? this.unitPriceInCents,
+      productionDate:
+          clearProductionDate ? null : productionDate ?? this.productionDate,
+      barcode: barcode ?? this.barcode,
+    );
+  }
+}
 
 /// 入库列表状态通知器
 ///
 /// 管理入库项列表的状态，并提供增、删、改、查等操作。
-class InboundListNotifier extends StateNotifier<List<InboundItem>> {
+class InboundListNotifier extends StateNotifier<List<InboundItemState>> {
   InboundListNotifier() : super([]);
 
   /// 添加单个入库项到列表头部
-  void addItem(InboundItem item) {
+  void addItem(InboundItemState item) {
     state = [item, ...state];
   }
 
   /// 添加多个入库项到列表头部
-  void addAllItems(List<InboundItem> items) {
+  void addAllItems(List<InboundItemState> items) {
     state = [...items.reversed, ...state];
   }
 
@@ -24,7 +80,7 @@ class InboundListNotifier extends StateNotifier<List<InboundItem>> {
   }
 
   /// 更新指定的入库项
-  void updateItem(InboundItem updatedItem) {
+  void updateItem(InboundItemState updatedItem) {
     state = [
       for (final item in state)
         if (item.id == updatedItem.id) updatedItem else item,
@@ -36,7 +92,6 @@ class InboundListNotifier extends StateNotifier<List<InboundItem>> {
   /// [product] - 要添加的货品对象
   /// [unitName] - 单位名称
   /// [barcode] - 条码
-  /// [defaultUnitName] - 默认单位名称
   void addOrUpdateItem({
     required ProductModel product,
     required int unitId,
@@ -44,13 +99,13 @@ class InboundListNotifier extends StateNotifier<List<InboundItem>> {
     String? barcode,
     int? wholesalePriceInCents,
   }) {
-    final actualUnitName = unitName ?? '未知单位';
     // 优先通过条码匹配，其次通过货品ID和单位匹配
     final existingItemIndex = state.indexWhere((item) {
-      if (barcode != null && item.id.contains('item_${barcode}_')) {
+      if (barcode != null && barcode.isNotEmpty && item.barcode == barcode) {
         return true;
       }
-      return item.productId == product.id! && item.unitId == unitId;
+      // Fallback to product and unit if no barcode match or barcode is not provided
+      return item.productId == product.id && item.unitId == unitId;
     });
 
     if (existingItemIndex != -1) {
@@ -58,26 +113,24 @@ class InboundListNotifier extends StateNotifier<List<InboundItem>> {
       final existingItem = state[existingItemIndex];
       final updatedItem = existingItem.copyWith(
         quantity: existingItem.quantity + 1,
-        amount: (existingItem.quantity + 1) * existingItem.unitPrice,
       );
       updateItem(updatedItem);
-      // 可以返回一个值或状态，用于在UI层显示提示信息
     } else {
       // 如果是新货品，创建新的入库项
-      // 使用条码作为唯一标识符的一部分，以确保唯一性
-      final itemId = barcode != null
+      // 使用条码或货品+单位作为唯一标识符的一部分，以确保列表中的唯一性
+      final itemId = (barcode != null && barcode.isNotEmpty)
           ? 'item_${barcode}_${DateTime.now().millisecondsSinceEpoch}'
-          : 'item_${product.id!}_${unitId}_${DateTime.now().millisecondsSinceEpoch}';
+          : 'item_${product.id}_${unitId}_${DateTime.now().millisecondsSinceEpoch}';
 
-      final newItem = InboundItem(
+      final newItem = InboundItemState(
         id: itemId,
         productId: product.id!,
         productName: product.name,
         unitId: unitId,
-        unitName: actualUnitName,
-        unitPrice: (wholesalePriceInCents ?? 0.0) / 100,
+        unitName: unitName ?? '未知单位',
         quantity: 1,
-        amount: (wholesalePriceInCents ?? 0.0) / 100,
+        unitPriceInCents: wholesalePriceInCents ?? 0,
+        barcode: barcode,
         productionDate: product.enableBatchManagement
             ? DateTime.now().subtract(const Duration(days: 90))
             : null,
@@ -96,9 +149,9 @@ class InboundListNotifier extends StateNotifier<List<InboundItem>> {
 ///
 /// 这是UI层访问 [InboundListNotifier] 的入口。
 final inboundListProvider =
-    StateNotifierProvider<InboundListNotifier, List<InboundItem>>(
-      (ref) => InboundListNotifier(),
-    );
+    StateNotifierProvider<InboundListNotifier, List<InboundItemState>>(
+  (ref) => InboundListNotifier(),
+);
 
 /// 入库统计信息Provider
 ///
@@ -107,10 +160,11 @@ final inboundListProvider =
 final inboundTotalsProvider = Provider<Map<String, double>>((ref) {
   final items = ref.watch(inboundListProvider);
   final totalQuantity = items.fold(0.0, (sum, item) => sum + item.quantity);
-  final totalAmount = items.fold(0.0, (sum, item) => sum + item.amount);
+  final totalAmountInCents =
+      items.fold(0.0, (sum, item) => sum + item.amountInCents);
   return {
     'varieties': items.length.toDouble(),
     'quantity': totalQuantity,
-    'amount': totalAmount,
+    'amount': totalAmountInCents / 100.0, // 将总金额从分转换为元
   };
 });

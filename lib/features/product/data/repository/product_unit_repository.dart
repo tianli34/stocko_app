@@ -14,11 +14,11 @@ class ProductUnitRepository implements IProductUnitRepository {
     : _productUnitDao = database.productUnitDao;
 
   @override
-  Future<int> addProductUnit(ProductUnit productUnit) async {
+  Future<int> addProductUnit(UnitProduct unitProduct) async {
     try {
-      print('🗃️ 仓储层：添加产品单位，ID: ${productUnit.productUnitId}');
+      print('🗃️ 仓储层：添加产品单位，ID: ${unitProduct.id}');
       return await _productUnitDao.insertProductUnit(
-        _productUnitToCompanion(productUnit),
+        _productUnitToCompanion(unitProduct),
       );
     } catch (e) {
       print('🗃️ 仓储层：添加产品单位失败: $e');
@@ -27,7 +27,7 @@ class ProductUnitRepository implements IProductUnitRepository {
   }
 
   @override
-  Future<void> addMultipleProductUnits(List<ProductUnit> productUnits) async {
+  Future<void> addMultipleProductUnits(List<UnitProduct> productUnits) async {
     try {
       print('🗃️ 仓储层：批量添加产品单位，数量: ${productUnits.length}');
       final companions = productUnits.map(_productUnitToCompanion).toList();
@@ -39,9 +39,9 @@ class ProductUnitRepository implements IProductUnitRepository {
   }
 
   @override
-  Future<ProductUnit?> getProductUnitById(int productUnitId) async {
+  Future<UnitProduct?> getProductUnitById(int id) async {
     try {
-      final data = await _productUnitDao.getProductUnitById(productUnitId);
+      final data = await _productUnitDao.getProductUnitById(id);
       return data != null ? _dataToProductUnit(data) : null;
     } catch (e) {
       print('🗃️ 仓储层：根据ID获取产品单位失败: $e');
@@ -50,7 +50,7 @@ class ProductUnitRepository implements IProductUnitRepository {
   }
 
   @override
-  Future<List<ProductUnit>> getProductUnitsByProductId(int productId) async {
+  Future<List<UnitProduct>> getProductUnitsByProductId(int productId) async {
     try {
       final dataList = await _productUnitDao.getProductUnitsByProductId(
         productId,
@@ -63,7 +63,7 @@ class ProductUnitRepository implements IProductUnitRepository {
   }
 
   @override
-  Future<List<ProductUnit>> getAllProductUnits() async {
+  Future<List<UnitProduct>> getAllProductUnits() async {
     try {
       final dataList = await _productUnitDao.getAllProductUnits();
       return dataList.map(_dataToProductUnit).toList();
@@ -74,7 +74,7 @@ class ProductUnitRepository implements IProductUnitRepository {
   }
 
   @override
-  Stream<List<ProductUnit>> watchProductUnitsByProductId(int productId) {
+  Stream<List<UnitProduct>> watchProductUnitsByProductId(int productId) {
     try {
       return _productUnitDao.watchProductUnitsByProductId(productId).map((
         dataList,
@@ -88,11 +88,11 @@ class ProductUnitRepository implements IProductUnitRepository {
   }
 
   @override
-  Future<bool> updateProductUnit(ProductUnit productUnit) async {
+  Future<bool> updateProductUnit(UnitProduct unitProduct) async {
     try {
-      print('🗃️ 仓储层：更新产品单位，ID: ${productUnit.productUnitId}');
+      print('🗃️ 仓储层：更新产品单位，ID: ${unitProduct.id}');
       return await _productUnitDao.updateProductUnit(
-        _productUnitToCompanion(productUnit),
+        _productUnitToCompanion(unitProduct),
       );
     } catch (e) {
       print('🗃️ 仓储层：更新产品单位失败: $e');
@@ -101,10 +101,10 @@ class ProductUnitRepository implements IProductUnitRepository {
   }
 
   @override
-  Future<int> deleteProductUnit(int productUnitId) async {
+  Future<int> deleteProductUnit(int id) async {
     try {
-      print('🗃️ 仓储层：删除产品单位，ID: $productUnitId');
-      return await _productUnitDao.deleteProductUnit(productUnitId);
+      print('🗃️ 仓储层：删除产品单位，ID: $id');
+      return await _productUnitDao.deleteProductUnit(id);
     } catch (e) {
       print('🗃️ 仓储层：删除产品单位失败: $e');
       rethrow;
@@ -139,7 +139,7 @@ class ProductUnitRepository implements IProductUnitRepository {
   }
 
   @override
-  Future<ProductUnit?> getBaseUnitForProduct(int productId) async {
+  Future<UnitProduct?> getBaseUnitForProduct(int productId) async {
     try {
       final data = await _productUnitDao.getBaseUnitForProduct(productId);
       return data != null ? _dataToProductUnit(data) : null;
@@ -150,11 +150,11 @@ class ProductUnitRepository implements IProductUnitRepository {
   }
 
   @override
-  Future<void> upsertProductUnit(ProductUnit productUnit) async {
+  Future<void> upsertProductUnit(UnitProduct unitProduct) async {
     try {
-      print('🗃️ 仓储层：更新或插入产品单位，ID: ${productUnit.productUnitId}');
+      print('🗃️ 仓储层：更新或插入产品单位，ID: ${unitProduct.id}');
       await _productUnitDao.upsertProductUnit(
-        _productUnitToCompanion(productUnit),
+        _productUnitToCompanion(unitProduct),
       );
     } catch (e) {
       print('🗃️ 仓储层：更新或插入产品单位失败: $e');
@@ -164,7 +164,7 @@ class ProductUnitRepository implements IProductUnitRepository {
 
   @override
   Future<void> upsertMultipleProductUnits(
-    List<ProductUnit> productUnits,
+    List<UnitProduct> productUnits,
   ) async {
     try {
       print('🗃️ 仓储层：批量更新或插入产品单位，数量: ${productUnits.length}');
@@ -179,7 +179,7 @@ class ProductUnitRepository implements IProductUnitRepository {
   @override
   Future<void> replaceProductUnits(
     int productId,
-    List<ProductUnit> productUnits,
+    List<UnitProduct> productUnits,
   ) async {
     try {
       print('🗃️ 仓储层：替换产品单位配置，产品ID: $productId，新单位数量: ${productUnits.length}');
@@ -204,44 +204,44 @@ class ProductUnitRepository implements IProductUnitRepository {
   }
 
   /// 将ProductUnit模型转换为数据库Companion
-  ProductUnitCompanion _productUnitToCompanion(ProductUnit productUnit) {
+  UnitProductCompanion _productUnitToCompanion(UnitProduct unitProduct) {
     print('==================【批发价调试】==================');
-    print('ProductUnit ID: ${productUnit.productUnitId}');
-    print('SELLING PRICE: ${productUnit.sellingPriceInCents}');
-    print('WHOLESALE PRICE: ${productUnit.wholesalePriceInCents}');
+    print('UnitProduct ID: ${unitProduct.id}');
+    print('SELLING PRICE: ${unitProduct.sellingPriceInCents}');
+    print('WHOLESALE PRICE: ${unitProduct.wholesalePriceInCents}');
     print(
-      'productId: ${productUnit.productId}, unitId: ${productUnit.unitId}, conversionRate: ${productUnit.conversionRate}',
+      'productId: ${unitProduct.productId}, unitId: ${unitProduct.unitId}, conversionRate: ${unitProduct.conversionRate}',
     );
     print('=================================================');
-    return ProductUnitCompanion(
-      productUnitId: productUnit.productUnitId == null
+    return UnitProductCompanion(
+      id: unitProduct.id == null
           ? const Value.absent()
-          : Value(productUnit.productUnitId!),
-      productId: Value(productUnit.productId),
-      unitId: Value(productUnit.unitId),
-      conversionRate: Value(productUnit.conversionRate),
-      sellingPriceInCents: productUnit.sellingPriceInCents != null
-          ? Value(productUnit.sellingPriceInCents!)
+          : Value(unitProduct.id!),
+      productId: Value(unitProduct.productId),
+      unitId: Value(unitProduct.unitId),
+      conversionRate: Value(unitProduct.conversionRate),
+      sellingPriceInCents: unitProduct.sellingPriceInCents != null
+          ? Value(unitProduct.sellingPriceInCents!)
           : const Value.absent(),
-      wholesalePriceInCents: productUnit.wholesalePriceInCents != null
-          ? Value(productUnit.wholesalePriceInCents!)
+      wholesalePriceInCents: unitProduct.wholesalePriceInCents != null
+          ? Value(unitProduct.wholesalePriceInCents!)
           : const Value.absent(),
-      lastUpdated: Value(productUnit.lastUpdated ?? DateTime.now()),
+      lastUpdated: Value(unitProduct.lastUpdated ?? DateTime.now()),
     );
   }
 
   /// 将数据库数据转换为ProductUnit模型
-  ProductUnit _dataToProductUnit(ProductUnitData data) {
+  UnitProduct _dataToProductUnit(UnitProductData data) {
     print('==================【批发价回显调试】==================');
-    print('ProductUnit ID: ${data.productUnitId}');
+    print('UnitProduct ID: ${data.id}');
     print('SELLING PRICE: ${data.sellingPriceInCents}');
     print('WHOLESALE PRICE: ${data.wholesalePriceInCents}');
     print(
       'productId: ${data.productId}, unitId: ${data.unitId}, conversionRate: ${data.conversionRate}',
     );
     print('=====================================================');
-    return ProductUnit(
-      productUnitId: data.productUnitId,
+    return UnitProduct(
+      id: data.id,
       productId: data.productId,
       unitId: data.unitId,
       conversionRate: data.conversionRate,
@@ -252,7 +252,7 @@ class ProductUnitRepository implements IProductUnitRepository {
   }
 }
 
-/// ProductUnit Repository Provider
+/// UnitProduct Repository Provider
 final productUnitRepositoryProvider = Provider<IProductUnitRepository>((ref) {
   final database = ref.watch(appDatabaseProvider);
   return ProductUnitRepository(database);

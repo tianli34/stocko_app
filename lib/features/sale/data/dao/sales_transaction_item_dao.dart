@@ -4,24 +4,24 @@ import '../../../../core/database/sales_transaction_items_table.dart';
 
 part 'sales_transaction_item_dao.g.dart';
 
-@DriftAccessor(tables: [SalesTransactionItemsTable])
+@DriftAccessor(tables: [SalesTransactionItem])
 class SalesTransactionItemDao extends DatabaseAccessor<AppDatabase> with _$SalesTransactionItemDaoMixin {
   SalesTransactionItemDao(super.db);
 
   /// 插入一个销售交易项目
-  Future<int> insertSalesTransactionItem(SalesTransactionItemsTableCompanion companion) {
-    return into(db.salesTransactionItemsTable).insert(companion);
+  Future<int> insertSalesTransactionItem(SalesTransactionItemCompanion companion) {
+    return into(db.salesTransactionItem).insert(companion);
   }
 
   /// 批量插入销售交易项目
-  Future<void> insertSalesTransactionItems(List<SalesTransactionItemsTableCompanion> companions) {
+  Future<void> insertSalesTransactionItems(List<SalesTransactionItemCompanion> companions) {
     return batch((batch) {
-      batch.insertAll(db.salesTransactionItemsTable, companions);
+      batch.insertAll(db.salesTransactionItem, companions);
     });
   }
 
   /// 根据交易ID查找销售项目
-  Future<List<SalesTransactionItemsTableData>> findSalesTransactionItemsByTransactionId(String transactionId) {
+  Future<List<SalesTransactionItemData>> findSalesTransactionItemsByTransactionId(String transactionId) {
     print('🔍 [DEBUG] DAO: findSalesTransactionItemsByTransactionId called with: $transactionId (type: ${transactionId.runtimeType})');
     print('🔍 [DEBUG] DAO: transactionId content: "$transactionId"');
     
@@ -34,6 +34,6 @@ class SalesTransactionItemDao extends DatabaseAccessor<AppDatabase> with _$Sales
       throw Exception('无法解析交易ID: $transactionId');
     }
     
-    return (select(db.salesTransactionItemsTable)..where((tbl) => tbl.salesTransactionId.equals(parsedId))).get();
+    return (select(db.salesTransactionItem)..where((tbl) => tbl.salesTransactionId.equals(parsedId))).get();
   }
 }

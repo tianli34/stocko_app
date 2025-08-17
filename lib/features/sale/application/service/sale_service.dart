@@ -2,7 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:stocko_app/features/inventory/application/inventory_service.dart';
 import 'package:stocko_app/features/sale/data/repository/sales_transaction_repository.dart';
 
-import '../../domain/model/sale_item.dart';
+import '../../domain/model/sale_cart_item.dart';
 import '../../domain/model/sales_transaction.dart';
 import '../../domain/model/sales_transaction_item.dart';
 import '../../domain/repository/i_sales_transaction_repository.dart';
@@ -20,8 +20,8 @@ class SaleService {
 
   Future<String> processOneClickSale({
     required int salesOrderNo,
-    required String shopId,
-    required List<SaleItem> saleItems,
+    required int shopId,
+    required List<SaleCartItem> saleItems,
     String? remarks,
     required bool isSaleMode,
     int? customerId,
@@ -35,16 +35,13 @@ class SaleService {
       return SalesTransactionItem(
         salesTransactionId: 0, // Will be replaced later
         productId: item.productId,
-        unitId: item.unitId,
-        batchNumber: item.batchId != null ? int.tryParse(item.batchId!) : null,
+        batchId: item.batchId != null ? int.tryParse(item.batchId!) : null,
         quantity: item.quantity.toInt(),
-        unitPrice: item.sellingPriceInCents/100,
-        totalPrice: item.amount,
+        priceInCents: item.sellingPriceInCents,
       );
     }).toList();
 
     final transaction = SalesTransaction(
-      salesOrderNo: salesOrderNo,
       shopId: shopId,
       totalAmount: totalAmount,
       actualAmount: totalAmount,
@@ -61,14 +58,14 @@ class SaleService {
         await inventoryService.outbound(
           productId: item.productId,
           shopId: shopId,
-          quantity: item.quantity,
+          quantity: item.quantity.toInt(),
           time: now,
         );
       } else {
         await inventoryService.inbound(
           productId: item.productId,
           shopId: shopId,
-          quantity: item.quantity,
+          quantity: item.quantity.toInt(),
           // TODO: Handle return with batch number properly
           time: now,
         );

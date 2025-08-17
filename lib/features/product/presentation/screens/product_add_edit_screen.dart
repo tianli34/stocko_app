@@ -61,7 +61,7 @@ class _ProductAddEditScreenState extends ConsumerState<ProductAddEditScreen> {
   int? _selectedCategoryId; // 添加类别选择状态
   int? _selectedUnitId; // 添加单位选择状态
   String? _selectedImagePath; // 添加图片路径状态
-  List<ProductUnit>? _productUnits; // 存储单位配置数据
+  List<UnitProduct>? _productUnits; // 存储单位配置数据
   List<Map<String, String>>? _auxiliaryUnitBarcodes; // 存储辅单位条码数据
   // 保质期单位相关
   String _shelfLifeUnit = 'months'; // 保质期单位：days, months, years
@@ -72,25 +72,24 @@ class _ProductAddEditScreenState extends ConsumerState<ProductAddEditScreen> {
   ]; // 批次管理开关
   bool _enableBatchManagement = false;
 
-  bool _isInitialized = false;
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    if (!_isInitialized) {
-      ref.invalidate(unitEditFormProvider);
-      _isInitialized = true;
-    }
   }
 
   @override
   void initState() {
     super.initState();
+    // Invalidate the main barcode provider when the widget is initialized.
+    // This ensures that the barcode is re-fetched every time the page is entered,
+    // including after a hot restart.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (widget.product?.id != null) {
+        ref.invalidate(mainBarcodeProvider(widget.product!.id!));
+      }
+    });
     _initializeControllers();
-    // 如果是编辑模式，加载现有的主条码
-    if (widget.product != null) {
-      _loadExistingMainBarcode();
-    }
   }
 
   void _initializeControllers() {
@@ -129,44 +128,7 @@ class _ProductAddEditScreenState extends ConsumerState<ProductAddEditScreen> {
         product?.enableBatchManagement ?? false; // 初始化批次管理开关
   }
 
-  /// 加载现有货品的主条码
-  void _loadExistingMainBarcode() async {
-    if (widget.product?.id == null) return;
-
-    try {
-      // 获取货品的所有单位配置
-      final productUnitController = ref.read(
-        productUnitControllerProvider.notifier,
-      );
-      final productUnits = await productUnitController
-          .getProductUnitsByProductId(widget.product!.id!);
-
-      if (productUnits.isNotEmpty) {
-        // 找到基础单位（换算率为1.0的单位）
-        final baseProductUnit = productUnits.firstWhere(
-          (unit) => unit.conversionRate == 1.0,
-          orElse: () => productUnits.first,
-        );
-
-        // 获取基础单位的条码
-        final barcodeController = ref.read(barcodeControllerProvider.notifier);
-        final barcodes = await barcodeController.getBarcodesByProductUnitId(
-          baseProductUnit.productUnitId,
-        );
-
-        if (barcodes.isNotEmpty && mounted) {
-          // 使用第一个条码作为主条码
-          setState(() {
-            _barcodeController.text = barcodes.first.barcodeValue;
-          });
-          print('🔧 ProductAddEditScreen: 加载现有主条码: ${barcodes.first.barcodeValue}');
-        }
-      }
-    } catch (e) {
-      print('🔧 ProductAddEditScreen: 加载现有主条码失败: $e');
-      // 加载失败不影响页面显示，只是条码字段保持空
-    }
-  }
+  // _loadExistingMainBarcode is now replaced by the mainBarcodeProvider.
 
   @override
   void dispose() {
@@ -175,11 +137,15 @@ class _ProductAddEditScreenState extends ConsumerState<ProductAddEditScreen> {
       // 使用 mounted 检查确保 widget 仍然可用
       if (mounted) {
         ref.invalidate(unitEditFormProvider);
+        // BUG FIX: Invalidate the main barcode provider on dispose
+        // This ensures that when re-entering the page, the provider re-fetches the barcode
+        // and triggers the ref.listen to update the UI.
+        // The invalidation logic has been moved to initState to handle hot restarts correctly.
       }
     } catch (e) {
-      print('🔧 ProductAddEditScreen: 清除辅单位数据失败: $e');
+      // print('🔧 ProductAddEditScreen: 清除辅单位数据失败: $e');
     }
-
+  
     _nameController.dispose();
     _barcodeController.dispose();
     _retailPriceController.dispose();
@@ -190,14 +156,14 @@ class _ProductAddEditScreenState extends ConsumerState<ProductAddEditScreen> {
     _remarksController.dispose();
     _categoryController.dispose(); // 释放类别控制器
     _unitController.dispose(); // 释放单位控制器
-
+  
     // 释放焦点节点
     _nameFocusNode.dispose();
     _unitFocusNode.dispose();
     _categoryFocusNode.dispose();
     _retailPriceFocusNode.dispose();
     _shelfLifeFocusNode.dispose();
-
+  
     super.dispose();
   }
 
@@ -206,14 +172,33 @@ class _ProductAddEditScreenState extends ConsumerState<ProductAddEditScreen> {
     try {
       // 在dispose之前调用，此时ref仍然可用
       ref.read(unitEditFormProvider.notifier).resetUnitEditForm();
-      print('🔧 ProductAddEditScreen: 已清除保存的辅单位数据');
+      // print('🔧 ProductAddEditScreen: 已清除保存的辅单位数据');
     } catch (e) {
-      print('🔧 ProductAddEditScreen: 清除辅单位数据失败: $e');
+      // print('🔧 ProductAddEditScreen: 清除辅单位数据失败: $e');
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    // Listen to the main barcode provider
+    // Listen to the main barcode provider
+    if (widget.product?.id != null) {
+      ref.listen<AsyncValue<String?>>(
+        mainBarcodeProvider(widget.product!.id!),
+        (previous, next) {
+          next.whenData((barcode) {
+            // 只有当provider提供的值与当前输入框的值不同时才更新
+            // 这样可以避免光标跳动，也解决了重复进入页面不显示的问题
+            if (barcode != null && _barcodeController.text != barcode) {
+              _barcodeController.text = barcode;
+            } else if (barcode == null && _barcodeController.text.isNotEmpty) {
+              // 如果provider返回null（例如条码被删除），则清空输入框
+              _barcodeController.clear();
+            }
+          });
+        },
+      );
+    }
     final operationsState = ref.watch(productOperationsProvider);
     final categories = ref.watch(categoryListProvider).categories;
     final unitsAsyncValue = ref.watch(allUnitsProvider); // 获取单位列表
@@ -1052,15 +1037,15 @@ class _ProductAddEditScreenState extends ConsumerState<ProductAddEditScreen> {
 
     // 处理返回的单位配置结果
     if (result != null) {
-      List<ProductUnit>? productUnits;
+      List<UnitProduct>? productUnits;
       List<Map<String, String>>? auxiliaryBarcodes;
 
       if (result is Map<String, dynamic>) {
         // 新格式：包含货品单位和条码信息
-        productUnits = result['productUnits'] as List<ProductUnit>?;
+        productUnits = result['productUnits'] as List<UnitProduct>?;
         auxiliaryBarcodes =
             result['auxiliaryBarcodes'] as List<Map<String, String>>?;
-      } else if (result is List<ProductUnit>) {
+      } else if (result is List<UnitProduct>) {
         // 旧格式：只有货品单位
         productUnits = result;
       }
@@ -1155,7 +1140,7 @@ class _ProductAddEditScreenState extends ConsumerState<ProductAddEditScreen> {
         auxiliaryBarcodeData = _auxiliaryUnitBarcodes!
             .map(
               (item) => AuxiliaryUnitBarcodeData(
-                productUnitId: int.parse(item['productUnitId']!),
+                id: int.parse(item['id']!),
                 barcode: item['barcode']!,
               ),
             )

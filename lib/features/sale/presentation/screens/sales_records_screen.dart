@@ -22,7 +22,7 @@ final salesTransactionItemDaoProvider = Provider<SalesTransactionItemDao>((ref) 
 });
 
 // Provider to watch all sales transactions
-final salesTransactionsProvider = StreamProvider<List<SalesTransactionsTableData>>((
+final salesTransactionsProvider = StreamProvider<List<SalesTransactionData>>((
   ref,
 ) {
   final dao = ref.watch(salesTransactionDaoProvider);
@@ -33,7 +33,7 @@ final salesTransactionsProvider = StreamProvider<List<SalesTransactionsTableData
 
 // Provider to get items for a specific sale
 final salesTransactionItemsProvider =
-    FutureProvider.family<List<SalesTransactionItemsTableData>, String>((
+    FutureProvider.family<List<SalesTransactionItemData>, String>((
       ref,
       saleId,
     ) {
@@ -93,7 +93,7 @@ class SalesRecordsScreen extends ConsumerWidget {
 }
 
 class SaleOrderCard extends ConsumerWidget {
-  final SalesTransactionsTableData sale;
+  final SalesTransactionData sale;
 
   const SaleOrderCard({super.key, required this.sale});
 
@@ -179,7 +179,7 @@ class SaleOrderCard extends ConsumerWidget {
             data: (items) {
               final totalAmount = items.fold<double>(
                 0,
-                (sum, item) => sum + item.totalPrice,
+                (sum, item) => sum + (item.priceInCents * item.quantity),
               );
               final totalQuantity = items.fold<int>(
                 0,
@@ -289,7 +289,7 @@ class SaleOrderCard extends ConsumerWidget {
 }
 
 class SaleOrderItemTile extends ConsumerWidget {
-  final SalesTransactionItemsTableData item;
+  final SalesTransactionItemData item;
 
   const SaleOrderItemTile({super.key, required this.item});
 
@@ -311,10 +311,10 @@ class SaleOrderItemTile extends ConsumerWidget {
         crossAxisAlignment: CrossAxisAlignment.end,
         children: [
           Text(
-            '￥${item.unitPrice.toStringAsFixed(2)} × ${item.quantity.toInt()}',
+            '￥${(item.priceInCents / 100).toStringAsFixed(2)} × ${item.quantity.toInt()}',
           ),
           Text(
-            '￥${item.totalPrice.toStringAsFixed(2)}',
+            '￥${(item.priceInCents * item.quantity / 100).toStringAsFixed(2)}',
             style: const TextStyle(fontWeight: FontWeight.bold),
           ),
         ],
