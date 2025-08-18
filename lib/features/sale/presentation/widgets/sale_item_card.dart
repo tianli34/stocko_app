@@ -10,6 +10,8 @@ import '../../domain/model/sale_cart_item.dart';
 class SaleItemCard extends ConsumerStatefulWidget {
   final String itemId;
   final FocusNode? quantityFocusNode;
+  // 新增：允许外部传入售价输入框的 FocusNode，用于跨卡片焦点链路
+  final FocusNode? sellingPriceFocusNode;
   final VoidCallback? onSubmitted;
   final bool showPriceInfo;
 
@@ -17,6 +19,7 @@ class SaleItemCard extends ConsumerStatefulWidget {
     required super.key,
     required this.itemId,
     this.quantityFocusNode,
+    this.sellingPriceFocusNode,
     this.onSubmitted,
     this.showPriceInfo = true,
   });
@@ -31,16 +34,21 @@ class _SaleItemCardState extends ConsumerState<SaleItemCard> {
 
   final _sellingPriceFocusNode = FocusNode();
 
+  // 统一获取当前使用的售价 FocusNode（外部优先，其次内部）
+  FocusNode get _priceNode => widget.sellingPriceFocusNode ?? _sellingPriceFocusNode;
+
 
   void _onSellingPriceFocusChange() {
-    if (_sellingPriceFocusNode.hasFocus) {
+    if (_priceNode.hasFocus) {
       _sellingPriceController.clear();
     } else {
       if (_sellingPriceController.text.isEmpty) {
         final item = ref
             .read(saleListProvider)
             .firstWhere((it) => it.id == widget.itemId);
-        _sellingPriceController.text = item.sellingPriceInCents.toStringAsFixed(2);
+    // 显示为元（分/100）
+    _sellingPriceController.text =
+      (item.sellingPriceInCents / 100).toStringAsFixed(2);
       }
     }
   }
@@ -62,7 +70,7 @@ class _SaleItemCardState extends ConsumerState<SaleItemCard> {
   @override
   void initState() {
     super.initState();
-    _sellingPriceFocusNode.addListener(_onSellingPriceFocusChange);
+  _priceNode.addListener(_onSellingPriceFocusChange);
     widget.quantityFocusNode?.addListener(_onQuantityFocusChange);
   }
 
@@ -73,20 +81,30 @@ class _SaleItemCardState extends ConsumerState<SaleItemCard> {
       oldWidget.quantityFocusNode?.removeListener(_onQuantityFocusChange);
       widget.quantityFocusNode?.addListener(_onQuantityFocusChange);
     }
+    if (widget.sellingPriceFocusNode != oldWidget.sellingPriceFocusNode) {
+      // 切换外部售价 FocusNode 时，迁移监听
+      (oldWidget.sellingPriceFocusNode ?? _sellingPriceFocusNode)
+          .removeListener(_onSellingPriceFocusChange);
+      _priceNode.addListener(_onSellingPriceFocusChange);
+    }
   }
 
   @override
   void dispose() {
     _sellingPriceController.dispose();
     _quantityController.dispose();
-    _sellingPriceFocusNode.removeListener(_onSellingPriceFocusChange);
-    _sellingPriceFocusNode.dispose();
+  // 仅移除监听；仅销毁内部节点
+  (widget.sellingPriceFocusNode ?? _sellingPriceFocusNode)
+    .removeListener(_onSellingPriceFocusChange);
+  _sellingPriceFocusNode.dispose();
     widget.quantityFocusNode?.removeListener(_onQuantityFocusChange);
     super.dispose();
   }
 
   void _updateItem(SaleCartItem item) {
-    final sellingPriceInCents = (int.tryParse(_sellingPriceController.text) ?? 0) * 100;
+  // 将输入的小数价格（元）转换为分
+  final String priceText = _sellingPriceController.text.trim();
+  final sellingPriceInCents = ((double.tryParse(priceText) ?? 0) * 100).round();
     final quantity = int.tryParse(_quantityController.text) ?? 0;
     final amount = sellingPriceInCents / 100 * quantity;
 
@@ -109,9 +127,12 @@ class _SaleItemCardState extends ConsumerState<SaleItemCard> {
       ),
     );
 
-    if (!_sellingPriceFocusNode.hasFocus &&
-        _sellingPriceController.text != item.sellingPriceInCents.toStringAsFixed(2)) {
-      _sellingPriceController.text = item.sellingPriceInCents.toStringAsFixed(2);
+  if (!_priceNode.hasFocus &&
+    _sellingPriceController.text !=
+      (item.sellingPriceInCents / 100).toStringAsFixed(2)) {
+    // 同步控制器文本为元（分/100）
+    _sellingPriceController.text =
+      (item.sellingPriceInCents / 100).toStringAsFixed(2);
     }
     if (widget.quantityFocusNode?.hasFocus == false &&
         _quantityController.text != item.quantity.toStringAsFixed(0)) {
@@ -236,12 +257,13 @@ class _SaleItemCardState extends ConsumerState<SaleItemCard> {
                                             child: TextFormField(
                                               controller:
                                                   _sellingPriceController,
-                                              focusNode: _sellingPriceFocusNode,
+                                              focusNode: _priceNode,
                                               keyboardType:
                                                   const TextInputType
                                                       .numberWithOptions(
                                                 decimal: true,
                                               ),
+                                              textInputAction: TextInputAction.next,
                                               decoration:
                                                   const InputDecoration(
                                                 border: OutlineInputBorder(),
@@ -253,6 +275,14 @@ class _SaleItemCardState extends ConsumerState<SaleItemCard> {
                                               ),
                                               onChanged: (value) =>
                                                   _updateItem(item),
+                                              onFieldSubmitted: (value) {
+                                                // 价格回车后，先跳到同卡片的数量；若无数量节点，则交给父层处理
+                                                if (widget.quantityFocusNode != null) {
+                                                  widget.quantityFocusNode!.requestFocus();
+                                                } else {
+                                                  widget.onSubmitted?.call();
+                                                }
+                                              },
                                             ),
                                           ),
                                         ],

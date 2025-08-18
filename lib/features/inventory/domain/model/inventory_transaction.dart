@@ -41,6 +41,41 @@ extension InventoryTransactionTypeExtension on InventoryTransactionType {
         return '退货';
     }
   }
+
+  /// 将枚举映射为数据库字段允许的短码
+  String get toDbCode {
+    switch (this) {
+      case InventoryTransactionType.inbound:
+        return 'in';
+      case InventoryTransactionType.outbound:
+        return 'out';
+      case InventoryTransactionType.adjustment:
+        return 'adjust';
+      case InventoryTransactionType.transfer:
+        return 'transfer';
+      case InventoryTransactionType.returned:
+        return 'return';
+    }
+  }
+}
+
+/// 从数据库短码还原为枚举值
+InventoryTransactionType inventoryTransactionTypeFromDbCode(String code) {
+  switch (code) {
+    case 'in':
+      return InventoryTransactionType.inbound;
+    case 'out':
+      return InventoryTransactionType.outbound;
+    case 'adjust':
+      return InventoryTransactionType.adjustment;
+    case 'transfer':
+      return InventoryTransactionType.transfer;
+    case 'return':
+      return InventoryTransactionType.returned;
+    default:
+      // 兜底：按入库处理
+      return InventoryTransactionType.inbound;
+  }
 }
 
 

@@ -16,7 +16,9 @@ final salesTransactionDaoProvider = Provider<SalesTransactionDao>((ref) {
 });
 
 // Provider for SalesTransactionItemDao
-final salesTransactionItemDaoProvider = Provider<SalesTransactionItemDao>((ref) {
+final salesTransactionItemDaoProvider = Provider<SalesTransactionItemDao>((
+  ref,
+) {
   final database = ref.watch(appDatabaseProvider);
   return database.salesTransactionItemDao;
 });
@@ -27,8 +29,9 @@ final salesTransactionsProvider = StreamProvider<List<SalesTransactionData>>((
 ) {
   final dao = ref.watch(salesTransactionDaoProvider);
   // Sort by created date descending
-  return dao.watchAllSalesTransactions().map((sales) => sales
-    ..sort((a, b) => b.createdAt.compareTo(a.createdAt)));
+  return dao.watchAllSalesTransactions().map(
+    (sales) => sales..sort((a, b) => b.createdAt.compareTo(a.createdAt)),
+  );
 });
 
 // Provider to get items for a specific sale
@@ -101,11 +104,12 @@ class SaleOrderCard extends ConsumerWidget {
     return '${dateTime.year}-${dateTime.month.toString().padLeft(2, '0')}-${dateTime.day.toString().padLeft(2, '0')} ${dateTime.hour.toString().padLeft(2, '0')}:${dateTime.minute.toString().padLeft(2, '0')}';
   }
 
-
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final customersAsync = ref.watch(allCustomersProvider);
-    final itemsAsync = ref.watch(salesTransactionItemsProvider(sale.id.toString()));
+    final itemsAsync = ref.watch(
+      salesTransactionItemsProvider(sale.id.toString()),
+    );
 
     Widget cardContent = Card(
       margin: EdgeInsets.zero,
@@ -120,7 +124,10 @@ class SaleOrderCard extends ConsumerWidget {
               if (sale.status == 'credit') ...[
                 const SizedBox(width: 8),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 4,
+                  ),
                   decoration: BoxDecoration(
                     color: Colors.orange.withOpacity(0.8),
                     borderRadius: BorderRadius.circular(12),
@@ -138,7 +145,10 @@ class SaleOrderCard extends ConsumerWidget {
               if (sale.status == 'settled') ...[
                 const SizedBox(width: 8),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 4,
+                  ),
                   decoration: BoxDecoration(
                     color: Colors.green.withOpacity(0.8),
                     borderRadius: BorderRadius.circular(12),
@@ -164,15 +174,15 @@ class SaleOrderCard extends ConsumerWidget {
               ),
               const SizedBox(height: 4),
               customersAsync.when(
-                  data: (customers) {
-                    final customer = customers
-                        .where((c) => c.id == sale.customerId)
-                        .firstOrNull;
-                    return Text('客户: ${customer?.name ?? '未知'}');
-                  },
-                  loading: () => const Text('客户: 加载中...'),
-                  error: (_, __) => const Text('客户: 加载失败'),
-                ),
+                data: (customers) {
+                  final customer = customers
+                      .where((c) => c.id == sale.customerId)
+                      .firstOrNull;
+                  return Text('客户: ${customer?.name ?? '未知'}');
+                },
+                loading: () => const Text('客户: 加载中...'),
+                error: (_, __) => const Text('客户: 加载失败'),
+              ),
             ],
           ),
           trailing: itemsAsync.when(
@@ -190,7 +200,7 @@ class SaleOrderCard extends ConsumerWidget {
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
                   Text(
-                    '￥${totalAmount.toStringAsFixed(2)}',
+                    '￥${(totalAmount / 100).toStringAsFixed(2)}',
                     style: const TextStyle(
                       fontWeight: FontWeight.bold,
                       color: Colors.red,
@@ -260,29 +270,20 @@ class SaleOrderCard extends ConsumerWidget {
       content = cardContent;
     }
 
-    return Container(
-      margin: const EdgeInsets.all(4.0),
-      child: content,
-    );
+    return Container(margin: const EdgeInsets.all(4.0), child: content);
   }
 
   Future<void> _handleSettlePayment(BuildContext context, WidgetRef ref) async {
     final dao = ref.read(salesTransactionDaoProvider);
     final success = await dao.updateSalesTransactionStatus(sale.id, 'settled');
-    
+
     if (success) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('销账成功'),
-          backgroundColor: Colors.green,
-        ),
+        const SnackBar(content: Text('销账成功'), backgroundColor: Colors.green),
       );
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('销账失败，请重试'),
-          backgroundColor: Colors.red,
-        ),
+        const SnackBar(content: Text('销账失败，请重试'), backgroundColor: Colors.red),
       );
     }
   }
@@ -297,14 +298,34 @@ class SaleOrderItemTile extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final productAsync = ref.watch(productByIdProvider(item.productId));
     return ListTile(
-      contentPadding: const EdgeInsets.symmetric(horizontal: 32, vertical: 4),
-      title: productAsync.when(
-        data: (product) => Text(product?.name ?? '货品ID: ${item.productId}'),
-        loading: () => const Text('加载中...'),
-        error: (err, stack) => Text(
-          '加载货品失败',
-          style: TextStyle(color: Theme.of(context).colorScheme.error),
-        ),
+      contentPadding: const EdgeInsets.only(
+        left: 3,
+        right: 16,
+        top: 0,
+        bottom: 0,
+      ),
+      minVerticalPadding: 0,
+      dense: true,
+      visualDensity: const VisualDensity(horizontal: 0, vertical: -3),
+      minLeadingWidth: 0,
+      title: Row(
+        children: [
+          Text(' ${item.id}  ', style: const TextStyle(fontSize: 14)),
+          const SizedBox(width: 6),
+          Expanded(
+            child: productAsync.when(
+              data: (product) => Text(
+                product?.name ?? '货品ID: ${item.productId}',
+                style: const TextStyle(fontSize: 16),
+              ),
+              loading: () => const Text('加载中...'),
+              error: (err, stack) => Text(
+                '加载货品失败',
+                style: TextStyle(color: Theme.of(context).colorScheme.error),
+              ),
+            ),
+          ),
+        ],
       ),
       trailing: Column(
         mainAxisAlignment: MainAxisAlignment.center,

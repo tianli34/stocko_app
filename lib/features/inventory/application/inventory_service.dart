@@ -24,11 +24,9 @@ class InventoryService {
     DateTime? time,
   }) async {
     try {
-      // 检查库存是否存在（暂时使用产品+店铺查找，未来需要支持批次）
-      var inventory = await _inventoryRepository.getInventoryByProductAndShop(
-        productId,
-        shopId,
-      );
+      // 按 产品+店铺+批次 维度检查库存是否存在
+      var inventory = await _inventoryRepository
+          .getInventoryByProductShopAndBatch(productId, shopId, batchId);
 
       if (inventory == null) {
         // 如果库存不存在，创建新库存记录
@@ -41,9 +39,10 @@ class InventoryService {
         await _inventoryRepository.addInventory(inventory);
       } else {
         // 如果库存存在，增加库存数量
-        await _inventoryRepository.addInventoryQuantity(
+        await _inventoryRepository.addInventoryQuantityByBatch(
           productId,
           shopId,
+          batchId,
           quantity,
         );
       }
@@ -53,6 +52,7 @@ class InventoryService {
         productId: productId,
         quantity: quantity,
         shopId: shopId,
+        batchId: batchId,
       );
       await _transactionRepository.addTransaction(transaction);
 

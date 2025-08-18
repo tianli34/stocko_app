@@ -304,9 +304,13 @@ class InventoryTransactionRepository
     return InventoryTransactionCompanion(
       id: transaction.id == null ? const Value.absent() : Value(transaction.id!),
       productId: Value(transaction.productId),
-      transactionType: Value(transaction.type.name),
+    // 数据库存的 type 字段使用短码（in/out/adjust/transfer/return）
+    transactionType: Value(transaction.type.toDbCode),
       quantity: Value(transaction.quantity),
       shopId: Value(transaction.shopId),
+    batchId: transaction.batchId != null
+      ? Value(transaction.batchId!)
+      : const Value.absent(),
       createdAt: transaction.createdAt != null
           ? Value(transaction.createdAt!)
           : const Value.absent(),
@@ -318,9 +322,10 @@ class InventoryTransactionRepository
     return InventoryTransactionModel(
       id: data.id,
       productId: data.productId,
-      type: InventoryTransactionType.values.byName(data.transactionType),
+  type: inventoryTransactionTypeFromDbCode(data.transactionType),
       quantity: data.quantity,
       shopId: data.shopId,
+  batchId: data.batchId,
       createdAt: data.createdAt,
     );
   }

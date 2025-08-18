@@ -4,7 +4,7 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/constants/app_routes.dart';
 import '../widgets/inbound_record_card.dart';
 import '../providers/inbound_records_provider.dart';
-import '../providers/outbound_records_provider.dart';
+import '../providers/outbound_receipts_provider.dart';
 import '../widgets/outbound_record_card.dart';
 
 /// 库存记录页面
@@ -23,7 +23,7 @@ class _InventoryRecordsScreenState extends ConsumerState<InventoryRecordsScreen>
   @override
   Widget build(BuildContext context) {
     final inboundRecordsAsync = ref.watch(inboundRecordsProvider);
-    final outboundRecordsAsync = ref.watch(outboundRecordsProvider);
+  final outboundRecordsAsync = ref.watch(outboundReceiptsProvider);
 
     return PopScope(
       canPop: false,
@@ -84,9 +84,7 @@ class _InventoryRecordsScreenState extends ConsumerState<InventoryRecordsScreen>
                           final record = records[index];
                           return Padding(
                             padding: const EdgeInsets.only(bottom: 12),
-                            child: OutboundRecordCard(
-                              record: record,
-                            ),
+                            child: OutboundRecordCard(record: record),
                           );
                         },
                       ),
@@ -110,8 +108,8 @@ class _InventoryRecordsScreenState extends ConsumerState<InventoryRecordsScreen>
                       ),
                       const SizedBox(height: 16),
                       ElevatedButton(
-                        onPressed: () =>
-                            ref.refresh(outboundRecordsProvider),
+            onPressed: () =>
+              ref.refresh(outboundReceiptsProvider),
                         child: const Text('重试'),
                       ),
                     ],

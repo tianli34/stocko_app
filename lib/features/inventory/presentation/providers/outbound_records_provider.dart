@@ -20,7 +20,9 @@ final outboundRecordsProvider =
     return InventoryTransactionModel(
       id: data.id,
       productId: data.productId,
-      type: InventoryTransactionType.values.firstWhere((e) => e.name == data.transactionType),
+  // DB stores short codes: 'in' | 'out' | 'adjust' | 'transfer' | 'return'
+  // Use converter to enum to avoid Bad state: No element
+  type: inventoryTransactionTypeFromDbCode(data.transactionType),
       quantity: data.quantity,
       shopId: data.shopId,
       batchId: data.batchId,

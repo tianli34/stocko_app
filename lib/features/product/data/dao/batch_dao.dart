@@ -38,18 +38,22 @@ class BatchDao extends DatabaseAccessor<AppDatabase> with _$BatchDaoMixin {
     // 可选：将时间标准化为日期粒度（与唯一键语义一致）。
     final d = productionDate.toUtc();
     final dateOnly = DateTime.utc(d.year, d.month, d.day);
+    final now = DateTime.now();
 
     await db.customInsert(
-      'INSERT INTO product_batch (product_id, production_date, total_inbound_quantity, shop_id) '
-      'VALUES (?1, ?2, ?3, ?4) '
+      'INSERT INTO product_batch (product_id, production_date, total_inbound_quantity, shop_id, created_at, updated_at) '
+      'VALUES (?1, ?2, ?3, ?4, ?5, ?6) '
       'ON CONFLICT(product_id, production_date, shop_id) DO UPDATE SET '
       'total_inbound_quantity = product_batch.total_inbound_quantity + excluded.total_inbound_quantity, '
-      'updated_at = CURRENT_TIMESTAMP',
+      // 关键修复：避免使用 CURRENT_TIMESTAMP（TEXT），绑定 DateTime，匹配 Drift 的整数存储。
+      'updated_at = ?6',
       variables: [
         Variable(productId),
         Variable(dateOnly),
         Variable(increment),
         Variable(shopId),
+        Variable(now), // created_at
+        Variable(now), // updated_at
       ],
       updates: {db.productBatch},
     );
@@ -68,6 +72,23 @@ class BatchDao extends DatabaseAccessor<AppDatabase> with _$BatchDaoMixin {
           t.productionDate.equals(dateOnly) &
           t.shopId.equals(shopId));
     return q.getSingleOrNull();
+  }
+
+  /// 仅返回批次 id，避免映射 DateTime 列（兼容旧数据 TEXT 时间存储）
+  Future<int?> getBatchIdByBusinessKey({
+    required int productId,
+    required DateTime productionDate,
+    required int shopId,
+  }) async {
+    final d = productionDate.toUtc();
+    final dateOnly = DateTime.utc(d.year, d.month, d.day);
+    final query = selectOnly(db.productBatch)
+      ..addColumns([db.productBatch.id])
+      ..where(db.productBatch.productId.equals(productId) &
+          db.productBatch.productionDate.equals(dateOnly) &
+          db.productBatch.shopId.equals(shopId));
+    final row = await query.getSingleOrNull();
+    return row?.read(db.productBatch.id);
   }
 
   /// 获取所有批次

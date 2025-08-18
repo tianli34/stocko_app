@@ -26,10 +26,27 @@ class InventoryDao extends DatabaseAccessor<AppDatabase>
     int productId,
     int shopId,
   ) {
-    return (select(stock)..where(
-          (t) => t.productId.equals(productId) & t.shopId.equals(shopId),
-        ))
+  return (select(stock)
+      ..where((t) => t.productId.equals(productId) & t.shopId.equals(shopId)))
         .getSingleOrNull();
+  }
+
+  /// 根据产品、店铺与批次获取库存（batchId 可为空）
+  Future<StockData?> getInventoryByProductShopAndBatch(
+    int productId,
+    int shopId,
+    int? batchId,
+  ) {
+    final query = select(stock)
+      ..where((t) => t.productId.equals(productId) & t.shopId.equals(shopId));
+
+    if (batchId == null) {
+      query.where((t) => t.batchId.isNull());
+    } else {
+      query.where((t) => t.batchId.equals(batchId));
+    }
+
+    return query.getSingleOrNull();
   }
 
   /// 获取所有库存
@@ -107,6 +124,31 @@ class InventoryDao extends DatabaseAccessor<AppDatabase>
                 updatedAt: Value(DateTime.now()),
               ),
             );
+    return result > 0;
+  }
+
+  /// 按批次更新库存数量（batchId 可为空）
+  Future<bool> updateInventoryQuantityByBatch(
+    int productId,
+    int shopId,
+    int? batchId,
+    int quantity,
+  ) async {
+    final updater = update(stock)
+      ..where((t) => t.productId.equals(productId) & t.shopId.equals(shopId));
+
+    if (batchId == null) {
+      updater.where((t) => t.batchId.isNull());
+    } else {
+      updater.where((t) => t.batchId.equals(batchId));
+    }
+
+    final result = await updater.write(
+      StockCompanion(
+        quantity: Value(quantity),
+        updatedAt: Value(DateTime.now()),
+      ),
+    );
     return result > 0;
   }
 

@@ -55,7 +55,7 @@ class InboundService {
     required List<InboundItemState> inboundItems,
     required String source,
     required bool isPurchaseMode,
-    int? supplierId,
+  int? supplierId,
     String? supplierName,
     String? remarks,
   }) async {
@@ -89,9 +89,7 @@ class InboundService {
 
       if (isPurchaseMode) {
         // --- 采购模式下的特定逻辑 ---
-        if (supplierId == null) {
-          throw Exception("采购模式下，supplierId不能为空");
-        }
+        // 允许仅提供名称时自动创建供应商
         final actualSupplierId =
             await _ensureSupplierExists(supplierId, supplierName);
         print('✅ 确认供应商ID: $actualSupplierId');
@@ -275,7 +273,8 @@ class InboundService {
     // final now = DateTime.now();
 
     // 创建入库单主记录
-    final receiptNumber =null;
+  // 若上游未生成单号，可使用 receiptId 作为返回标识
+  String? receiptNumber = id;
 
     final receipt = InboundReceiptCompanion(
       // id is auto-incrementing
@@ -296,12 +295,12 @@ class InboundService {
       int? resolvedBatchNumber;
       if (item.productionDate != null &&
           product?.enableBatchManagement == true) {
-        final batchRow = await _batchDao.getBatchByBusinessKey(
+  final batchIdOnly = await _batchDao.getBatchIdByBusinessKey(
           productId: item.model.productId,
           productionDate: item.productionDate!,
           shopId: shopId,
         );
-        resolvedBatchNumber = batchRow?.id;
+  resolvedBatchNumber = batchIdOnly;
       }
 
       final itemCompanion = InboundItemCompanion(
@@ -309,10 +308,10 @@ class InboundService {
         receiptId: drift.Value(receiptId),
         productId: drift.Value(item.model.productId),
         quantity: drift.Value(item.model.quantity),
-        
-        id: resolvedBatchNumber != null
-            ? drift.Value(resolvedBatchNumber)
-            : const drift.Value.absent(),
+    // 正确写入批次列到 batchId，而不是误写到主键 id
+    batchId: resolvedBatchNumber != null
+      ? drift.Value(resolvedBatchNumber)
+      : const drift.Value.absent(),
       );
       itemCompanions.add(itemCompanion);
     }
@@ -320,7 +319,8 @@ class InboundService {
     await _inboundItemDao.insertMultipleInboundItems(itemCompanions);
     print('✅ 入库明细创建完成，共 ${itemCompanions.length} 条');
 
-    return receiptNumber.toString();
+  // 如果没有传入单号，则用数据库生成的 receiptId 作为回传编号
+  return (receiptNumber ?? receiptId.toString());
   }
 
   /// 间接写入流水表、库存表
@@ -333,51 +333,55 @@ class InboundService {
           await _database.productDao.getProductById(item.model.productId);
 
       int? batchId;
-      if (item.productionDate != null &&
-          product?.enableBatchManagement == true) {
-        final batchRow = await _batchDao.getBatchByBusinessKey(
+      if (product?.enableBatchManagement == true &&
+          item.productionDate != null) {
+  final batchIdOnly = await _batchDao.getBatchIdByBusinessKey(
           productId: item.model.productId,
           productionDate: item.productionDate!,
           shopId: shopId,
         );
-        batchId = batchRow?.id;
-
-        final success = await _inventoryService.inbound(
-          productId: item.model.productId,
-          shopId: shopId,
-          batchId: batchId,
-          quantity: item.model.quantity,
-          time: DateTime.now(),
-        );
-
-        if (!success) {
-          throw Exception('商品 ${item.productName} 库存更新失败');
-        }
-        print('✅ 商品 ${item.productName} 库存更新完成');
+  batchId = batchIdOnly;
       }
+
+      // 无论是否启用批次管理，都必须更新库存；未启用批次时 batchId 为空
+      final success = await _inventoryService.inbound(
+        productId: item.model.productId,
+        shopId: shopId,
+        batchId: batchId,
+        quantity: item.model.quantity,
+        time: DateTime.now(),
+      );
+
+      if (!success) {
+        throw Exception('商品 ${item.productName} 库存更新失败');
+      }
+      print('✅ 商品 ${item.productName} 库存更新完成');
     }
   }
 
   /// 确保供应商存在，如果不存在则创建
   Future<int> _ensureSupplierExists(
-    int supplierId,
+    int? supplierId,
     String? supplierName,
   ) async {
-    // 首先尝试根据ID获取供应商
-    final existingSupplier = await _supplierRepository.getSupplierById(
-      supplierId,
-    );
-    if (existingSupplier != null) {
-      print('✅ 供应商已存在: ${existingSupplier.name}');
-      return supplierId;
+    // 1) 若提供了 ID，优先用 ID 校验
+    if (supplierId != null) {
+      final existingSupplier = await _supplierRepository.getSupplierById(
+        supplierId,
+      );
+      if (existingSupplier != null) {
+        print('✅ 供应商已存在: ${existingSupplier.name}');
+        return supplierId;
+      }
+      // 若 ID 不存在，则尝试用名称处理
     }
 
-    // 如果没有提供供应商名称，无法创建新供应商
+    // 2) 若无有效 ID，则必须有名称
     if (supplierName == null || supplierName.trim().isEmpty) {
-      throw Exception('供应商不存在且未提供供应商名称，无法自动创建');
+      throw Exception('采购模式下需要提供供应商名称，或选择一个已有供应商');
     }
 
-    // 检查是否有重名的供应商
+    // 3) 名称已存在则复用
     final supplierByName = await _supplierRepository.getSupplierByName(
       supplierName,
     );
@@ -386,13 +390,13 @@ class InboundService {
       return supplierByName.id!;
     }
 
-    // 创建新供应商
-    final newSupplier = Supplier(id: supplierId, name: supplierName.trim());
+    // 4) 否则创建新供应商
+    final newSupplier = Supplier(name: supplierName.trim());
 
     try {
-      await _supplierRepository.addSupplier(newSupplier);
-      print('✅ 自动创建新供应商: ${newSupplier.name} (ID: ${newSupplier.id})');
-      return newSupplier.id!;
+      final newId = await _supplierRepository.addSupplier(newSupplier);
+      print('✅ 自动创建新供应商: ${newSupplier.name} (ID: $newId)');
+      return newId;
     } catch (e) {
       print('❌ 创建供应商失败: $e');
       throw Exception('创建供应商失败: $e');

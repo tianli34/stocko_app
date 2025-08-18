@@ -281,8 +281,11 @@ class _CreateInboundScreenState extends ConsumerState<CreateInboundScreen> {
           context.go(AppRoutes.inventoryInboundRecords);
         }
       });
-    } catch (e) {
+    } catch (e, st) {
       Navigator.of(context).pop();
+      // 打印详细堆栈以定位真正的抛错位置
+      debugPrint('❌ 一键入库失败: $e');
+      debugPrintStack(stackTrace: st);
       showAppSnackBar(context,
           message: '❌ 一键入库失败: ${e.toString()}', isError: true);
     } finally {

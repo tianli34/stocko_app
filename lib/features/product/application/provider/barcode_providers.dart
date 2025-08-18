@@ -277,13 +277,6 @@ final mainBarcodeProvider =
     baseProductUnit = productUnits.first;
     print('备选的基础单位: id: ${baseProductUnit.id}');
   }
-
-  // 2. 根据基础单位配置ID查找条码
-  if (baseProductUnit == null) {
-    print('最终未能确定基础单位，返回 null');
-    print('=============================================');
-    return null;
-  }
   final barcodes =
       await barcodeRepo.getBarcodesByProductUnitId(baseProductUnit.id);
   print('根据单位ID ${baseProductUnit.id} 查找到的条码: ${barcodes.map((e) => e.barcodeValue).toList()}');

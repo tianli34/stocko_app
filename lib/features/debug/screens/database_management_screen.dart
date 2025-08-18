@@ -27,26 +27,7 @@ class DatabaseManagementScreen extends ConsumerWidget {
         padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            // 数据库信息卡片
-            Card(
-              child: Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      '数据库信息',
-                      style: Theme.of(context).textTheme.titleLarge,
-                    ),
-                    const SizedBox(height: 8),
-                    Text('版本: 14'),
-                    Text('位置: app_database.db'),
-                    Text('状态: 正常运行'),
-                  ],
-                ),
-              ),
-            ),
+          children: [            
 
             const SizedBox(height: 16),
 
@@ -214,10 +195,92 @@ class DatabaseManagementScreen extends ConsumerWidget {
                 child: const Text('查看销售交易项'),
               ),
             ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: OutlinedButton(
+                onPressed: () => _showStockData(context, ref),
+                child: const Text('查看库存'),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        Row(
+          children: [
+            Expanded(
+              child: OutlinedButton(
+                onPressed: () => _showOutboundReceiptsData(context, ref),
+                child: const Text('查看出库单'),
+              ),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: OutlinedButton(
+                onPressed: () {}, // 保留位置以便后续添加其他功能
+                child: const Text('待添加'),
+              ),
+            ),
           ],
         ),
       ],
     );
+  }
+
+  Future<void> _showOutboundReceiptsData(BuildContext context, WidgetRef ref) async {
+    try {
+      final database = ref.read(appDatabaseProvider);
+      final outboundReceipts = await database.select(database.outboundReceipt).get();
+      
+      if (context.mounted) {
+        showDialog(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: Text('出库单数据 (${outboundReceipts.length} 条)'),
+            content: SizedBox(
+              width: double.maxFinite,
+              height: 500, // 设置固定高度以便滚动
+              child: ListView.builder(
+                shrinkWrap: true,
+                itemCount: outboundReceipts.length,
+                itemBuilder: (context, index) {
+                  final outboundReceipt = outboundReceipts[index];
+                  return Card(
+                    margin: const EdgeInsets.symmetric(vertical: 4),
+                    child: ListTile(
+                      title: Text('出库单号: ${outboundReceipt.id}'),
+                      subtitle: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text('店铺ID: ${outboundReceipt.shopId}'),
+                          Text('原因: ${outboundReceipt.reason}'),
+                          if (outboundReceipt.salesTransactionId != null)
+                            Text('销售单ID: ${outboundReceipt.salesTransactionId}'),
+                          Text(
+                            '创建时间: ${outboundReceipt.createdAt.toString().substring(0, 16)}',
+                          ),
+                        ],
+                      ),
+                      isThreeLine: true,
+                    ),
+                  );
+                },
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(),
+                child: const Text('关闭'),
+              ),
+            ],
+          ),
+        );
+      }
+    } catch (e) {
+      print('查询出库单数据时出错: $e');
+      if (context.mounted) {
+        showAppSnackBar(context, message: '❌ 查询失败: $e', isError: true);
+      }
+    }
   }
 
   Future<void> _initializeDatabase(WidgetRef ref, BuildContext context) async {
@@ -736,6 +799,59 @@ class DatabaseManagementScreen extends ConsumerWidget {
       }
     } catch (e) {
       print('查询销售交易项数据时出错: $e');
+      if (context.mounted) {
+        showAppSnackBar(context, message: '❌ 查询失败: $e', isError: true);
+      }
+    }
+  }
+
+  Future<void> _showStockData(BuildContext context, WidgetRef ref) async {
+    try {
+      final database = ref.read(appDatabaseProvider);
+      final stockItems = await database.select(database.stock).get();
+      
+      if (context.mounted) {
+        showDialog(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: Text('库存数据 (${stockItems.length} 条)'),
+            content: SizedBox(
+              width: double.maxFinite,
+              height: 500, // 设置固定高度以便滚动
+              child: ListView.builder(
+                shrinkWrap: true,
+                itemCount: stockItems.length,
+                itemBuilder: (context, index) {
+                  final stock = stockItems[index];
+                  return Card(
+                    margin: const EdgeInsets.symmetric(vertical: 4),
+                    child: ListTile(
+                      title: Text('产品ID: ${stock.productId}'),
+                      subtitle: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text('批次ID: ${stock.batchId ?? '无'}'),
+                          Text('数量: ${stock.quantity}'),
+                          Text('店铺ID: ${stock.shopId}'),
+                        ],
+                      ),
+                      isThreeLine: true,
+                    ),
+                  );
+                },
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(),
+                child: const Text('关闭'),
+              ),
+            ],
+          ),
+        );
+      }
+    } catch (e) {
+      print('查询库存数据时出错: $e');
       if (context.mounted) {
         showAppSnackBar(context, message: '❌ 查询失败: $e', isError: true);
       }

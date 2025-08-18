@@ -17,9 +17,18 @@ class InventoryRepository implements IInventoryRepository {
   Future<int> addInventory(StockModel inventory) async {
     try {
       print('📦 仓储层：添加库存记录，ID: ${inventory.id}');
-      return await _inventoryDao.insertInventory(
-        _inventoryToCompanion(inventory),
+      // 新增时不应强制携带自增主键 ID
+      final companion = StockCompanion(
+        productId: Value(inventory.productId),
+        quantity: Value(inventory.quantity),
+        shopId: Value(inventory.shopId),
+        batchId: Value(inventory.batchId),
+        createdAt: inventory.createdAt != null
+            ? Value(inventory.createdAt!)
+            : const Value.absent(),
+        updatedAt: Value(inventory.updatedAt ?? DateTime.now()),
       );
+      return await _inventoryDao.insertInventory(companion);
     } catch (e) {
       print('📦 仓储层：添加库存记录失败: $e');
       rethrow;
@@ -50,6 +59,25 @@ class InventoryRepository implements IInventoryRepository {
       return data != null ? _dataToInventory(data) : null;
     } catch (e) {
       print('📦 仓储层：根据产品和店铺获取库存失败: $e');
+      rethrow;
+    }
+  }
+
+  @override
+  Future<StockModel?> getInventoryByProductShopAndBatch(
+    int productId,
+    int shopId,
+    int? batchId,
+  ) async {
+    try {
+      final data = await _inventoryDao.getInventoryByProductShopAndBatch(
+        productId,
+        shopId,
+        batchId,
+      );
+      return data != null ? _dataToInventory(data) : null;
+    } catch (e) {
+      print('📦 仓储层：根据产品/店铺/批次获取库存失败: $e');
       rethrow;
     }
   }
@@ -183,6 +211,26 @@ class InventoryRepository implements IInventoryRepository {
   }
 
   @override
+  Future<bool> updateInventoryQuantityByBatch(
+    int productId,
+    int shopId,
+    int? batchId,
+    int quantity,
+  ) async {
+    try {
+      return await _inventoryDao.updateInventoryQuantityByBatch(
+        productId,
+        shopId,
+        batchId,
+        quantity,
+      );
+    } catch (e) {
+      print('📦 仓储层：按批次更新库存数量失败: $e');
+      rethrow;
+    }
+  }
+
+  @override
   Future<bool> addInventoryQuantity(
     int productId,
     int shopId,
@@ -205,6 +253,34 @@ class InventoryRepository implements IInventoryRepository {
   }
 
   @override
+  Future<bool> addInventoryQuantityByBatch(
+    int productId,
+    int shopId,
+    int? batchId,
+    int amount,
+  ) async {
+    try {
+      final current = await getInventoryByProductShopAndBatch(
+        productId,
+        shopId,
+        batchId,
+      );
+      if (current != null) {
+        return await updateInventoryQuantityByBatch(
+          productId,
+          shopId,
+          batchId,
+          current.quantity + amount,
+        );
+      }
+      return false;
+    } catch (e) {
+      print('📦 仓储层：按批次增加库存数量失败: $e');
+      rethrow;
+    }
+  }
+
+  @override
   Future<bool> subtractInventoryQuantity(
     int productId,
     int shopId,
@@ -222,6 +298,34 @@ class InventoryRepository implements IInventoryRepository {
       return false;
     } catch (e) {
       print('📦 仓储层：减少库存数量失败: $e');
+      rethrow;
+    }
+  }
+
+  @override
+  Future<bool> subtractInventoryQuantityByBatch(
+    int productId,
+    int shopId,
+    int? batchId,
+    int amount,
+  ) async {
+    try {
+      final current = await getInventoryByProductShopAndBatch(
+        productId,
+        shopId,
+        batchId,
+      );
+      if (current != null) {
+        return await updateInventoryQuantityByBatch(
+          productId,
+          shopId,
+          batchId,
+          current.quantity - amount,
+        );
+      }
+      return false;
+    } catch (e) {
+      print('📦 仓储层：按批次减少库存数量失败: $e');
       rethrow;
     }
   }
@@ -286,11 +390,9 @@ class InventoryRepository implements IInventoryRepository {
 
   /// 将Inventory模型转换为数据库Companion对象
   StockCompanion _inventoryToCompanion(StockModel inventory) {
-    if (inventory.id == null) {
-      throw ArgumentError('Inventory ID cannot be null when creating a companion.');
-    }
     return StockCompanion(
-      id: Value(inventory.id!),
+      // 对于更新等需要指定行的场景，id 需由调用方通过 where 子句控制；此处避免强制要求
+      id: inventory.id != null ? Value(inventory.id!) : const Value.absent(),
       productId: Value(inventory.productId),
       quantity: Value(inventory.quantity),
       shopId: Value(inventory.shopId),

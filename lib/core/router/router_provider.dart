@@ -15,7 +15,6 @@ import '../../features/inventory/presentation/screens/screens.dart';
 import '../../features/sale/presentation/screens/create_sale_screen.dart';
 import '../../features/sale/presentation/screens/sales_records_screen.dart';
 import '../../features/purchase/presentation/screens/purchase_records_screen.dart';
-import '../../features/purchase/presentation/screens/purchase_detail_screen.dart';
 import '../../features/settings/presentation/screens/settings_screen.dart';
 import '../../features/sale/presentation/screens/customer_selection_screen.dart';
 import '../../features/home/presentation/screens/home_screen.dart';
@@ -74,7 +73,10 @@ final routerProvider = Provider<GoRouter>((ref) {
                       children: [
                         const Text(
                           '销售管理功能',
-                          style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                          style: TextStyle(
+                            fontSize: 24,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                         const SizedBox(height: 40),
                         SizedBox(
@@ -88,7 +90,8 @@ final routerProvider = Provider<GoRouter>((ref) {
                         SizedBox(
                           width: 200,
                           child: ElevatedButton(
-                            onPressed: () => context.push(AppRoutes.saleRecords),
+                            onPressed: () =>
+                                context.push(AppRoutes.saleRecords),
                             child: const Text('销售记录'),
                           ),
                         ),
@@ -125,13 +128,17 @@ final routerProvider = Provider<GoRouter>((ref) {
                       children: [
                         const Text(
                           '库存管理功能',
-                          style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                          style: TextStyle(
+                            fontSize: 24,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                         const SizedBox(height: 40),
                         SizedBox(
                           width: 200,
                           child: ElevatedButton(
-                            onPressed: () => context.go(AppRoutes.inboundCreate),
+                            onPressed: () =>
+                                context.go(AppRoutes.inboundCreate),
                             child: const Text('新建入库单'),
                           ),
                         ),
@@ -139,7 +146,8 @@ final routerProvider = Provider<GoRouter>((ref) {
                         SizedBox(
                           width: 200,
                           child: ElevatedButton(
-                            onPressed: () => context.push(AppRoutes.inventoryInboundRecords),
+                            onPressed: () =>
+                                context.push(AppRoutes.inventoryInboundRecords),
                             child: const Text('入库记录'),
                           ),
                         ),
@@ -147,7 +155,8 @@ final routerProvider = Provider<GoRouter>((ref) {
                         SizedBox(
                           width: 200,
                           child: ElevatedButton(
-                            onPressed: () => context.push(AppRoutes.inventoryQuery),
+                            onPressed: () =>
+                                context.push(AppRoutes.inventoryQuery),
                             child: const Text('库存查询'),
                           ),
                         ),
@@ -205,8 +214,9 @@ final routerProvider = Provider<GoRouter>((ref) {
               final productsAsyncValue = ref.watch(allProductsProvider);
               return productsAsyncValue.when(
                 data: (products) {
-                  final product =
-                      products.where((p) => p.id == productId).firstOrNull;
+                  final product = products
+                      .where((p) => p.id == productId)
+                      .firstOrNull;
                   return ProductAddEditScreen(product: product);
                 },
                 loading: () => const Scaffold(
@@ -224,9 +234,9 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: AppRoutes.categories,
         name: 'categories',
-        builder: (context, state) => const CategorySelectionScreen(isSelectionMode: false),
-        routes: [
-        ],
+        builder: (context, state) =>
+            const CategorySelectionScreen(isSelectionMode: false),
+        routes: [],
       ),
       GoRoute(
         path: AppRoutes.inboundCreate,
@@ -268,14 +278,6 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: AppRoutes.purchaseRecords,
         name: 'purchase-records',
         builder: (context, state) => const PurchaseRecordsScreen(),
-      ),
-      GoRoute(
-        path: AppRoutes.purchaseDetail,
-        name: 'purchase-detail',
-        builder: (context, state) {
-          final purchaseNumber = state.pathParameters['purchaseNumber']!;
-          return PurchaseDetailScreen(orderId: purchaseNumber);
-        },
       ),
       GoRoute(
         path: AppRoutes.databaseViewer,

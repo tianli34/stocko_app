@@ -13,7 +13,6 @@ import '../../domain/model/product_unit.dart';
 import '../../application/provider/product_providers.dart';
 import '../../application/category_notifier.dart';
 import '../../application/provider/unit_providers.dart';
-import '../../application/provider/product_unit_providers.dart';
 import '../../application/provider/barcode_providers.dart';
 import '../../application/provider/unit_edit_form_providers.dart';
 import 'category_selection_screen.dart';

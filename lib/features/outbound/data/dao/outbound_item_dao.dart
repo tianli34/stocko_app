@@ -9,5 +9,10 @@ class OutboundItemDao extends DatabaseAccessor<AppDatabase>
     with _$OutboundItemDaoMixin {
   OutboundItemDao(super.db);
 
-  // Methods to interact with the table will be defined here
+  /// 根据出库单ID获取所有明细
+  Future<List<OutboundItemData>> getOutboundItemsByReceiptId(int receiptId) {
+    return (select(outboundItem)
+          ..where((t) => t.receiptId.equals(receiptId)))
+        .get();
+  }
 }

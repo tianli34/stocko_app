@@ -3,6 +3,7 @@ import 'package:drift/drift.dart';
 // 导入数据库定义文件和所有表
 import '../../../core/database/database.dart';
 
+import 'package:stocko_app/features/product/domain/model/product.dart';
 /// 一个服务类，用于处理从外部数据源批量导入商品。
 class ProductImportService {
   final AppDatabase db;
@@ -176,6 +177,8 @@ class ProductImportService {
               brand: Value(brand),
               categoryId: Value(categoryId),
               baseUnitId: packUnitId, // 基础单位ID是“包”
+              suggestedRetailPrice:
+                  Value(Money((cartonSuggestedRetailPrice * 100).toInt())),
             ),
           );
 

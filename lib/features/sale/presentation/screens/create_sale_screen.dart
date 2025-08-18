@@ -16,6 +16,7 @@ import '../../../inventory/application/provider/shop_providers.dart';
 import '../../../inventory/domain/model/shop.dart';
 import '../../../inventory/presentation/providers/inbound_records_provider.dart';
 import '../../../inventory/presentation/providers/inventory_query_providers.dart';
+import '../../../inventory/presentation/providers/outbound_receipts_provider.dart';
 import '../../../product/application/provider/product_providers.dart';
 import '../../../product/presentation/screens/product_selection_screen.dart';
 import '../widgets/sale_item_card.dart';
@@ -47,6 +48,8 @@ class _CreateSaleScreenState extends ConsumerState<CreateSaleScreen> {
   final FocusNode _shopFocusNode = FocusNode();
   final FocusNode _customerFocusNode = FocusNode();
   final FocusNode _paymentFocusNode = FocusNode();
+  // 每个条目的售价与数量 FocusNode 列表
+  final List<FocusNode> _priceFocusNodes = [];
   final List<FocusNode> _quantityFocusNodes = [];
 
   @override
@@ -76,6 +79,9 @@ class _CreateSaleScreenState extends ConsumerState<CreateSaleScreen> {
     for (var node in _quantityFocusNodes) {
       node.dispose();
     }
+    for (var node in _priceFocusNodes) {
+      node.dispose();
+    }
     super.dispose();
   }
 
@@ -83,6 +89,10 @@ class _CreateSaleScreenState extends ConsumerState<CreateSaleScreen> {
     while (_quantityFocusNodes.length < itemCount) {
       _quantityFocusNodes.add(FocusNode());
     }
+    while (_priceFocusNodes.length < itemCount) {
+      _priceFocusNodes.add(FocusNode());
+    }
+    // 如果条目减少，不立刻销毁已存在的节点，避免异步 rebuild 期间访问已释放对象
   }
 
   Future<void> _handleNextStep(int index) async {
@@ -95,7 +105,11 @@ class _CreateSaleScreenState extends ConsumerState<CreateSaleScreen> {
   void _moveToNextQuantity(int index) {
     final itemCount = ref.read(saleListProvider).length;
     if (index + 1 < itemCount) {
-      _quantityFocusNodes[index + 1].requestFocus();
+      // 跳到下一项的售价（先价格后数量）
+      _priceFocusNodes[index + 1].requestFocus();
+    } else {
+      // 最后一项后跳到收款
+      _paymentFocusNode.requestFocus();
     }
   }
 
@@ -267,6 +281,8 @@ class _CreateSaleScreenState extends ConsumerState<CreateSaleScreen> {
 
       // 核心修复：使入库记录和库存查询的Provider失效，以便在导航后刷新数据
       ref.invalidate(inboundRecordsProvider);
+  // 同步刷新：使出库记录 Provider 失效，库存记录页的“出库记录”可自动更新
+  ref.invalidate(outboundReceiptsProvider);
       ref.invalidate(inventoryQueryProvider);
 
       Future.delayed(const Duration(seconds: 1), () {
@@ -373,6 +389,8 @@ class _CreateSaleScreenState extends ConsumerState<CreateSaleScreen> {
 
       // 核心修复：使入库记录和库存查询的Provider失效，以便在导航后刷新数据
       ref.invalidate(inboundRecordsProvider);
+  // 同步刷新：使出库记录 Provider 失效，库存记录页的“出库记录”可自动更新
+  ref.invalidate(outboundReceiptsProvider);
       ref.invalidate(inventoryQueryProvider);
 
       Future.delayed(const Duration(seconds: 1), () {
@@ -648,7 +666,7 @@ class _CreateSaleScreenState extends ConsumerState<CreateSaleScreen> {
               children: [
                 _buildHeaderSection(theme, textTheme),
                 const SizedBox(height: 0),
-                if (saleItemIds.isEmpty)
+        if (saleItemIds.isEmpty)
                   _buildEmptyState(theme, textTheme)
                 else
                   ...saleItemIds.asMap().entries.map((entry) {
@@ -660,10 +678,14 @@ class _CreateSaleScreenState extends ConsumerState<CreateSaleScreen> {
                         key: ValueKey(itemId),
                         itemId: itemId,
                         showPriceInfo: _currentMode == SaleMode.sale, // 新增
+            // 价格与数量 FocusNode 注入，构建焦点链路
+            sellingPriceFocusNode:
+              _priceFocusNodes.length > index ? _priceFocusNodes[index] : null,
                         quantityFocusNode: _quantityFocusNodes.length > index
                             ? _quantityFocusNodes[index]
                             : null,
-                        onSubmitted: () => _handleNextStep(index),
+            // 当数量提交时，跳到下一项的售价或收款
+            onSubmitted: () => _handleNextStep(index),
                       ),
                     );
                   }),
@@ -989,7 +1011,14 @@ class _CreateSaleScreenState extends ConsumerState<CreateSaleScreen> {
                                 _selectedCustomer = suggestion;
                                 _customerController.text = suggestion.name;
                               });
-                              _shopFocusNode.requestFocus();
+                              // 选中客户后跳到首个售价（延迟到下一帧，避免焦点被重建抢占落到店铺）
+                              WidgetsBinding.instance.addPostFrameCallback((_) {
+                                if (_priceFocusNodes.isNotEmpty) {
+                                  _priceFocusNodes.first.requestFocus();
+                                } else {
+                                  _paymentFocusNode.requestFocus();
+                                }
+                              });
                             },
                             builder: (context, controller, focusNode) {
                               return TextField(
@@ -1002,6 +1031,17 @@ class _CreateSaleScreenState extends ConsumerState<CreateSaleScreen> {
                                     vertical: 0,
                                   ),
                                 ),
+                                textInputAction: TextInputAction.next,
+                                onSubmitted: (_) {
+                                  // 顾客后跳到首个售价；如果没有条目则跳到收款
+                                  WidgetsBinding.instance.addPostFrameCallback((_) {
+                                    if (_priceFocusNodes.isNotEmpty) {
+                                      _priceFocusNodes.first.requestFocus();
+                                    } else {
+                                      _paymentFocusNode.requestFocus();
+                                    }
+                                  });
+                                },
                               );
                             },
                           ),

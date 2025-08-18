@@ -15,6 +15,13 @@ abstract class IInventoryRepository {
     int shopId,
   );
 
+  /// 根据产品ID、店铺ID与批次ID（可空）获取库存
+  Future<StockModel?> getInventoryByProductShopAndBatch(
+    int productId,
+    int shopId,
+    int? batchId,
+  );
+
   /// 获取所有库存
   Future<List<StockModel>> getAllInventory();
 
@@ -49,6 +56,14 @@ abstract class IInventoryRepository {
     int quantity,
   );
 
+  /// 按批次更新库存数量（batchId 可为 null 表示无批次）
+  Future<bool> updateInventoryQuantityByBatch(
+    int productId,
+    int shopId,
+    int? batchId,
+    int quantity,
+  );
+
   /// 增加库存数量
   Future<bool> addInventoryQuantity(
     int productId,
@@ -56,10 +71,26 @@ abstract class IInventoryRepository {
     int amount,
   );
 
+  /// 按批次增加库存数量（batchId 可为 null 表示无批次）
+  Future<bool> addInventoryQuantityByBatch(
+    int productId,
+    int shopId,
+    int? batchId,
+    int amount,
+  );
+
   /// 减少库存数量
   Future<bool> subtractInventoryQuantity(
     int productId,
     int shopId,
+    int amount,
+  );
+
+  /// 按批次减少库存数量（batchId 可为 null 表示无批次）
+  Future<bool> subtractInventoryQuantityByBatch(
+    int productId,
+    int shopId,
+    int? batchId,
     int amount,
   );
 

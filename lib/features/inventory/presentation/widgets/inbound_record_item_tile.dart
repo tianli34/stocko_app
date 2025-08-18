@@ -16,16 +16,35 @@ class InboundRecordItemTile extends ConsumerWidget {
     final batchAsync = ref.watch(batchByNumberProvider(item.id));
 
     return ListTile(
-      contentPadding: const EdgeInsets.symmetric(horizontal: 32, vertical: 4),
-      title: productAsync.when(
-        data: (product) => Text(product?.name ?? '货品ID: ${item.productId}'),
-        loading: () => const Text('加载中...'),
-        error: (err, stack) => Text(
-          '加载货品失败',
-          style: TextStyle(color: Theme.of(context).colorScheme.error),
-        ),
+      contentPadding: const EdgeInsets.only(
+        left: 3,
+        right: 16,
+        top: 0,
+        bottom: 0,
       ),
-      subtitle: Text('批号: ${item.id}'),
+      minVerticalPadding: 0,
+      dense: true,
+      visualDensity: const VisualDensity(horizontal: 0, vertical: -4),
+      minLeadingWidth: 0,
+      title: Row(
+        children: [
+          Text(' ${item.id}  ', style: const TextStyle(fontSize: 14)),
+          const SizedBox(width: 6),
+          Expanded(
+            child: productAsync.when(
+              data: (product) => Text(
+                product?.name ?? '货品ID: ${item.productId}',
+                style: const TextStyle(fontSize: 16),
+              ),
+              loading: () => const Text('加载中...'),
+              error: (err, stack) => Text(
+                '加载货品失败',
+                style: TextStyle(color: Theme.of(context).colorScheme.error),
+              ),
+            ),
+          ),
+        ],
+      ),
       trailing: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         crossAxisAlignment: CrossAxisAlignment.end,
@@ -34,19 +53,20 @@ class InboundRecordItemTile extends ConsumerWidget {
             '数量: ${item.quantity.toStringAsFixed(item.quantity.truncateToDouble() == item.quantity ? 0 : 2)}',
           ),
           batchAsync.when(
-              data: (batch) {
-                if (batch?.productionDate == null) return const SizedBox.shrink();
-                return Text(
-                  '生产日期: ${DateFormat('yyyy-MM-dd').format(batch!.productionDate)}',
-                  style: const TextStyle(fontSize: 12, color: Colors.grey),
-                );
-              },
-              loading: () => const SizedBox(
-                  width: 12,
-                  height: 12,
-                  child: CircularProgressIndicator(strokeWidth: 2)),
-              error: (e, s) => const SizedBox.shrink(),
+            data: (batch) {
+              if (batch?.productionDate == null) return const SizedBox.shrink();
+              return Text(
+                '生产日期: ${DateFormat('yyyy-MM-dd').format(batch!.productionDate)}',
+                style: const TextStyle(fontSize: 12, color: Colors.grey),
+              );
+            },
+            loading: () => const SizedBox(
+              width: 12,
+              height: 12,
+              child: CircularProgressIndicator(strokeWidth: 2),
             ),
+            error: (e, s) => const SizedBox.shrink(),
+          ),
         ],
       ),
     );
