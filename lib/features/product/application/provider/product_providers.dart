@@ -50,6 +50,8 @@ class ProductOperationsNotifier extends AsyncNotifier<void> {
 
       // 刷新产品列表
       ref.invalidate(allProductsProvider);
+// 使对应的 productByIdProvider 无效，以便获取最新数据
+      ref.invalidate(productByIdProvider(product.id!));
     });
   }
 

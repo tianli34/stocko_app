@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../product/application/provider/product_providers.dart';
+import '../../../product/application/provider/batch_providers.dart';
 import '../../../../core/widgets/cached_image_widget.dart';
 import '../../application/provider/sale_list_provider.dart';
 import '../../domain/model/sale_cart_item.dart';
@@ -14,6 +15,8 @@ class SaleItemCard extends ConsumerStatefulWidget {
   final FocusNode? sellingPriceFocusNode;
   final VoidCallback? onSubmitted;
   final bool showPriceInfo;
+  // 新增：用于加载批次（按产品+店铺）
+  final int? shopId;
 
   const SaleItemCard({
     required super.key,
@@ -22,6 +25,7 @@ class SaleItemCard extends ConsumerStatefulWidget {
     this.sellingPriceFocusNode,
     this.onSubmitted,
     this.showPriceInfo = true,
+    this.shopId,
   });
 
   @override
@@ -35,8 +39,8 @@ class _SaleItemCardState extends ConsumerState<SaleItemCard> {
   final _sellingPriceFocusNode = FocusNode();
 
   // 统一获取当前使用的售价 FocusNode（外部优先，其次内部）
-  FocusNode get _priceNode => widget.sellingPriceFocusNode ?? _sellingPriceFocusNode;
-
+  FocusNode get _priceNode =>
+      widget.sellingPriceFocusNode ?? _sellingPriceFocusNode;
 
   void _onSellingPriceFocusChange() {
     if (_priceNode.hasFocus) {
@@ -46,9 +50,9 @@ class _SaleItemCardState extends ConsumerState<SaleItemCard> {
         final item = ref
             .read(saleListProvider)
             .firstWhere((it) => it.id == widget.itemId);
-    // 显示为元（分/100）
-    _sellingPriceController.text =
-      (item.sellingPriceInCents / 100).toStringAsFixed(2);
+        // 显示为元（分/100）
+        _sellingPriceController.text = (item.sellingPriceInCents / 100)
+            .toStringAsFixed(2);
       }
     }
   }
@@ -66,11 +70,10 @@ class _SaleItemCardState extends ConsumerState<SaleItemCard> {
     }
   }
 
-
   @override
   void initState() {
     super.initState();
-  _priceNode.addListener(_onSellingPriceFocusChange);
+    _priceNode.addListener(_onSellingPriceFocusChange);
     widget.quantityFocusNode?.addListener(_onQuantityFocusChange);
   }
 
@@ -93,18 +96,20 @@ class _SaleItemCardState extends ConsumerState<SaleItemCard> {
   void dispose() {
     _sellingPriceController.dispose();
     _quantityController.dispose();
-  // 仅移除监听；仅销毁内部节点
-  (widget.sellingPriceFocusNode ?? _sellingPriceFocusNode)
-    .removeListener(_onSellingPriceFocusChange);
-  _sellingPriceFocusNode.dispose();
+    // 仅移除监听；仅销毁内部节点
+    (widget.sellingPriceFocusNode ?? _sellingPriceFocusNode).removeListener(
+      _onSellingPriceFocusChange,
+    );
+    _sellingPriceFocusNode.dispose();
     widget.quantityFocusNode?.removeListener(_onQuantityFocusChange);
     super.dispose();
   }
 
   void _updateItem(SaleCartItem item) {
-  // 将输入的小数价格（元）转换为分
-  final String priceText = _sellingPriceController.text.trim();
-  final sellingPriceInCents = ((double.tryParse(priceText) ?? 0) * 100).round();
+    // 将输入的小数价格（元）转换为分
+    final String priceText = _sellingPriceController.text.trim();
+    final sellingPriceInCents = ((double.tryParse(priceText) ?? 0) * 100)
+        .round();
     final quantity = int.tryParse(_quantityController.text) ?? 0;
     final amount = sellingPriceInCents / 100 * quantity;
 
@@ -117,7 +122,10 @@ class _SaleItemCardState extends ConsumerState<SaleItemCard> {
     ref.read(saleListProvider.notifier).updateItem(updatedItem);
   }
 
-
+  void _updateItemBatch(SaleCartItem item, int? batchId) {
+    final updatedItem = item.copyWith(batchId: batchId?.toString());
+    ref.read(saleListProvider.notifier).updateItem(updatedItem);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -127,12 +135,12 @@ class _SaleItemCardState extends ConsumerState<SaleItemCard> {
       ),
     );
 
-  if (!_priceNode.hasFocus &&
-    _sellingPriceController.text !=
-      (item.sellingPriceInCents / 100).toStringAsFixed(2)) {
-    // 同步控制器文本为元（分/100）
-    _sellingPriceController.text =
-      (item.sellingPriceInCents / 100).toStringAsFixed(2);
+    if (!_priceNode.hasFocus &&
+        _sellingPriceController.text !=
+            (item.sellingPriceInCents / 100).toStringAsFixed(2)) {
+      // 同步控制器文本为元（分/100）
+      _sellingPriceController.text = (item.sellingPriceInCents / 100)
+          .toStringAsFixed(2);
     }
     if (widget.quantityFocusNode?.hasFocus == false &&
         _quantityController.text != item.quantity.toStringAsFixed(0)) {
@@ -147,8 +155,9 @@ class _SaleItemCardState extends ConsumerState<SaleItemCard> {
             padding: const EdgeInsets.all(3),
             child: Consumer(
               builder: (context, ref, _) {
-                final productAsync =
-                    ref.watch(productByIdProvider(item.productId));
+                final productAsync = ref.watch(
+                  productByIdProvider(item.productId),
+                );
 
                 return productAsync.when(
                   loading: () => const SizedBox(
@@ -158,7 +167,8 @@ class _SaleItemCardState extends ConsumerState<SaleItemCard> {
                   error: (e, st) => const SizedBox(
                     height: 80,
                     child: Center(
-                        child: Icon(Icons.error, color: Colors.red, size: 30)),
+                      child: Icon(Icons.error, color: Colors.red, size: 30),
+                    ),
                   ),
                   data: (product) {
                     return Row(
@@ -200,40 +210,142 @@ class _SaleItemCardState extends ConsumerState<SaleItemCard> {
                                       overflow: TextOverflow.ellipsis,
                                     ),
                                   ),
-                                  if (!widget.showPriceInfo) ...[
+
+                                  // 批次（生产日期）选择：仅当启用批次管理且存在店铺ID
+                                  if (product?.enableBatchManagement == true &&
+                                      widget.shopId != null) ...[
                                     const SizedBox(width: 8),
                                     SizedBox(
-                                      width: 60,
-                                      height: 30,
-                                      child: TextFormField(
-                                        controller: _quantityController,
-                                        focusNode: widget.quantityFocusNode,
-                                        keyboardType: const TextInputType
-                                            .numberWithOptions(
-                                          decimal: false,
-                                        ),
-                                        textAlign: TextAlign.center,
-                                        textInputAction: TextInputAction.next,
-                                        decoration: const InputDecoration(
-                                          hintText: '数量',
-                                          border: OutlineInputBorder(),
-                                          contentPadding: EdgeInsets.zero,
-                                        ),
-                                        onChanged: (value) =>
-                                            _updateItem(item),
-                                        onFieldSubmitted: (value) =>
-                                            widget.onSubmitted?.call(),
+                                      width: 130,
+                                      child: Consumer(
+                                        builder: (context, ref, __) {
+                                          final batchesAsync = ref.watch(
+                                            batchesByProductAndShopProvider((
+                                              productId: item.productId,
+                                              shopId: widget.shopId!,
+                                            )),
+                                          );
+                                          return batchesAsync.when(
+                                            loading: () => const SizedBox(
+                                              height: 30,
+                                              child: Center(
+                                                child: SizedBox(
+                                                  width: 16,
+                                                  height: 16,
+                                                  child:
+                                                      CircularProgressIndicator(
+                                                        strokeWidth: 2,
+                                                      ),
+                                                ),
+                                              ),
+                                            ),
+                                            error: (e, st) => const SizedBox(
+                                              height: 30,
+                                              child: Center(
+                                                child: Icon(
+                                                  Icons.error,
+                                                  size: 16,
+                                                  color: Colors.red,
+                                                ),
+                                              ),
+                                            ),
+                                            data: (list) {
+                                              // 选项：显示生产日期（按 id 去重，防止出现重复 value）
+                                              final options = list;
+                                              final uniqueOptions = {
+                                                for (final b in options)
+                                                  b.id: b,
+                                              }.values.toList();
+                                              final selectedId = int.tryParse(
+                                                item.batchId ?? '',
+                                              );
+
+                                              // 若当前选中批次不在新店铺的批次列表中，置空以避免 Dropdown 的断言错误
+                                              final isValid =
+                                                  selectedId != null &&
+                                                  uniqueOptions.any(
+                                                    (b) => b.id == selectedId,
+                                                  );
+
+                                              // 若无有效选择，则默认使用最早的生产日期
+                                              int? defaultId;
+                                              if (!isValid &&
+                                                  uniqueOptions.isNotEmpty) {
+                                                final sortedByDate =
+                                                    [...uniqueOptions]..sort(
+                                                      (a, b) => a.productionDate
+                                                          .compareTo(
+                                                            b.productionDate,
+                                                          ),
+                                                    );
+                                                defaultId =
+                                                    sortedByDate.first.id;
+                                              }
+
+                                              final effectiveValue = isValid
+                                                  ? selectedId
+                                                  : defaultId;
+
+                                              // 异步将默认值写回（或在切换店铺后修正为有效默认值）
+                                              if (!isValid &&
+                                                  effectiveValue != null) {
+                                                WidgetsBinding.instance
+                                                    .addPostFrameCallback((_) {
+                                                      _updateItemBatch(
+                                                        item,
+                                                        effectiveValue,
+                                                      );
+                                                    });
+                                              }
+
+                                              return DropdownButtonFormField<
+                                                int
+                                              >(
+                                                isDense: true,
+                                                value: effectiveValue,
+                                                decoration:
+                                                    const InputDecoration(
+                                                      isDense: true,
+                                                      contentPadding:
+                                                          EdgeInsets.symmetric(
+                                                            horizontal: 8,
+                                                            vertical: 6,
+                                                          ),
+                                                      border:
+                                                          OutlineInputBorder(),
+                                                    ),
+                                                hint: const Text('生产日期'),
+                                                items: uniqueOptions
+                                                    .map(
+                                                      (b) =>
+                                                          DropdownMenuItem<int>(
+                                                            value: b.id,
+                                                            child: Text(
+                                                              // 仅日期部分
+                                                              b.productionDate
+                                                                  .toLocal()
+                                                                  .toString()
+                                                                  .split(' ')
+                                                                  .first,
+                                                              overflow:
+                                                                  TextOverflow
+                                                                      .ellipsis,
+                                                            ),
+                                                          ),
+                                                    )
+                                                    .toList(),
+                                                onChanged: (val) {
+                                                  _updateItemBatch(item, val);
+                                                },
+                                              );
+                                            },
+                                          );
+                                        },
                                       ),
                                     ),
                                   ],
+
                                   const Spacer(),
-                                  Text(
-                                    item.unitName,
-                                    style: TextStyle(
-                                        fontSize: 12,
-                                        color: Colors.grey[600]),
-                                  ),
-                                  const SizedBox(width: 55),
                                 ],
                               ),
                               const SizedBox(height: 3),
@@ -247,10 +359,13 @@ class _SaleItemCardState extends ConsumerState<SaleItemCard> {
                                         crossAxisAlignment:
                                             CrossAxisAlignment.start,
                                         children: [
-                                          const Text('售价',
-                                              style: TextStyle(
-                                                  fontSize: 12,
-                                                  color: Colors.grey)),
+                                          const Text(
+                                            '售价',
+                                            style: TextStyle(
+                                              fontSize: 12,
+                                              color: Colors.grey,
+                                            ),
+                                          ),
                                           const SizedBox(height: 4),
                                           SizedBox(
                                             height: 27,
@@ -259,26 +374,28 @@ class _SaleItemCardState extends ConsumerState<SaleItemCard> {
                                                   _sellingPriceController,
                                               focusNode: _priceNode,
                                               keyboardType:
-                                                  const TextInputType
-                                                      .numberWithOptions(
-                                                decimal: true,
-                                              ),
-                                              textInputAction: TextInputAction.next,
-                                              decoration:
-                                                  const InputDecoration(
+                                                  const TextInputType.numberWithOptions(
+                                                    decimal: true,
+                                                  ),
+                                              textInputAction:
+                                                  TextInputAction.next,
+                                              decoration: const InputDecoration(
                                                 border: OutlineInputBorder(),
-                                                contentPadding: EdgeInsets
-                                                    .symmetric(
-                                                        horizontal: 12,
-                                                        vertical: 7),
+                                                contentPadding:
+                                                    EdgeInsets.symmetric(
+                                                      horizontal: 12,
+                                                      vertical: 7,
+                                                    ),
                                                 prefixText: '¥',
                                               ),
                                               onChanged: (value) =>
                                                   _updateItem(item),
                                               onFieldSubmitted: (value) {
                                                 // 价格回车后，先跳到同卡片的数量；若无数量节点，则交给父层处理
-                                                if (widget.quantityFocusNode != null) {
-                                                  widget.quantityFocusNode!.requestFocus();
+                                                if (widget.quantityFocusNode !=
+                                                    null) {
+                                                  widget.quantityFocusNode!
+                                                      .requestFocus();
                                                 } else {
                                                   widget.onSubmitted?.call();
                                                 }
@@ -290,37 +407,38 @@ class _SaleItemCardState extends ConsumerState<SaleItemCard> {
                                     ),
                                     const SizedBox.square(dimension: 12.0),
                                     Expanded(
-                                      flex: 3,
+                                      flex: 4,
                                       child: Column(
                                         crossAxisAlignment:
                                             CrossAxisAlignment.start,
                                         children: [
-                                          const Text('数量',
-                                              style: TextStyle(
-                                                  fontSize: 12,
-                                                  color: Colors.grey)),
+                                          const Text(
+                                            '数量',
+                                            style: TextStyle(
+                                              fontSize: 12,
+                                              color: Colors.grey,
+                                            ),
+                                          ),
                                           const SizedBox(height: 4),
                                           SizedBox(
                                             height: 27,
                                             child: TextFormField(
-                                              controller:
-                                                  _quantityController,
+                                              controller: _quantityController,
                                               focusNode:
                                                   widget.quantityFocusNode,
                                               keyboardType:
-                                                  const TextInputType
-                                                      .numberWithOptions(
-                                                decimal: false,
-                                              ),
+                                                  const TextInputType.numberWithOptions(
+                                                    decimal: false,
+                                                  ),
                                               textInputAction:
                                                   TextInputAction.next,
-                                              decoration:
-                                                  const InputDecoration(
+                                              decoration: const InputDecoration(
                                                 border: OutlineInputBorder(),
-                                                contentPadding: EdgeInsets
-                                                    .symmetric(
-                                                        horizontal: 12,
-                                                        vertical: 7),
+                                                contentPadding:
+                                                    EdgeInsets.symmetric(
+                                                      horizontal: 12,
+                                                      vertical: 4,
+                                                    ),
                                               ),
                                               onChanged: (value) =>
                                                   _updateItem(item),
@@ -332,16 +450,32 @@ class _SaleItemCardState extends ConsumerState<SaleItemCard> {
                                       ),
                                     ),
                                     const SizedBox.square(dimension: 12.0),
+
+                                    Padding(
+                                      padding: const EdgeInsets.only(top: 24.0),
+                                      child: Text(
+                                        item.unitName,
+                                        style: TextStyle(
+                                          fontSize: 16,
+                                          color: Colors.grey[600],
+                                        ),
+                                      ),
+                                    ),
+                                    const SizedBox(width: 22.0),
+
                                     Expanded(
                                       flex: 7,
                                       child: Column(
                                         crossAxisAlignment:
                                             CrossAxisAlignment.start,
                                         children: [
-                                          const Text('金额',
-                                              style: TextStyle(
-                                                  fontSize: 12,
-                                                  color: Colors.grey)),
+                                          const Text(
+                                            '金额',
+                                            style: TextStyle(
+                                              fontSize: 12,
+                                              color: Colors.grey,
+                                            ),
+                                          ),
                                           const SizedBox(height: 4),
                                           SizedBox(
                                             height: 27,
@@ -350,11 +484,13 @@ class _SaleItemCardState extends ConsumerState<SaleItemCard> {
                                               child: Padding(
                                                 padding:
                                                     const EdgeInsets.symmetric(
-                                                        horizontal: 12.0),
+                                                      horizontal: 12.0,
+                                                    ),
                                                 child: Text(
                                                   '¥${item.amount.toStringAsFixed(2)}',
                                                   style: const TextStyle(
-                                                      fontSize: 14),
+                                                    fontSize: 14,
+                                                  ),
                                                 ),
                                               ),
                                             ),

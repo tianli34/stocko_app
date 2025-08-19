@@ -156,7 +156,7 @@ final routerProvider = Provider<GoRouter>((ref) {
                           width: 200,
                           child: ElevatedButton(
                             onPressed: () =>
-                                context.push(AppRoutes.inventoryQuery),
+                                context.push('/inventory-query'),
                             child: const Text('库存查询'),
                           ),
                         ),
@@ -170,11 +170,6 @@ final routerProvider = Provider<GoRouter>((ref) {
                   ),
                 ),
                 routes: [
-                  GoRoute(
-                    path: 'query',
-                    name: 'inventory-query',
-                    builder: (context, state) => const InventoryQueryScreen(),
-                  ),
                   GoRoute(
                     path: 'inbound-records',
                     name: 'inventory-inbound-records',
@@ -298,6 +293,11 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: AppRoutes.saleCreate,
         name: 'sale-create',
         builder: (context, state) => const CreateSaleScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.inventoryQuery,
+        name: 'inventory-query',
+        builder: (context, state) => const InventoryQueryScreen(),
       ),
     ],
     errorBuilder: (context, state) => Scaffold(

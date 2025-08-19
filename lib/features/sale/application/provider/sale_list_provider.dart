@@ -51,7 +51,10 @@ class SaleListNotifier extends StateNotifier<List<SaleCartItem>> {
       if (barcode != null && item.id.contains('item_${barcode}_')) {
         return true;
       }
-      return item.productId == product.id! && item.unitId == unitId;
+      final sameBase = item.productId == product.id! && item.unitId == unitId;
+      // 若任一方有 batchId，则需要相等才合并；否则视为不同批次不合并
+      if ((item.batchId ?? '') != (batchId ?? '')) return false;
+      return sameBase;
     });
 
     if (existingItemIndex != -1) {

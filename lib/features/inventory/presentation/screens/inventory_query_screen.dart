@@ -25,7 +25,32 @@ class InventoryQueryScreen extends ConsumerWidget {
         backgroundColor: Theme.of(context).colorScheme.surface,
         foregroundColor: Theme.of(context).colorScheme.onSurface,
         elevation: 0,
+        actions: [
+          PopupMenuButton<InventorySortType>(
+            onSelected: (InventorySortType sortType) {
+              ref.read(inventoryFilterProvider.notifier).updateSortBy(sortType);
+            },
+            itemBuilder: (BuildContext context) =>
+                <PopupMenuEntry<InventorySortType>>[
+              const PopupMenuItem<InventorySortType>(
+                value: InventorySortType.byQuantity,
+                child: Text('按库存数量排序'),
+              ),
+              const PopupMenuItem<InventorySortType>(
+                value: InventorySortType.byShelfLife,
+                child: Text('按剩余保质期排序'),
+              ),
+              const PopupMenuItem<InventorySortType>(
+                value: InventorySortType.none,
+                child: Text('默认排序'),
+              ),
+            ],
+            icon: const Icon(Icons.sort),
+            tooltip: '排序方式',
+          ),
+        ],
       ),
+      bottomNavigationBar: null,
       body: Column(
         children: [
           // 筛选栏

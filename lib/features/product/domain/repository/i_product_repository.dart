@@ -1,3 +1,5 @@
+import 'package:stocko_app/features/inventory/domain/model/batch.dart';
+
 import '../model/product.dart';
 
 /// 产品仓储抽象接口
@@ -83,4 +85,6 @@ abstract class IProductRepository {
   /// [unitId] 单位ID
   /// 返回布尔值，表示是否被使用
   Future<bool> isUnitUsed(int unitId);
+  /// 根据货品ID和店铺ID获取批次
+  Future<List<BatchModel>> getBatchesByProductAndShop(int productId, int shopId);
 }

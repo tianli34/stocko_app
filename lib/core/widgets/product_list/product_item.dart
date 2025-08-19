@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../features/product/domain/model/product.dart';
-import '../../../features/product/application/provider/unit_providers.dart';
-import '../../widgets/cached_image_widget.dart';
+import 'package:stocko_app/features/inventory/presentation/widgets/adjust_inventory_dialog.dart';
+import 'package:stocko_app/features/product/domain/model/product.dart';
+import 'package:stocko_app/features/product/application/provider/unit_providers.dart';
+import 'package:stocko_app/core/widgets/cached_image_widget.dart';
 import 'package:flutter/services.dart';
 
 class ProductItem extends ConsumerStatefulWidget {
@@ -104,7 +105,10 @@ class _ProductItemState extends ConsumerState<ProductItem> {
       } else if (value == 'delete') {
         widget.onDelete?.call(widget.item);
       } else if (value == 'adjust_inventory') {
-        widget.onAdjustInventory?.call(widget.item);
+        showDialog(
+          context: context,
+          builder: (context) => AdjustInventoryDialog(product: widget.item),
+        );
       }
     });
   }

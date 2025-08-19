@@ -69,14 +69,23 @@ class InventoryService {
     required int productId,
     required int shopId,
     required int quantity,
+    int? batchId,
     DateTime? time,
   }) async {
     try {
-      // 检查库存是否足够
-      await _inventoryRepository.getInventoryByProductAndShop(
-        productId,
-        shopId,
-      );
+      // 检查库存是否足够（按批次或总库存）
+      if (batchId != null) {
+        await _inventoryRepository.getInventoryByProductShopAndBatch(
+          productId,
+          shopId,
+          batchId,
+        );
+      } else {
+        await _inventoryRepository.getInventoryByProductAndShop(
+          productId,
+          shopId,
+        );
+      }
 
       // if (inventory == null || inventory.quantity < quantity) {
       //   print('📦 库存服务：库存不足，无法出库');
@@ -84,17 +93,27 @@ class InventoryService {
       // }
 
       // 减少库存数量
-      await _inventoryRepository.subtractInventoryQuantity(
-        productId,
-        shopId,
-        quantity,
-      );
+      if (batchId != null) {
+        await _inventoryRepository.subtractInventoryQuantityByBatch(
+          productId,
+          shopId,
+          batchId,
+          quantity,
+        );
+      } else {
+        await _inventoryRepository.subtractInventoryQuantity(
+          productId,
+          shopId,
+          quantity,
+        );
+      }
 
       // 记录出库流水
       final transaction = InventoryTransactionModel.createOutbound(
         productId: productId,
         quantity: quantity,
         shopId: shopId,
+        batchId: batchId,
       );
       await _transactionRepository.addTransaction(transaction);
 

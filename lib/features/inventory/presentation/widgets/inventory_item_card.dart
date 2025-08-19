@@ -17,6 +17,51 @@ class InventoryItemCard extends StatelessWidget {
     // 根据库存数量确定状态
     final stockStatus = _getStockStatus(quantity);
 
+    // 计算保质期
+    final productionDateStr = inventory['productionDate'] as String?;
+    final shelfLifeDays = inventory['shelfLifeDays'] as int?;
+    final shelfLifeUnit = inventory['shelfLifeUnit'] as String?;
+    String? shelfLifeText;
+
+    if (productionDateStr != null && shelfLifeDays != null && shelfLifeUnit != null) {
+      print('==================== 卡片UI保质期计算 ====================');
+      print('商品: $productName | 生产日期字符串: $productionDateStr, 保质期: $shelfLifeDays $shelfLifeUnit');
+      try {
+        final productionDate = DateTime.parse(productionDateStr);
+        
+        // 根据保质期单位转换为天数
+        int shelfLifeInDays;
+        switch (shelfLifeUnit) {
+          case 'days':
+            shelfLifeInDays = shelfLifeDays;
+            break;
+          case 'months':
+            shelfLifeInDays = shelfLifeDays * 30; // 近似值
+            break;
+          case 'years':
+            shelfLifeInDays = shelfLifeDays * 365; // 近似值
+            break;
+          default:
+            shelfLifeInDays = shelfLifeDays; // 默认按天处理
+        }
+        
+        final expiryDate = productionDate.add(Duration(days: shelfLifeInDays));
+        final remainingDays = expiryDate.difference(DateTime.now()).inDays;
+
+        print('计算结果 -> 生产日期: $productionDate, 到期日: $expiryDate, 剩余: $remainingDays 天');
+
+        if (remainingDays <= 0) {
+          shelfLifeText = '已过期';
+        } else {
+          shelfLifeText = '剩余: $remainingDays 天';
+        }
+      } catch (e) {
+        shelfLifeText = '日期格式错误';
+        print('错误: 日期解析失败 - $e');
+      }
+      print('========================================================');
+    }
+
     return Card(
       elevation: 2,
       margin: EdgeInsets.zero,
@@ -58,6 +103,18 @@ class InventoryItemCard extends StatelessWidget {
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                   ),
+                  if (shelfLifeText != null) ...[
+                    const SizedBox(height: 4),
+                    Text(
+                      shelfLifeText,
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: shelfLifeText == '已过期'
+                            ? Colors.red
+                            : Colors.grey[600],
+                      ),
+                    ),
+                  ],
                   const SizedBox(height: 12),
 
                   // 库存信息

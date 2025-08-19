@@ -1,3 +1,5 @@
+import 'package:stocko_app/features/inventory/domain/model/batch.dart';
+
 import '../../domain/repository/i_product_repository.dart';
 import '../../domain/model/product.dart';
 import '../../../../core/database/database.dart';
@@ -307,6 +309,29 @@ class ProductRepository implements IProductRepository {
     } catch (e) {
       throw Exception('检查单位是否被使用失败: $e');
     }
+  }
+  @override
+  Future<List<BatchModel>> getBatchesByProductAndShop(
+      int productId, int shopId) async {
+    try {
+      final batchDao = (_productDao.db).batchDao;
+      final data = await batchDao.getBatchesByProductAndShop(productId, shopId);
+      return data.map(_dataToBatch).toList();
+    } catch (e) {
+      throw Exception('根据产品和店铺获取批次失败: $e');
+    }
+  }
+
+  BatchModel _dataToBatch(ProductBatchData data) {
+    return BatchModel(
+      id: data.id,
+      productId: data.productId,
+      productionDate: data.productionDate,
+      totalInboundQuantity: data.totalInboundQuantity,
+      shopId: data.shopId,
+      createdAt: data.createdAt,
+      updatedAt: data.updatedAt,
+    );
   }
 }
 

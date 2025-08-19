@@ -95,19 +95,21 @@ class SaleService {
       }
     }
 
-    for (final item in saleItems) {
+  for (final item in saleItems) {
       if (isSaleMode) {
         await inventoryService.outbound(
           productId: item.productId,
           shopId: shopId,
-          quantity: item.quantity.toInt(),
+      quantity: item.quantity.toInt(),
+      batchId: item.batchId != null ? int.tryParse(item.batchId!) : null,
           time: now,
         );
       } else {
         await inventoryService.inbound(
           productId: item.productId,
           shopId: shopId,
-          quantity: item.quantity.toInt(),
+      quantity: item.quantity.toInt(),
+      batchId: item.batchId != null ? int.tryParse(item.batchId!) : null,
           // TODO: Handle return with batch number properly
           time: now,
         );

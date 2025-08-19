@@ -677,6 +677,7 @@ class _CreateSaleScreenState extends ConsumerState<CreateSaleScreen> {
                       child: SaleItemCard(
                         key: ValueKey(itemId),
                         itemId: itemId,
+                        shopId: _selectedShop?.id,
                         showPriceInfo: _currentMode == SaleMode.sale, // 新增
             // 价格与数量 FocusNode 注入，构建焦点链路
             sellingPriceFocusNode:

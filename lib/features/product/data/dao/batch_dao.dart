@@ -134,4 +134,10 @@ class BatchDao extends DatabaseAccessor<AppDatabase> with _$BatchDaoMixin {
       db.productBatch,
     )..where((t) => t.productId.equals(productId))).get();
   }
+/// 根据货品ID和店铺ID获取批次
+  Future<List<ProductBatchData>> getBatchesByProductAndShop(int productId, int shopId) {
+    return (select(db.productBatch)
+          ..where((t) => t.productId.equals(productId) & t.shopId.equals(shopId)))
+        .get();
+  }
 }
