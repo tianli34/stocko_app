@@ -241,6 +241,11 @@ class ProductListScreen extends ConsumerWidget {
       appBar: AppBar(
         title: titleWidget,
         actions: [
+          IconButton(
+            icon: const Icon(Icons.leaderboard),
+            tooltip: '商品排行榜',
+            onPressed: () => context.push(AppRoutes.productRanking),
+          ),
           if (searchQuery.isNotEmpty || selectedCategoryId != null)
             IconButton(
               icon: const Icon(Icons.clear_all),

@@ -26,9 +26,6 @@ class PurchaseOrderItem extends Table {
   IntColumn get quantity => integer()();
 
   @override
-  Set<Column> get primaryKey => {purchaseOrderId, productId, productionDate};
-
-  @override
   List<String> get customConstraints => [
         'CHECK(quantity >= 1)',
         'CHECK(unit_price_in_cents >= 0)',

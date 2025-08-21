@@ -20,7 +20,4 @@ class OutboundItem extends Table {
 
   /// 数量
   IntColumn get quantity => integer()();
-
-  @override
-  Set<Column> get primaryKey => {receiptId, productId, batchId};
 }

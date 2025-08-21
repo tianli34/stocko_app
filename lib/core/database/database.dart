@@ -11,7 +11,6 @@ import 'units_table.dart';
 import 'product_units_table.dart';
 import 'shops_table.dart';
 import 'suppliers_table.dart';
-import 'product_suppliers_table.dart';
 import 'batches_table.dart';
 import 'inventory_table.dart';
 import 'inventory_transactions_table.dart';
@@ -31,7 +30,6 @@ import '../../features/product/data/dao/category_dao.dart';
 import '../../features/product/data/dao/unit_dao.dart';
 import '../../features/product/data/dao/product_unit_dao.dart';
 import '../../features/purchase/data/dao/supplier_dao.dart';
-import '../../features/purchase/data/dao/product_supplier_dao.dart';
 import '../../features/product/data/dao/batch_dao.dart';
 import '../../features/inventory/data/dao/shop_dao.dart';
 import '../../features/inventory/data/dao/inventory_dao.dart';
@@ -58,7 +56,6 @@ part 'database.g.dart';
     UnitProduct,
     Shop,
     Supplier,
-    ProductSuppliersTable,
     ProductBatch,
     Stock,
     InventoryTransaction,
@@ -81,7 +78,6 @@ part 'database.g.dart';
     ProductUnitDao,
     ShopDao,
     SupplierDao,
-    ProductSupplierDao,
     BatchDao,
     InventoryDao,
     InventoryTransactionDao,
@@ -247,14 +243,7 @@ class AppDatabase extends _$AppDatabase {
           'CREATE INDEX IF NOT EXISTS idx_barcode_unit_product_id ON barcode(unit_product_id);',
         );
       }
-      if (from < 10 && to >= 10) {
-        // 删除旧的product_suppliers表并重新创建（因为结构有重大变更）
-        await m.drop(productSuppliersTable);
-        await m.createTable(productSuppliersTable);
-      }
-      if (from < 9 && to >= 9) {
-        await m.createTable(productSuppliersTable);
-      }
+      
       if (from < 8 && to >= 8) {
         // This migration is now obsolete as purchasesTable is removed.
         // The logic is replaced by migration to version 14.

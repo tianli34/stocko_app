@@ -42,6 +42,10 @@ class HomeScreen extends StatelessWidget {
                     child: const Text('产品管理'),
                   ),
                   ElevatedButton(
+                    onPressed: () => context.push(AppRoutes.productRanking),
+                    child: const Text('产品排行'),
+                  ),
+                  ElevatedButton(
                     onPressed: () => context.push(AppRoutes.categories),
                     child: const Text('类别管理'),
                   ),

@@ -6,6 +6,7 @@ import '../widgets/scaffold_with_nav_bar.dart';
 import '../../features/product/presentation/screens/product_list_screen.dart';
 import '../../features/product/presentation/screens/product_add_edit_screen.dart';
 import '../../features/product/presentation/screens/product_detail_screen.dart';
+import '../../features/product/presentation/screens/product_ranking_screen.dart';
 import '../../features/product/presentation/screens/category_selection_screen.dart';
 import '../../features/product/application/provider/product_providers.dart';
 import '../../features/database/presentation/screens/database_viewer_screen.dart';
@@ -47,6 +48,11 @@ final routerProvider = Provider<GoRouter>((ref) {
                 name: 'products',
                 builder: (context, state) => const ProductListScreen(),
                 routes: [
+                  GoRoute(
+                    path: 'ranking',
+                    name: 'product-ranking',
+                    builder: (context, state) => const ProductRankingScreen(),
+                  ),
                   GoRoute(
                     path: ':id',
                     name: 'product-detail',
