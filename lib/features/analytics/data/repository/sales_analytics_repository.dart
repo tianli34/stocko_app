@@ -106,7 +106,7 @@ class SalesAnalyticsRepository {
       WHERE st.created_at >= ? AND st.created_at < ? AND st.status != 'cancelled'
       GROUP BY p.id, p.name, p.sku
       HAVING SUM(si.quantity) > 0
-      ORDER BY ${orderBy}
+      ORDER BY $orderBy
       ${limit != null ? 'LIMIT $limit' : ''}
       ''',
       variables: [
@@ -230,7 +230,7 @@ class SalesAnalyticsRepository {
       WHERE st.created_at >= ? AND st.created_at < ? AND st.status != 'cancelled'
       GROUP BY p.id, p.name, p.sku
       HAVING SUM(si.quantity) > 0
-      ORDER BY ${orderBy}
+      ORDER BY $orderBy
       ${limit != null ? 'LIMIT $limit' : ''}
       ''',
       variables: [

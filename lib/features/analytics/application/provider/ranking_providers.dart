@@ -1,6 +1,17 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../data/repository/sales_analytics_repository.dart';
 import '../../domain/model/product_sales_ranking.dart';
+
+// 时间筛选模式
+enum TimeFilterMode {
+  daily('每天'),
+  weekly('每周'),
+  monthly('每月');
+
+  const TimeFilterMode(this.label);
+  final String label;
+}
 
 // 时间范围 Provider
 class RankingRange {
@@ -15,6 +26,18 @@ final rankingRangeProvider = StateProvider<RankingRange>((ref) {
   final start = endOpen.subtract(const Duration(days: 7)); // 近7天
   return RankingRange(start, endOpen);
 });
+
+// 时间筛选模式 Provider
+final timeFilterModeProvider = StateProvider<TimeFilterMode>((ref) => TimeFilterMode.daily);
+
+// 选中的日期 Provider
+final selectedDateProvider = StateProvider<DateTime>((ref) => DateTime.now());
+
+// 选中的周范围 Provider
+final selectedWeekRangeProvider = StateProvider<DateTimeRange?>((ref) => null);
+
+// 选中的月份 Provider
+final selectedMonthProvider = StateProvider<DateTime>((ref) => DateTime.now());
 
 // 排序方式（销量/利润）
 final rankingSortProvider = StateProvider<ProductRankingSort>((ref) => ProductRankingSort.byQtyDesc);
