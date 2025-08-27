@@ -1,0 +1,4 @@
+# 让 Flutter 生成的目录完全跳过换行符转换
+/linux/**   -text
+/macos/**   -text
+/windows/** -text
