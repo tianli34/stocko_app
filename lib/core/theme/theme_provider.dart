@@ -57,9 +57,32 @@ class AppTheme {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
       ),
     ),
-    inputDecorationTheme: const InputDecorationTheme(
-      border: OutlineInputBorder(),
-      contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+    inputDecorationTheme: InputDecorationTheme(
+      isDense: true,
+      filled: true,
+      fillColor: Colors.grey.shade50, // 淡灰色背景
+      border: UnderlineInputBorder(
+        borderSide: BorderSide(color: Colors.grey.shade300),
+      ),
+      enabledBorder: UnderlineInputBorder(
+        borderSide: BorderSide(color: Colors.grey.shade300),
+      ),
+      focusedBorder: UnderlineInputBorder(
+        borderSide: BorderSide(color: primaryColor, width: 2),
+      ),
+      errorBorder: UnderlineInputBorder(
+        borderSide: BorderSide(color: errorColor),
+      ),
+      focusedErrorBorder: UnderlineInputBorder(
+        borderSide: BorderSide(color: errorColor, width: 2),
+      ),
+      floatingLabelBehavior: FloatingLabelBehavior.never,
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 0),
+      hintStyle: TextStyle(color: Colors.grey.shade600),
+      labelStyle: TextStyle(color: Colors.grey.shade700),
+      helperStyle: TextStyle(color: Colors.grey.shade600, fontSize: 12),
+      errorStyle: TextStyle(color: errorColor, fontSize: 12),
+      suffixIconColor: Colors.grey.shade600,
     ),
   );
 
@@ -98,9 +121,32 @@ class AppTheme {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
       ),
     ),
-    inputDecorationTheme: const InputDecorationTheme(
-      border: OutlineInputBorder(),
-      contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+    inputDecorationTheme: InputDecorationTheme(
+      isDense: true,
+      filled: true,
+      fillColor: Colors.grey.shade800, // 暗色主题的淡背景
+      border: UnderlineInputBorder(
+        borderSide: BorderSide(color: Colors.grey.shade600),
+      ),
+      enabledBorder: UnderlineInputBorder(
+        borderSide: BorderSide(color: Colors.grey.shade600),
+      ),
+      focusedBorder: UnderlineInputBorder(
+        borderSide: BorderSide(color: primaryColor, width: 2),
+      ),
+      errorBorder: UnderlineInputBorder(
+        borderSide: BorderSide(color: errorColor),
+      ),
+      focusedErrorBorder: UnderlineInputBorder(
+        borderSide: BorderSide(color: errorColor, width: 2),
+      ),
+      floatingLabelBehavior: FloatingLabelBehavior.never,
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 0),
+      hintStyle: TextStyle(color: Colors.grey.shade400),
+      labelStyle: TextStyle(color: Colors.grey.shade300),
+      helperStyle: TextStyle(color: Colors.grey.shade400, fontSize: 12),
+      errorStyle: TextStyle(color: errorColor, fontSize: 12),
+      suffixIconColor: Colors.grey.shade400,
     ),
   );
 }

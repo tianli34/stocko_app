@@ -33,93 +33,95 @@ class SaleService {
     final now = DateTime.now();
     final totalAmount = saleItems.fold(0.0, (sum, item) => sum + item.amount);
 
-    final transactionItems = saleItems.map((item) {
-      return SalesTransactionItem(
-        salesTransactionId: 0, // Will be replaced later
-        productId: item.productId,
-        batchId: item.batchId != null ? int.tryParse(item.batchId!) : null,
-        quantity: item.quantity.toInt(),
-        priceInCents: item.sellingPriceInCents,
-      );
-    }).toList();
+    final db = ref.read(appDatabaseProvider);
 
-    final transaction = SalesTransaction(
-      shopId: shopId,
-      totalAmount: totalAmount,
-      actualAmount: totalAmount,
-      remarks: remarks,
-      customerId: customerId ?? 0,
-      items: transactionItems,
-      status: status,
-    );
-
-    await salesTransactionRepository.addSalesTransaction(transaction);
-
-    // 写入出库单与明细（仅销售模式）
-    if (isSaleMode) {
-      final db = ref.read(appDatabaseProvider);
-
-      // 1) 创建出库单
-      final receiptId = await db.outboundReceiptDao.insertOutboundReceipt(
-        OutboundReceiptCompanion(
-          shopId: drift.Value(shopId),
-          reason: const drift.Value('销售出库'),
-          // salesTransactionId 暂无法获取（仓储未返回ID），保留为空
-        ),
-      );
-
-      // 2) 合并明细，避免唯一键冲突（receipt_id, product_id, batch_id）
-      final Map<(int, int?), int> merged = {};
-      for (final item in saleItems) {
-        final key = (item.productId, item.batchId != null ? int.tryParse(item.batchId!) : null);
-        merged.update(key, (q) => q + item.quantity.toInt(), ifAbsent: () => item.quantity.toInt());
-      }
-
-      // 3) 批量写入出库明细
-      final companions = merged.entries.map((e) {
-        final pid = e.key.$1;
-        final bid = e.key.$2;
-        final qty = e.value;
-        return OutboundItemCompanion(
-          receiptId: drift.Value(receiptId),
-          productId: drift.Value(pid),
-          quantity: drift.Value(qty),
-          batchId: bid != null ? drift.Value(bid) : const drift.Value.absent(),
+    return await db.transaction<String>(() async {
+      // 1) 先落销售交易，拿到ID
+      final transactionItems = saleItems.map((item) {
+        return SalesTransactionItem(
+          salesTransactionId: 0,
+          productId: item.productId,
+          batchId: item.batchId != null ? int.tryParse(item.batchId!) : null,
+          quantity: item.quantity.toInt(),
+          priceInCents: item.sellingPriceInCents,
         );
-      }).toList(growable: false);
+      }).toList();
 
-      if (companions.isNotEmpty) {
-        await db.batch((batch) {
-          batch.insertAll(db.outboundItem, companions);
-        });
-      }
-    }
+      final transaction = SalesTransaction(
+        shopId: shopId,
+        totalAmount: totalAmount,
+        actualAmount: totalAmount,
+        remarks: remarks,
+        customerId: customerId ?? 0,
+        items: transactionItems,
+        status: status,
+      );
 
-  for (final item in saleItems) {
+      final salesId = await salesTransactionRepository.addSalesTransaction(transaction);
+
+      // 2) 仅销售模式：写出库单与明细，并在同事务内扣减库存并记录流水
       if (isSaleMode) {
-        await inventoryService.outbound(
-          productId: item.productId,
-          shopId: shopId,
-      quantity: item.quantity.toInt(),
-      batchId: item.batchId != null ? int.tryParse(item.batchId!) : null,
-          time: now,
+        final receiptId = await db.outboundReceiptDao.insertOutboundReceipt(
+          OutboundReceiptCompanion(
+            shopId: drift.Value(shopId),
+            reason: const drift.Value('销售出库'),
+            salesTransactionId: drift.Value(salesId),
+          ),
         );
-      } else {
-        await inventoryService.inbound(
-          productId: item.productId,
-          shopId: shopId,
-      quantity: item.quantity.toInt(),
-      batchId: item.batchId != null ? int.tryParse(item.batchId!) : null,
-          // TODO: Handle return with batch number properly
-          time: now,
-        );
+
+        // 合并明细
+        final Map<(int, int?), int> merged = {};
+        for (final item in saleItems) {
+          final key = (item.productId, item.batchId != null ? int.tryParse(item.batchId!) : null);
+          merged.update(key, (q) => q + item.quantity.toInt(), ifAbsent: () => item.quantity.toInt());
+        }
+
+        // 批量写入出库明细
+        if (merged.isNotEmpty) {
+          final companions = merged.entries.map((e) {
+            final pid = e.key.$1;
+            final bid = e.key.$2;
+            final qty = e.value;
+            return OutboundItemCompanion(
+              receiptId: drift.Value(receiptId),
+              productId: drift.Value(pid),
+              quantity: drift.Value(qty),
+              batchId: bid != null ? drift.Value(bid) : const drift.Value.absent(),
+            );
+          }).toList(growable: false);
+          await db.batch((batch) {
+            batch.insertAll(db.outboundItem, companions);
+          });
+        }
       }
-    }
 
-    final receiptNumber = 'SALE-${now.millisecondsSinceEpoch}';
-    print('Sale successful. Receipt number: $receiptNumber');
+      // 3) 扣减或回补库存 + 写库存流水（允许负库存）
+      for (final item in saleItems) {
+        final ok = isSaleMode
+            ? await inventoryService.outbound(
+                productId: item.productId,
+                shopId: shopId,
+                quantity: item.quantity.toInt(),
+                batchId: item.batchId != null ? int.tryParse(item.batchId!) : null,
+                time: now,
+              )
+            : await inventoryService.inbound(
+                productId: item.productId,
+                shopId: shopId,
+                quantity: item.quantity.toInt(),
+                batchId: item.batchId != null ? int.tryParse(item.batchId!) : null,
+                time: now,
+              );
+        if (!ok) {
+          // 若库存记录不存在导致更新不到，抛错使事务回滚
+          throw StateError('Inventory operation failed for product ${item.productId}');
+        }
+      }
 
-    return receiptNumber;
+      final receiptNumber = 'SALE-${now.millisecondsSinceEpoch}';
+      print('Sale successful. Receipt number: $receiptNumber');
+      return receiptNumber;
+    });
   }
 }
 

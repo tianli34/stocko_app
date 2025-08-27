@@ -639,10 +639,18 @@ class _AuxiliaryUnitEditScreenState
     final List<UnitProduct> productUnits = [];
 
     // 添加基本单位
+    final int? parsedBaseUnitId = int.tryParse(widget.baseUnitId);
+    if (parsedBaseUnitId == null) {
+      print('❌ 基本单位ID无效: ${widget.baseUnitId}');
+      // 如果基本单位ID无效，直接返回
+      Navigator.of(context).pop();
+      return [];
+    }
+
     final baseUnit = UnitProduct(
       // id: '${widget.productId ?? 'new'}_${widget.baseUnitId!}',
       productId: widget.productId ?? 0,
-      unitId: int.parse(widget.baseUnitId),
+      unitId: parsedBaseUnitId,
       conversionRate: 1,
     );
     productUnits.add(baseUnit);
@@ -734,19 +742,25 @@ class _AuxiliaryUnitEditScreenState
 
   void _handleReturn() {
     print('🔍 处理返回，开始构建数据...');
-    final productUnits = _buildProductUnits();
-    final auxiliaryBarcodes = _buildAuxiliaryUnitBarcodes();
+    try {
+      final productUnits = _buildProductUnits();
+      final auxiliaryBarcodes = _buildAuxiliaryUnitBarcodes();
 
-    if (productUnits.isNotEmpty) {
-      print('🔍 数据有效，返回产品单位数据');
+      if (productUnits.isNotEmpty) {
+        print('🔍 数据有效，返回产品单位数据');
 
-      // 返回包含产品单位和条码信息的数据
-      Navigator.of(context).pop({
-        'productUnits': productUnits,
-        'auxiliaryBarcodes': auxiliaryBarcodes,
-      });
-    } else {
-      print('🔍 数据无效或缺少基本单位，直接返回');
+        // 返回包含产品单位和条码信息的数据
+        Navigator.of(context).pop({
+          'productUnits': productUnits,
+          'auxiliaryBarcodes': auxiliaryBarcodes,
+        });
+      } else {
+        print('🔍 数据无效或缺少基本单位，直接返回');
+        Navigator.of(context).pop();
+      }
+    } catch (e, s) {
+      print('❌ 返回处理异常: $e\n$s');
+      // 发生异常时，简单返回
       Navigator.of(context).pop();
     }
   }

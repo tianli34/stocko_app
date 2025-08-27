@@ -169,6 +169,14 @@ class AppDatabase extends _$AppDatabase {
           'CREATE UNIQUE INDEX IF NOT EXISTS poi_unique_without_date ON purchase_order_item(purchase_order_id, product_id) WHERE production_date IS NULL;',
         );
 
+        // 为库存表创建部分唯一索引（与 onCreate 保持一致，确保老版本升级后也具备约束）
+        await customStatement(
+          'CREATE UNIQUE INDEX IF NOT EXISTS stock_unique_with_batch ON stock(product_id, shop_id, batch_id) WHERE batch_id IS NOT NULL;',
+        );
+        await customStatement(
+          'CREATE UNIQUE INDEX IF NOT EXISTS stock_unique_without_batch ON stock(product_id, shop_id) WHERE batch_id IS NULL;',
+        );
+
         // 为出库单明细表创建部分唯一索引
         await customStatement(
           'CREATE UNIQUE INDEX IF NOT EXISTS outbound_item_unique_with_batch ON outbound_item(receipt_id, product_id, batch_id) WHERE batch_id IS NOT NULL;',

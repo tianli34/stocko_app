@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:stocko_app/core/database/database.dart';
 import '../domain/model/inventory.dart';
 import '../domain/model/inventory_transaction.dart';
 import '../domain/repository/i_inventory_repository.dart';
@@ -11,8 +12,9 @@ import '../data/repository/inventory_transaction_repository.dart';
 class InventoryService {
   final IInventoryRepository _inventoryRepository;
   final IInventoryTransactionRepository _transactionRepository;
+  final AppDatabase _db;
 
-  InventoryService(this._inventoryRepository, this._transactionRepository);
+  InventoryService(this._inventoryRepository, this._transactionRepository, this._db);
 
   /// 入库操作
   /// 增加库存数量并记录入库流水
@@ -24,6 +26,8 @@ class InventoryService {
     DateTime? time,
   }) async {
     try {
+      // 事务内：变更库存 + 写流水
+      return await _db.transaction(() async {
       // 按 产品+店铺+批次 维度检查库存是否存在
       var inventory = await _inventoryRepository
           .getInventoryByProductShopAndBatch(productId, shopId, batchId);
@@ -39,12 +43,13 @@ class InventoryService {
         await _inventoryRepository.addInventory(inventory);
       } else {
         // 如果库存存在，增加库存数量
-        await _inventoryRepository.addInventoryQuantityByBatch(
+        final ok = await _inventoryRepository.addInventoryQuantityByBatch(
           productId,
           shopId,
           batchId,
           quantity,
         );
+        if (!ok) return false; // 没有匹配行（例如记录不存在）
       }
 
       // 记录入库流水
@@ -55,8 +60,8 @@ class InventoryService {
         batchId: batchId,
       );
       await _transactionRepository.addTransaction(transaction);
-
       return true;
+      });
     } catch (e) {
       print('📦 库存服务：入库操作失败: $e');
       return false;
@@ -73,51 +78,32 @@ class InventoryService {
     DateTime? time,
   }) async {
     try {
-      // 检查库存是否足够（按批次或总库存）
-      if (batchId != null) {
-        await _inventoryRepository.getInventoryByProductShopAndBatch(
-          productId,
-          shopId,
-          batchId,
-        );
-      } else {
-        await _inventoryRepository.getInventoryByProductAndShop(
-          productId,
-          shopId,
-        );
-      }
+  return await _db.transaction(() async {
+        // 减少库存数量（允许负库存），但必须命中一行
+        final ok = batchId != null
+            ? await _inventoryRepository.subtractInventoryQuantityByBatch(
+                productId,
+                shopId,
+                batchId,
+                quantity,
+              )
+            : await _inventoryRepository.subtractInventoryQuantity(
+                productId,
+                shopId,
+                quantity,
+              );
+        if (!ok) return false;
 
-      // if (inventory == null || inventory.quantity < quantity) {
-      //   print('📦 库存服务：库存不足，无法出库');
-      //   return false;
-      // }
-
-      // 减少库存数量
-      if (batchId != null) {
-        await _inventoryRepository.subtractInventoryQuantityByBatch(
-          productId,
-          shopId,
-          batchId,
-          quantity,
+        // 记录出库流水
+        final transaction = InventoryTransactionModel.createOutbound(
+          productId: productId,
+          quantity: quantity,
+          shopId: shopId,
+          batchId: batchId,
         );
-      } else {
-        await _inventoryRepository.subtractInventoryQuantity(
-          productId,
-          shopId,
-          quantity,
-        );
-      }
-
-      // 记录出库流水
-      final transaction = InventoryTransactionModel.createOutbound(
-        productId: productId,
-        quantity: quantity,
-        shopId: shopId,
-        batchId: batchId,
-      );
-      await _transactionRepository.addTransaction(transaction);
-
-      return true;
+        await _transactionRepository.addTransaction(transaction);
+        return true;
+      });
     } catch (e) {
       print('📦 库存服务：出库操作失败: $e');
       return false;
@@ -133,40 +119,30 @@ class InventoryService {
     DateTime? time,
   }) async {
     try {
-      // 获取当前库存
-      final inventory = await _inventoryRepository.getInventoryByProductAndShop(
-        productId,
-        shopId,
-      );
+  return await _db.transaction(() async {
+        // 允许负库存：直接在现有数量上调整
+        final ok = adjustQuantity >= 0
+            ? await _inventoryRepository.addInventoryQuantity(
+                productId,
+                shopId,
+                adjustQuantity,
+              )
+            : await _inventoryRepository.subtractInventoryQuantity(
+                productId,
+                shopId,
+                -adjustQuantity,
+              );
+        if (!ok) return false;
 
-      if (inventory == null) {
-        print('📦 库存服务：库存不存在，无法调整');
-        return false;
-      }
-
-      // 计算新的库存数量
-      final newQuantity = inventory.quantity + adjustQuantity;
-      // if (newQuantity < 0) {
-      //   print('📦 库存服务：调整后库存数量不能为负数');
-      //   return false;
-      // }
-
-      // 更新库存数量
-      await _inventoryRepository.updateInventoryQuantity(
-        productId,
-        shopId,
-        newQuantity,
-      );
-
-      // 记录调整流水
-      final transaction = InventoryTransactionModel.createAdjustment(
-        productId: productId,
-        quantity: adjustQuantity,
-        shopId: shopId,
-      );
-      await _transactionRepository.addTransaction(transaction);
-
-      return true;
+        // 记录调整流水
+        final transaction = InventoryTransactionModel.createAdjustment(
+          productId: productId,
+          quantity: adjustQuantity,
+          shopId: shopId,
+        );
+        await _transactionRepository.addTransaction(transaction);
+        return true;
+      });
     } catch (e) {
       print('📦 库存服务：库存调整失败: $e');
       return false;
@@ -255,40 +231,19 @@ class InventoryService {
     required int quantity,
     required int shopId,
   }) async {
-    // 检查库存记录是否存在
+    // 以“目标量-当前量”为调整额，复用 adjust（允许负库存）
     final inventory = await _inventoryRepository.getInventoryByProductAndShop(
       productId,
       shopId,
     );
-
     final currentQuantity = inventory?.quantity ?? 0;
-    final adjustQuantity = quantity - currentQuantity;
-
-    if (inventory != null) {
-      // 如果记录存在，则更新数量
-      await _inventoryRepository.updateInventoryQuantity(
-        productId,
-        shopId,
-        quantity,
-      );
-    } else {
-      // 如果记录不存在，则创建新的库存记录
-      final newInventory = StockModel.create(
-        productId: productId,
-        quantity: quantity,
-        shopId: shopId,
-        batchId: null,
-      );
-      await _inventoryRepository.addInventory(newInventory);
-    }
-
-    // 记录调整流水
-    final transaction = InventoryTransactionModel.createAdjustment(
+    final diff = quantity - currentQuantity;
+    if (diff == 0) return;
+    await adjust(
       productId: productId,
-      quantity: adjustQuantity,
       shopId: shopId,
+      adjustQuantity: diff,
     );
-    await _transactionRepository.addTransaction(transaction);
   }
 }
 
@@ -298,5 +253,6 @@ final inventoryServiceProvider = Provider<InventoryService>((ref) {
   final transactionRepository = ref.watch(
     inventoryTransactionRepositoryProvider,
   );
-  return InventoryService(inventoryRepository, transactionRepository);
+  final db = ref.watch(appDatabaseProvider);
+  return InventoryService(inventoryRepository, transactionRepository, db);
 });

@@ -237,15 +237,13 @@ class InventoryRepository implements IInventoryRepository {
     int amount,
   ) async {
     try {
-      final current = await getInventoryByProductAndShop(productId, shopId);
-      if (current != null) {
-        return await updateInventoryQuantity(
-          productId,
-          shopId,
-          current.quantity + amount,
-        );
-      }
-      return false;
+      final affected = await _inventoryDao.incrementQuantity(
+        productId,
+        shopId,
+        null,
+        amount,
+      );
+      return affected > 0;
     } catch (e) {
       print('📦 仓储层：增加库存数量失败: $e');
       rethrow;
@@ -260,20 +258,13 @@ class InventoryRepository implements IInventoryRepository {
     int amount,
   ) async {
     try {
-      final current = await getInventoryByProductShopAndBatch(
+      final affected = await _inventoryDao.incrementQuantity(
         productId,
         shopId,
         batchId,
+        amount,
       );
-      if (current != null) {
-        return await updateInventoryQuantityByBatch(
-          productId,
-          shopId,
-          batchId,
-          current.quantity + amount,
-        );
-      }
-      return false;
+      return affected > 0;
     } catch (e) {
       print('📦 仓储层：按批次增加库存数量失败: $e');
       rethrow;
@@ -287,15 +278,13 @@ class InventoryRepository implements IInventoryRepository {
     int amount,
   ) async {
     try {
-      final current = await getInventoryByProductAndShop(productId, shopId);
-      if (current != null) {
-        return await updateInventoryQuantity(
-          productId,
-          shopId,
-          current.quantity - amount,
-        );
-      }
-      return false;
+      final affected = await _inventoryDao.decrementQuantity(
+        productId,
+        shopId,
+        null,
+        amount,
+      );
+      return affected > 0;
     } catch (e) {
       print('📦 仓储层：减少库存数量失败: $e');
       rethrow;
@@ -310,20 +299,13 @@ class InventoryRepository implements IInventoryRepository {
     int amount,
   ) async {
     try {
-      final current = await getInventoryByProductShopAndBatch(
+      final affected = await _inventoryDao.decrementQuantity(
         productId,
         shopId,
         batchId,
+        amount,
       );
-      if (current != null) {
-        return await updateInventoryQuantityByBatch(
-          productId,
-          shopId,
-          batchId,
-          current.quantity - amount,
-        );
-      }
-      return false;
+      return affected > 0;
     } catch (e) {
       print('📦 仓储层：按批次减少库存数量失败: $e');
       rethrow;

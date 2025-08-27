@@ -127,6 +127,72 @@ class InventoryDao extends DatabaseAccessor<AppDatabase>
     return result > 0;
   }
 
+  /// 原子增加库存数量（允许负库存，单SQL更新）
+  Future<int> incrementQuantity(
+    int productId,
+    int shopId,
+    int? batchId,
+    int amount,
+  ) async {
+    if (batchId == null) {
+      return await customUpdate(
+        'UPDATE stock SET quantity = quantity + ?, updated_at = CURRENT_TIMESTAMP '
+        'WHERE product_id = ? AND shop_id = ? AND batch_id IS NULL',
+        variables: [
+          Variable.withInt(amount),
+          Variable.withInt(productId),
+          Variable.withInt(shopId),
+        ],
+        updates: {stock},
+      );
+    } else {
+      return await customUpdate(
+        'UPDATE stock SET quantity = quantity + ?, updated_at = CURRENT_TIMESTAMP '
+        'WHERE product_id = ? AND shop_id = ? AND batch_id = ?',
+        variables: [
+          Variable.withInt(amount),
+          Variable.withInt(productId),
+          Variable.withInt(shopId),
+          Variable.withInt(batchId),
+        ],
+        updates: {stock},
+      );
+    }
+  }
+
+  /// 原子减少库存数量（允许负库存，不做 >=0 约束）
+  Future<int> decrementQuantity(
+    int productId,
+    int shopId,
+    int? batchId,
+    int amount,
+  ) async {
+    if (batchId == null) {
+      return await customUpdate(
+        'UPDATE stock SET quantity = quantity - ?, updated_at = CURRENT_TIMESTAMP '
+        'WHERE product_id = ? AND shop_id = ? AND batch_id IS NULL',
+        variables: [
+          Variable.withInt(amount),
+          Variable.withInt(productId),
+          Variable.withInt(shopId),
+        ],
+        updates: {stock},
+      );
+    } else {
+      return await customUpdate(
+        'UPDATE stock SET quantity = quantity - ?, updated_at = CURRENT_TIMESTAMP '
+        'WHERE product_id = ? AND shop_id = ? AND batch_id = ?',
+        variables: [
+          Variable.withInt(amount),
+          Variable.withInt(productId),
+          Variable.withInt(shopId),
+          Variable.withInt(batchId),
+        ],
+        updates: {stock},
+      );
+    }
+  }
+
   /// 按批次更新库存数量（batchId 可为空）
   Future<bool> updateInventoryQuantityByBatch(
     int productId,

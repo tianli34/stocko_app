@@ -18,12 +18,12 @@ class SalesTransactionRepository implements ISalesTransactionRepository {
   SalesTransactionRepository(this._db);
 
   @override
-  Future<void> addSalesTransaction(SalesTransaction transaction) async {
+  Future<int> addSalesTransaction(SalesTransaction transaction) async {
     print('🔍 [DEBUG] Repository: addSalesTransaction called');
     final transactionCompanion = transaction.toTableCompanion();
     print('🔍 [DEBUG] Repository: transactionCompanion created');
     
-    await _db.transaction(() async {
+    return await _db.transaction(() async {
       try {
         // 插入销售交易并获取自增ID
         final transactionId = await _db.salesTransactionDao.insertSalesTransaction(transactionCompanion);
@@ -39,7 +39,7 @@ class SalesTransactionRepository implements ISalesTransactionRepository {
         // 插入销售交易项目
         await _db.salesTransactionItemDao.insertSalesTransactionItems(itemCompanions);
         print('🔍 [DEBUG] Repository: items inserted successfully');
-        
+        return transactionId;
       } catch (e) {
         print('🔍 [DEBUG] Repository: Error in transaction: $e');
         rethrow;

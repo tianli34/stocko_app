@@ -2,7 +2,7 @@
 
 cd E:\stocko_app\
 git add .
-git commit -m "821 1 616 更新"
+git commit -m "822 614 更新"
 git push
 
 
@@ -10,7 +10,9 @@ git push
 
 cd E:\stocko_app\
 flutter run -v
-adb connect 192.168.5.83:37141 
+adb pair 192.168.5.83:37785 
+adb connect 192.168.5.83:42583
+flutter run
 
 
 cd E:\stocko_app\lib
@@ -31,6 +33,6 @@ root-gist-467921-s7
 AIzaSyAIsu3ZFPCAHmDvDdXnQw4kyMLvkRnjF0w
 
 
-
+https://api-inference.modelscope.cn/v1
 sk-ufXdeSXiQS2vvK7EeTLtOnRBR+f2iJn9/LyG51PazFZttVIrPUf04hVXQ0b85TzNUnrVrm94eeT3kVUM3pFpDlND+5vIOLTzKwSHnvLFggk=
 

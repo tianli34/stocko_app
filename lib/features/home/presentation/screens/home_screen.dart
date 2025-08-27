@@ -99,11 +99,11 @@ class HomeScreen extends StatelessWidget {
                         context.push(AppRoutes.databaseViewer),
                     child: const Text('数据库查看器'),
                   ),
-                  ElevatedButton(
-                    onPressed: () =>
-                        context.push(AppRoutes.categoryTest),
-                    child: const Text('类别管理测试'),
-                  ),
+                  // ElevatedButton(
+                  //   onPressed: () =>
+                  //       context.push(AppRoutes.categoryTest),
+                  //   child: const Text('类别管理测试'),
+                  // ),
                 ],
               ),
             ),
