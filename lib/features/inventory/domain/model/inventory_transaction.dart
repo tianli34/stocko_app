@@ -112,6 +112,7 @@ abstract class InventoryTransactionModel with _$InventoryTransactionModel {
       quantity: quantity,
       shopId: shopId,
       batchId: batchId,
+      createdAt: DateTime.now(),
     );
   }
 
@@ -129,6 +130,7 @@ abstract class InventoryTransactionModel with _$InventoryTransactionModel {
       quantity: quantity,
       shopId: shopId,
       batchId: batchId,
+      createdAt: DateTime.now(),
     );
   }
 
@@ -146,6 +148,7 @@ abstract class InventoryTransactionModel with _$InventoryTransactionModel {
       quantity: quantity,
       shopId: shopId,
       batchId: batchId,
+      createdAt: DateTime.now(),
     );
   }
 

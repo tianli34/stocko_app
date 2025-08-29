@@ -192,7 +192,7 @@ class ProductDao extends DatabaseAccessor<AppDatabase> with _$ProductDaoMixin {
     // 然后在产品单位表中找到对应的产品ID
     final productUnitResult =
         await (select(db.unitProduct)..where(
-              (tbl) => tbl.id.equals(barcodeResult.id),
+              (tbl) => tbl.id.equals(barcodeResult.unitProductId),
             ))
             .getSingleOrNull();
 
@@ -239,7 +239,7 @@ class ProductDao extends DatabaseAccessor<AppDatabase> with _$ProductDaoMixin {
           ),
         ])..where(
           db.unitProduct.id.equals(
-            barcodeResult.id,
+            barcodeResult.unitProductId,
           ),
         );
 

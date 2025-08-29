@@ -1,5 +1,5 @@
-import '../../../features/product/domain/model/unit.dart';
-import '../../../features/product/domain/model/product_unit.dart';
+import 'package:stocko_app/features/product/domain/model/unit.dart';
+import 'package:stocko_app/features/product/domain/model/product_unit.dart';
 
 /// 单位换算工具类
 ///
@@ -116,6 +116,12 @@ class UnitConverter {
       return (false, '至少需要配置一个单位');
     }
 
+    // 检查换算率是否都大于0
+    final invalidRates = allUnits.where((unit) => unit.conversionRate <= 0);
+    if (invalidRates.isNotEmpty) {
+      return (false, '换算率必须大于0');
+    }
+
     // 检查是否有基础单位（换算率为1的单位）
     final baseUnits = allUnits.where((unit) => unit.conversionRate == 1.0);
     if (baseUnits.isEmpty) {
@@ -124,12 +130,6 @@ class UnitConverter {
 
     if (baseUnits.length > 1) {
       return (false, '只能有一个基础单位（换算率为1）');
-    }
-
-    // 检查换算率是否都大于0
-    final invalidRates = allUnits.where((unit) => unit.conversionRate <= 0);
-    if (invalidRates.isNotEmpty) {
-      return (false, '换算率必须大于0');
     }
 
     return (true, null);
@@ -148,12 +148,19 @@ class UnitConverter {
   ///
   /// [allUnits] 产品的所有单位配置列表
   ///
-  /// 返回基础单位，如果找不到则抛出异常
+  /// 返回基础单位，如果找不到或有多个基础单位则抛出异常
   static UnitProduct findBaseUnit(List<UnitProduct> allUnits) {
-    return allUnits.firstWhere(
-      (unit) => unit.conversionRate == 1.0,
-      orElse: () => throw ArgumentError('找不到基础单位'),
-    );
+    final baseUnits = allUnits.where((unit) => unit.conversionRate == 1.0).toList();
+
+    if (baseUnits.isEmpty) {
+      throw ArgumentError('找不到基础单位');
+    }
+
+    if (baseUnits.length > 1) {
+      throw ArgumentError('只能有一个基础单位');
+    }
+
+    return baseUnits.first;
   }
 
   /// 比较两个单位的大小关系

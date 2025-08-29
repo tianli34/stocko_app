@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/shared_widgets/shared_widgets.dart';
 import '../../domain/model/product.dart';
 import '../../domain/model/unit.dart';
+import '../../domain/model/category.dart';
 import '../../application/provider/product_providers.dart';
 import '../../application/category_notifier.dart';
 import '../../application/provider/unit_providers.dart';
@@ -52,26 +53,15 @@ class _ProductAddEditScreenState extends ConsumerState<ProductAddEditScreen> {
       if (widget.product?.id != null) {
         ref.invalidate(mainBarcodeProvider(widget.product!.id!));
       }
+      // 在编辑模式下，回填单位和类别信息
+      if (widget.product != null) {
+        _populateUnitAndCategoryData();
+      }
     });
     // 初始化表单控制器
     _c = ProductFormControllers()..init(widget.product);
 
-    // 将条码监听移动到 initState，避免在 build 中重复注册监听
-    if (widget.product?.id != null) {
-      ref.listen<AsyncValue<String?>>(
-        mainBarcodeProvider(widget.product!.id!),
-        (previous, next) {
-          next.whenData((barcode) {
-            if (barcode != null && _c.barcodeController.text != barcode) {
-              _c.barcodeController.text = barcode;
-            } else if (barcode == null &&
-                _c.barcodeController.text.isNotEmpty) {
-              _c.barcodeController.clear();
-            }
-          });
-        },
-      );
-    }
+    // 条码监听将在 build 方法中处理，确保 ref.listen 在正确的上下文中使用
   }
 
   // 控制器初始化已移动到 ProductFormControllers
@@ -107,8 +97,24 @@ class _ProductAddEditScreenState extends ConsumerState<ProductAddEditScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // 条码监听已在 initState 中处理
     final operationsState = ref.watch(productOperationsProvider);
+    
+    // 条码监听必须在 build 方法中处理
+    if (widget.product?.id != null) {
+      ref.listen<AsyncValue<String?>>(
+        mainBarcodeProvider(widget.product!.id!),
+        (previous, next) {
+          next.whenData((barcode) {
+            if (barcode != null && _c.barcodeController.text != barcode) {
+              _c.barcodeController.text = barcode;
+            } else if (barcode == null &&
+                _c.barcodeController.text.isNotEmpty) {
+              _c.barcodeController.clear();
+            }
+          });
+        },
+      );
+    }
     final categories = ref.watch(categoryListProvider).categories;
     final unitsAsyncValue = ref.watch(allUnitsProvider); // 获取单位列表
     final ui = ref.watch(productFormUiProvider);
@@ -427,5 +433,48 @@ class _ProductAddEditScreenState extends ConsumerState<ProductAddEditScreen> {
       _c.unitController.clear();
     }
     // 允许用户不选择单位，不强制设置默认值
+  }
+
+  /// 在编辑模式下回填单位和类别数据
+  Future<void> _populateUnitAndCategoryData() async {
+    if (widget.product == null) return;
+
+    // 设置单位ID和名称
+    if (widget.product!.baseUnitId != null) {
+      ref.read(productFormUiProvider.notifier).setUnitId(widget.product!.baseUnitId);
+
+      // 获取单位信息并设置控制器文本
+      final unit = await ref.read(unitControllerProvider.notifier).getUnitById(widget.product!.baseUnitId!);
+      if (unit != null && mounted) {
+        setState(() {
+          _c.unitController.text = unit.name.replaceAll(' ', '');
+        });
+      }
+    }
+
+    // 设置类别ID和名称
+    if (widget.product!.categoryId != null) {
+      ref.read(productFormUiProvider.notifier).setCategoryId(widget.product!.categoryId);
+
+      // 从类别列表中获取类别名称
+      final categories = ref.read(categoryListProvider).categories;
+      final category = categories.firstWhere(
+        (c) => c.id == widget.product!.categoryId,
+        orElse: () => const CategoryModel(name: '未分类'),
+      );
+
+      if (mounted) {
+        setState(() {
+          _c.categoryController.text = category.name.replaceAll(' ', '');
+        });
+      }
+    } else {
+      // 如果没有类别，设置为未分类
+      if (mounted) {
+        setState(() {
+          _c.categoryController.text = '未分类';
+        });
+      }
+    }
   }
 }

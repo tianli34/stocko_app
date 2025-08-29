@@ -35,28 +35,29 @@ class ProductItem extends ConsumerStatefulWidget {
 class _ProductItemState extends ConsumerState<ProductItem> {
   String? _unitName;
   bool _unitLoaded = false;
+  int? _lastBaseUnitId;
 
   @override
   void initState() {
     super.initState();
-    _loadUnitName();
+    _lastBaseUnitId = widget.item.baseUnitId;
   }
 
   @override
   void didUpdateWidget(covariant ProductItem oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (widget.item.baseUnitId != oldWidget.item.baseUnitId) {
+      _lastBaseUnitId = widget.item.baseUnitId;
       _unitLoaded = false;
-      _loadUnitName();
     }
   }
 
-  Future<void> _loadUnitName() async {
-    if (!_unitLoaded) {
+  Future<void> _loadUnitName(WidgetRef ref) async {
+    if (!_unitLoaded && _lastBaseUnitId != null) {
       try {
         final unit = await ref
             .read(unitControllerProvider.notifier)
-            .getUnitById(widget.item.baseUnitId);
+            .getUnitById(_lastBaseUnitId!);
         if (mounted) {
           setState(() {
             _unitName = unit?.name;
@@ -115,6 +116,11 @@ class _ProductItemState extends ConsumerState<ProductItem> {
 
   @override
   Widget build(BuildContext context) {
+    // 在build方法中加载单位名称，确保ref.read()在正确的上下文中使用
+    if (!_unitLoaded) {
+      _loadUnitName(ref);
+    }
+    
     return GestureDetector(
       onTap: () {
         if (widget.mode == 'select') {

@@ -70,10 +70,12 @@ class _CategoryTypeAheadFieldState extends State<CategoryTypeAheadField> {
                 ]);
               }
               final filtered = widget.categories
-                  .where((c) => c.name
-                      .replaceAll(' ', '')
-                      .toLowerCase()
-                      .contains(pattern.toLowerCase()))
+                  .where(
+                    (c) => c.name
+                        .replaceAll(' ', '')
+                        .toLowerCase()
+                        .contains(pattern.toLowerCase()),
+                  )
                   .toList();
               if (filtered.isEmpty || pattern == '未分类') {
                 filtered.insert(0, const CategoryModel(name: '未分类'));
@@ -98,12 +100,8 @@ class _CategoryTypeAheadFieldState extends State<CategoryTypeAheadField> {
                 ],
                 decoration: InputDecoration(
                   hintText: _isFocused ? '' : widget.hintText,
-                  suffixIcon: widget.controller.text.isNotEmpty
-                      ? IconButton(
-                          icon: const Icon(Icons.clear),
-                          onPressed: widget.onClear ?? widget.controller.clear,
-                        )
-                      : null,
+                  isDense: true,
+                  contentPadding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
                 ),
               );
             },

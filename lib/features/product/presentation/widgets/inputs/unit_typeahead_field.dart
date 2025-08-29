@@ -96,18 +96,15 @@ class _UnitTypeAheadFieldState extends State<UnitTypeAheadField> {
                 ],
                 decoration: InputDecoration(
                   hintText: _isFocused ? '' : widget.hintText,
+                  isDense: true,
+                  contentPadding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
                   errorText: widget.errorTextBuilder?.call(),
                   helperText: widget.helperText,
                   helperStyle: TextStyle(
                     color: Colors.green.shade600,
                     fontSize: 12,
                   ),
-                  suffixIcon: widget.controller.text.isNotEmpty
-                      ? IconButton(
-                          icon: const Icon(Icons.clear),
-                          onPressed: widget.onClear ?? widget.controller.clear,
-                        )
-                      : null,
+                  
                 ),
               );
             },

@@ -2,7 +2,7 @@
 
 cd E:\stocko_app\
 git add .
-git commit -m "827 596 更新"
+git commit -m "829 596 更新"
 git push
 
 
@@ -11,7 +11,7 @@ git push
 cd E:\stocko_app\
 flutter run -v
 adb pair 192.168.5.83:37785 
-adb connect 192.168.5.83:42583
+adb connect 192.168.5.83:40547
 flutter run
 
 
