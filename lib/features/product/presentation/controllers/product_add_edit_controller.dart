@@ -106,12 +106,16 @@ class ProductAddEditController {
         final categoryNotifier = ref.read(categoryListProvider.notifier);
         await categoryNotifier.loadCategories();
         final categories = ref.read(categoryListProvider).categories;
-        final existingCat = categories.firstWhere(
-          (c) =>
-              c.name.toLowerCase() == data.newCategoryName.trim().toLowerCase(),
-          orElse: () => const CategoryModel(id: -1, name: ''),
-        );
-        if (existingCat.id != -1) {
+        CategoryModel? existingCat;
+        try {
+          existingCat = categories.firstWhere(
+            (c) =>
+                c.name.toLowerCase() == data.newCategoryName.trim().toLowerCase(),
+          );
+        } catch (e) {
+          existingCat = null;
+        }
+        if (existingCat != null) {
           categoryId = existingCat.id;
         } else {
           final service = ref.read(categoryServiceProvider);
@@ -123,9 +127,8 @@ class ProductAddEditController {
           // 再次获取以找到新创建的类别ID
           await categoryNotifier.loadCategories();
           final newCategories = ref.read(categoryListProvider).categories;
-          categoryId = newCategories
-              .firstWhere((c) => c.name == data.newCategoryName.trim())
-              .id;
+          final foundCategory = newCategories.where((c) => c.name == data.newCategoryName.trim()).firstOrNull;
+          categoryId = foundCategory?.id;
         }
       }
 
@@ -136,13 +139,9 @@ class ProductAddEditController {
             .read(allUnitsProvider)
             .maybeWhen(data: (u) => u, orElse: () => <Unit>[]);
         Unit? existingUnit;
-        try {
-          existingUnit = units.firstWhere(
-            (u) => u.name.toLowerCase() == data.newUnitName.trim().toLowerCase(),
-          );
-        } catch (e) {
-          existingUnit = null;
-        }
+        existingUnit = units.where(
+          (u) => u.name.toLowerCase() == data.newUnitName.trim().toLowerCase(),
+        ).firstOrNull;
 
         if (existingUnit != null) {
           unitId = existingUnit.id;
@@ -269,9 +268,9 @@ class ProductAddEditController {
 
       Unit? unit;
       try {
-        unit = allUnits.firstWhere(
+        unit = allUnits.where(
           (u) => u.name.toLowerCase() == unitName.toLowerCase(),
-        );
+        ).firstOrNull;
       } catch (e) {
         unit = null;
       }
@@ -334,10 +333,10 @@ class ProductAddEditController {
         ref.read(productUnitControllerProvider.notifier);
     final productUnits =
         await productUnitController.getProductUnitsByProductId(product.id!);
-    final baseProductUnit = productUnits.firstWhere(
-      (pu) => pu.conversionRate == 1.0,
-      orElse: () => throw Exception('保存主条码失败：未找到基础产品单位。'),
-    );
+    final baseProductUnit = productUnits.where((pu) => pu.conversionRate == 1.0).firstOrNull;
+    if (baseProductUnit == null) {
+      throw Exception('保存主条码失败：未找到基础产品单位。');
+    }
     final baseUnitProductId = baseProductUnit.id!;
 
     // 2. 查找与输入条码匹配的现有条码
@@ -430,9 +429,9 @@ class ProductAddEditController {
           .maybeWhen(data: (u) => u, orElse: () => <Unit>[]);
       Unit? targetUnit;
       try {
-        targetUnit = allUnits.firstWhere(
+        targetUnit = allUnits.where(
           (u) => u.name.toLowerCase() == auxUnit.unitName.trim().toLowerCase(),
-        );
+        ).firstOrNull;
       } catch (e) {
         targetUnit = null;
       }
@@ -440,15 +439,11 @@ class ProductAddEditController {
       if (targetUnit != null) {
         final finalTargetUnit = targetUnit;
         UnitProduct? matchingProductUnit;
-        try {
-          matchingProductUnit = productUnits.firstWhere(
-            (pu) =>
-                pu.unitId == finalTargetUnit.id &&
-                pu.conversionRate == auxUnit.conversionRate,
-          );
-        } catch (e) {
-          matchingProductUnit = null;
-        }
+        matchingProductUnit = productUnits.where(
+          (pu) =>
+              pu.unitId == finalTargetUnit.id &&
+              pu.conversionRate == auxUnit.conversionRate,
+        ).firstOrNull;
 
         if (matchingProductUnit == null) {
           throw Exception(
@@ -520,13 +515,9 @@ class ProductAddEditController {
 
       // 检查单位是否已存在
       Unit? existingUnit;
-      try {
-        existingUnit = units.firstWhere(
-          (u) => u.name.toLowerCase() == unitName.toLowerCase(),
-        );
-      } catch (e) {
-        existingUnit = null;
-      }
+      existingUnit = units.where(
+        (u) => u.name.toLowerCase() == unitName.toLowerCase(),
+      ).firstOrNull;
 
       if (existingUnit != null) {
         print(

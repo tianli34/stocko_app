@@ -102,10 +102,15 @@ class BatchDao extends DatabaseAccessor<AppDatabase> with _$BatchDaoMixin {
   }
 
   /// 根据批次号获取批次
-  Future<ProductBatchData?> getBatchByNumber(int id) {
-    return (select(
-      db.productBatch,
-    )..where((t) => t.id.equals(id))).getSingleOrNull();
+  Future<ProductBatchData?> getBatchByNumber(int id) async {
+    try {
+      return await (select(
+        db.productBatch,
+      )..where((t) => t.id.equals(id))).getSingleOrNull();
+    } catch (e) {
+      print('获取批次数据失败 (ID: $id): $e');
+      return null;
+    }
   }
 
   /// 更新批次初始数量

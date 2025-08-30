@@ -11,10 +11,21 @@ import 'image_cache_service.dart';
 class ImageService {
   static final ImageService _instance = ImageService._internal();
   factory ImageService() => _instance;
-  ImageService._internal();
 
-  final ImagePicker _picker = ImagePicker();
-  final ImageCacheService _cacheService = ImageCacheService();
+  ImagePicker _picker;
+  ImageCacheService _cacheService;
+
+  ImageService._internal({ImagePicker? picker, ImageCacheService? cacheService})
+      : _picker = picker ?? ImagePicker(),
+        _cacheService = cacheService ?? ImageCacheService();
+
+  @visibleForTesting
+  factory ImageService.forTest({
+    required ImagePicker picker,
+    required ImageCacheService cacheService,
+  }) {
+    return ImageService._internal(picker: picker, cacheService: cacheService);
+  }
 
   /// 从相机拍照
   Future<String?> pickImageFromCamera() async {

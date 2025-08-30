@@ -36,6 +36,7 @@ abstract class InboundReceiptModel with _$InboundReceiptModel {
     required DateTime updatedAt,
 
     /// 明细列表（仅领域层维护，不对应表字段）
+    @JsonKey(toJson: _itemsToJson, fromJson: _itemsFromJson)
     @Default(<InboundItemModel>[]) List<InboundItemModel> items,
   }) = _InboundReceiptModel;
 
@@ -110,4 +111,13 @@ class InboundReceiptStatus {
   static const String preset = 'preset';
   static const String draft = 'draft';
   static const String completed = 'completed';
+}
+
+/// JSON serialization helpers for items list
+List<Map<String, dynamic>> _itemsToJson(List<InboundItemModel> items) {
+  return items.map((item) => item.toJson()).toList();
+}
+
+List<InboundItemModel> _itemsFromJson(List<dynamic> json) {
+  return json.map((item) => InboundItemModel.fromJson(item as Map<String, dynamic>)).toList();
 }

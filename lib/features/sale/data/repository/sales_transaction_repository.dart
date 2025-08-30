@@ -1,5 +1,7 @@
+import 'package:drift/drift.dart' as drift;
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:stocko_app/core/database/database.dart';
+import 'package:stocko_app/features/sale/domain/model/sale_cart_item.dart';
 import 'package:stocko_app/features/sale/domain/model/sales_transaction.dart';
 import 'package:stocko_app/features/sale/domain/model/sales_transaction_item.dart';
 import 'package:stocko_app/features/sale/domain/repository/i_sales_transaction_repository.dart';
@@ -63,5 +65,45 @@ class SalesTransactionRepository implements ISalesTransactionRepository {
     final itemsData = await _db.salesTransactionItemDao.findSalesTransactionItemsByTransactionId(id.toString());
     final items = itemsData.map((i) => SalesTransactionItem.fromTableData(i)).toList();
     return SalesTransaction.fromTableData(transactionData, items: items);
+  }
+  @override
+  Future<int> handleOutbound(
+      int shopId, int salesId, List<SaleCartItem> saleItems) async {
+    final receiptId = await _db.outboundReceiptDao.insertOutboundReceipt(
+      OutboundReceiptCompanion(
+        shopId: drift.Value(shopId),
+        reason: const drift.Value('销售出库'),
+        salesTransactionId: drift.Value(salesId),
+      ),
+    );
+
+    // 合并明细
+    final Map<(int, int?), int> merged = {};
+    for (final item in saleItems) {
+      final key = (item.productId,
+          item.batchId != null ? int.tryParse(item.batchId!) : null);
+      merged.update(key, (q) => q + item.quantity.toInt(), ifAbsent: () => item.quantity.toInt());
+    }
+
+    // 批量写入出库明细
+    if (merged.isNotEmpty) {
+      final companions = merged.entries.map((e) {
+        final pid = e.key.$1;
+        final bid = e.key.$2;
+        final qty = e.value;
+        return OutboundItemCompanion(
+          receiptId: drift.Value(receiptId),
+          productId: drift.Value(pid),
+          quantity: drift.Value(qty),
+          batchId: bid != null
+              ? drift.Value(bid)
+              : const drift.Value.absent(),
+        );
+      }).toList(growable: false);
+      await _db.batch((batch) {
+        batch.insertAll(_db.outboundItem, companions);
+      });
+    }
+    return receiptId;
   }
 }

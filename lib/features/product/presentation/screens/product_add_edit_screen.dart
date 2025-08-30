@@ -68,31 +68,8 @@ class _ProductAddEditScreenState extends ConsumerState<ProductAddEditScreen> {
 
   @override
   void dispose() {
-    // 在 dispose 之前清除辅单位数据
-    try {
-      // 使用 mounted 检查确保 widget 仍然可用
-      if (mounted) {
-        ref.invalidate(unitEditFormProvider);
-      }
-    } catch (e) {
-      // print('🔧 ProductAddEditScreen: 清除辅单位数据失败: $e');
-    }
-
-    // 统一释放
     _c.dispose();
-
     super.dispose();
-  }
-
-  /// 在页面即将销毁时清除辅单位数据
-  void clearAuxiliaryUnitDataBeforeDispose() {
-    try {
-      // 在dispose之前调用，此时ref仍然可用
-      ref.read(unitEditFormProvider.notifier).resetUnitEditForm();
-      // print('🔧 ProductAddEditScreen: 已清除保存的辅单位数据');
-    } catch (e) {
-      // print('🔧 ProductAddEditScreen: 清除辅单位数据失败: $e');
-    }
   }
 
   @override
@@ -115,7 +92,8 @@ class _ProductAddEditScreenState extends ConsumerState<ProductAddEditScreen> {
         },
       );
     }
-    final categories = ref.watch(categoryListProvider).categories;
+    final categoryState = ref.watch(categoryListProvider);
+    final categories = categoryState.categories;
     final unitsAsyncValue = ref.watch(allUnitsProvider); // 获取单位列表
     final ui = ref.watch(productFormUiProvider);
     final isEdit = widget.product != null;
@@ -437,7 +415,7 @@ class _ProductAddEditScreenState extends ConsumerState<ProductAddEditScreen> {
 
   /// 在编辑模式下回填单位和类别数据
   Future<void> _populateUnitAndCategoryData() async {
-    if (widget.product == null) return;
+    if (widget.product == null || !mounted) return;
 
     // 设置单位ID和名称
     if (widget.product!.baseUnitId != null) {
@@ -453,28 +431,22 @@ class _ProductAddEditScreenState extends ConsumerState<ProductAddEditScreen> {
     }
 
     // 设置类别ID和名称
-    if (widget.product!.categoryId != null) {
+    if (widget.product!.categoryId != null && mounted) {
       ref.read(productFormUiProvider.notifier).setCategoryId(widget.product!.categoryId);
 
       // 从类别列表中获取类别名称
       final categories = ref.read(categoryListProvider).categories;
-      final category = categories.firstWhere(
-        (c) => c.id == widget.product!.categoryId,
-        orElse: () => const CategoryModel(name: '未分类'),
-      );
+      final category = categories.where((c) => c.id == widget.product!.categoryId).firstOrNull ?? 
+          const CategoryModel(name: '未分类');
 
-      if (mounted) {
-        setState(() {
-          _c.categoryController.text = category.name.replaceAll(' ', '');
-        });
-      }
-    } else {
+      setState(() {
+        _c.categoryController.text = category.name.replaceAll(' ', '');
+      });
+    } else if (mounted) {
       // 如果没有类别，设置为未分类
-      if (mounted) {
-        setState(() {
-          _c.categoryController.text = '未分类';
-        });
-      }
+      setState(() {
+        _c.categoryController.text = '未分类';
+      });
     }
   }
 }

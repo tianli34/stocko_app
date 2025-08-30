@@ -52,7 +52,7 @@ class _SaleItemCardState extends ConsumerState<SaleItemCard> {
             .firstWhere((it) => it.id == widget.itemId);
         // 显示为元（分/100）
         _sellingPriceController.text = (item.sellingPriceInCents / 100)
-            .toStringAsFixed(2);
+            .toStringAsFixed(1);
       }
     }
   }
@@ -140,7 +140,7 @@ class _SaleItemCardState extends ConsumerState<SaleItemCard> {
             (item.sellingPriceInCents / 100).toStringAsFixed(2)) {
       // 同步控制器文本为元（分/100）
       _sellingPriceController.text = (item.sellingPriceInCents / 100)
-          .toStringAsFixed(2);
+          .toStringAsFixed(1);
     }
     if (widget.quantityFocusNode?.hasFocus == false &&
         _quantityController.text != item.quantity.toStringAsFixed(0)) {
@@ -386,7 +386,7 @@ class _SaleItemCardState extends ConsumerState<SaleItemCard> {
                                                       horizontal: 12,
                                                       vertical: 7,
                                                     ),
-                                                prefixText: '¥',
+                                                // prefixText: '¥',
                                               ),
                                               onChanged: (value) =>
                                                   _updateItem(item),
@@ -487,7 +487,7 @@ class _SaleItemCardState extends ConsumerState<SaleItemCard> {
                                                       horizontal: 12.0,
                                                     ),
                                                 child: Text(
-                                                  '¥${item.amount.toStringAsFixed(2)}',
+                                                  '¥${item.amount.toStringAsFixed(1)}',
                                                   style: const TextStyle(
                                                     fontSize: 14,
                                                   ),

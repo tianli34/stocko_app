@@ -79,7 +79,23 @@ class InventoryService {
   }) async {
     try {
   return await _db.transaction(() async {
-        // 减少库存数量（允许负库存），但必须命中一行
+        // 检查库存记录是否存在
+        var inventory = await _inventoryRepository
+            .getInventoryByProductShopAndBatch(productId, shopId, batchId);
+        
+        if (inventory == null) {
+          // 如果库存记录不存在，创建初始库存为0的记录
+          print('📦 库存服务：产品 $productId 在店铺 $shopId 的库存记录不存在，创建初始记录');
+          inventory = StockModel.create(
+            productId: productId,
+            quantity: 0,
+            shopId: shopId,
+            batchId: batchId,
+          );
+          await _inventoryRepository.addInventory(inventory);
+        }
+        
+        // 减少库存数量（允许负库存）
         final ok = batchId != null
             ? await _inventoryRepository.subtractInventoryQuantityByBatch(
                 productId,

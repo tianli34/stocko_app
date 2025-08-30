@@ -81,12 +81,14 @@ extension ProductUnitListExtensions on List<UnitProduct> {
   String? get configurationError {
     if (isEmpty) return '至少需要配置一个单位';
 
-    final baseUnits = where((unit) => unit.isBaseUnit).toList();
-    if (baseUnits.isEmpty) return '必须有一个基础单位（换算率为1）';
-    if (baseUnits.length > 1) return '只能有一个基础单位（换算率为1）';
+  // 先校验换算率有效性（优先级更高）
+  final invalidRates = where((unit) => unit.conversionRate <= 0);
+  if (invalidRates.isNotEmpty) return '换算率必须大于0';
 
-    final invalidRates = where((unit) => unit.conversionRate <= 0);
-    if (invalidRates.isNotEmpty) return '换算率必须大于0';
+  // 再校验基础单位约束
+  final baseUnits = where((unit) => unit.isBaseUnit).toList();
+  if (baseUnits.isEmpty) return '必须有一个基础单位（换算率为1）';
+  if (baseUnits.length > 1) return '只能有一个基础单位（换算率为1）';
 
     return null;
   }

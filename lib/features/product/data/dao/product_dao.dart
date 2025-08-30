@@ -63,16 +63,50 @@ class ProductDao extends DatabaseAccessor<AppDatabase> with _$ProductDaoMixin {
 
     return query.watch().map((rows) {
       return rows.map((row) {
-        final product = row.readTable(db.product);
-        final unit = row.readTableOrNull(db.unit);
-        final unitProduct = row.readTableOrNull(db.unitProduct);
-        return (
-          product: product,
-          unitId: unit?.id ?? 0,
-          unitName: unit?.name ?? '未知单位',
-          wholesalePriceInCents: unitProduct?.wholesalePriceInCents,
-        );
+        try {
+          final product = row.readTable(db.product);
+          final unit = row.readTableOrNull(db.unit);
+          final unitProduct = row.readTableOrNull(db.unitProduct);
+          
+          // 安全地获取单位ID，确保不会出现数字解析错误
+          int unitId;
+          String unitName;
+          
+          if (unit != null) {
+            unitId = unit.id;
+            unitName = unit.name;
+          } else {
+            // 如果没有找到单位，使用产品的基础单位ID
+            unitId = product.baseUnitId;
+            unitName = '未知单位';
+          }
+          
+          return (
+            product: product,
+            unitId: unitId,
+            unitName: unitName,
+            wholesalePriceInCents: unitProduct?.wholesalePriceInCents,
+          );
+        } catch (e) {
+          print('处理产品单位数据时出错: $e');
+          // 返回一个安全的默认值
+          final product = row.readTable(db.product);
+          return (
+            product: product,
+            unitId: product.baseUnitId,
+            unitName: '未知单位',
+            wholesalePriceInCents: null,
+          );
+        }
       }).toList();
+    }).handleError((error) {
+      print('监听产品及单位数据时出错: $error');
+      return <({
+        ProductData product,
+        int unitId,
+        String unitName,
+        int? wholesalePriceInCents
+      })>[];
     });
   }
 

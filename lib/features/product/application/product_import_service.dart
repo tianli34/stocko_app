@@ -68,34 +68,6 @@ class ProductImportService {
   ) async {
     if (rawProductsData.isEmpty) return '没有需要导入的数据。';
 
-    // --- 步骤 1: 预处理，收集所有唯一的品牌和单位名称 ---
-    final categoryNames = rawProductsData
-        .map((data) => data['品牌'] as String)
-        .toSet();
-    final unitNames = {'包', '条'}; // 根据需求固定
-
-    // --- 步骤 2: 一次性查找或创建所有需要的ID，并存入Map ---
-    // --- 步骤 2: 创建层级分类 ---
-    // 2.1 首先创建或获取顶级分类“烟”
-    final rootCategoryName = '烟';
-    final rootCategoryId = await _getOrCreateCategory(rootCategoryName);
-
-    // 2.2 然后将文件中的品牌作为“烟”的子分类
-    final categoryIdMap = <String, int>{};
-    for (final name in categoryNames) {
-      // 将品牌作为二级分类，父级是“烟”
-      categoryIdMap[name] =
-          await _getOrCreateCategory(name, parentId: rootCategoryId);
-    }
-
-    final unitIdMap = <String, int>{};
-    for (final name in unitNames) {
-      unitIdMap[name] = await _getOrCreateUnit(name);
-    }
-
-    final packUnitId = unitIdMap['包']!;
-    final cartonUnitId = unitIdMap['条']!;
-
     // --- 新增步骤: 预检查条码唯一性 ---
     final allBarcodes = <String>[];
     final duplicateBarcodesInFile = <String>{};
@@ -126,6 +98,34 @@ class ProductImportService {
     if (duplicateBarcodesInFile.isNotEmpty) {
       return '导入失败：文件中发现重复条码: ${duplicateBarcodesInFile.join(', ')}。请修正数据后重试。';
     }
+
+    // --- 步骤 1: 预处理，收集所有唯一的品牌和单位名称 ---
+    final categoryNames = rawProductsData
+        .map((data) => data['品牌'] as String)
+        .toSet();
+    final unitNames = {'包', '条'}; // 根据需求固定
+
+    // --- 步骤 2: 一次性查找或创建所有需要的ID，并存入Map ---
+    // --- 步骤 2: 创建层级分类 ---
+    // 2.1 首先创建或获取顶级分类"烟"
+    final rootCategoryName = '烟';
+    final rootCategoryId = await _getOrCreateCategory(rootCategoryName);
+
+    // 2.2 然后将文件中的品牌作为"烟"的子分类
+    final categoryIdMap = <String, int>{};
+    for (final name in categoryNames) {
+      // 将品牌作为二级分类，父级是"烟"
+      categoryIdMap[name] =
+          await _getOrCreateCategory(name, parentId: rootCategoryId);
+    }
+
+    final unitIdMap = <String, int>{};
+    for (final name in unitNames) {
+      unitIdMap[name] = await _getOrCreateUnit(name);
+    }
+
+    final packUnitId = unitIdMap['包']!;
+    final cartonUnitId = unitIdMap['条']!;
 
     if (allBarcodes.isNotEmpty) {
       final existingBarcodes = await (db.select(
@@ -176,13 +176,13 @@ class ProductImportService {
               name: productName,
               brand: Value(brand),
               categoryId: Value(categoryId),
-              baseUnitId: packUnitId, // 基础单位ID是“包”
+              baseUnitId: packUnitId, // 基础单位ID是"包"
               suggestedRetailPrice:
                   Value(Money((cartonSuggestedRetailPrice * 100).toInt())),
             ),
           );
 
-          // 插入“包”的单位和条码记录
+          // 插入"包"的单位和条码记录
           batch.insert(
             db.unitProduct,
             UnitProductCompanion.insert(
@@ -208,7 +208,7 @@ class ProductImportService {
             );
           }
 
-          // 插入“条”的单位和条码记录
+          // 插入"条"的单位和条码记录
           batch.insert(
             db.unitProduct,
             UnitProductCompanion.insert(

@@ -2,7 +2,7 @@
 
 cd E:\stocko_app\
 git add .
-git commit -m "829 596 更新"
+git commit -m "829 6 597 更新"
 git push
 
 

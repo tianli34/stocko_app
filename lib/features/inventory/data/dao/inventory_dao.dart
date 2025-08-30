@@ -50,8 +50,40 @@ class InventoryDao extends DatabaseAccessor<AppDatabase>
   }
 
   /// 获取所有库存
-  Future<List<StockData>> getAllInventory() {
-    return select(stock).get();
+  Future<List<StockData>> getAllInventory() async {
+    try {
+      return await select(stock).get();
+    } catch (e) {
+      print('📦 DAO层：获取所有库存数据失败: $e');
+      // 如果标准查询失败，尝试使用原始 SQL 过滤有问题的记录
+      try {
+        final result = await customSelect(
+          'SELECT id, product_id, batch_id, quantity, shop_id, '
+          'datetime(COALESCE(created_at, CURRENT_TIMESTAMP)) as created_at, '
+          'datetime(COALESCE(updated_at, CURRENT_TIMESTAMP)) as updated_at '
+          'FROM stock WHERE id IS NOT NULL AND product_id IS NOT NULL',
+          readsFrom: {stock},
+        ).get();
+        
+        return result.map((row) {
+          final createdAtStr = row.readNullable<String>('created_at');
+          final updatedAtStr = row.readNullable<String>('updated_at');
+
+          return StockData(
+            id: row.read<int>('id'),
+            productId: row.read<int>('product_id'),
+            batchId: row.readNullable<int>('batch_id'),
+            quantity: row.read<int>('quantity'),
+            shopId: row.read<int>('shop_id'),
+            createdAt: DateTime.tryParse(createdAtStr ?? '') ?? DateTime.now(),
+            updatedAt: DateTime.tryParse(updatedAtStr ?? '') ?? DateTime.now(),
+          );
+        }).toList();
+      } catch (e2) {
+        print('📦 DAO层：备用查询也失败: $e2');
+        return [];
+      }
+    }
   }
 
   /// 根据店铺ID获取库存列表

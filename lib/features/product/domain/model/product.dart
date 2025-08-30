@@ -1,4 +1,5 @@
 // ignore_for_file: invalid_annotation_target
+import 'package:equatable/equatable.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:intl/intl.dart';
 
@@ -13,9 +14,11 @@ int? _intFromJson(dynamic value) {
   return null;
 }
 
+Money? _moneyFromJson(int? cents) => cents == null ? null : Money(cents);
+int? _moneyToJson(Money? money) => money?.cents;
+
 /// 价格封装类（单位为分）
-@JsonSerializable()
-class Money {
+class Money extends Equatable {
   final int cents;
   const Money(this.cents);
 
@@ -32,9 +35,13 @@ class Money {
 
   static final _formatterCache = <String, NumberFormat>{};
 
-  factory Money.fromJson(Map<String, dynamic> json) => _$MoneyFromJson(json);
-  Map<String, dynamic> toJson() => _$MoneyToJson(this);
+  factory Money.fromJson(int cents) => Money(cents);
+  int toJson() => cents;
+
+  @override
+  List<Object?> get props => [cents];
 }
+
 
 /// 保质期单位
 @JsonEnum(alwaysCreate: true)
@@ -55,8 +62,11 @@ abstract class ProductModel with _$ProductModel {
     @JsonKey(fromJson: _intFromJson) int? categoryId,
     String? specification,
     String? brand,
+    @JsonKey(fromJson: _moneyFromJson, toJson: _moneyToJson)
     Money? suggestedRetailPrice,
+    @JsonKey(fromJson: _moneyFromJson, toJson: _moneyToJson)
     Money? retailPrice,
+    @JsonKey(fromJson: _moneyFromJson, toJson: _moneyToJson)
     Money? promotionalPrice,
     int? stockWarningValue,
     int? shelfLife,

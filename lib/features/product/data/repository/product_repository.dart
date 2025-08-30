@@ -113,17 +113,33 @@ class ProductRepository implements IProductRepository {
         .map(
           (data) => data
               .map(
-                (e) => (
-                  product: _dataToProduct(e.product),
-                  unitId: e.unitId,
-                  unitName: e.unitName,
-                  wholesalePriceInCents: e.wholesalePriceInCents,
-                ),
+                (e) {
+                  try {
+                    return (
+                      product: _dataToProduct(e.product),
+                      unitId: e.unitId,
+                      unitName: e.unitName,
+                      wholesalePriceInCents: e.wholesalePriceInCents,
+                    );
+                  } catch (error) {
+                    print('转换产品数据时出错: $error');
+                    print('问题产品ID: ${e.product.id}');
+                    // 返回一个安全的默认值，但跳过这个有问题的项
+                    rethrow;
+                  }
+                },
               )
               .toList(),
         )
         .handleError((error) {
-          throw Exception('监听产品及其单位失败: $error');
+          print('监听产品及其单位失败: $error');
+          // 返回空列表而不是抛出异常
+          return <({
+            ProductModel product,
+            int unitId,
+            String unitName,
+            int? wholesalePriceInCents
+          })>[];
         });
   }
 
@@ -280,26 +296,32 @@ class ProductRepository implements IProductRepository {
 
   /// 将数据库数据转换为Product模型
   ProductModel _dataToProduct(ProductData data) {
-    return ProductModel(
-      id: data.id, // 直接使用int类型的id
-      name: data.name,
-      sku: data.sku,
-      image: data.image,
-      categoryId: data.categoryId,
-      baseUnitId: data.baseUnitId,
-      specification: data.specification,
-      brand: data.brand,
-      suggestedRetailPrice: data.suggestedRetailPrice,
-      retailPrice: data.retailPrice,
-      promotionalPrice: data.promotionalPrice,
-      stockWarningValue: data.stockWarningValue,
-      shelfLife: data.shelfLife,
-      shelfLifeUnit: data.shelfLifeUnit,
-      enableBatchManagement: data.enableBatchManagement,
-      status: data.status,
-      remarks: data.remarks,
-      lastUpdated: data.lastUpdated,
-    );
+    try {
+      return ProductModel(
+        id: data.id, // 直接使用int类型的id
+        name: data.name,
+        sku: data.sku,
+        image: data.image,
+        categoryId: data.categoryId,
+        baseUnitId: data.baseUnitId,
+        specification: data.specification,
+        brand: data.brand,
+        suggestedRetailPrice: data.suggestedRetailPrice,
+        retailPrice: data.retailPrice,
+        promotionalPrice: data.promotionalPrice,
+        stockWarningValue: data.stockWarningValue,
+        shelfLife: data.shelfLife,
+        shelfLifeUnit: data.shelfLifeUnit,
+        enableBatchManagement: data.enableBatchManagement,
+        status: data.status,
+        remarks: data.remarks,
+        lastUpdated: data.lastUpdated,
+      );
+    } catch (e) {
+      print('转换产品数据时出错: $e');
+      print('问题数据: id=${data.id}, name=${data.name}, baseUnitId=${data.baseUnitId}');
+      rethrow;
+    }
   }
 
   @override

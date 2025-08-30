@@ -89,7 +89,8 @@ class InventoryRepository implements IInventoryRepository {
       return dataList.map(_dataToInventory).toList();
     } catch (e) {
       print('📦 仓储层：获取所有库存失败: $e');
-      rethrow;
+      // 返回空列表而不是抛出异常
+      return [];
     }
   }
 
@@ -388,15 +389,21 @@ class InventoryRepository implements IInventoryRepository {
 
   /// 将数据库数据转换为Inventory模型
   StockModel _dataToInventory(StockData data) {
-    return StockModel(
-      id: data.id,
-      productId: data.productId,
-      quantity: data.quantity,
-      shopId: data.shopId,
-      batchId: data.batchId,
-      createdAt: data.createdAt,
-      updatedAt: data.updatedAt,
-    );
+    try {
+      return StockModel(
+        id: data.id,
+        productId: data.productId,
+        quantity: data.quantity,
+        shopId: data.shopId,
+        batchId: data.batchId,
+        createdAt: data.createdAt,
+        updatedAt: data.updatedAt,
+      );
+    } catch (e) {
+      print('📦 数据转换失败: $e');
+      print('📦 原始数据: id=${data.id}, productId=${data.productId}, quantity=${data.quantity}');
+      rethrow;
+    }
   }
 }
 

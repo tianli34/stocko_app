@@ -122,7 +122,7 @@ class _CreateSaleScreenState extends ConsumerState<CreateSaleScreen> {
     if (result == null || result.isEmpty) return;
 
     try {
-      // 核心修复：
+      // 核心修复：安全获取产品数据
       final List<
         ({
           ProductModel product,
@@ -131,25 +131,44 @@ class _CreateSaleScreenState extends ConsumerState<CreateSaleScreen> {
           int? wholesalePriceInCents,
         })
       >
-      productsWithUnit = await ref.read(allProductsWithUnitProvider.future);
+      productsWithUnit;
+      
+      try {
+        productsWithUnit = await ref.read(allProductsWithUnitProvider.future);
+      } catch (e) {
+        print('获取产品单位数据失败: $e');
+        if (!mounted) return;
+        showAppSnackBar(
+          context,
+          message: '获取产品数据失败，请稍后重试',
+          isError: true,
+        );
+        return;
+      }
 
       final selectedProducts = productsWithUnit
           .where((p) => result.contains(p.product.id))
           .toList();
 
       for (final p in selectedProducts) {
-        final price = p.product.effectivePrice;
-        ref
-            .read(saleListProvider.notifier)
-            .addOrUpdateItem(
-              product: p.product,
-              unitId: p.unitId,
-              unitName: p.unitName,
-              sellingPriceInCents: price != null ? price.cents : 0,
-            );
+        try {
+          final price = p.product.effectivePrice;
+          ref
+              .read(saleListProvider.notifier)
+              .addOrUpdateItem(
+                product: p.product,
+                unitId: p.unitId,
+                unitName: p.unitName,
+                sellingPriceInCents: price != null ? price.cents : 0,
+              );
+        } catch (e) {
+          print('添加产品失败: ${p.product.name}, 错误: $e');
+          // 继续处理下一个产品
+        }
       }
     } catch (e) {
       // 捕获并处理可能的异常
+      print('添加手动产品时发生错误: $e');
       if (!mounted) return;
       showAppSnackBar(
         context,
@@ -602,7 +621,7 @@ class _CreateSaleScreenState extends ConsumerState<CreateSaleScreen> {
                   Text('找零:', style: textTheme.titleMedium),
                   const SizedBox(width: 8),
                   Text(
-                    '¥ ${change.toStringAsFixed(2)}',
+                    '¥ ${change.toStringAsFixed(1)}',
                     style: textTheme.titleLarge?.copyWith(
                       color: change < 0
                           ? theme.colorScheme.error
@@ -810,7 +829,7 @@ class _CreateSaleScreenState extends ConsumerState<CreateSaleScreen> {
             _buildTotalItem(
               textTheme,
               '总金额',
-              '¥${totalAmount.toStringAsFixed(2)}',
+              '¥${totalAmount.toStringAsFixed(1)}',
               isAmount: true,
             ),
         ],

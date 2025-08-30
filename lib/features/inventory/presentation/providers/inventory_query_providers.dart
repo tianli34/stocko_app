@@ -118,7 +118,28 @@ final inventoryQueryProvider = FutureProvider<List<Map<String, dynamic>>>((
 
     filteredData.sort((a, b) {
       try {
-        final aProductionDate = DateTime.parse(a['productionDate'] as String);
+        // 安全解析日期字符串
+        final aDateStr = (a['productionDate'] as String).trim();
+        final bDateStr = (b['productionDate'] as String).trim();
+        
+        // 尝试解析日期，如果失败则跳过
+        DateTime aProductionDate;
+        DateTime bProductionDate;
+        
+        try {
+          aProductionDate = DateTime.parse(aDateStr);
+        } catch (e) {
+          print('无法解析日期A: $aDateStr, 错误: $e');
+          return 1; // 解析失败的项排在后面
+        }
+        
+        try {
+          bProductionDate = DateTime.parse(bDateStr);
+        } catch (e) {
+          print('无法解析日期B: $bDateStr, 错误: $e');
+          return -1; // 解析失败的项排在后面
+        }
+        
         final aShelfLife = a['shelfLifeDays'] as int;
         final aShelfLifeUnit = a['shelfLifeUnit'] as String;
         
@@ -141,7 +162,6 @@ final inventoryQueryProvider = FutureProvider<List<Map<String, dynamic>>>((
         final aExpiryDate = aProductionDate.add(Duration(days: aShelfLifeInDays));
         final aRemaining = aExpiryDate.difference(now);
 
-        final bProductionDate = DateTime.parse(b['productionDate'] as String);
         final bShelfLife = b['shelfLifeDays'] as int;
         final bShelfLifeUnit = b['shelfLifeUnit'] as String;
         
@@ -175,6 +195,7 @@ final inventoryQueryProvider = FutureProvider<List<Map<String, dynamic>>>((
         return aRemaining.compareTo(bRemaining);
       } catch (e) {
         print('排序时发生错误: $e');
+        print('问题数据: A=${a['productionDate']}, B=${b['productionDate']}');
         // 如果解析失败，则将该项排在后面
         return 1;
       }

@@ -170,9 +170,15 @@ class InventoryQueryService {
         if (!shouldInclude) continue;
 
         // 获取批次信息
-        final batch = inventory.batchId != null
-            ? await _batchDao.getBatchByNumber(inventory.batchId!)
-            : null;
+        ProductBatchData? batch;
+        if (inventory.batchId != null) {
+          try {
+            batch = await _batchDao.getBatchByNumber(inventory.batchId!);
+          } catch (e) {
+            print('📦 获取批次信息失败 (batchId: ${inventory.batchId}): $e');
+            batch = null; // 如果获取批次失败，设为null
+          }
+        }
 
         // 构建库存项目数据
         final inventoryItem = {
@@ -190,7 +196,18 @@ class InventoryQueryService {
 
         if (batch != null) {
           inventoryItem['batchNumber'] = batch.id;
-          inventoryItem['productionDate'] = batch.productionDate.toIso8601String();
+          // 安全处理日期，确保格式正确
+          try {
+            if (batch.productionDate != null) {
+              inventoryItem['productionDate'] = batch.productionDate.toIso8601String();
+            } else {
+              inventoryItem['productionDate'] = DateTime.now().toIso8601String();
+            }
+          } catch (e) {
+            print('日期转换失败: ${batch.productionDate}, 错误: $e');
+            // 如果日期转换失败，使用当前日期作为默认值
+            inventoryItem['productionDate'] = DateTime.now().toIso8601String();
+          }
           inventoryItem['shelfLifeDays'] = product.shelfLife;
           inventoryItem['shelfLifeUnit'] = product.shelfLifeUnit.name;
         }
@@ -202,6 +219,7 @@ class InventoryQueryService {
       return result;
     } catch (e) {
       print('📦 库存查询服务：获取库存详细信息失败: $e');
+      print('📦 错误堆栈: ${e.toString()}');
       rethrow;
     }
   }

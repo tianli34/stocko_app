@@ -30,20 +30,32 @@ class CategoryListState {
 /// 类别列表状态管理器
 class CategoryListNotifier extends StateNotifier<CategoryListState> {
   final CategoryService _categoryService;
+  bool _disposed = false;
 
   CategoryListNotifier(this._categoryService)
     : super(const CategoryListState()) {
     loadCategories();
   }
 
+  @override
+  void dispose() {
+    _disposed = true;
+    super.dispose();
+  }
+
   /// 加载所有类别
   Future<void> loadCategories() async {
+    if (_disposed) return;
     state = state.copyWith(isLoading: true, error: null);
     try {
       final categories = await _categoryService.getAllCategories();
-      state = state.copyWith(categories: categories, isLoading: false);
+      if (!_disposed) {
+        state = state.copyWith(categories: categories, isLoading: false);
+      }
     } catch (e) {
-      state = state.copyWith(isLoading: false, error: e.toString());
+      if (!_disposed) {
+        state = state.copyWith(isLoading: false, error: e.toString());
+      }
     }
   }
 
@@ -161,11 +173,7 @@ final getCategoryByIdProvider = Provider.family<CategoryModel?, String>((
   categoryId,
 ) {
   final categories = ref.watch(categoriesProvider);
-  try {
-    return categories.firstWhere((category) => category.id == categoryId);
-  } catch (e) {
-    return null;
-  }
+  return categories.where((category) => category.id == categoryId).firstOrNull;
 });
 
 /// 获取顶级类别（无父级的类别）
