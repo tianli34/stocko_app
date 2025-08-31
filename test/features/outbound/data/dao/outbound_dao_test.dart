@@ -21,22 +21,20 @@ void main() {
   });
 
   // Helper function to insert prerequisite data
-  Future<int> _insertTestShop() async {
+  Future<int> insertTestShop() async {
     return await database
         .into(database.shop)
         .insert(ShopCompanion.insert(name: 'Test Shop', manager: 'Test Manager'));
   }
   
-  Future<int> _insertTestProduct() async {
+  Future<int> insertTestProduct() async {
     var unitId = await (database.select(database.unit)
           ..where((tbl) => tbl.name.equals('box')))
         .getSingleOrNull()
         .then((value) => value?.id);
-    if (unitId == null) {
-      unitId = await database
+    unitId ??= await database
           .into(database.unit)
           .insert(UnitCompanion.insert(name: 'box'));
-    }
 
     return await database.into(database.product).insert(
           ProductCompanion.insert(name: 'Test Product', baseUnitId: unitId),
@@ -45,7 +43,7 @@ void main() {
 
   test('should insert and get an outbound receipt', () async {
     // Arrange
-    final shopId = await _insertTestShop();
+    final shopId = await insertTestShop();
     final receiptCompanion = OutboundReceiptCompanion.insert(
       shopId: shopId,
       reason: 'Sale',
@@ -64,9 +62,9 @@ void main() {
 
   test('should insert a full outbound receipt with items in a transaction', () async {
     // Arrange
-    final shopId = await _insertTestShop();
-    final productId1 = await _insertTestProduct();
-    final productId2 = await _insertTestProduct();
+    final shopId = await insertTestShop();
+    final productId1 = await insertTestProduct();
+    final productId2 = await insertTestProduct();
 
     // Act
     final newReceiptId = await database.transaction(() async {

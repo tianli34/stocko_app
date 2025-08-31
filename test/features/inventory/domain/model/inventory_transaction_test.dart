@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import '../../../../../lib/features/inventory/domain/model/inventory_transaction.dart';
+import 'package:stocko_app/features/inventory/domain/model/inventory_transaction.dart';
 
 void main() {
   group('InventoryTransactionModel', () {

@@ -2,7 +2,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:stocko_app/features/inventory/application/inventory_service.dart';
 import 'package:stocko_app/features/sale/data/repository/sales_transaction_repository.dart';
 import 'package:stocko_app/core/database/database.dart';
-import 'package:drift/drift.dart' as drift;
 
 import '../../domain/model/sale_cart_item.dart';
 import '../../domain/model/sales_transaction.dart';

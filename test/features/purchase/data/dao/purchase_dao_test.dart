@@ -19,26 +19,26 @@ void main() {
   });
 
   // Helper function to insert prerequisite data
-  Future<int> _insertTestUnit() async {
+  Future<int> insertTestUnit() async {
     return await database.into(database.unit).insert(
           UnitCompanion.insert(name: 'g'),
         );
   }
 
-  Future<int> _insertTestProduct(int unitId) async {
+  Future<int> insertTestProduct(int unitId) async {
     return await database.into(database.product).insert(
           ProductCompanion.insert(
               name: 'Test Product', baseUnitId: unitId),
         );
   }
   
-  Future<int> _insertTestSupplier() async {
+  Future<int> insertTestSupplier() async {
     return await database.into(database.supplier).insert(
           SupplierCompanion.insert(name: 'Test Supplier'),
         );
   }
 
-  Future<int> _insertTestShop() async {
+  Future<int> insertTestShop() async {
     return await database.into(database.shop).insert(
           ShopCompanion.insert(name: 'Test Shop', manager: 'Test Manager'),
         );
@@ -48,10 +48,10 @@ void main() {
   test('createFullPurchaseOrder should create an order and its items',
       () async {
     // Arrange
-    final supplierId = await _insertTestSupplier();
-    final shopId = await _insertTestShop();
-    final unitId = await _insertTestUnit();
-    final productId = await _insertTestProduct(unitId);
+    final supplierId = await insertTestSupplier();
+    final shopId = await insertTestShop();
+    final unitId = await insertTestUnit();
+    final productId = await insertTestProduct(unitId);
 
     final orderCompanion = PurchaseOrderCompanion.insert(
       supplierId: supplierId,
@@ -98,10 +98,10 @@ void main() {
 
   test('deletePurchaseOrder should remove the order and its items', () async {
     // Arrange
-    final supplierId = await _insertTestSupplier();
-    final shopId = await _insertTestShop();
-    final unitId = await _insertTestUnit();
-    final productId = await _insertTestProduct(unitId);
+    final supplierId = await insertTestSupplier();
+    final shopId = await insertTestShop();
+    final unitId = await insertTestUnit();
+    final productId = await insertTestProduct(unitId);
 
     final orderId = await purchaseDao.createFullPurchaseOrder(
       order: PurchaseOrderCompanion.insert(
@@ -135,10 +135,10 @@ void main() {
 
   test('watchPurchaseOrderWithItems emits correct data', () async {
     // Arrange
-    final supplierId = await _insertTestSupplier();
-    final shopId = await _insertTestShop();
-    final unitId = await _insertTestUnit();
-    final productId = await _insertTestProduct(unitId);
+    final supplierId = await insertTestSupplier();
+    final shopId = await insertTestShop();
+    final unitId = await insertTestUnit();
+    final productId = await insertTestProduct(unitId);
     
     final orderCompanion = PurchaseOrderCompanion.insert(
       supplierId: supplierId,

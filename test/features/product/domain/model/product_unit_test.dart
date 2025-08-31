@@ -1,6 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:stocko_app/features/product/domain/model/product_unit.dart';
-import 'package:stocko_app/features/product/domain/model/unit.dart';
 
 void main() {
   group('UnitProduct', () {

@@ -52,7 +52,7 @@ final _productSalesRankingStreamControllerProvider =
   final controller = StreamController<List<ProductSalesRanking>>.broadcast();
 
   StreamSubscription<List<ProductSalesRanking>>? sub;
-  Stream<List<ProductSalesRanking>>? _lastSrc;
+  Stream<List<ProductSalesRanking>>? lastSrc;
 
   void resubscribe() {
     final range = ref.read(rankingRangeProvider);
@@ -64,7 +64,7 @@ final _productSalesRankingStreamControllerProvider =
     );
     // 若仓库返回的是同一个单订阅 Stream 实例（测试里可能复用同一个 controller.stream），
     // 不要二次监听，以免抛出 “Stream has already been listened to”。
-    if (identical(_lastSrc, src)) {
+    if (identical(lastSrc, src)) {
       return; // 保持原订阅，继续接收事件
     }
 
@@ -89,7 +89,7 @@ final _productSalesRankingStreamControllerProvider =
     // 新订阅建立成功，替换并取消旧订阅
     final oldSub = sub;
     sub = newSub;
-    _lastSrc = src;
+    lastSrc = src;
     oldSub?.cancel();
   }
 

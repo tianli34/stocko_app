@@ -418,18 +418,16 @@ class _ProductAddEditScreenState extends ConsumerState<ProductAddEditScreen> {
     if (widget.product == null || !mounted) return;
 
     // 设置单位ID和名称
-    if (widget.product!.baseUnitId != null) {
-      ref.read(productFormUiProvider.notifier).setUnitId(widget.product!.baseUnitId);
+    ref.read(productFormUiProvider.notifier).setUnitId(widget.product!.baseUnitId);
 
-      // 获取单位信息并设置控制器文本
-      final unit = await ref.read(unitControllerProvider.notifier).getUnitById(widget.product!.baseUnitId!);
-      if (unit != null && mounted) {
-        setState(() {
-          _c.unitController.text = unit.name.replaceAll(' ', '');
-        });
-      }
+    // 获取单位信息并设置控制器文本
+    final unit = await ref.read(unitControllerProvider.notifier).getUnitById(widget.product!.baseUnitId);
+    if (unit != null && mounted) {
+      setState(() {
+        _c.unitController.text = unit.name.replaceAll(' ', '');
+      });
     }
-
+  
     // 设置类别ID和名称
     if (widget.product!.categoryId != null && mounted) {
       ref.read(productFormUiProvider.notifier).setCategoryId(widget.product!.categoryId);

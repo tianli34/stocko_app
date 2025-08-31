@@ -198,12 +198,8 @@ class InventoryQueryService {
           inventoryItem['batchNumber'] = batch.id;
           // 安全处理日期，确保格式正确
           try {
-            if (batch.productionDate != null) {
-              inventoryItem['productionDate'] = batch.productionDate.toIso8601String();
-            } else {
-              inventoryItem['productionDate'] = DateTime.now().toIso8601String();
-            }
-          } catch (e) {
+            inventoryItem['productionDate'] = batch.productionDate.toIso8601String();
+                    } catch (e) {
             print('日期转换失败: ${batch.productionDate}, 错误: $e');
             // 如果日期转换失败，使用当前日期作为默认值
             inventoryItem['productionDate'] = DateTime.now().toIso8601String();

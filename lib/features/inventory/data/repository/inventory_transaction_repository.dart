@@ -80,7 +80,9 @@ class InventoryTransactionRepository
   @override
   Future<List<InventoryTransactionModel>> getTransactionsByType(String type) async {
     try {
-      final dataList = await _transactionDao.getTransactionsByType(type);
+      final dataList = await _transactionDao.getTransactionsByType(
+        _normalizeTypeToDbCode(type),
+      );
       return dataList.map(_dataToTransaction).toList();
     } catch (e) {
       print('📋 仓储层：根据类型获取库存流水失败: $e');
@@ -213,7 +215,8 @@ class InventoryTransactionRepository
     int? shopId,
     int? productId,
   }) async {
-    return getTransactionsByType(InventoryTransactionType.inbound.name);
+  // 使用数据库短码，避免 name 与 DB 存储不一致
+  return getTransactionsByType(InventoryTransactionType.inbound.toDbCode);
   }
 
   @override
@@ -221,7 +224,7 @@ class InventoryTransactionRepository
     int? shopId,
     int? productId,
   }) async {
-    return getTransactionsByType(InventoryTransactionType.outbound.name);
+  return getTransactionsByType(InventoryTransactionType.outbound.toDbCode);
   }
 
   @override
@@ -229,7 +232,7 @@ class InventoryTransactionRepository
     int? shopId,
     int? productId,
   }) async {
-    return getTransactionsByType(InventoryTransactionType.adjustment.name);
+  return getTransactionsByType(InventoryTransactionType.adjustment.toDbCode);
   }
 
   @override
@@ -289,7 +292,7 @@ class InventoryTransactionRepository
       return await _transactionDao.getTransactionCount(
         shopId: shopId,
         productId: productId,
-        type: type,
+  type: type == null ? null : _normalizeTypeToDbCode(type),
       );
     } catch (e) {
       print('📋 仓储层：获取库存流水数量失败: $e');
@@ -328,6 +331,30 @@ class InventoryTransactionRepository
   batchId: data.batchId,
       createdAt: data.createdAt,
     );
+  }
+
+  /// 将外部传入的类型字符串标准化为数据库短码
+  /// 支持传入 enum.name（如 'inbound'）或已是短码（如 'in'）
+  String _normalizeTypeToDbCode(String type) {
+    final t = type.toLowerCase();
+    switch (t) {
+      case 'in':
+      case 'inbound':
+        return 'in';
+      case 'out':
+      case 'outbound':
+        return 'out';
+      case 'adjust':
+      case 'adjustment':
+        return 'adjust';
+      case 'transfer':
+        return 'transfer';
+      case 'return':
+      case 'returned':
+        return 'return';
+      default:
+        return t;
+    }
   }
 }
 

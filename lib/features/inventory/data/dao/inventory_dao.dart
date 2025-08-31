@@ -26,8 +26,13 @@ class InventoryDao extends DatabaseAccessor<AppDatabase>
     int productId,
     int shopId,
   ) {
-  return (select(stock)
-      ..where((t) => t.productId.equals(productId) & t.shopId.equals(shopId)))
+    // 注意：同一 productId + shopId 可能存在多条记录（不同 batchId）。
+    // 为避免 getSingleOrNull 在多行时抛出异常，这里限定只取一条。
+    return (select(stock)
+          ..where(
+            (t) => t.productId.equals(productId) & t.shopId.equals(shopId),
+          )
+          ..limit(1))
         .getSingleOrNull();
   }
 
@@ -168,7 +173,8 @@ class InventoryDao extends DatabaseAccessor<AppDatabase>
   ) async {
     if (batchId == null) {
       return await customUpdate(
-        'UPDATE stock SET quantity = quantity + ?, updated_at = CURRENT_TIMESTAMP '
+  // Use milliseconds since epoch for updated_at to match Drift's int-backed DateTime
+  'UPDATE stock SET quantity = quantity + ?, updated_at = CAST(strftime(\'%s\', \'now\') AS INTEGER) * 1000 '
         'WHERE product_id = ? AND shop_id = ? AND batch_id IS NULL',
         variables: [
           Variable.withInt(amount),
@@ -179,7 +185,8 @@ class InventoryDao extends DatabaseAccessor<AppDatabase>
       );
     } else {
       return await customUpdate(
-        'UPDATE stock SET quantity = quantity + ?, updated_at = CURRENT_TIMESTAMP '
+  // Use milliseconds since epoch for updated_at to match Drift's int-backed DateTime
+  'UPDATE stock SET quantity = quantity + ?, updated_at = CAST(strftime(\'%s\', \'now\') AS INTEGER) * 1000 '
         'WHERE product_id = ? AND shop_id = ? AND batch_id = ?',
         variables: [
           Variable.withInt(amount),
@@ -201,7 +208,8 @@ class InventoryDao extends DatabaseAccessor<AppDatabase>
   ) async {
     if (batchId == null) {
       return await customUpdate(
-        'UPDATE stock SET quantity = quantity - ?, updated_at = CURRENT_TIMESTAMP '
+  // Use milliseconds since epoch for updated_at to match Drift's int-backed DateTime
+  'UPDATE stock SET quantity = quantity - ?, updated_at = CAST(strftime(\'%s\', \'now\') AS INTEGER) * 1000 '
         'WHERE product_id = ? AND shop_id = ? AND batch_id IS NULL',
         variables: [
           Variable.withInt(amount),
@@ -212,7 +220,8 @@ class InventoryDao extends DatabaseAccessor<AppDatabase>
       );
     } else {
       return await customUpdate(
-        'UPDATE stock SET quantity = quantity - ?, updated_at = CURRENT_TIMESTAMP '
+  // Use milliseconds since epoch for updated_at to match Drift's int-backed DateTime
+  'UPDATE stock SET quantity = quantity - ?, updated_at = CAST(strftime(\'%s\', \'now\') AS INTEGER) * 1000 '
         'WHERE product_id = ? AND shop_id = ? AND batch_id = ?',
         variables: [
           Variable.withInt(amount),
@@ -293,7 +302,13 @@ class InventoryDao extends DatabaseAccessor<AppDatabase>
 
   /// 检查库存是否存在
   Future<bool> inventoryExists(int productId, int shopId) async {
-    final result = await getInventoryByProductAndShop(productId, shopId);
-    return result != null;
+    // 使用受限查询判断是否存在，避免因多条记录导致的单行读取异常
+    final rows = await (select(stock)
+          ..where(
+            (t) => t.productId.equals(productId) & t.shopId.equals(shopId),
+          )
+          ..limit(1))
+        .get();
+    return rows.isNotEmpty;
   }
 }

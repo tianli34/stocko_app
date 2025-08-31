@@ -2,7 +2,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:stocko_app/core/database/database.dart';
 import 'package:stocko_app/features/product/application/product_import_service.dart';
-import 'package:drift/drift.dart';
 
 class MockAppDatabase extends Mock implements AppDatabase {}
 

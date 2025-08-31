@@ -4,6 +4,25 @@ import '../widgets/universal_barcode_scanner.dart';
 
 /// 扫码服务类
 class BarcodeScannerService {
+  /// 可注入的扫描器Widget构建器（用于测试替换）
+  /// 生产环境默认构建 UniversalBarcodeScanner
+  static Widget Function({
+    required BarcodeScannerConfig config,
+    required OnBarcodeScanned onBarcodeScanned,
+    Widget? loadingWidget,
+    bool isLoading,
+  }) scannerBuilder = ({
+    required BarcodeScannerConfig config,
+    required OnBarcodeScanned onBarcodeScanned,
+    Widget? loadingWidget,
+    bool isLoading = false,
+  }) => UniversalBarcodeScanner(
+        config: config,
+        onBarcodeScanned: onBarcodeScanned,
+        loadingWidget: loadingWidget,
+        isLoading: isLoading,
+      );
+
   /// 通用扫码方法
   /// 返回扫描到的条码字符串，如果取消则返回null
   static Future<String?> scan(
@@ -16,7 +35,7 @@ class BarcodeScannerService {
 
     return await Navigator.of(context).push<String>(
       MaterialPageRoute(
-        builder: (context) => UniversalBarcodeScanner(
+        builder: (context) => scannerBuilder(
           config: scannerConfig,
           onBarcodeScanned: (barcode) {
             Navigator.of(context).pop(barcode);
