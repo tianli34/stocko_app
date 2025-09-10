@@ -29,6 +29,19 @@ android {
         versionCode = flutter.versionCode
         versionName = flutter.versionName
     }
+    flavorDimensions.add("version")
+    productFlavors {
+        create("personalized") {
+            dimension = "version"
+            applicationIdSuffix = ".personalized"
+            versionNameSuffix = "-personalized"
+        }
+        create("generic") {
+            dimension = "version"
+            applicationIdSuffix = ".generic"
+            versionNameSuffix = "-generic"
+        }
+    }
 
     buildTypes {
         release {

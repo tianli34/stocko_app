@@ -128,7 +128,8 @@ class _CreateSaleScreenState extends ConsumerState<CreateSaleScreen> {
           ProductModel product,
           int unitId,
           String unitName,
-          int? wholesalePriceInCents,
+          int conversionRate,
+          int? wholesalePriceInCents
         })
       >
       productsWithUnit;
@@ -160,6 +161,7 @@ class _CreateSaleScreenState extends ConsumerState<CreateSaleScreen> {
                 unitId: p.unitId,
                 unitName: p.unitName,
                 sellingPriceInCents: price != null ? price.cents : 0,
+                conversionRate: p.conversionRate,
               );
         } catch (e) {
           print('添加产品失败: ${p.product.name}, 错误: $e');
@@ -453,6 +455,7 @@ class _CreateSaleScreenState extends ConsumerState<CreateSaleScreen> {
               unitId: result.unitId,
               unitName: result.unitName,
               sellingPriceInCents: price != null ? price.cents : 0,
+              conversionRate: result.conversionRate,
             );
       } else {
         // 如果没有找到产品，显示对话框
@@ -492,6 +495,7 @@ class _CreateSaleScreenState extends ConsumerState<CreateSaleScreen> {
               unitId: result.unitId,
               unitName: result.unitName,
               sellingPriceInCents: price != null ? price.cents : 0,
+              conversionRate: result.conversionRate,
             );
         _lastScannedBarcode = barcode; // 仅在成功时更新上一个条码
         // 成功添加后给予一个更明确的提示

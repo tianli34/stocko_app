@@ -19,18 +19,18 @@ void main() {
   });
 
   // Helpers
-  Future<int> _unit() async =>
+  Future<int> unit() async =>
       await db.into(db.unit).insert(UnitCompanion.insert(name: 'pcs'));
-  Future<int> _product() async {
-    final u = await _unit();
+  Future<int> product() async {
+    final u = await unit();
     return await db
         .into(db.product)
         .insert(ProductCompanion.insert(name: 'P1', baseUnitId: u));
   }
-  Future<int> _shop({String name = 'S1'}) async => await db
+  Future<int> shop({String name = 'S1'}) async => await db
       .into(db.shop)
       .insert(ShopCompanion.insert(name: name, manager: 'M'));
-  Future<int> _batch(int productId, int shopId) async => await db
+  Future<int> batch(int productId, int shopId) async => await db
       .into(db.productBatch)
       .insert(ProductBatchCompanion.insert(
         productId: productId,
@@ -39,7 +39,7 @@ void main() {
         shopId: shopId,
       ));
 
-  InventoryTransactionCompanion _tx({
+  InventoryTransactionCompanion tx({
     required int productId,
     required String type,
     required int quantity,
@@ -58,12 +58,12 @@ void main() {
   }
 
   test('insert/get/update/delete and basic queries', () async {
-    final pid = await _product();
-    final sid = await _shop();
-    final bid = await _batch(pid, sid);
+    final pid = await product();
+    final sid = await shop();
+    final bid = await batch(pid, sid);
 
     final id = await dao.insertTransaction(
-      _tx(productId: pid, type: 'in', quantity: 10, shopId: sid, batchId: bid),
+      tx(productId: pid, type: 'in', quantity: 10, shopId: sid, batchId: bid),
     );
     expect(id, isPositive);
 
@@ -103,17 +103,17 @@ void main() {
   });
 
   test('date range, recents, count and watchers', () async {
-    final pid = await _product();
-    final sid1 = await _shop(name: 'A');
-    final sid2 = await _shop(name: 'B');
+    final pid = await product();
+    final sid1 = await shop(name: 'A');
+    final sid2 = await shop(name: 'B');
 
     final t1 = DateTime(2023, 1, 1, 10);
     final t2 = DateTime(2023, 1, 2, 10);
     final t3 = DateTime(2023, 1, 3, 10);
 
-    await dao.insertTransaction(_tx(productId: pid, type: 'in', quantity: 5, shopId: sid1, createdAt: t1));
-    await dao.insertTransaction(_tx(productId: pid, type: 'out', quantity: 2, shopId: sid1, createdAt: t2));
-    await dao.insertTransaction(_tx(productId: pid, type: 'in', quantity: 3, shopId: sid2, createdAt: t3));
+    await dao.insertTransaction(tx(productId: pid, type: 'in', quantity: 5, shopId: sid1, createdAt: t1));
+    await dao.insertTransaction(tx(productId: pid, type: 'out', quantity: 2, shopId: sid1, createdAt: t2));
+    await dao.insertTransaction(tx(productId: pid, type: 'in', quantity: 3, shopId: sid2, createdAt: t3));
 
     final range = await dao.getTransactionsByDateRange(DateTime(2023, 1, 1), DateTime(2023, 1, 2, 23, 59, 59));
     expect(range.length, 2);

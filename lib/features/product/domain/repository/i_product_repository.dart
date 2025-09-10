@@ -37,6 +37,7 @@ abstract class IProductRepository {
         ProductModel product,
         int unitId,
         String unitName,
+        int conversionRate,
         int? wholesalePriceInCents
       })
     >
@@ -76,6 +77,7 @@ abstract class IProductRepository {
       ProductModel product,
       int unitId,
       String unitName,
+      int conversionRate,
       int? wholesalePriceInCents
     })?
   >

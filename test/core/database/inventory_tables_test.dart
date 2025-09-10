@@ -16,21 +16,21 @@ void main() {
       await db.close();
     });
 
-    Future<int> _shop() async => await db
+    Future<int> shop() async => await db
         .into(db.shop)
         .insert(ShopCompanion.insert(name: 'S', manager: 'M'));
 
-    Future<int> _unit() async =>
+    Future<int> unit() async =>
         await db.into(db.unit).insert(UnitCompanion.insert(name: 'pcs'));
 
-    Future<int> _product() async {
-      final u = await _unit();
+    Future<int> product() async {
+      final u = await unit();
       return await db
           .into(db.product)
           .insert(ProductCompanion.insert(name: 'P', baseUnitId: u));
     }
 
-    Future<int> _batch(int productId, int shopId) async => await db
+    Future<int> batch(int productId, int shopId) async => await db
         .into(db.productBatch)
         .insert(ProductBatchCompanion.insert(
           productId: productId,
@@ -55,8 +55,8 @@ void main() {
     });
 
     test('stock CRUD and partial unique without batch', () async {
-      final pid = await _product();
-      final sid = await _shop();
+      final pid = await product();
+      final sid = await shop();
 
       final id = await db.into(db.stock).insert(
             StockCompanion.insert(
@@ -87,9 +87,9 @@ void main() {
     });
 
     test('stock partial unique with batch', () async {
-      final pid = await _product();
-      final sid = await _shop();
-      final bid = await _batch(pid, sid);
+      final pid = await product();
+      final sid = await shop();
+      final bid = await batch(pid, sid);
 
       await db.into(db.stock).insert(
             StockCompanion.insert(

@@ -14,6 +14,7 @@ void main() {
         sellingPriceInCents: 1200,
         quantity: 3.5,
         amount: 42.0,
+        conversionRate: 1,
       );
       final json = item.toJson();
       final again = SaleCartItem.fromJson(json);

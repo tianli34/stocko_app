@@ -14,22 +14,22 @@ void main() {
 
     tearDown(() async => db.close());
 
-    Future<int> _supplier() async =>
+    Future<int> supplier() async =>
         await db.into(db.supplier).insert(SupplierCompanion.insert(name: 'X'));
-    Future<int> _shop() async =>
+    Future<int> shop() async =>
         await db.into(db.shop).insert(ShopCompanion.insert(name: 'S', manager: 'M'));
-    Future<int> _unit() async =>
+    Future<int> unit() async =>
         await db.into(db.unit).insert(UnitCompanion.insert(name: 'pcs'));
-    Future<int> _product() async {
-      final u = await _unit();
+    Future<int> product() async {
+      final u = await unit();
       return await db
           .into(db.product)
           .insert(ProductCompanion.insert(name: 'P', baseUnitId: u));
     }
 
-    Future<int> _po() async {
-      final sid = await _supplier();
-      final shopId = await _shop();
+    Future<int> po() async {
+      final sid = await supplier();
+      final shopId = await shop();
       return await db.into(db.purchaseOrder).insert(
             PurchaseOrderCompanion.insert(
               supplierId: sid,
@@ -39,8 +39,8 @@ void main() {
     }
 
     test('unique when production_date IS NULL', () async {
-      final poId = await _po();
-      final pid = await _product();
+      final poId = await po();
+      final pid = await product();
 
       await db.into(db.purchaseOrderItem).insert(
             PurchaseOrderItemCompanion.insert(
@@ -66,8 +66,8 @@ void main() {
     });
 
     test('unique when production_date IS NOT NULL', () async {
-      final poId = await _po();
-      final pid = await _product();
+      final poId = await po();
+      final pid = await product();
 
       final date = DateTime(2024, 1, 1);
       await db.into(db.purchaseOrderItem).insert(

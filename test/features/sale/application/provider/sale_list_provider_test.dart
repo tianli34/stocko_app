@@ -22,6 +22,7 @@ void main() {
         sellingPriceInCents: 1000,
         quantity: 1,
         amount: 10.0,
+        conversionRate: 1,
       );
       final item2 = SaleCartItem(
         id: 'b',
@@ -32,6 +33,7 @@ void main() {
         sellingPriceInCents: 2000,
         quantity: 1,
         amount: 20.0,
+        conversionRate: 1,
       );
 
       notifier.addItem(item1);
@@ -50,6 +52,7 @@ void main() {
         sellingPriceInCents: 500,
         quantity: 1,
         amount: 5.0,
+        conversionRate: 1,
       );
       notifier.addItem(existing);
 
@@ -63,6 +66,7 @@ void main() {
           sellingPriceInCents: 1000,
           quantity: 1,
           amount: 10.0,
+          conversionRate: 1,
         ),
         SaleCartItem(
           id: 'b',
@@ -73,6 +77,7 @@ void main() {
           sellingPriceInCents: 2000,
           quantity: 1,
           amount: 20.0,
+          conversionRate: 1,
         ),
       ];
 
@@ -90,6 +95,7 @@ void main() {
         sellingPriceInCents: 100,
         quantity: 1,
         amount: 1.0,
+        conversionRate: 1,
       );
       notifier.addItem(item);
       expect(notifier.state.length, 1);
@@ -107,6 +113,7 @@ void main() {
         sellingPriceInCents: 100,
         quantity: 1,
         amount: 1.0,
+        conversionRate: 1,
       );
       notifier.addItem(item);
       final updated = item.copyWith(quantity: 2, amount: 2.0);
@@ -124,6 +131,7 @@ void main() {
         unitName: '件',
         barcode: '6900001',
         sellingPriceInCents: 1000,
+        conversionRate: 1,
       );
       notifier.addOrUpdateItem(
         product: product,
@@ -131,6 +139,7 @@ void main() {
         unitName: '件',
         barcode: '6900001',
         sellingPriceInCents: 1000,
+        conversionRate: 1,
       );
 
       expect(notifier.state.length, 1);
@@ -149,6 +158,7 @@ void main() {
         unitName: '件',
         sellingPriceInCents: 500,
         batchId: '101',
+        conversionRate: 1,
       );
       notifier.addOrUpdateItem(
         product: product,
@@ -156,6 +166,7 @@ void main() {
         unitName: '件',
         sellingPriceInCents: 500,
         batchId: '102',
+        conversionRate: 1,
       );
 
       expect(notifier.state.length, 2);
@@ -170,6 +181,7 @@ void main() {
         unitName: '箱',
         sellingPriceInCents: 1200,
         batchId: 'B01',
+        conversionRate: 1,
       );
       notifier.addOrUpdateItem(
         product: product,
@@ -177,6 +189,7 @@ void main() {
         unitName: '箱',
         sellingPriceInCents: 1200,
         batchId: 'B01',
+        conversionRate: 1,
       );
 
       expect(notifier.state.length, 1);
@@ -193,10 +206,10 @@ void main() {
       final notifier = container.read(saleListProvider.notifier);
       notifier.addAllItems([
         SaleCartItem(
-          id: 'a', productId: 1, productName: 'A', unitId: 1, unitName: '件', sellingPriceInCents: 1000, quantity: 2, amount: 20.0,
+          id: 'a', productId: 1, productName: 'A', unitId: 1, unitName: '件', sellingPriceInCents: 1000, quantity: 2, amount: 20.0, conversionRate: 1,
         ),
         SaleCartItem(
-          id: 'b', productId: 2, productName: 'B', unitId: 1, unitName: '件', sellingPriceInCents: 500, quantity: 3.5, amount: 17.5,
+          id: 'b', productId: 2, productName: 'B', unitId: 1, unitName: '件', sellingPriceInCents: 500, quantity: 3.5, amount: 17.5, conversionRate: 1,
         ),
       ]);
 

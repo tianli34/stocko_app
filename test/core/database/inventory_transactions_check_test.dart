@@ -13,21 +13,21 @@ void main() {
 
     tearDown(() async => db.close());
 
-    Future<int> _shop() async => await db
+    Future<int> shop() async => await db
         .into(db.shop)
         .insert(ShopCompanion.insert(name: 'S', manager: 'M'));
-    Future<int> _unit() async =>
+    Future<int> unit() async =>
         await db.into(db.unit).insert(UnitCompanion.insert(name: 'pcs'));
-    Future<int> _product() async {
-      final uid = await _unit();
+    Future<int> product() async {
+      final uid = await unit();
       return await db
           .into(db.product)
           .insert(ProductCompanion.insert(name: 'P', baseUnitId: uid));
     }
 
     test('accepts valid types', () async {
-      final pid = await _product();
-      final sid = await _shop();
+      final pid = await product();
+      final sid = await shop();
   for (final t in ['in', 'out', 'adjust', 'transfer', 'return']) {
         final id = await db.into(db.inventoryTransaction).insert(
               InventoryTransactionCompanion.insert(
@@ -42,8 +42,8 @@ void main() {
     });
 
     test('rejects invalid type', () async {
-      final pid = await _product();
-      final sid = await _shop();
+      final pid = await product();
+      final sid = await shop();
       expect(
         () async => db.into(db.inventoryTransaction).insert(
               InventoryTransactionCompanion.insert(

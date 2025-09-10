@@ -67,7 +67,8 @@ void main() {
             amount: 2000,
             productName: 'Test Product',
             unitId: 1,
-            unitName: '个'),
+            unitName: '个',
+            conversionRate: 1),
       ];
 
       // Mock the repository and service calls that happen *inside* the transaction

@@ -18,7 +18,7 @@ void main() {
       await db.close();
     });
 
-    Future<int> _insertUnit(String name) async {
+    Future<int> insertUnit(String name) async {
       return await db.into(db.unit).insert(UnitCompanion.insert(name: name));
     }
 
@@ -35,7 +35,7 @@ void main() {
     });
 
     test('insert/read product with Money mapping works', () async {
-      final unitId = await _insertUnit('pcs');
+      final unitId = await insertUnit('pcs');
 
       final id = await db.into(db.product).insert(
             ProductCompanion.insert(
@@ -56,7 +56,7 @@ void main() {
     });
 
     test('sku must be unique (violates unique constraint)', () async {
-      final unitId = await _insertUnit('g');
+      final unitId = await insertUnit('g');
 
       await db.into(db.product).insert(
             ProductCompanion.insert(

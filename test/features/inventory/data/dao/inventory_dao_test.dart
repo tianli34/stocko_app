@@ -19,18 +19,18 @@ void main() {
   });
 
   // Helpers
-  Future<int> _unit() async =>
+  Future<int> unit() async =>
       await db.into(db.unit).insert(UnitCompanion.insert(name: 'pcs'));
-  Future<int> _product() async {
-    final u = await _unit();
+  Future<int> product() async {
+    final u = await unit();
     return await db
         .into(db.product)
         .insert(ProductCompanion.insert(name: 'P1', baseUnitId: u));
   }
-  Future<int> _shop({String name = 'S1'}) async => await db
+  Future<int> shop({String name = 'S1'}) async => await db
       .into(db.shop)
       .insert(ShopCompanion.insert(name: name, manager: 'M'));
-  Future<int> _batch(int productId, int shopId) async => await db
+  Future<int> batch(int productId, int shopId) async => await db
       .into(db.productBatch)
       .insert(ProductBatchCompanion.insert(
         productId: productId,
@@ -39,7 +39,7 @@ void main() {
         shopId: shopId,
       ));
 
-  StockCompanion _inv({
+  StockCompanion inv({
     required int productId,
     required int shopId,
     int? batchId,
@@ -58,10 +58,10 @@ void main() {
   }
 
   test('CRUD and basic queries', () async {
-    final pid = await _product();
-    final sid = await _shop();
+    final pid = await product();
+    final sid = await shop();
 
-    final id = await dao.insertInventory(_inv(productId: pid, shopId: sid, quantity: 10));
+    final id = await dao.insertInventory(inv(productId: pid, shopId: sid, quantity: 10));
     expect(id, isPositive);
 
     final got = await dao.getInventoryById(id);
@@ -83,12 +83,12 @@ void main() {
   });
 
   test('watchers and totals, low/out-of-stock', () async {
-    final pid = await _product();
-    final sid = await _shop();
-    final sid2 = await _shop(name: 'S2');
+    final pid = await product();
+    final sid = await shop();
+    final sid2 = await shop(name: 'S2');
 
-    await dao.insertInventory(_inv(productId: pid, shopId: sid, quantity: 5));
-    await dao.insertInventory(_inv(productId: pid, shopId: sid2, quantity: 0));
+    await dao.insertInventory(inv(productId: pid, shopId: sid, quantity: 5));
+    await dao.insertInventory(inv(productId: pid, shopId: sid2, quantity: 0));
 
   expect(dao.watchAllInventory(), emits(isA<List<StockData>>().having((e) => e.length, 'len', greaterThanOrEqualTo(2))));
   expect(dao.watchInventoryByShop(sid), emits(isA<List<StockData>>()));
@@ -111,13 +111,13 @@ void main() {
   });
 
   test('increment/decrement and batch-specific update paths', () async {
-    final pid = await _product();
-    final sid = await _shop();
-    final bid = await _batch(pid, sid);
+    final pid = await product();
+    final sid = await shop();
+    final bid = await batch(pid, sid);
 
     // one row without batch, one with batch
-    final id1 = await dao.insertInventory(_inv(productId: pid, shopId: sid, quantity: 10));
-    final id2 = await dao.insertInventory(_inv(productId: pid, shopId: sid, batchId: bid, quantity: 20));
+    final id1 = await dao.insertInventory(inv(productId: pid, shopId: sid, quantity: 10));
+    final id2 = await dao.insertInventory(inv(productId: pid, shopId: sid, batchId: bid, quantity: 20));
     expect(id1, isPositive);
     expect(id2, isPositive);
 

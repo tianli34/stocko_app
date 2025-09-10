@@ -9,7 +9,6 @@ import '../../application/provider/product_providers.dart';
 import '../../application/category_notifier.dart';
 import '../../application/provider/unit_providers.dart';
 import '../../application/provider/barcode_providers.dart';
-import '../../application/provider/unit_edit_form_providers.dart';
 import '../widgets/sections/shelf_life_section.dart';
 import '../widgets/sections/pricing_section.dart';
 import '../widgets/inputs/app_text_field.dart';

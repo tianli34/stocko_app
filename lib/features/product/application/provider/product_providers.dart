@@ -114,16 +114,25 @@ class ProductOperationsNotifier extends AsyncNotifier<void> {
       ProductModel product,
       int unitId,
       String unitName,
+      int conversionRate,
       int? wholesalePriceInCents
     })?
   >
   getProductWithUnitByBarcode(String barcode) async {
     try {
       final repository = ref.read(productRepositoryProvider);
-      return await repository.getProductWithUnitByBarcode(barcode);
+      final result = await repository.getProductWithUnitByBarcode(barcode);
+      if (result == null) return null;
+      return (
+        product: result.product,
+        unitId: result.unitId,
+        unitName: result.unitName,
+        conversionRate: result.conversionRate,
+        wholesalePriceInCents: result.wholesalePriceInCents,
+      );
     } catch (e, st) {
       state = AsyncValue.error(Exception('根据条码查询产品及单位失败: ${e.toString()}'), st);
-      rethrow;
+      return null;
     }
   }
 }
@@ -205,7 +214,17 @@ final filteredProductsProvider = Provider<AsyncValue<List<ProductModel>>>((ref) 
   final selectedCategoryId = ref.watch(selectedCategoryIdProvider);
   final searchQuery = ref.watch(searchQueryProvider);
   final productsAsyncValue = ref.watch(allProductsProvider);
-  final allCategories = ref.watch(categoryListProvider).categories;
+  final categoryListState = ref.watch(categoryListProvider);
+
+  if (categoryListState.isLoading) {
+    return const AsyncValue.loading();
+  }
+
+  if (categoryListState.error != null) {
+    return AsyncValue.error(categoryListState.error!, StackTrace.current);
+  }
+
+  final allCategories = categoryListState.categories;
 
   return productsAsyncValue.when(
     data: (products) {
@@ -276,10 +295,17 @@ final allProductsWithUnitProvider =
           ProductModel product,
           int unitId,
           String unitName,
+          int conversionRate,
           int? wholesalePriceInCents
         })
       >
     >((ref) {
       final repository = ref.watch(productRepositoryProvider);
-      return repository.watchAllProductsWithUnit();
+      return repository.watchAllProductsWithUnit().map((list) => list.map((e) => (
+        product: e.product,
+        unitId: e.unitId,
+        unitName: e.unitName,
+        conversionRate: e.conversionRate,
+        wholesalePriceInCents: e.wholesalePriceInCents,
+      )).toList());
     });

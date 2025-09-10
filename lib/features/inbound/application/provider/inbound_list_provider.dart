@@ -13,6 +13,7 @@ class InboundItemState {
   final String unitName;
   final int quantity;
   final int unitPriceInCents;
+  final int conversionRate; // 新增：单位换算率
   final DateTime? productionDate;
   final String? barcode;
 
@@ -24,12 +25,16 @@ class InboundItemState {
     required this.unitName,
     required this.quantity,
     required this.unitPriceInCents,
+    required this.conversionRate, // 新增
     this.productionDate,
     this.barcode,
   });
 
   /// Total amount for this item line, in cents.
   int get amountInCents => quantity * unitPriceInCents;
+
+  /// The total quantity in the base unit.
+  int get totalBaseQuantity => quantity * conversionRate;
 
   InboundItemState copyWith({
     String? id,
@@ -39,6 +44,7 @@ class InboundItemState {
     String? unitName,
     int? quantity,
     int? unitPriceInCents,
+    int? conversionRate, // 新增
     DateTime? productionDate,
     String? barcode,
     bool clearProductionDate = false,
@@ -51,6 +57,7 @@ class InboundItemState {
       unitName: unitName ?? this.unitName,
       quantity: quantity ?? this.quantity,
       unitPriceInCents: unitPriceInCents ?? this.unitPriceInCents,
+      conversionRate: conversionRate ?? this.conversionRate, // 新增
       productionDate:
           clearProductionDate ? null : productionDate ?? this.productionDate,
       barcode: barcode ?? this.barcode,
@@ -88,48 +95,38 @@ class InboundListNotifier extends StateNotifier<List<InboundItemState>> {
   }
 
   /// 添加一个新货品，或如果已存在则更新其数量
-  ///
-  /// [product] - 要添加的货品对象
-  /// [unitName] - 单位名称
-  /// [barcode] - 条码
   void addOrUpdateItem({
     required ProductModel product,
     required int unitId,
     String? unitName,
+    required int conversionRate,
     String? barcode,
     int? wholesalePriceInCents,
+    int quantity = 1,
   }) {
-    // 优先通过条码匹配，其次通过货品ID和单位匹配
-    final existingItemIndex = state.indexWhere((item) {
-      if (barcode != null && barcode.isNotEmpty && item.barcode == barcode) {
-        return true;
-      }
-      // Fallback to product and unit if no barcode match or barcode is not provided
-      return item.productId == product.id && item.unitId == unitId;
-    });
+    final existingItemIndex = state.indexWhere((item) =>
+        item.productId == product.id &&
+        item.unitId == unitId &&
+        item.barcode == barcode);
 
     if (existingItemIndex != -1) {
-      // 如果货品已存在，增加数量
       final existingItem = state[existingItemIndex];
       final updatedItem = existingItem.copyWith(
-        quantity: existingItem.quantity + 1,
+        quantity: existingItem.quantity + quantity,
       );
       updateItem(updatedItem);
     } else {
-      // 如果是新货品，创建新的入库项
-      // 使用条码或货品+单位作为唯一标识符的一部分，以确保列表中的唯一性
-      final itemId = (barcode != null && barcode.isNotEmpty)
-          ? 'item_${barcode}_${DateTime.now().millisecondsSinceEpoch}'
-          : 'item_${product.id}_${unitId}_${DateTime.now().millisecondsSinceEpoch}';
-
+      final itemId =
+          'item_${product.id}_${unitId}_${DateTime.now().millisecondsSinceEpoch}';
       final newItem = InboundItemState(
         id: itemId,
         productId: product.id!,
         productName: product.name,
         unitId: unitId,
         unitName: unitName ?? '未知单位',
-        quantity: 1,
+        quantity: quantity,
         unitPriceInCents: wholesalePriceInCents ?? 0,
+        conversionRate: conversionRate,
         barcode: barcode,
         productionDate: product.enableBatchManagement
             ? DateTime.now().subtract(const Duration(days: 90))
@@ -159,7 +156,9 @@ final inboundListProvider =
 /// UI可以只监听这个Provider，从而避免在列表项内容变化时进行不必要的重算。
 final inboundTotalsProvider = Provider<Map<String, double>>((ref) {
   final items = ref.watch(inboundListProvider);
-  final totalQuantity = items.fold(0.0, (sum, item) => sum + item.quantity);
+  // 使用 `totalBaseQuantity` 计算基础单位总数
+  final totalQuantity =
+      items.fold(0.0, (sum, item) => sum + item.totalBaseQuantity);
   final totalAmountInCents =
       items.fold(0.0, (sum, item) => sum + item.amountInCents);
   return {

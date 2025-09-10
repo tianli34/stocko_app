@@ -170,6 +170,7 @@ void main() {
           quantity: 5,
           unitPriceInCents: 1234,
           productionDate: DateTime(2024, 1, 1),
+          conversionRate: 1,
         ),
       ];
 
@@ -262,6 +263,7 @@ void main() {
           unitName: '个',
           quantity: 3,
           unitPriceInCents: 500,
+          conversionRate: 1,
         ),
       ];
 
@@ -343,6 +345,7 @@ void main() {
           unitName: '个',
           quantity: 1,
           unitPriceInCents: 100,
+          conversionRate: 1,
         ),
       ];
 
@@ -375,6 +378,7 @@ void main() {
           unitName: '个',
           quantity: 1,
           unitPriceInCents: 100,
+          conversionRate: 1,
         ),
       ];
 

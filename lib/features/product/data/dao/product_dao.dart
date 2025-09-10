@@ -44,6 +44,7 @@ class ProductDao extends DatabaseAccessor<AppDatabase> with _$ProductDaoMixin {
         ProductData product,
         int unitId,
         String unitName,
+        int conversionRate,
         int? wholesalePriceInCents
       })
     >
@@ -85,6 +86,7 @@ class ProductDao extends DatabaseAccessor<AppDatabase> with _$ProductDaoMixin {
             product: product,
             unitId: unitId,
             unitName: unitName,
+            conversionRate: unitProduct?.conversionRate ?? 1,
             wholesalePriceInCents: unitProduct?.wholesalePriceInCents,
           );
         } catch (e) {
@@ -95,6 +97,7 @@ class ProductDao extends DatabaseAccessor<AppDatabase> with _$ProductDaoMixin {
             product: product,
             unitId: product.baseUnitId,
             unitName: '未知单位',
+            conversionRate: 1,
             wholesalePriceInCents: null,
           );
         }
@@ -105,6 +108,7 @@ class ProductDao extends DatabaseAccessor<AppDatabase> with _$ProductDaoMixin {
         ProductData product,
         int unitId,
         String unitName,
+        int conversionRate,
         int? wholesalePriceInCents
       })>[];
     });
@@ -247,6 +251,7 @@ class ProductDao extends DatabaseAccessor<AppDatabase> with _$ProductDaoMixin {
       ProductData product,
       int unitId,
       String unitName,
+      int conversionRate,
       int? wholesalePriceInCents
     })?
   >
@@ -290,6 +295,7 @@ class ProductDao extends DatabaseAccessor<AppDatabase> with _$ProductDaoMixin {
       product: product,
       unitId: unit.id,
       unitName: unit.name,
+      conversionRate: unitProduct.conversionRate,
       wholesalePriceInCents: unitProduct.wholesalePriceInCents,
     );
   }

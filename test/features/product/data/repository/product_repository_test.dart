@@ -20,11 +20,11 @@ void main() {
       await db.close();
     });
 
-    Future<int> _unit(String name) async =>
+    Future<int> unit(String name) async =>
         await db.into(db.unit).insert(UnitCompanion.insert(name: name));
 
     test('add/get/update/delete product happy paths', () async {
-      final unitId = await _unit('pcs');
+      final unitId = await unit('pcs');
 
       final product = ProductModel(
         name: 'Prod',
@@ -51,7 +51,7 @@ void main() {
     });
 
     test('updateProduct throws when id missing', () async {
-      final unitId = await _unit('box');
+      final unitId = await unit('box');
       final product = ProductModel(name: 'X', baseUnitId: unitId);
       expect(
         () => repo.updateProduct(product),

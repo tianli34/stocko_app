@@ -44,6 +44,7 @@ class SaleListNotifier extends StateNotifier<List<SaleCartItem>> {
     String? barcode,
     String? batchId,
     int? sellingPriceInCents,
+    required int conversionRate,
   }) {
     final actualUnitName = unitName ?? '未知单位';
     // 优先通过条码匹配，其次通过货品ID和单位匹配
@@ -81,6 +82,7 @@ class SaleListNotifier extends StateNotifier<List<SaleCartItem>> {
         sellingPriceInCents: sellingPriceInCents ?? 0,
         quantity: 1,
         amount: (sellingPriceInCents ?? 0.0) / 100, // 转换为元
+        conversionRate: conversionRate,
       );
       addItem(newItem);
     }
@@ -105,7 +107,7 @@ final saleListProvider =
 /// 派生自 [saleListProvider]，用于高效计算总计信息。
 final saleTotalsProvider = Provider<Map<String, double>>((ref) {
   final items = ref.watch(saleListProvider);
-  final totalQuantity = items.fold(0.0, (sum, item) => sum + item.quantity);
+  final totalQuantity = items.fold(0.0, (sum, item) => sum + item.quantity * item.conversionRate);
   final totalAmount = items.fold(0.0, (sum, item) => sum + item.amount);
   return {
     'varieties': items.length.toDouble(),

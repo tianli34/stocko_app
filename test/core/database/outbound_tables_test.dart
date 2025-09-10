@@ -16,21 +16,21 @@ void main() {
       await db.close();
     });
 
-    Future<int> _shop() async => await db
+    Future<int> shop() async => await db
         .into(db.shop)
         .insert(ShopCompanion.insert(name: 'S', manager: 'M'));
 
-    Future<int> _unit() async =>
+    Future<int> unit() async =>
         await db.into(db.unit).insert(UnitCompanion.insert(name: 'pcs'));
 
-    Future<int> _product() async {
-      final u = await _unit();
+    Future<int> product() async {
+      final u = await unit();
       return await db
           .into(db.product)
           .insert(ProductCompanion.insert(name: 'P', baseUnitId: u));
     }
 
-    Future<int> _receipt(int shopId) async => await db
+    Future<int> receipt(int shopId) async => await db
         .into(db.outboundReceipt)
         .insert(OutboundReceiptCompanion.insert(
           shopId: shopId,
@@ -38,7 +38,7 @@ void main() {
           createdAt: Value(DateTime.now()),
         ));
 
-    Future<int> _batch(int productId, int shopId) async => await db
+    Future<int> batch(int productId, int shopId) async => await db
         .into(db.productBatch)
         .insert(ProductBatchCompanion.insert(
           productId: productId,
@@ -61,9 +61,9 @@ void main() {
     });
 
     test('CRUD and partial unique index on outbound_item (no batch)', () async {
-      final sid = await _shop();
-      final rid = await _receipt(sid);
-      final pid = await _product();
+      final sid = await shop();
+      final rid = await receipt(sid);
+      final pid = await product();
 
       final id = await db.into(db.outboundItem).insert(
             OutboundItemCompanion.insert(
@@ -91,10 +91,10 @@ void main() {
     });
 
     test('partial unique index with batch', () async {
-      final sid = await _shop();
-      final rid = await _receipt(sid);
-      final pid = await _product();
-      final bid = await _batch(pid, sid);
+      final sid = await shop();
+      final rid = await receipt(sid);
+      final pid = await product();
+      final bid = await batch(pid, sid);
 
       await db.into(db.outboundItem).insert(
             OutboundItemCompanion.insert(

@@ -50,12 +50,13 @@ class _FakeRepo implements IProductRepository {
   Stream<List<ProductModel>> watchAllProducts() => _controller.stream;
 
   @override
-  Stream<List<({ProductModel product, int unitId, String unitName, int? wholesalePriceInCents})>>
+  Stream<List<({ProductModel product, int unitId, String unitName, int conversionRate, int? wholesalePriceInCents})>>
       watchAllProductsWithUnit() =>
           _controller.stream.map((items) => items.map((p) => (
                 product: p,
                 unitId: p.baseUnitId,
                 unitName: 'unit',
+                conversionRate: 1,
                 wholesalePriceInCents: null,
               )).toList());
 
@@ -74,7 +75,7 @@ class _FakeRepo implements IProductRepository {
   Future<ProductModel?> getProductByBarcode(String barcode) async => null;
 
   @override
-  Future<({ProductModel product, int unitId, String unitName, int? wholesalePriceInCents})?>
+  Future<({ProductModel product, int unitId, String unitName, int conversionRate, int? wholesalePriceInCents})?>
       getProductWithUnitByBarcode(String barcode) async => null;
 
   @override
@@ -107,7 +108,7 @@ void main() {
       container.dispose();
     });
 
-    ProductModel _p(String name, {int? id, int baseUnitId = 1, DateTime? lastUpdated}) =>
+    ProductModel p(String name, {int? id, int baseUnitId = 1, DateTime? lastUpdated}) =>
         ProductModel(
           id: id,
           name: name,
@@ -120,7 +121,7 @@ void main() {
       final state = container.read(allProductsProvider);
       expect(state.isLoading, true);
 
-      await notifier.addProduct(_p('A'));
+      await notifier.addProduct(p('A'));
 
       final list = await container.read(allProductsProvider.future);
       expect(list.map((e) => e.name), contains('A'));
@@ -134,10 +135,10 @@ void main() {
       // seed 4 products with timestamps
       final now = DateTime.now();
       await repo.addMultipleProducts([
-        _p('P1', lastUpdated: now.subtract(const Duration(days: 3))),
-        _p('P2', lastUpdated: now.subtract(const Duration(days: 2))),
-        _p('P3', lastUpdated: now.subtract(const Duration(days: 1))),
-        _p('P4', lastUpdated: now), // latest
+        p('P1', lastUpdated: now.subtract(const Duration(days: 3))),
+        p('P2', lastUpdated: now.subtract(const Duration(days: 2))),
+        p('P3', lastUpdated: now.subtract(const Duration(days: 1))),
+        p('P4', lastUpdated: now), // latest
       ]);
 
       final list = await container.read(allProductsProvider.future);

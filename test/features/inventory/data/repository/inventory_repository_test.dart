@@ -19,21 +19,21 @@ void main() {
       await db.close();
     });
 
-    Future<int> _unit() async =>
+    Future<int> unit() async =>
         await db.into(db.unit).insert(UnitCompanion.insert(name: 'pcs'));
-    Future<int> _product() async {
-      final u = await _unit();
+    Future<int> product() async {
+      final u = await unit();
       return await db
           .into(db.product)
           .insert(ProductCompanion.insert(name: 'P', baseUnitId: u));
     }
-    Future<int> _shop() async => await db
+    Future<int> shop() async => await db
         .into(db.shop)
         .insert(ShopCompanion.insert(name: 'S', manager: 'M'));
 
     test('add/get/update/delete inventory', () async {
-      final pid = await _product();
-      final sid = await _shop();
+      final pid = await product();
+      final sid = await shop();
 
       final id = await repo.addInventory(
         StockModel(
@@ -62,8 +62,8 @@ void main() {
     });
 
     test('quantity ops via dao helpers', () async {
-      final pid = await _product();
-      final sid = await _shop();
+      final pid = await product();
+      final sid = await shop();
 
       final id = await repo.addInventory(
         StockModel(

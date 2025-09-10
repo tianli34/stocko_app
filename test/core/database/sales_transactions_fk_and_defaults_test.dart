@@ -13,23 +13,23 @@ void main() {
 
     tearDown(() async => db.close());
 
-    Future<int> _customer() async =>
+    Future<int> customer() async =>
         await db.into(db.customers).insert(CustomersCompanion.insert(name: 'C'));
-    Future<int> _shop() async => await db
+    Future<int> shop() async => await db
         .into(db.shop)
         .insert(ShopCompanion.insert(name: 'S', manager: 'M'));
-    Future<int> _unit() async =>
+    Future<int> unit() async =>
         await db.into(db.unit).insert(UnitCompanion.insert(name: 'pcs'));
-    Future<int> _product() async {
-      final uid = await _unit();
+    Future<int> product() async {
+      final uid = await unit();
       return await db
           .into(db.product)
           .insert(ProductCompanion.insert(name: 'P', baseUnitId: uid));
     }
 
     test('sales_transaction has default status preset', () async {
-      final cid = await _customer();
-      final sid = await _shop();
+      final cid = await customer();
+      final sid = await shop();
       final id = await db.salesTransactionDao.insertSalesTransaction(
         SalesTransactionCompanion.insert(
           customerId: cid,
@@ -44,9 +44,9 @@ void main() {
     });
 
     test('sales_transaction_item basic FK', () async {
-      final cid = await _customer();
-      final sid = await _shop();
-      final pid = await _product();
+      final cid = await customer();
+      final sid = await shop();
+      final pid = await product();
       final txId = await db.salesTransactionDao.insertSalesTransaction(
         SalesTransactionCompanion.insert(
           customerId: cid,

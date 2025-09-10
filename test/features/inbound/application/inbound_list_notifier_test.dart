@@ -15,6 +15,7 @@ void main() {
         unitName: '个',
         quantity: 1,
         unitPriceInCents: 100,
+        conversionRate: 1,
       );
       final b = InboundItemState(
         id: 'b',
@@ -24,6 +25,7 @@ void main() {
         unitName: '个',
         quantity: 2,
         unitPriceInCents: 200,
+        conversionRate: 1,
       );
 
       notifier.addItem(a);
@@ -60,6 +62,7 @@ void main() {
         unitId: 1,
         unitName: '瓶',
         barcode: '6900001',
+        conversionRate: 1,
       );
       expect(notifier.state.length, 1);
       expect(notifier.state.first.quantity, 1);
@@ -70,6 +73,7 @@ void main() {
         unitId: 1,
         unitName: '瓶',
         barcode: '6900001',
+        conversionRate: 1,
       );
       expect(notifier.state.first.quantity, 2);
 
@@ -79,6 +83,7 @@ void main() {
         unitId: 1,
         unitName: '瓶',
         barcode: '6900002',
+        conversionRate: 1,
       );
   expect(notifier.state.length, 1);
   expect(notifier.state.first.quantity, 3);
@@ -88,6 +93,7 @@ void main() {
         product: product,
         unitId: 1,
         unitName: '瓶',
+        conversionRate: 1,
       );
   // quantity increased again on the same line
   final totalQty = notifier.state.fold<int>(0, (s, e) => s + e.quantity);

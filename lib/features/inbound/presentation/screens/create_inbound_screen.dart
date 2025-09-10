@@ -141,6 +141,7 @@ class _CreateInboundScreenState extends ConsumerState<CreateInboundScreen> {
           ProductModel product,
           int unitId,
           String unitName,
+          int conversionRate,
           int? wholesalePriceInCents
         })
       > productsWithUnit = await ref.read(allProductsWithUnitProvider.future);
@@ -150,12 +151,11 @@ class _CreateInboundScreenState extends ConsumerState<CreateInboundScreen> {
           .toList();
 
       for (final p in selectedProducts) {
-        ref
-            .read(inboundListProvider.notifier)
-            .addOrUpdateItem(
+        ref.read(inboundListProvider.notifier).addOrUpdateItem(
               product: p.product,
               unitId: p.unitId,
               unitName: p.unitName,
+              conversionRate: p.conversionRate,
               wholesalePriceInCents: p.wholesalePriceInCents,
             );
       }
@@ -310,12 +310,11 @@ class _CreateInboundScreenState extends ConsumerState<CreateInboundScreen> {
       Navigator.of(context).pop();
 
       if (result != null) {
-        ref
-            .read(inboundListProvider.notifier)
-            .addOrUpdateItem(
+        ref.read(inboundListProvider.notifier).addOrUpdateItem(
               product: result.product,
               unitId: result.unitId,
               unitName: result.unitName,
+              conversionRate: result.conversionRate,
               barcode: barcode,
               wholesalePriceInCents: result.wholesalePriceInCents,
             );
@@ -351,12 +350,11 @@ class _CreateInboundScreenState extends ConsumerState<CreateInboundScreen> {
       if (!mounted) return;
 
       if (result != null) {
-        ref
-            .read(inboundListProvider.notifier)
-            .addOrUpdateItem(
+        ref.read(inboundListProvider.notifier).addOrUpdateItem(
               product: result.product,
               unitId: result.unitId,
               unitName: result.unitName,
+              conversionRate: result.conversionRate,
               barcode: barcode,
               wholesalePriceInCents: result.wholesalePriceInCents,
             );

@@ -16,27 +16,27 @@ void main() {
       await db.close();
     });
 
-    Future<int> _unit(String name) async =>
+    Future<int> unit(String name) async =>
         await db.into(db.unit).insert(UnitCompanion.insert(name: name));
 
-    Future<int> _product() async {
-      final unitId = await _unit('pcs');
+    Future<int> product() async {
+      final unitId = await unit('pcs');
       return await db
           .into(db.product)
           .insert(ProductCompanion.insert(name: 'P', baseUnitId: unitId));
     }
 
-  Future<int> _customer() async => await db
+  Future<int> customer() async => await db
     .into(db.customers)
     .insert(CustomersCompanion.insert(name: 'C'));
 
-  Future<int> _shop() async => await db
+  Future<int> shop() async => await db
     .into(db.shop)
     .insert(ShopCompanion.insert(name: 'S', manager: 'M'));
 
-    Future<int> _transaction() async {
-      final cid = await _customer();
-      final sid = await _shop();
+    Future<int> transaction() async {
+      final cid = await customer();
+      final sid = await shop();
       return await db.salesTransactionDao.insertSalesTransaction(
         SalesTransactionCompanion.insert(
           customerId: cid,
@@ -47,7 +47,7 @@ void main() {
       );
     }
 
-    Future<int> _batch(int productId, int shopId) async {
+    Future<int> batch(int productId, int shopId) async {
       return await db.into(db.productBatch).insert(
             ProductBatchCompanion.insert(
               productId: productId,
@@ -75,8 +75,8 @@ void main() {
     });
 
     test('CRUD without batch', () async {
-      final tid = await _transaction();
-      final pid = await _product();
+      final tid = await transaction();
+      final pid = await product();
 
       final id = await db.into(db.salesTransactionItem).insert(
             SalesTransactionItemCompanion.insert(
@@ -104,10 +104,10 @@ void main() {
     });
 
     test('CRUD with batch', () async {
-      final tid = await _transaction();
-      final sid = await _shop();
-      final pid = await _product();
-      final bid = await _batch(pid, sid);
+      final tid = await transaction();
+      final sid = await shop();
+      final pid = await product();
+      final bid = await batch(pid, sid);
 
       final id = await db.into(db.salesTransactionItem).insert(
             SalesTransactionItemCompanion.insert(
@@ -126,8 +126,8 @@ void main() {
     });
 
     test('deleting referenced transaction should be restricted', () async {
-      final tid = await _transaction();
-      final pid = await _product();
+      final tid = await transaction();
+      final pid = await product();
       await db.into(db.salesTransactionItem).insert(
             SalesTransactionItemCompanion.insert(
               salesTransactionId: tid,

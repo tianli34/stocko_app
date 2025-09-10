@@ -1,4 +1,3 @@
-import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:drift/native.dart';
@@ -9,7 +8,7 @@ import 'package:stocko_app/core/database/database.dart';
 import 'package:stocko_app/core/database/database_providers.dart';
 
 void main() {
-  Future<void> _pumpApp(WidgetTester tester) async {
+  Future<void> pumpApp(WidgetTester tester) async {
     final testDb = AppDatabase(NativeDatabase.memory());
     await tester.pumpWidget(
       ProviderScope(
@@ -24,7 +23,7 @@ void main() {
   }
 
   testWidgets('收银台页面可以打开并显示标题', (tester) async {
-    await _pumpApp(tester);
+    await pumpApp(tester);
 
     // 点击首页“收银台”按钮
     final cashierButton = find.text('收银台');
@@ -37,7 +36,7 @@ void main() {
   });
 
   testWidgets('新建入库单页面可以打开并显示标题', (tester) async {
-    await _pumpApp(tester);
+    await pumpApp(tester);
 
     // 点击首页“新建入库单”
     final inboundButton = find.text('新建入库单');

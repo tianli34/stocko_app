@@ -14,21 +14,21 @@ void main() {
       await db.close();
     });
 
-    Future<int> _insertCustomer() async {
+    Future<int> insertCustomer() async {
       return await db.into(db.customers).insert(
             CustomersCompanion.insert(name: 'Alice'),
           );
     }
 
-    Future<int> _insertShop() async {
+    Future<int> insertShop() async {
       return await db.into(db.shop).insert(
             ShopCompanion.insert(name: 'Main', manager: 'Bob'),
           );
     }
 
     test('insert and find by id', () async {
-      final customerId = await _insertCustomer();
-      final shopId = await _insertShop();
+      final customerId = await insertCustomer();
+      final shopId = await insertShop();
 
       final id = await db.salesTransactionDao.insertSalesTransaction(
         SalesTransactionCompanion.insert(
@@ -47,8 +47,8 @@ void main() {
     });
 
     test('watchAllSalesTransactions emits inserted rows', () async {
-      final customerId = await _insertCustomer();
-      final shopId = await _insertShop();
+      final customerId = await insertCustomer();
+      final shopId = await insertShop();
 
       final stream = db.salesTransactionDao.watchAllSalesTransactions();
       expect(stream, emits(isA<List<SalesTransactionData>>()));
@@ -64,8 +64,8 @@ void main() {
     });
 
     test('update status returns true when row affected', () async {
-      final customerId = await _insertCustomer();
-      final shopId = await _insertShop();
+      final customerId = await insertCustomer();
+      final shopId = await insertShop();
 
       final id = await db.salesTransactionDao.insertSalesTransaction(
         SalesTransactionCompanion.insert(

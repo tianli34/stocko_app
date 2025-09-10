@@ -15,6 +15,7 @@ abstract class SaleCartItem with _$SaleCartItem {
     required int sellingPriceInCents,
     required double quantity,
     required double amount,
+    required int conversionRate,
   }) = _SaleCartItem;
 
   factory SaleCartItem.fromJson(Map<String, dynamic> json) =>

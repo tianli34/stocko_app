@@ -20,33 +20,33 @@ void main() {
       await db.close();
     });
 
-    Future<int> _insertUnit(String name) async {
+    Future<int> insertUnit(String name) async {
       return await db.into(db.unit).insert(UnitCompanion.insert(name: name));
     }
 
-    Future<int> _insertProduct({required int unitId, String name = 'P'}) async {
+    Future<int> insertProduct({required int unitId, String name = 'P'}) async {
       return await db.into(db.product).insert(
             ProductCompanion.insert(name: name, baseUnitId: unitId),
           );
     }
 
-    Future<int> _insertCustomer() async {
+    Future<int> insertCustomer() async {
       return await db.into(db.customers).insert(
             CustomersCompanion.insert(name: 'Alice'),
           );
     }
 
-    Future<int> _insertShop() async {
+    Future<int> insertShop() async {
       return await db.into(db.shop).insert(
             ShopCompanion.insert(name: 'Main', manager: 'Bob'),
           );
     }
 
     test('addSalesTransaction inserts header and items, then retrievable', () async {
-      final customerId = await _insertCustomer();
-      final shopId = await _insertShop();
-      final unitId = await _insertUnit('pcs');
-      final productId = await _insertProduct(unitId: unitId);
+      final customerId = await insertCustomer();
+      final shopId = await insertShop();
+      final unitId = await insertUnit('pcs');
+      final productId = await insertProduct(unitId: unitId);
 
       final tx = domain.SalesTransaction(
         customerId: customerId,
@@ -74,14 +74,14 @@ void main() {
     });
 
     test('handleOutbound merges items by (productId,batchId)', () async {
-      final shopId = await _insertShop();
-      final unitId = await _insertUnit('pcs');
-      final p1 = await _insertProduct(unitId: unitId, name: 'P1');
-      final p2 = await _insertProduct(unitId: unitId, name: 'P2');
+      final shopId = await insertShop();
+      final unitId = await insertUnit('pcs');
+      final p1 = await insertProduct(unitId: unitId, name: 'P1');
+      final p2 = await insertProduct(unitId: unitId, name: 'P2');
 
       final salesId = await db.into(db.salesTransaction).insert(
             SalesTransactionCompanion.insert(
-              customerId: await _insertCustomer(),
+              customerId: await insertCustomer(),
               shopId: shopId,
               totalAmount: 0,
               actualAmount: 0,
@@ -101,6 +101,7 @@ void main() {
             sellingPriceInCents: 100,
             quantity: 1,
             amount: 1.0,
+            conversionRate: 1,
           ),
           domain.SaleCartItem(
             id: '2',
@@ -111,6 +112,7 @@ void main() {
             sellingPriceInCents: 100,
             quantity: 3,
             amount: 3.0,
+            conversionRate: 1,
           ),
           domain.SaleCartItem(
             id: '3',
@@ -121,6 +123,7 @@ void main() {
             sellingPriceInCents: 200,
             quantity: 2,
             amount: 4.0,
+            conversionRate: 1,
           ),
         ],
       );

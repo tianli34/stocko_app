@@ -19,21 +19,21 @@ void main() {
       await db.close();
     });
 
-    Future<int> _unit() async =>
+    Future<int> unit() async =>
         await db.into(db.unit).insert(UnitCompanion.insert(name: 'pcs'));
-    Future<int> _product() async {
-      final u = await _unit();
+    Future<int> product() async {
+      final u = await unit();
       return await db
           .into(db.product)
           .insert(ProductCompanion.insert(name: 'P', baseUnitId: u));
     }
-    Future<int> _shop({String name = 'S'}) async => await db
+    Future<int> shop({String name = 'S'}) async => await db
         .into(db.shop)
         .insert(ShopCompanion.insert(name: name, manager: 'M'));
 
     test('add/get/update/delete + basic filters', () async {
-      final pid = await _product();
-      final sid = await _shop();
+      final pid = await product();
+      final sid = await shop();
 
       final id = await repo.addTransaction(InventoryTransactionModel.createInbound(
         productId: pid,
@@ -63,8 +63,8 @@ void main() {
     });
 
     test('date range, recent, count, summary and watchers', () async {
-      final pid = await _product();
-      final sid = await _shop(name: 'A');
+      final pid = await product();
+      final sid = await shop(name: 'A');
 
       // seed 3
       await repo.addTransaction(InventoryTransactionModel(

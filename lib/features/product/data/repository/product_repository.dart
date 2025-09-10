@@ -103,6 +103,7 @@ class ProductRepository implements IProductRepository {
         ProductModel product,
         int unitId,
         String unitName,
+        int conversionRate,
         int? wholesalePriceInCents
       })
     >
@@ -119,6 +120,7 @@ class ProductRepository implements IProductRepository {
                       product: _dataToProduct(e.product),
                       unitId: e.unitId,
                       unitName: e.unitName,
+                      conversionRate: e.conversionRate,
                       wholesalePriceInCents: e.wholesalePriceInCents,
                     );
                   } catch (error) {
@@ -138,6 +140,7 @@ class ProductRepository implements IProductRepository {
             ProductModel product,
             int unitId,
             String unitName,
+            int conversionRate,
             int? wholesalePriceInCents
           })>[];
         });
@@ -201,6 +204,7 @@ class ProductRepository implements IProductRepository {
       ProductModel product,
       int unitId,
       String unitName,
+      int conversionRate,
       int? wholesalePriceInCents
     })?
   >
@@ -213,6 +217,7 @@ class ProductRepository implements IProductRepository {
         product: _dataToProduct(result.product),
         unitId: result.unitId,
         unitName: result.unitName,
+        conversionRate: result.conversionRate,
         wholesalePriceInCents: result.wholesalePriceInCents,
       );
     } catch (e) {

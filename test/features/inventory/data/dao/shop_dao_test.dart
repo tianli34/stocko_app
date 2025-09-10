@@ -18,11 +18,11 @@ void main() {
     await db.close();
   });
 
-  ShopCompanion _shop({required String name, String manager = 'M'}) =>
+  ShopCompanion shop({required String name, String manager = 'M'}) =>
       ShopCompanion.insert(name: name, manager: manager);
 
   test('CRUD + get by id/name + watch', () async {
-    final id = await dao.insertShop(_shop(name: 'S1'));
+    final id = await dao.insertShop(shop(name: 'S1'));
     expect(id, isPositive);
 
     final one = await dao.getShopById(id);
@@ -45,8 +45,8 @@ void main() {
   });
 
   test('search, isNameExists with excludeId, count', () async {
-    final id1 = await dao.insertShop(_shop(name: 'Alpha', manager: 'Alice'));
-    await dao.insertShop(_shop(name: 'Beta', manager: 'Bob'));
+    final id1 = await dao.insertShop(shop(name: 'Alpha', manager: 'Alice'));
+    await dao.insertShop(shop(name: 'Beta', manager: 'Bob'));
 
     final byName = await dao.searchShopsByName('Al');
     expect(byName.map((e) => e.name), contains('Alpha'));
