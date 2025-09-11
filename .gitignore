@@ -48,3 +48,8 @@ app.*.map.json
 *.zip
 *.aab
 *.apk
+
+
+linux/flutter/generated_*
+macos/Flutter/GeneratedPluginRegistrant.swift
+windows/flutter/generated_*
