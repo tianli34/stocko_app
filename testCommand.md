@@ -2,7 +2,7 @@
 
 cd E:\stocko_app\
 git add .
-git commit -m "831 7 696 集成测试"
+git commit -m "910 4 636 采购入库单位换算修复"
 git push
 
 

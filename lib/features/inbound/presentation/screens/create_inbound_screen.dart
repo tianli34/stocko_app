@@ -207,6 +207,82 @@ class _CreateInboundScreenState extends ConsumerState<CreateInboundScreen> {
   }
 
 
+  /// 对入库项目进行预处理，合并相同货品的不同单位
+  Future<List<InboundItemState>> _getMergedInboundItems() async {
+    final originalItems = ref.read(inboundListProvider);
+    // 使用 a Map 来合并货品，键为货品ID
+    final Map<int, InboundItemState> mergedItemsMap = {};
+
+    for (final item in originalItems) {
+      // 异步获取完整的货品信息
+      final product = await ref.read(productByIdProvider(item.productId).future);
+      if (product == null) continue; // 如果找不到货品，则跳过
+
+      // 计算当前项目以基本单位（如“包”）计的总数量
+      // conversionRate 是指一个大单位（如“条”）等于多少个基本单位（如“包”）
+      final baseUnitQuantity = item.quantity * item.conversionRate;
+
+      if (mergedItemsMap.containsKey(item.productId)) {
+        // 如果已存在相同货品，进行合并
+        final existingItem = mergedItemsMap[item.productId]!;
+
+        // 累加基本单位数量
+        final newTotalBaseQuantity =
+            (existingItem.quantity * existingItem.conversionRate) +
+                baseUnitQuantity;
+
+        // 计算加权平均单价（以分为单位）
+        // (旧总价 + 新总价) / 新总数量
+        final totalCost = (existingItem.quantity *
+                existingItem.conversionRate *
+                existingItem.unitPriceInCents) +
+            (baseUnitQuantity * item.unitPriceInCents);
+
+        final newUnitPrice = (totalCost / newTotalBaseQuantity).round();
+
+        // 更新 Map 中的项目
+        // 查找基本单位的名称
+        final baseUnitName = originalItems
+                .firstWhere(
+                  (i) => i.productId == item.productId && i.conversionRate == 1,
+                  orElse: () => item, // 如果找不到，则使用当前单位名作为后备
+                )
+                .unitName;
+
+        // 注意：合并后的项目将统一使用基本单位，因此 conversionRate 设为 1
+        mergedItemsMap[item.productId] = existingItem.copyWith(
+          quantity: newTotalBaseQuantity,
+          unitPriceInCents: newUnitPrice,
+          conversionRate: 1, // 合并后统一为基本单位
+          unitName: baseUnitName, // 使用货品的基本单位名
+        );
+      } else {
+        // 如果是新货品，直接添加入Map
+        // 如果当前单位不是基本单位，则转换为基本单位
+        if (item.conversionRate > 1) {
+          final baseUnitName = originalItems
+              .firstWhere(
+                (i) => i.productId == item.productId && i.conversionRate == 1,
+                orElse: () => item,
+              )
+              .unitName;
+          mergedItemsMap[item.productId] = item.copyWith(
+            quantity: baseUnitQuantity,
+            unitPriceInCents:
+                (item.unitPriceInCents / item.conversionRate).round(),
+            conversionRate: 1,
+            unitName: baseUnitName,
+          );
+        } else {
+          // 如果已经是基本单位，直接添加
+          mergedItemsMap[item.productId] = item;
+        }
+      }
+    }
+    // 返回合并后的值列表
+    return mergedItemsMap.values.toList();
+  }
+
   void _confirmInbound() async {
     if (_isProcessing) return;
     if (!_validateForm()) return;
@@ -255,9 +331,12 @@ class _CreateInboundScreenState extends ConsumerState<CreateInboundScreen> {
         supplierName = null;
       }
 
+      // 获取合并后的入库项目列表
+      final mergedInboundItems = await _getMergedInboundItems();
+
       final receiptNumber = await inboundService.processOneClickInbound(
         shopId: _selectedShop!.id!,
-        inboundItems: ref.read(inboundListProvider),
+        inboundItems: mergedInboundItems, // 使用合并后的列表
         remarks: _remarksController.text.isNotEmpty
             ? _remarksController.text
             : null,
