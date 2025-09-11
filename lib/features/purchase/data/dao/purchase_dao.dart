@@ -9,7 +9,7 @@ part 'purchase_dao.g.dart';
 
 /// 采购订单及其所有明细的数据类
 class PurchaseOrderWithItems {
-  final PurchaseOrdersTableData order;
+  final PurchaseOrderData order;
   final List<PurchaseOrderItemWithDetails> items;
 
   PurchaseOrderWithItems({required this.order, required this.items});
@@ -17,15 +17,15 @@ class PurchaseOrderWithItems {
 
 /// 采购订单明细及其关联产品信息的数据类
 class PurchaseOrderItemWithDetails {
-  final PurchaseOrderItemsTableData item;
-  final ProductsTableData product;
+  final PurchaseOrderItemData item;
+  final ProductData product;
 
   PurchaseOrderItemWithDetails({required this.item, required this.product});
 }
 
 /// 采购订单数据访问对象 (DAO)
 @DriftAccessor(
-  tables: [PurchaseOrdersTable, PurchaseOrderItemsTable, ProductsTable],
+  tables: [PurchaseOrder, PurchaseOrderItem, Product],
 )
 class PurchaseDao extends DatabaseAccessor<AppDatabase>
     with _$PurchaseDaoMixin {
@@ -36,20 +36,20 @@ class PurchaseDao extends DatabaseAccessor<AppDatabase>
   // ===========================================================================
 
   /// 创建一个新的采购订单，并返回其自增ID
-  Future<int> createPurchaseOrder(PurchaseOrdersTableCompanion companion) {
-    return into(db.purchaseOrdersTable).insert(companion);
+  Future<int> createPurchaseOrder(PurchaseOrderCompanion companion) {
+    return into(db.purchaseOrder).insert(companion);
   }
 
   /// 根据ID获取单个采购订单
-  Future<PurchaseOrdersTableData?> getPurchaseOrderById(int orderId) {
+  Future<PurchaseOrderData?> getPurchaseOrderById(int orderId) {
     return (select(
-      db.purchaseOrdersTable,
+      db.purchaseOrder,
     )..where((tbl) => tbl.id.equals(orderId))).getSingleOrNull();
   }
 
   /// 监听所有采购订单的变化
-  Stream<List<PurchaseOrdersTableData>> watchAllPurchaseOrders() {
-    return select(db.purchaseOrdersTable).watch();
+  Stream<List<PurchaseOrderData>> watchAllPurchaseOrders() {
+    return select(db.purchaseOrder).watch();
   }
 
   /// 删除一个采购订单（需要先删除其所有明细）
@@ -57,11 +57,11 @@ class PurchaseDao extends DatabaseAccessor<AppDatabase>
     return transaction(() async {
       // 1. 删除所有关联的明细
       await (delete(
-        db.purchaseOrderItemsTable,
+        db.purchaseOrderItem,
       )..where((tbl) => tbl.purchaseOrderId.equals(orderId))).go();
       // 2. 删除订单本身
       return (delete(
-        db.purchaseOrdersTable,
+        db.purchaseOrder,
       )..where((tbl) => tbl.id.equals(orderId))).go();
     });
   }
@@ -72,17 +72,17 @@ class PurchaseDao extends DatabaseAccessor<AppDatabase>
 
   /// 为指定的采购订单批量添加明细
   Future<void> addPurchaseOrderItems(
-    List<PurchaseOrderItemsTableCompanion> companions,
+    List<PurchaseOrderItemCompanion> companions,
   ) {
     return batch((batch) {
-      batch.insertAll(db.purchaseOrderItemsTable, companions);
+      batch.insertAll(db.purchaseOrderItem, companions);
     });
   }
 
   /// 获取指定采购订单的所有明细
-  Future<List<PurchaseOrderItemsTableData>> getPurchaseOrderItems(int orderId) {
+  Future<List<PurchaseOrderItemData>> getPurchaseOrderItems(int orderId) {
     return (select(
-      db.purchaseOrderItemsTable,
+      db.purchaseOrderItem,
     )..where((tbl) => tbl.purchaseOrderId.equals(orderId))).get();
   }
 
@@ -93,16 +93,16 @@ class PurchaseDao extends DatabaseAccessor<AppDatabase>
   /// 监听一个完整的采购订单（包含其所有明细及产品信息）
   Stream<PurchaseOrderWithItems> watchPurchaseOrderWithItems(int orderId) {
     final orderStream = (select(
-      db.purchaseOrdersTable,
+      db.purchaseOrder,
     )..where((tbl) => tbl.id.equals(orderId))).watchSingle();
 
     final itemsStream =
         (select(
-          db.purchaseOrderItemsTable,
+          db.purchaseOrderItem,
         )..where((tbl) => tbl.purchaseOrderId.equals(orderId))).join([
           innerJoin(
-            db.productsTable,
-            db.productsTable.id.equalsExp(db.purchaseOrderItemsTable.productId),
+            db.product,
+            db.product.id.equalsExp(db.purchaseOrderItem.productId),
           ),
         ]).watch();
 
@@ -110,8 +110,8 @@ class PurchaseDao extends DatabaseAccessor<AppDatabase>
       return itemsStream.map((rows) {
         final detailedItems = rows.map((row) {
           return PurchaseOrderItemWithDetails(
-            item: row.readTable(db.purchaseOrderItemsTable),
-            product: row.readTable(db.productsTable),
+            item: row.readTable(db.purchaseOrderItem),
+            product: row.readTable(db.product),
           );
         }).toList();
         return PurchaseOrderWithItems(order: order, items: detailedItems);
@@ -122,12 +122,12 @@ class PurchaseDao extends DatabaseAccessor<AppDatabase>
   /// 创建一个完整的采购订单（包括订单头和多个明细项）
   /// 这是一个事务性操作，确保数据一致性
   Future<int> createFullPurchaseOrder({
-    required PurchaseOrdersTableCompanion order,
-    required List<PurchaseOrderItemsTableCompanion> items,
+    required PurchaseOrderCompanion order,
+    required List<PurchaseOrderItemCompanion> items,
   }) {
     return transaction(() async {
       // 1. 插入订单头，获取新订单的ID
-      final orderId = await into(db.purchaseOrdersTable).insert(order);
+      final orderId = await into(db.purchaseOrder).insert(order);
 
       // 2. 为每个明细项设置外键 (purchaseOrderId)
       final itemsWithOrderId = items.map((item) {
@@ -136,7 +136,7 @@ class PurchaseDao extends DatabaseAccessor<AppDatabase>
 
       // 3. 批量插入所有明细项
       await batch((batch) {
-        batch.insertAll(db.purchaseOrderItemsTable, itemsWithOrderId);
+        batch.insertAll(db.purchaseOrderItem, itemsWithOrderId);
       });
 
       return orderId;
@@ -147,21 +147,4 @@ class PurchaseDao extends DatabaseAccessor<AppDatabase>
   // 工具方法
   // ===========================================================================
 
-  /// 生成新的采购单号
-  /// 格式：PUR + YYYYMMDD + 4位序号
-  Future<String> generatePurchaseNumber(DateTime date) async {
-    final dateStr = date.toIso8601String().substring(0, 10).replaceAll('-', '');
-    final prefix = 'PUR$dateStr';
-
-    // 获取当天已有的采购单数量
-    final query = selectOnly(db.purchaseOrdersTable)
-      ..where(db.purchaseOrdersTable.purchaseOrderNumber.like('$prefix%'))
-      ..addColumns([db.purchaseOrdersTable.id.count()]);
-
-    final result = await query.getSingle();
-    final count = result.read(db.purchaseOrdersTable.id.count());
-
-    final sequenceNumber = (count ?? 0) + 1;
-    return '$prefix${sequenceNumber.toString().padLeft(4, '0')}';
-  }
 }

@@ -3,5 +3,6 @@
     "files.associations": {
         "*.plist": "plist"
     },
-    "xml.validate.enable": false
+    "xml.validate.enable": false,
+    "workbench.editor.enablePreview": false
 }

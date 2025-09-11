@@ -51,10 +51,12 @@ class ImageCacheService {
     int? width,
     int? height,
     int quality = 100,
+    DateTime? fileModifiedTime,
   }) async {
     try {
       // 生成缓存键
-      final cacheKey = _generateCacheKey(imagePath, width, height, quality);
+      final cacheKey =
+          _generateCacheKey(imagePath, width, height, quality, fileModifiedTime);
 
       // 检查字节缓存
       if (_byteCache.containsKey(cacheKey)) {
@@ -126,11 +128,24 @@ class ImageCacheService {
   /// 预加载图片到缓存
   Future<void> preloadImage(String imagePath) async {
     try {
+      // 获取文件修改时间，确保预加载的缓存键与实际使用时一致
+      DateTime? fileModifiedTime;
+      try {
+        final file = File(imagePath);
+        if (await file.exists()) {
+          final stat = await file.stat();
+          fileModifiedTime = stat.modified;
+          debugPrint('预加载时获取文件修改时间: $fileModifiedTime');
+        }
+      } catch (e) {
+        debugPrint('预加载时获取文件修改时间失败: $e');
+      }
+      
       // 预加载常用尺寸的缩略图
       await Future.wait([
-        getOptimizedImage(imagePath, width: 60, height: 80), // 列表缩略图
-        getOptimizedImage(imagePath, width: 120, height: 120), // 对话框图片
-        getOptimizedImage(imagePath, width: 200, height: 200), // 详情页图片
+        getOptimizedImage(imagePath, width: 60, height: 80, fileModifiedTime: fileModifiedTime), // 列表缩略图
+        getOptimizedImage(imagePath, width: 120, height: 120, fileModifiedTime: fileModifiedTime), // 对话框图片
+        getOptimizedImage(imagePath, width: 200, height: 200, fileModifiedTime: fileModifiedTime), // 详情页图片
       ]);
       debugPrint('预加载图片完成: $imagePath');
     } catch (e) {
@@ -213,8 +228,10 @@ class ImageCacheService {
     int? width,
     int? height,
     int quality,
+    DateTime? fileModifiedTime,
   ) {
-    return '${imagePath.hashCode}_${width ?? 'null'}_${height ?? 'null'}_$quality';
+    final timeStamp = fileModifiedTime?.millisecondsSinceEpoch ?? 'null';
+    return '${imagePath.hashCode}_${width ?? 'null'}_${height ?? 'null'}_${quality}_$timeStamp';
   }
 
   /// 生成优化后的图片

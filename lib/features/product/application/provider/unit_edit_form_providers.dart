@@ -82,7 +82,7 @@ class UnitEditFormNotifier extends Notifier<UnitEditFormState> {
   }
 
   /// 更新辅单位的单位名称
-  void updateAuxiliaryUnitName(int id, String unitName, {String? unitId}) {
+  void updateAuxiliaryUnitName(int id, String unitName, {int? unitId}) {
     final updatedUnits = state.auxiliaryUnits.map((unit) {
       if (unit.id == id) {
         return unit.copyWith(unitName: unitName, unitId: unitId);
@@ -93,7 +93,7 @@ class UnitEditFormNotifier extends Notifier<UnitEditFormState> {
   }
 
   /// 更新辅单位的换算率
-  void updateAuxiliaryUnitConversionRate(int id, double conversionRate) {
+  void updateAuxiliaryUnitConversionRate(int id, int conversionRate) {
     final updatedUnits = state.auxiliaryUnits.map((unit) {
       if (unit.id == id) {
         return unit.copyWith(conversionRate: conversionRate);
@@ -115,10 +115,10 @@ class UnitEditFormNotifier extends Notifier<UnitEditFormState> {
   }
 
   /// 更新辅单位的建议零售价
-  void updateAuxiliaryUnitRetailPrice(int id, String retailPrice) {
+  void updateAuxiliaryUnitRetailPrice(int id, String retailPriceInCents) {
     final updatedUnits = state.auxiliaryUnits.map((unit) {
       if (unit.id == id) {
-        return unit.copyWith(retailPrice: retailPrice);
+        return unit.copyWith(retailPriceInCents: retailPriceInCents);
       }
       return unit;
     }).toList();
@@ -126,10 +126,10 @@ class UnitEditFormNotifier extends Notifier<UnitEditFormState> {
   }
 
   /// 更新辅单位的批发价
-  void updateAuxiliaryUnitWholesalePrice(int id, String wholesalePrice) {
+  void updateAuxiliaryUnitWholesalePrice(int id, String wholesalePriceInCents) {
     final updatedUnits = state.auxiliaryUnits.map((unit) {
       if (unit.id == id) {
-        return unit.copyWith(wholesalePrice: wholesalePrice);
+        return unit.copyWith(wholesalePriceInCents: wholesalePriceInCents);
       }
       return unit;
     }).toList();
@@ -168,12 +168,12 @@ class UnitEditFormNotifier extends Notifier<UnitEditFormState> {
         auxiliaryUnits.add(
           AuxiliaryUnitData(
             id: auxUnit.id as int,
-            unitId: auxUnit.unit?.id as String?,
+            unitId: auxUnit.unit?.id as int?,
             unitName: auxUnit.unitController?.text as String? ?? '',
-            conversionRate: auxUnit.conversionRate as double? ?? 0.0,
+            conversionRate: auxUnit.conversionRate ?? 1,
             barcode: auxUnit.barcodeController?.text as String? ?? '',
-            retailPrice: auxUnit.retailPriceController?.text as String? ?? '',
-            wholesalePrice:
+            retailPriceInCents: auxUnit.retailPriceController?.text as String? ?? '',
+            wholesalePriceInCents:
                 auxUnit.wholesalePriceController?.text as String? ?? '',
           ),
         );

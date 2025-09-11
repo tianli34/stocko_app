@@ -24,7 +24,7 @@ class SupplierRepository implements ISupplierRepository {
   }
 
   @override
-  Future<Supplier?> getSupplierById(String id) async {
+  Future<Supplier?> getSupplierById(int id) async {
     try {
       final data = await _supplierDao.getSupplierById(id);
       return data != null ? _supplierDataToModel(data) : null;
@@ -80,7 +80,7 @@ class SupplierRepository implements ISupplierRepository {
   }
 
   @override
-  Future<int> deleteSupplier(String id) async {
+  Future<int> deleteSupplier(int id) async {
     try {
       print('🗃️ 仓储层：删除供应商，ID: $id');
       final success = await _supplierDao.deleteSupplier(id);
@@ -92,7 +92,7 @@ class SupplierRepository implements ISupplierRepository {
   }
 
   @override
-  Future<bool> isSupplierNameExists(String name, [String? excludeId]) async {
+  Future<bool> isSupplierNameExists(String name, [int? excludeId]) async {
     try {
       final supplier = await _supplierDao.getSupplierByName(name);
       if (supplier == null) return false;
@@ -126,16 +126,16 @@ class SupplierRepository implements ISupplierRepository {
   }
 
   /// 将领域模型转换为数据库Companion对象
-  SuppliersTableCompanion _supplierToCompanion(Supplier supplier) {
-    return SuppliersTableCompanion(
-      id: Value(supplier.id),
+  SupplierCompanion _supplierToCompanion(Supplier supplier) {
+    return SupplierCompanion(
+      id: supplier.id == null ? const Value.absent() : Value(supplier.id!),
       name: Value(supplier.name),
       updatedAt: Value(DateTime.now()),
     );
   }
 
   /// 将数据库Data对象转换为领域模型
-  Supplier _supplierDataToModel(SuppliersTableData data) {
+  Supplier _supplierDataToModel(SupplierData data) {
     return Supplier(id: data.id, name: data.name);
   }
 }

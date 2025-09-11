@@ -14,7 +14,7 @@ class CategoryRepository implements ICategoryRepository {
     : _categoryDao = database.categoryDao;
 
   @override
-  Future<int> addCategory(Category category) async {
+  Future<int> addCategory(CategoryModel category) async {
     try {
       print('🏷️ 仓储层：添加类别，ID: ${category.id}, 名称: ${category.name}');
       await _categoryDao.insertCategory(_categoryToCompanion(category));
@@ -26,7 +26,7 @@ class CategoryRepository implements ICategoryRepository {
   }
 
   @override
-  Future<Category?> getCategoryById(String id) async {
+  Future<CategoryModel?> getCategoryById(int id) async {
     print('🏷️ 仓储层：根据ID获取类别，ID: $id');
     try {
       final categoryData = await _categoryDao.getCategoryById(id);
@@ -44,7 +44,7 @@ class CategoryRepository implements ICategoryRepository {
   }
 
   @override
-  Future<List<Category>> getAllCategories() async {
+  Future<List<CategoryModel>> getAllCategories() async {
     print('🏷️ 仓储层：获取所有类别');
     try {
       final categoriesData = await _categoryDao.getAllCategories();
@@ -58,7 +58,7 @@ class CategoryRepository implements ICategoryRepository {
   }
 
   @override
-  Future<List<Category>> getRootCategories() async {
+  Future<List<CategoryModel>> getRootCategories() async {
     try {
       final categoriesData = await _categoryDao.getCategoriesByParentId(null);
       return categoriesData.map(_categoryDataToModel).toList();
@@ -68,7 +68,7 @@ class CategoryRepository implements ICategoryRepository {
   }
 
   @override
-  Future<List<Category>> getCategoriesByParentId(String parentId) async {
+  Future<List<CategoryModel>> getCategoriesByParentId(int parentId) async {
     try {
       final categoriesData = await _categoryDao.getCategoriesByParentId(
         parentId,
@@ -80,21 +80,21 @@ class CategoryRepository implements ICategoryRepository {
   }
 
   @override
-  Stream<List<Category>> watchAllCategories() {
+  Stream<List<CategoryModel>> watchAllCategories() {
     return _categoryDao.watchAllCategories().map(
       (categoriesData) => categoriesData.map(_categoryDataToModel).toList(),
     );
   }
 
   @override
-  Stream<List<Category>> watchRootCategories() {
+  Stream<List<CategoryModel>> watchRootCategories() {
     return _categoryDao.watchRootCategories().map(
       (categoriesData) => categoriesData.map(_categoryDataToModel).toList(),
     );
   }
 
   @override
-  Stream<List<Category>> watchCategoriesByParentId(String parentId) {
+  Stream<List<CategoryModel>> watchCategoriesByParentId(int parentId) {
     return _categoryDao
         .watchCategoriesByParentId(parentId)
         .map(
@@ -103,8 +103,8 @@ class CategoryRepository implements ICategoryRepository {
   }
 
   @override
-  Future<bool> updateCategory(Category category) async {
-    if (category.id.isEmpty) {
+  Future<bool> updateCategory(CategoryModel category) async {
+    if ((category.id ?? 0)>0) {
       throw Exception('类别ID不能为空');
     }
 
@@ -118,7 +118,7 @@ class CategoryRepository implements ICategoryRepository {
   }
 
   @override
-  Future<int> deleteCategory(String id) async {
+  Future<int> deleteCategory(int id) async {
     print('🏷️ 仓储层：删除类别，ID: $id');
     try {
       final result = await _categoryDao.deleteCategory(id);
@@ -131,7 +131,7 @@ class CategoryRepository implements ICategoryRepository {
   }
 
   @override
-  Future<bool> hasSubCategories(String categoryId) async {
+  Future<bool> hasSubCategories(int categoryId) async {
     try {
       return await _categoryDao.hasSubCategories(categoryId);
     } catch (e) {
@@ -142,8 +142,8 @@ class CategoryRepository implements ICategoryRepository {
   @override
   Future<bool> isCategoryNameExists(
     String name,
-    String? parentId, {
-    String? excludeId,
+    int? parentId, {
+    int? excludeId,
   }) async {
     try {
       return await _categoryDao.isCategoryNameExists(
@@ -157,7 +157,7 @@ class CategoryRepository implements ICategoryRepository {
   }
 
   @override
-  Future<List<Category>> getCategoryPath(String categoryId) async {
+  Future<List<CategoryModel>> getCategoryPath(int categoryId) async {
     try {
       final categoriesData = await _categoryDao.getCategoryPath(categoryId);
       return categoriesData.map(_categoryDataToModel).toList();
@@ -166,25 +166,23 @@ class CategoryRepository implements ICategoryRepository {
     }
   }
 
-  /// 将 Category 模型转换为 CategoriesTableCompanion
-  CategoriesTableCompanion _categoryToCompanion(Category category) {
-    return CategoriesTableCompanion(
-      id: Value(category.id),
+  /// 将 CategoryModel 模型转换为 CategoryCompanion
+  CategoryCompanion _categoryToCompanion(CategoryModel category) {
+    return CategoryCompanion(
       name: Value(category.name),
       parentId: category.parentId != null
           ? Value(category.parentId!)
           : const Value.absent(),
-      updatedAt: Value(DateTime.now()),
     );
   }
 
-  /// 将 CategoriesTableData 转换为 Category 模型
-  Category _categoryDataToModel(CategoriesTableData data) {
-    return Category(id: data.id, name: data.name, parentId: data.parentId);
+  /// 将 CategoryData 转换为 CategoryModel 模型
+  CategoryModel _categoryDataToModel(CategoryData data) {
+    return CategoryModel(id: data.id, name: data.name, parentId: data.parentId);
   }
 }
 
-/// Category Repository Provider
+/// CategoryModel Repository Provider
 final categoryRepositoryProvider = Provider<CategoryRepository>((ref) {
   final database = ref.watch(appDatabaseProvider);
   return CategoryRepository(database);

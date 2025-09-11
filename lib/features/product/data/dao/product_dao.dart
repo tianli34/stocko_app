@@ -10,89 +10,135 @@ part 'product_dao.g.dart';
 /// 产品数据访问对象 (DAO)
 /// 专门负责产品相关的数据库操作
 @DriftAccessor(
-  tables: [ProductsTable, BarcodesTable, ProductUnitsTable, UnitsTable],
+  tables: [Product, Barcode, UnitProduct, Unit],
 )
 class ProductDao extends DatabaseAccessor<AppDatabase> with _$ProductDaoMixin {
   ProductDao(super.db);
 
   /// 添加产品
-  Future<int> insertProduct(ProductsTableCompanion companion) async {
-    return await into(db.productsTable).insert(companion);
+  Future<int> insertProduct( ProductCompanion companion) async {
+    return await into(db.product).insert(companion);
   }
 
   /// 根据ID获取产品
-  Future<ProductsTableData?> getProductById(String id) async {
+  Future<ProductData?> getProductById(int id) async {
     return await (select(
-      db.productsTable,
+      db.product,
     )..where((tbl) => tbl.id.equals(id))).getSingleOrNull();
   }
 
   /// 获取所有产品
-  Future<List<ProductsTableData>> getAllProducts() async {
-    return await select(db.productsTable).get();
+  Future<List<ProductData>> getAllProducts() async {
+    return await select(db.product).get();
   }
 
   /// 监听所有产品变化
-  Stream<List<ProductsTableData>> watchAllProducts() {
-    return select(db.productsTable).watch();
+  Stream<List<ProductData>> watchAllProducts() {
+    return select(db.product).watch();
   }
 
   /// 监听所有产品及其主单位的名称
   Stream<
-    List<({ProductsTableData product, String unitName, double? wholesalePrice})>
+    List<
+      ({
+        ProductData product,
+        int unitId,
+        String unitName,
+        int conversionRate,
+        int? wholesalePriceInCents
+      })
+    >
   >
   watchAllProductsWithUnit() {
-    final query = select(db.productsTable).join([
+    final query = select(db.product).join([
       leftOuterJoin(
-        db.productUnitsTable,
-        db.productUnitsTable.productId.equalsExp(db.productsTable.id) &
-            db.productUnitsTable.conversionRate.equals(1.0),
+        db.unitProduct,
+        db.unitProduct.productId.equalsExp(db.product.id) &
+            db.unitProduct.conversionRate.equals(1),
       ),
       leftOuterJoin(
-        db.unitsTable,
-        db.unitsTable.id.equalsExp(db.productsTable.unitId),
+        db.unit,
+        db.unit.id.equalsExp(db.product.baseUnitId),
       ),
     ]);
 
     return query.watch().map((rows) {
       return rows.map((row) {
-        final product = row.readTable(db.productsTable);
-        final unit = row.readTableOrNull(db.unitsTable);
-        final productUnit = row.readTableOrNull(db.productUnitsTable);
-        return (
-          product: product,
-          unitName: unit?.name ?? '未知单位',
-          wholesalePrice: productUnit?.wholesalePrice,
-        );
+        try {
+          final product = row.readTable(db.product);
+          final unit = row.readTableOrNull(db.unit);
+          final unitProduct = row.readTableOrNull(db.unitProduct);
+          
+          // 安全地获取单位ID，确保不会出现数字解析错误
+          int unitId;
+          String unitName;
+          
+          if (unit != null) {
+            unitId = unit.id;
+            unitName = unit.name;
+          } else {
+            // 如果没有找到单位，使用产品的基础单位ID
+            unitId = product.baseUnitId;
+            unitName = '未知单位';
+          }
+          
+          return (
+            product: product,
+            unitId: unitId,
+            unitName: unitName,
+            conversionRate: unitProduct?.conversionRate ?? 1,
+            wholesalePriceInCents: unitProduct?.wholesalePriceInCents,
+          );
+        } catch (e) {
+          print('处理产品单位数据时出错: $e');
+          // 返回一个安全的默认值
+          final product = row.readTable(db.product);
+          return (
+            product: product,
+            unitId: product.baseUnitId,
+            unitName: '未知单位',
+            conversionRate: 1,
+            wholesalePriceInCents: null,
+          );
+        }
       }).toList();
+    }).handleError((error) {
+      print('监听产品及单位数据时出错: $error');
+      return <({
+        ProductData product,
+        int unitId,
+        String unitName,
+        int conversionRate,
+        int? wholesalePriceInCents
+      })>[];
     });
   }
 
   /// 更新产品
-  Future<bool> updateProduct(ProductsTableCompanion companion) async {
+  Future<bool> updateProduct( ProductCompanion companion) async {
     final rowsAffected = await (update(
-      db.productsTable,
+      db.product,
     )..where((tbl) => tbl.id.equals(companion.id.value))).write(companion);
     return rowsAffected > 0;
   }
 
   /// 删除产品
-  Future<int> deleteProduct(String id) async {
+  Future<int> deleteProduct(int id) async {
     print('💾 数据库层：删除产品，ID: $id');
     final result = await (delete(
-      db.productsTable,
+      db.product,
     )..where((tbl) => tbl.id.equals(id))).go();
     print('💾 数据库层：删除完成，影响行数: $result');
     return result;
   }
 
   /// 根据条件查询产品
-  Future<List<ProductsTableData>> getProductsByCondition({
-    String? categoryId,
+  Future<List<ProductData>> getProductsByCondition({
+    int? categoryId,
     String? status,
     String? keyword,
   }) async {
-    final query = select(db.productsTable);
+    final query = select(db.product);
 
     if (categoryId != null) {
       query.where((tbl) => tbl.categoryId.equals(categoryId));
@@ -114,36 +160,36 @@ class ProductDao extends DatabaseAccessor<AppDatabase> with _$ProductDaoMixin {
   }
 
   /// 监听指定类别的产品
-  Stream<List<ProductsTableData>> watchProductsByCategory(String categoryId) {
+  Stream<List<ProductData>> watchProductsByCategory(int categoryId) {
     return (select(
-      db.productsTable,
+      db.product,
     )..where((tbl) => tbl.categoryId.equals(categoryId))).watch();
   }
 
   /// 获取库存预警产品 (假设当前库存通过其他方式获取)
-  Future<List<ProductsTableData>> getStockWarningProducts() async {
+  Future<List<ProductData>> getStockWarningProducts() async {
     return await (select(
-      db.productsTable,
+      db.product,
     )..where((tbl) => tbl.stockWarningValue.isNotNull())).get();
   }
 
   /// 批量插入产品
   Future<void> insertMultipleProducts(
-    List<ProductsTableCompanion> companions,
+    List< ProductCompanion> companions,
   ) async {
     await batch((batch) {
-      batch.insertAll(db.productsTable, companions);
+      batch.insertAll(db.product, companions);
     });
   }
 
   /// 批量更新产品
   Future<void> updateMultipleProducts(
-    List<ProductsTableCompanion> companions,
+    List< ProductCompanion> companions,
   ) async {
     await batch((batch) {
       for (final companion in companions) {
         batch.update(
-          db.productsTable,
+          db.product,
           companion,
           where: (tbl) => tbl.id.equals(companion.id.value),
         );
@@ -152,11 +198,11 @@ class ProductDao extends DatabaseAccessor<AppDatabase> with _$ProductDaoMixin {
   }
 
   /// 检查产品是否存在
-  Future<bool> productExists(String id) async {
+  Future<bool> productExists(int id) async {
     final result =
-        await (selectOnly(db.productsTable)
-              ..addColumns([db.productsTable.id])
-              ..where(db.productsTable.id.equals(id)))
+        await (selectOnly(db.product)
+              ..addColumns([db.product.id])
+              ..where(db.product.id.equals(id)))
             .getSingleOrNull();
     return result != null;
   }
@@ -164,18 +210,18 @@ class ProductDao extends DatabaseAccessor<AppDatabase> with _$ProductDaoMixin {
   /// 获取产品数量
   Future<int> getProductCount() async {
     final countExp = countAll();
-    final query = selectOnly(db.productsTable)..addColumns([countExp]);
+    final query = selectOnly(db.product)..addColumns([countExp]);
     final result = await query.getSingle();
     return result.read(countExp)!;
   }
 
   /// 根据条码获取产品
   /// 通过条码表和产品单位表联查获取产品
-  Future<ProductsTableData?> getProductByBarcode(String barcode) async {
+  Future<ProductData?> getProductByBarcode(String barcode) async {
     // 首先在条码表中找到对应的产品单位ID
     final barcodeResult = await (select(
-      db.barcodesTable,
-    )..where((tbl) => tbl.barcode.equals(barcode))).getSingleOrNull();
+      db.barcode,
+    )..where((tbl) => tbl.barcodeValue.equals(barcode))).getSingleOrNull();
 
     if (barcodeResult == null) {
       return null; // 条码不存在
@@ -183,8 +229,8 @@ class ProductDao extends DatabaseAccessor<AppDatabase> with _$ProductDaoMixin {
 
     // 然后在产品单位表中找到对应的产品ID
     final productUnitResult =
-        await (select(db.productUnitsTable)..where(
-              (tbl) => tbl.productUnitId.equals(barcodeResult.productUnitId),
+        await (select(db.unitProduct)..where(
+              (tbl) => tbl.id.equals(barcodeResult.unitProductId),
             ))
             .getSingleOrNull();
 
@@ -193,7 +239,7 @@ class ProductDao extends DatabaseAccessor<AppDatabase> with _$ProductDaoMixin {
     }
 
     // 最后获取产品信息
-    return await (select(db.productsTable)
+    return await (select(db.product)
           ..where((tbl) => tbl.id.equals(productUnitResult.productId)))
         .getSingleOrNull();
   }
@@ -201,13 +247,19 @@ class ProductDao extends DatabaseAccessor<AppDatabase> with _$ProductDaoMixin {
   /// 根据条码获取产品及其单位信息
   /// 返回包含产品信息和单位名称的结果
   Future<
-    ({ProductsTableData product, String unitName, double? wholesalePrice})?
+    ({
+      ProductData product,
+      int unitId,
+      String unitName,
+      int conversionRate,
+      int? wholesalePriceInCents
+    })?
   >
   getProductWithUnitByBarcode(String barcode) async {
     // 首先在条码表中找到对应的产品单位ID
     final barcodeResult = await (select(
-      db.barcodesTable,
-    )..where((tbl) => tbl.barcode.equals(barcode))).getSingleOrNull();
+      db.barcode,
+    )..where((tbl) => tbl.barcodeValue.equals(barcode))).getSingleOrNull();
 
     if (barcodeResult == null) {
       return null; // 条码不存在
@@ -215,18 +267,18 @@ class ProductDao extends DatabaseAccessor<AppDatabase> with _$ProductDaoMixin {
 
     // 联合查询产品单位表、产品表和单位表
     final query =
-        select(db.productUnitsTable).join([
+        select(db.unitProduct).join([
           innerJoin(
-            db.productsTable,
-            db.productsTable.id.equalsExp(db.productUnitsTable.productId),
+            db.product,
+            db.product.id.equalsExp(db.unitProduct.productId),
           ),
           innerJoin(
-            db.unitsTable,
-            db.unitsTable.id.equalsExp(db.productUnitsTable.unitId),
+            db.unit,
+            db.unit.id.equalsExp(db.unitProduct.unitId),
           ),
         ])..where(
-          db.productUnitsTable.productUnitId.equals(
-            barcodeResult.productUnitId,
+          db.unitProduct.id.equals(
+            barcodeResult.unitProductId,
           ),
         );
 
@@ -235,21 +287,23 @@ class ProductDao extends DatabaseAccessor<AppDatabase> with _$ProductDaoMixin {
       return null;
     }
 
-    final product = result.readTable(db.productsTable);
-    final unit = result.readTable(db.unitsTable);
-    final productUnit = result.readTable(db.productUnitsTable);
+    final product = result.readTable(db.product);
+    final unit = result.readTable(db.unit);
+    final unitProduct = result.readTable(db.unitProduct);
 
     return (
       product: product,
+      unitId: unit.id,
       unitName: unit.name,
-      wholesalePrice: productUnit.wholesalePrice,
+      conversionRate: unitProduct.conversionRate,
+      wholesalePriceInCents: unitProduct.wholesalePriceInCents,
     );
   }
 
   /// 检查单位是否被任何产品使用
-  Future<bool> isUnitUsed(String unitId) async {
-    final query = select(db.productsTable)
-      ..where((tbl) => tbl.unitId.equals(unitId))
+  Future<bool> isUnitUsed(int unitId) async {
+    final query = select(db.product)
+      ..where((tbl) => tbl.baseUnitId.equals(unitId))
       ..limit(1);
     final result = await query.getSingleOrNull();
     return result != null;

@@ -47,7 +47,7 @@ class UnitController extends StateNotifier<UnitControllerState> {
       : super(const UnitControllerState());
 
   /// 添加单位
-  Future<void> addUnit(Unit unit) async {
+  Future<Unit> addUnit(Unit unit) async {
     print('🎯 UnitController.addUnit - 开始添加单位: ID=${unit.id}, 名称="${unit.name}"');
     state = state.copyWith(status: UnitOperationStatus.loading);
 
@@ -68,19 +68,22 @@ class UnitController extends StateNotifier<UnitControllerState> {
       print('✅ 单位名称检查通过');
 
       print('💾 调用仓储层添加单位...');
-      await _repository.addUnit(unit);
-      print('✅ 仓储层添加单位成功');
+      final newUnit = await _repository.addUnit(unit);
+      print('✅ 仓储层添加单位成功, 新ID: ${newUnit.id}');
       
       state = state.copyWith(
         status: UnitOperationStatus.success,
-        lastOperatedUnit: unit,
+        lastOperatedUnit: newUnit,
         errorMessage: null,
       );
 
-      // 刷新单位列表 - Stream会自动更新，但我们也可以主动刷新
+      // 刷新单位列表 - Stream会自动更新，所以invalidate不是必须的，
+      // 但为了确保依赖此provider的旧代码能立即反应，可以保留。
+      // 不过，由于我们返回了新对象，调用方应优先使用返回值。
       print('🔄 刷新单位列表...');
       _ref.invalidate(allUnitsProvider);
       print('✅ UnitController.addUnit - 添加单位完成');
+      return newUnit;
     } catch (e) {
       print('❌ UnitController.addUnit - 添加单位失败: $e');
       state = state.copyWith(
@@ -94,7 +97,7 @@ class UnitController extends StateNotifier<UnitControllerState> {
   // updateUnit 方法已不再需要，因为编辑功能被移除了。
 
   /// 删除单位
-  Future<void> deleteUnit(String unitId) async {
+  Future<void> deleteUnit(int unitId) async {
     state = state.copyWith(status: UnitOperationStatus.loading);
     try {
       // 依赖检查
@@ -125,7 +128,7 @@ class UnitController extends StateNotifier<UnitControllerState> {
   }
 
   /// 根据ID获取单位
-  Future<Unit?> getUnitById(String unitId) async {
+  Future<Unit?> getUnitById(int unitId) async {
     try {
       return await _repository.getUnitById(unitId);
     } catch (e) {
@@ -151,7 +154,7 @@ class UnitController extends StateNotifier<UnitControllerState> {
   }
 
   /// 检查单位名称是否已存在
-  Future<bool> isUnitNameExists(String name, [String? excludeId]) async {
+  Future<bool> isUnitNameExists(String name, [int? excludeId]) async {
     try {
       return await _repository.isUnitNameExists(name, excludeId);
     } catch (e) {

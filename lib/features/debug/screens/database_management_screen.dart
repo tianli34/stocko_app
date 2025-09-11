@@ -27,26 +27,7 @@ class DatabaseManagementScreen extends ConsumerWidget {
         padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            // 数据库信息卡片
-            Card(
-              child: Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      '数据库信息',
-                      style: Theme.of(context).textTheme.titleLarge,
-                    ),
-                    const SizedBox(height: 8),
-                    Text('版本: 14'),
-                    Text('位置: app_database.db'),
-                    Text('状态: 正常运行'),
-                  ],
-                ),
-              ),
-            ),
+          children: [            
 
             const SizedBox(height: 16),
 
@@ -187,8 +168,119 @@ class DatabaseManagementScreen extends ConsumerWidget {
             ),
           ],
         ),
+        const SizedBox(height: 8),
+        Row(
+          children: [
+            Expanded(
+              child: OutlinedButton(
+                onPressed: () => _showSalesTransactionsData(context, ref),
+                child: const Text('查看销售交易'),
+              ),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: OutlinedButton(
+                onPressed: () => _showCustomersData(context, ref),
+                child: const Text('查看客户'),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        Row(
+          children: [
+            Expanded(
+              child: OutlinedButton(
+                onPressed: () => _showSalesTransactionItemsData(context, ref),
+                child: const Text('查看销售交易项'),
+              ),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: OutlinedButton(
+                onPressed: () => _showStockData(context, ref),
+                child: const Text('查看库存'),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        Row(
+          children: [
+            Expanded(
+              child: OutlinedButton(
+                onPressed: () => _showOutboundReceiptsData(context, ref),
+                child: const Text('查看出库单'),
+              ),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: OutlinedButton(
+                onPressed: () {}, // 保留位置以便后续添加其他功能
+                child: const Text('待添加'),
+              ),
+            ),
+          ],
+        ),
       ],
     );
+  }
+
+  Future<void> _showOutboundReceiptsData(BuildContext context, WidgetRef ref) async {
+    try {
+      final database = ref.read(appDatabaseProvider);
+      final outboundReceipts = await database.select(database.outboundReceipt).get();
+      
+      if (context.mounted) {
+        showDialog(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: Text('出库单数据 (${outboundReceipts.length} 条)'),
+            content: SizedBox(
+              width: double.maxFinite,
+              height: 500, // 设置固定高度以便滚动
+              child: ListView.builder(
+                shrinkWrap: true,
+                itemCount: outboundReceipts.length,
+                itemBuilder: (context, index) {
+                  final outboundReceipt = outboundReceipts[index];
+                  return Card(
+                    margin: const EdgeInsets.symmetric(vertical: 4),
+                    child: ListTile(
+                      title: Text('出库单号: ${outboundReceipt.id}'),
+                      subtitle: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text('店铺ID: ${outboundReceipt.shopId}'),
+                          Text('原因: ${outboundReceipt.reason}'),
+                          if (outboundReceipt.salesTransactionId != null)
+                            Text('销售单ID: ${outboundReceipt.salesTransactionId}'),
+                          Text(
+                            '创建时间: ${outboundReceipt.createdAt.toString().substring(0, 16)}',
+                          ),
+                        ],
+                      ),
+                      isThreeLine: true,
+                    ),
+                  );
+                },
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(),
+                child: const Text('关闭'),
+              ),
+            ],
+          ),
+        );
+      }
+    } catch (e) {
+      print('查询出库单数据时出错: $e');
+      if (context.mounted) {
+        showAppSnackBar(context, message: '❌ 查询失败: $e', isError: true);
+      }
+    }
   }
 
   Future<void> _initializeDatabase(WidgetRef ref, BuildContext context) async {
@@ -240,7 +332,7 @@ class DatabaseManagementScreen extends ConsumerWidget {
 
   Future<void> _showShopsData(BuildContext context, WidgetRef ref) async {
     final database = ref.read(appDatabaseProvider);
-    final shops = await database.select(database.shopsTable).get();
+    final shops = await database.select(database.shop).get();
 
     if (context.mounted) {
       showDialog(
@@ -257,7 +349,7 @@ class DatabaseManagementScreen extends ConsumerWidget {
                 return ListTile(
                   title: Text(shop.name),
                   subtitle: Text('经理: ${shop.manager}'),
-                  trailing: Text(shop.id),
+                  // trailing: Text(shop.id),
                 );
               },
             ),
@@ -275,7 +367,7 @@ class DatabaseManagementScreen extends ConsumerWidget {
 
   Future<void> _showCategoriesData(BuildContext context, WidgetRef ref) async {
     final database = ref.read(appDatabaseProvider);
-    final categories = await database.select(database.categoriesTable).get();
+    final categories = await database.select(database.category).get();
 
     if (context.mounted) {
       showDialog(
@@ -291,7 +383,7 @@ class DatabaseManagementScreen extends ConsumerWidget {
                 final category = categories[index];
                 return ListTile(
                   title: Text(category.name),
-                  trailing: Text(category.id),
+                  trailing: Text(category.id.toString()),
                 );
               },
             ),
@@ -309,7 +401,7 @@ class DatabaseManagementScreen extends ConsumerWidget {
 
   Future<void> _showUnitsData(BuildContext context, WidgetRef ref) async {
     final database = ref.read(appDatabaseProvider);
-    final units = await database.select(database.unitsTable).get();
+    final units = await database.select(database.unit).get();
 
     if (context.mounted) {
       showDialog(
@@ -325,7 +417,7 @@ class DatabaseManagementScreen extends ConsumerWidget {
                 final unit = units[index];
                 return ListTile(
                   title: Text(unit.name),
-                  trailing: Text(unit.id),
+                  trailing: Text(unit.id.toString()),
                 );
               },
             ),
@@ -343,7 +435,7 @@ class DatabaseManagementScreen extends ConsumerWidget {
 
   Future<void> _showProductsData(BuildContext context, WidgetRef ref) async {
     final database = ref.read(appDatabaseProvider);
-    final products = await database.select(database.productsTable).get();
+    final products = await database.select(database.product).get();
 
     if (context.mounted) {
       showDialog(
@@ -360,7 +452,7 @@ class DatabaseManagementScreen extends ConsumerWidget {
                 return ListTile(
                   title: Text(product.name),
                   subtitle: Text('状态: ${product.status}'),
-                  trailing: Text(product.id),
+                  trailing: Text(product.id.toString()),
                 );
               },
             ),
@@ -378,7 +470,7 @@ class DatabaseManagementScreen extends ConsumerWidget {
 
   Future<void> _showSuppliersData(BuildContext context, WidgetRef ref) async {
     final database = ref.read(appDatabaseProvider);
-    final suppliers = await database.select(database.suppliersTable).get();
+    final suppliers = await database.select(database.supplier).get();
 
     if (context.mounted) {
       showDialog(
@@ -397,7 +489,7 @@ class DatabaseManagementScreen extends ConsumerWidget {
                   subtitle: Text(
                     '创建时间: ${supplier.createdAt.toString().substring(0, 16)}',
                   ),
-                  trailing: Text(supplier.id),
+                  trailing: Text(supplier.id.toString()),
                 );
               },
             ),
@@ -415,7 +507,7 @@ class DatabaseManagementScreen extends ConsumerWidget {
 
   Future<void> _showPurchasesData(BuildContext context, WidgetRef ref) async {
     final database = ref.read(appDatabaseProvider);
-    final purchases = await database.select(database.purchaseOrdersTable).get();
+    final purchases = await database.select(database.purchaseOrder).get();
 
     if (context.mounted) {
       showDialog(
@@ -433,14 +525,14 @@ class DatabaseManagementScreen extends ConsumerWidget {
                 return Card(
                   margin: const EdgeInsets.symmetric(vertical: 4),
                   child: ListTile(
-                    title: Text('采购单号: ${purchase.purchaseOrderNumber}'),
+                    title: Text('采购单号: ${purchase.id}'),
                     subtitle: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text('供应商ID: ${purchase.supplierId}'),
                         Text('店铺ID: ${purchase.shopId}'),
                         Text(
-                          '采购日期: ${purchase.purchaseDate.toString().substring(0, 16)}',
+                          '采购日期: ${purchase.createdAt.toString().substring(0, 16)}',
                         ),
                         Text('状态: ${purchase.status}'),
                       ],
@@ -464,7 +556,7 @@ class DatabaseManagementScreen extends ConsumerWidget {
 
   Future<void> _showBarcodesData(BuildContext context, WidgetRef ref) async {
     final database = ref.read(appDatabaseProvider);
-    final barcodes = await database.select(database.barcodesTable).get();
+    final barcodes = await database.select(database.barcode).get();
 
     if (context.mounted) {
       showDialog(
@@ -482,18 +574,12 @@ class DatabaseManagementScreen extends ConsumerWidget {
                 return Card(
                   margin: const EdgeInsets.symmetric(vertical: 4),
                   child: ListTile(
-                    title: Text('条码: ${barcode.barcode}'),
+                    title: Text('条码: ${barcode.barcodeValue}'),
                     subtitle: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text('条码ID: ${barcode.id}'),
-                        Text('产品单位ID: ${barcode.productUnitId}'),
-                        Text(
-                          '创建时间: ${barcode.createdAt.toString().substring(0, 16)}',
-                        ),
-                        Text(
-                          '更新时间: ${barcode.updatedAt.toString().substring(0, 16)}',
-                        ),
+                        Text('产品单位ID: ${barcode.id}'),
                       ],
                     ),
                     isThreeLine: true,
@@ -515,7 +601,7 @@ class DatabaseManagementScreen extends ConsumerWidget {
 
   Future<void> _showBatchesData(BuildContext context, WidgetRef ref) async {
     final database = ref.read(appDatabaseProvider);
-    final batches = await database.select(database.batchesTable).get();
+    final batches = await database.select(database.productBatch).get();
 
     if (context.mounted) {
       showDialog(
@@ -533,12 +619,12 @@ class DatabaseManagementScreen extends ConsumerWidget {
                 return Card(
                   margin: const EdgeInsets.symmetric(vertical: 4),
                   child: ListTile(
-                    title: Text('批次号: ${batch.batchNumber}'),
+                    title: Text('批次号: ${batch.id}'),
                     subtitle: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text('产品ID: ${batch.productId}'),
-                        Text('初始数量: ${batch.initialQuantity}'),
+                        Text('totalInboundQuantity: ${batch.totalInboundQuantity}'),
                         Text(
                           '生产日期: ${batch.productionDate.toString().substring(0, 10)}',
                         ),
@@ -558,6 +644,217 @@ class DatabaseManagementScreen extends ConsumerWidget {
           ],
         ),
       );
+    }
+  }
+
+  Future<void> _showSalesTransactionsData(BuildContext context, WidgetRef ref) async {
+    final database = ref.read(appDatabaseProvider);
+    final salesTransactions = await database.select(database.salesTransaction).get();
+
+    if (context.mounted) {
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: Text('销售交易数据 (${salesTransactions.length} 条)'),
+          content: SizedBox(
+            width: double.maxFinite,
+            height: 500, // 设置固定高度以便滚动
+            child: ListView.builder(
+              shrinkWrap: true,
+              itemCount: salesTransactions.length,
+              itemBuilder: (context, index) {
+                final salesTransaction = salesTransactions[index];
+                return Card(
+                  margin: const EdgeInsets.symmetric(vertical: 4),
+                  child: ListTile(
+                    title: Text('销售订单号: ${salesTransaction.id}'),
+                    subtitle: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text('客户ID: ${salesTransaction.customerId}'),
+                        Text('店铺ID: ${salesTransaction.shopId}'),
+                        Text('总金额: ¥${salesTransaction.totalAmount.toStringAsFixed(2)}'),
+                        Text('实际金额: ¥${salesTransaction.actualAmount.toStringAsFixed(2)}'),
+                        Text('状态: ${salesTransaction.status}'),
+                        if (salesTransaction.remarks != null && salesTransaction.remarks!.isNotEmpty)
+                          Text('备注: ${salesTransaction.remarks}'),
+                        Text(
+                          '创建时间: ${salesTransaction.createdAt.toString().substring(0, 16)}',
+                        ),
+                        Text(
+                          '更新时间: ${salesTransaction.updatedAt.toString().substring(0, 16)}',
+                        ),
+                      ],
+                    ),
+                    isThreeLine: true,
+                  ),
+                );
+              },
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('关闭'),
+            ),
+          ],
+        ),
+      );
+    }
+  }
+
+  Future<void> _showCustomersData(BuildContext context, WidgetRef ref) async {
+    final database = ref.read(appDatabaseProvider);
+    final customers = await database.select(database.customers).get();
+
+    if (context.mounted) {
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: Text('客户数据 (${customers.length} 条)'),
+          content: SizedBox(
+            width: double.maxFinite,
+            height: 400, // 设置固定高度以便滚动
+            child: ListView.builder(
+              shrinkWrap: true,
+              itemCount: customers.length,
+              itemBuilder: (context, index) {
+                final customer = customers[index];
+                return Card(
+                  margin: const EdgeInsets.symmetric(vertical: 4),
+                  child: ListTile(
+                    title: Text(customer.name),
+                    subtitle: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text('ID: ${customer.id}'),
+                        Text('客户名称: ${customer.name}'),
+                      ],
+                    ),
+                    isThreeLine: true,
+                  ),
+                );
+              },
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('关闭'),
+            ),
+          ],
+        ),
+      );
+    }
+  }
+
+  Future<void> _showSalesTransactionItemsData(BuildContext context, WidgetRef ref) async {
+    try {
+      final database = ref.read(appDatabaseProvider);
+      final salesTransactionItems = await database.select(database.salesTransactionItem).get();
+      
+      // 添加调试日志
+      print('销售交易项数据查询结果: ${salesTransactionItems.length} 条记录');
+
+      if (context.mounted) {
+        showDialog(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: Text('销售交易项数据 (${salesTransactionItems.length} 条)'),
+            content: SizedBox(
+              width: double.maxFinite,
+              height: 500, // 设置固定高度以便滚动
+              child: ListView.builder(
+                shrinkWrap: true,
+                itemCount: salesTransactionItems.length,
+                itemBuilder: (context, index) {
+                  final salesTransactionItem = salesTransactionItems[index];
+                  return Card(
+                    margin: const EdgeInsets.symmetric(vertical: 4),
+                    child: ListTile(
+                      title: Text('销售交易ID: ${salesTransactionItem.salesTransactionId}'),
+                      subtitle: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text('产品ID: ${salesTransactionItem.productId}'),
+                          Text('数量: ${salesTransactionItem.quantity}'),
+                          Text('价格(分): ${salesTransactionItem.priceInCents}'),
+                          Text('批次ID: ${salesTransactionItem.batchId ?? '无'}'),
+                        ],
+                      ),
+                      isThreeLine: true,
+                    ),
+                  );
+                },
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(),
+                child: const Text('关闭'),
+              ),
+            ],
+          ),
+        );
+      }
+    } catch (e) {
+      print('查询销售交易项数据时出错: $e');
+      if (context.mounted) {
+        showAppSnackBar(context, message: '❌ 查询失败: $e', isError: true);
+      }
+    }
+  }
+
+  Future<void> _showStockData(BuildContext context, WidgetRef ref) async {
+    try {
+      final database = ref.read(appDatabaseProvider);
+      final stockItems = await database.select(database.stock).get();
+      
+      if (context.mounted) {
+        showDialog(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: Text('库存数据 (${stockItems.length} 条)'),
+            content: SizedBox(
+              width: double.maxFinite,
+              height: 500, // 设置固定高度以便滚动
+              child: ListView.builder(
+                shrinkWrap: true,
+                itemCount: stockItems.length,
+                itemBuilder: (context, index) {
+                  final stock = stockItems[index];
+                  return Card(
+                    margin: const EdgeInsets.symmetric(vertical: 4),
+                    child: ListTile(
+                      title: Text('产品ID: ${stock.productId}'),
+                      subtitle: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text('批次ID: ${stock.batchId ?? '无'}'),
+                          Text('数量: ${stock.quantity}'),
+                          Text('店铺ID: ${stock.shopId}'),
+                        ],
+                      ),
+                      isThreeLine: true,
+                    ),
+                  );
+                },
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(),
+                child: const Text('关闭'),
+              ),
+            ],
+          ),
+        );
+      }
+    } catch (e) {
+      print('查询库存数据时出错: $e');
+      if (context.mounted) {
+        showAppSnackBar(context, message: '❌ 查询失败: $e', isError: true);
+      }
     }
   }
 }

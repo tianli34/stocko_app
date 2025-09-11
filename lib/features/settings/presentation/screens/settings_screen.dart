@@ -10,6 +10,7 @@ import '../../../../core/database/database.dart';
 import '../../../../core/services/toast_service.dart';
 import '../../../product/application/product_import_service.dart';
 import 'image_cache_management_screen.dart';
+import 'privacy_policy_screen.dart';
 
 /// 通用设置页面
 class SettingsScreen extends StatelessWidget {
@@ -30,6 +31,19 @@ class SettingsScreen extends StatelessWidget {
                 context,
                 MaterialPageRoute(
                   builder: (context) => const ImageCacheManagementScreen(),
+                ),
+              );
+            },
+          ),
+          const Divider(),
+          ListTile(
+            leading: const Icon(Icons.privacy_tip_outlined),
+            title: const Text('隐私政策'),
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const PrivacyPolicyScreen(),
                 ),
               );
             },

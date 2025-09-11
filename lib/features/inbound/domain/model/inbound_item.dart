@@ -1,107 +1,53 @@
-/// 入库单商品项领域模型
-/// 表示入库单中的商品明细信息
-class InboundItem {
-  final String id;
-  final String productId;
-  final String productName;
-  final String unitName;
-  final double unitPrice;
-  final double quantity;
-  final double amount;
-  final DateTime? productionDate;
+/// 入库单明细 领域模型（freezed）
+/// 对应表: InboundItem (lib/core/database/inbound_receipt_items_table.dart)
+library;
+import 'package:freezed_annotation/freezed_annotation.dart';
 
-  const InboundItem({
-    required this.id,
-    required this.productId,
-    required this.productName,
-    required this.unitName,
-    required this.unitPrice,
-    required this.quantity,
-    required this.amount,
-    this.productionDate,
-  });
+part 'inbound_item.freezed.dart';
+part 'inbound_item.g.dart';
 
-  /// 复制并更新入库项
-  InboundItem copyWith({
-    String? id,
-    String? productId,
-    String? productName,
-    String? unitName,
-    double? unitPrice,
-    double? quantity,
-    double? amount,
-    DateTime? productionDate,
-  }) {
-    return InboundItem(
-      id: id ?? this.id,
-      productId: productId ?? this.productId,
-      productName: productName ?? this.productName,
-      unitName: unitName ?? this.unitName,
-      unitPrice: unitPrice ?? this.unitPrice,
-      quantity: quantity ?? this.quantity,
-      amount: amount ?? this.amount,
-      productionDate: productionDate ?? this.productionDate,
-    );
+@freezed
+abstract class InboundItemModel with _$InboundItemModel {
+  const InboundItemModel._();
+
+  @Assert('quantity > 0', 'quantity must be > 0')
+  const factory InboundItemModel({
+    /// 可能尚未持久化，因而为可空
+    int? id,
+
+    /// 所属入库单ID（新建时可能为空，保存后回填）
+    int? receiptId,
+
+    /// 商品ID（必填）
+    required int productId,
+
+
+
+    /// 批次号（可空，空批次与有批次的唯一性策略不同）
+    int? batchId,
+
+    /// 数量（> 0）
+    required int quantity,
+  }) = _InboundItemModel;
+
+  factory InboundItemModel.fromJson(Map<String, dynamic> json) =>
+      _$InboundItemModelFromJson(json);
+
+  /// 生成用于判定同一入库单中的“唯一性键”
+  /// 唯一性与表约束一致：
+  /// - 当 id 非空：唯一键 = (receiptId, productId, unitId, id)
+  /// - 当 id 为空：唯一键 = (receiptId, productId, unitId, null)
+  String uniqueKey({int? overrideReceiptId}) {
+    final rid = overrideReceiptId ?? receiptId;
+    return '${rid ?? 'null'}#$productId#${id ?? 'null'}';
   }
 
-  /// 创建新的入库项
-  factory InboundItem.create({
-    required String productId,
-    required String productName,
-    required String unitName,
-    required double unitPrice,
-    required double quantity,
-    DateTime? productionDate,
-  }) {
-    final now = DateTime.now();
-    return InboundItem(
-      id: 'item_${now.millisecondsSinceEpoch}',
-      productId: productId,
-      productName: productName,
-      unitName: unitName,
-      unitPrice: unitPrice,
-      quantity: quantity,
-      amount: unitPrice * quantity,
-      productionDate: productionDate,
-    );
+  /// 增加数量，返回新实例
+  InboundItemModel increase(int delta) {
+    assert(delta > 0, 'delta must be > 0');
+  return copyWith(quantity: quantity + delta);
   }
 
-  /// 更新数量并重新计算金额
-  InboundItem updateQuantity(double newQuantity) {
-    return copyWith(quantity: newQuantity, amount: unitPrice * newQuantity);
-  }
-
-  /// 更新单价并重新计算金额
-  InboundItem updateUnitPrice(double newUnitPrice) {
-    return copyWith(unitPrice: newUnitPrice, amount: newUnitPrice * quantity);
-  }
-
-  /// 是否有生产日期
-  bool get hasProductionDate => productionDate != null;
-
-  /// 获取格式化的单价显示
-  String get formattedUnitPrice => '¥${unitPrice.toStringAsFixed(2)}';
-
-  /// 获取格式化的金额显示
-  String get formattedAmount => '¥${amount.toStringAsFixed(2)}';
-
-  /// 获取格式化的数量显示
-  String get formattedQuantity =>
-      '${quantity.toStringAsFixed(quantity.truncateToDouble() == quantity ? 0 : 2)}$unitName';
-
-  @override
-  String toString() {
-    return 'InboundItem(id: $id, productName: $productName, quantity: $quantity, unitPrice: $unitPrice, amount: $amount)';
-  }
-
-  @override
-  bool operator ==(Object other) {
-    if (identical(this, other)) return true;
-    return other is InboundItem &&
-        other.id == id &&
-        other.productId == productId;
-  }
-
-  @override
-  int get hashCode => Object.hash(id, productId);
+  /// 设置/回填所属入库单ID
+  InboundItemModel attachToReceipt(int rid) => copyWith(receiptId: rid);
 }

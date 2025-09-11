@@ -4,10 +4,10 @@ import '../model/unit.dart';
 /// 定义单位相关的业务操作规范
 abstract class IUnitRepository {
   /// 添加单位
-  Future<int> addUnit(Unit unit);
+  Future<Unit> addUnit(Unit unit);
 
   /// 根据ID获取单位
-  Future<Unit?> getUnitById(String id);
+  Future<Unit?> getUnitById(int id);
 
   /// 根据名称获取单位
   Future<Unit?> getUnitByName(String name);
@@ -22,10 +22,10 @@ abstract class IUnitRepository {
   Future<bool> updateUnit(Unit unit);
 
   /// 删除单位
-  Future<int> deleteUnit(String id);
+  Future<int> deleteUnit(int id);
 
   /// 检查单位名称是否已存在
-  Future<bool> isUnitNameExists(String name, [String? excludeId]);
+  Future<bool> isUnitNameExists(String name, [int? excludeId]);
 
   /// 批量插入默认单位
   Future<void> insertDefaultUnits();

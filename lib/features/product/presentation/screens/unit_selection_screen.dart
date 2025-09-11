@@ -10,11 +10,11 @@ import '../../../../core/utils/snackbar_helper.dart';
 /// 单位选择屏幕
 /// 支持选择单位、新增单位及删除单位操作
 class UnitSelectionScreen extends ConsumerStatefulWidget {
-  final String? selectedUnitId;
+  final Unit? initialUnit;
 
   const UnitSelectionScreen({
     super.key,
-    this.selectedUnitId,
+    this.initialUnit,
   });
 
   @override
@@ -23,12 +23,12 @@ class UnitSelectionScreen extends ConsumerStatefulWidget {
 }
 
 class _UnitSelectionScreenState extends ConsumerState<UnitSelectionScreen> {
-  String? _selectedUnitId;
+  int? _selectedUnitId;
 
   @override
   void initState() {
     super.initState();
-    _selectedUnitId = widget.selectedUnitId;
+    _selectedUnitId = widget.initialUnit?.id;
   }
 
   @override
@@ -117,52 +117,60 @@ class _UnitSelectionScreenState extends ConsumerState<UnitSelectionScreen> {
   Widget _buildUnitTile(BuildContext context, Unit unit) {
     final isSelected = _selectedUnitId == unit.id;
 
-    return Slidable(
-      key: ValueKey(unit.id),
-      endActionPane: ActionPane(
-        motion: const DrawerMotion(),
-        children: [
-          Expanded(
-            child: CustomSlidableAction(
-              onPressed: (context) {
-                // 只调用方法，不在此处处理UI反馈
-                ref.read(unitControllerProvider.notifier).deleteUnit(unit.id);
-              },
-              backgroundColor: Colors.red,
-              child: const Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.delete, color: Colors.white),
-                  SizedBox(width: 4),
-                  Text('删除', style: TextStyle(color: Colors.white)),
-                ],
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4.0),
+      child: Slidable(
+        key: ValueKey(unit.id),
+        endActionPane: ActionPane(
+          motion: const DrawerMotion(),
+          children: [
+            Expanded(
+              child: CustomSlidableAction(
+                onPressed: (context) {
+                  // 只调用方法，不在此处处理UI反馈
+                  if (unit.id != null) {
+                    ref.read(unitControllerProvider.notifier).deleteUnit(unit.id!);
+                  } else {
+                    showAppSnackBar(context, message: '无法删除没有ID的单位', isError: true);
+                  }
+                },
+                backgroundColor: Colors.red,
+                child: const Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.delete, color: Colors.white),
+                    SizedBox(width: 4),
+                    Text('删除', style: TextStyle(color: Colors.white)),
+                  ],
+                ),
               ),
             ),
-          ),
-        ],
-      ),
-      child: Card(
-        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-        elevation: isSelected ? 4 : 1,
-        color: isSelected
-            ? Theme.of(context).primaryColor.withOpacity(0.1)
-            : null,
-        child: ListTile(
-          dense: true,
-          contentPadding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 0.0),
-          title: Text(
-            unit.name,
-            style: TextStyle(
-              fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-              fontSize: 16,
+          ],
+        ),
+        child: Card(
+          margin: const EdgeInsets.symmetric(horizontal: 16),
+          elevation: isSelected ? 4 : 1,
+          color: isSelected
+              ? Theme.of(context).primaryColor.withOpacity(0.1)
+              : null,
+          child: ListTile(
+            dense: true,
+            contentPadding:
+                const EdgeInsets.symmetric(horizontal: 16.0, vertical: 0.0),
+            title: Text(
+              unit.name,
+              style: TextStyle(
+                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                fontSize: 16,
+              ),
             ),
+            onTap: () {
+              setState(() {
+                _selectedUnitId = unit.id;
+              });
+              _confirmSelection();
+            },
           ),
-          onTap: () {
-            setState(() {
-              _selectedUnitId = unit.id;
-            });
-            _confirmSelection();
-          },
         ),
       ),
     );
@@ -217,7 +225,6 @@ class _UnitSelectionScreenState extends ConsumerState<UnitSelectionScreen> {
                 }
 
                 final unit = Unit(
-                  id: 'unit_${DateTime.now().millisecondsSinceEpoch}',
                   name: unitName,
                 );
 

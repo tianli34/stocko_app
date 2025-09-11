@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../../../core/widgets/cached_image_widget.dart';
+import 'package:stocko_app/core/widgets/cached_image_widget.dart';
 
 /// 库存商品卡片
 /// 展示单个商品的库存信息
@@ -9,15 +9,58 @@ class InventoryItemCard extends StatelessWidget {
   const InventoryItemCard({super.key, required this.inventory});
   @override
   Widget build(BuildContext context) {
-    final quantity = inventory['quantity'] as double? ?? 0.0;
+    final quantity = (inventory['quantity'] as num? ?? 0).toInt();
     final productName = inventory['productName'] as String? ?? '';
     final productImage = inventory['productImage'] as String?;
     final unit = inventory['unit'] as String? ?? '件';
-    final categoryName = inventory['categoryName'] as String? ?? '未分类';
-    final shopName = inventory['shopName'] as String? ?? '未知店铺';
 
     // 根据库存数量确定状态
     final stockStatus = _getStockStatus(quantity);
+
+    // 计算保质期
+    final productionDateStr = inventory['productionDate'] as String?;
+    final shelfLifeDays = inventory['shelfLifeDays'] as int?;
+    final shelfLifeUnit = inventory['shelfLifeUnit'] as String?;
+    String? shelfLifeText;
+
+    if (productionDateStr != null && shelfLifeDays != null && shelfLifeUnit != null) {
+      print('==================== 卡片UI保质期计算 ====================');
+      print('商品: $productName | 生产日期字符串: $productionDateStr, 保质期: $shelfLifeDays $shelfLifeUnit');
+      try {
+        final productionDate = DateTime.parse(productionDateStr);
+        
+        // 根据保质期单位转换为天数
+        int shelfLifeInDays;
+        switch (shelfLifeUnit) {
+          case 'days':
+            shelfLifeInDays = shelfLifeDays;
+            break;
+          case 'months':
+            shelfLifeInDays = shelfLifeDays * 30; // 近似值
+            break;
+          case 'years':
+            shelfLifeInDays = shelfLifeDays * 365; // 近似值
+            break;
+          default:
+            shelfLifeInDays = shelfLifeDays; // 默认按天处理
+        }
+        
+        final expiryDate = productionDate.add(Duration(days: shelfLifeInDays));
+        final remainingDays = expiryDate.difference(DateTime.now()).inDays;
+
+        print('计算结果 -> 生产日期: $productionDate, 到期日: $expiryDate, 剩余: $remainingDays 天');
+
+        if (remainingDays <= 0) {
+          shelfLifeText = '已过期';
+        } else {
+          shelfLifeText = '剩余: $remainingDays 天';
+        }
+      } catch (e) {
+        shelfLifeText = '日期格式错误';
+        print('错误: 日期解析失败 - $e');
+      }
+      print('========================================================');
+    }
 
     return Card(
       elevation: 2,
@@ -28,29 +71,21 @@ class InventoryItemCard extends StatelessWidget {
         child: Row(
           children: [
             // 商品图片
-            Container(
-              width: 60,
-              height: 60,
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(8),
-                color: Colors.grey[200],
-              ),
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(8),
-                child: productImage != null && productImage.isNotEmpty
-                    ? CachedImageWidget(
-                        imagePath: productImage,
-                        width: 60,
-                        height: 60,
-                        fit: BoxFit.cover,
-                      )
-                    : Icon(
-                        Icons.inventory_2_outlined,
-                        size: 30,
-                        color: Colors.grey[400],
-                      ),
-              ),
-            ),
+            productImage != null
+                ? ProductThumbnailImage(imagePath: productImage)
+                : Container(
+                    width: 60,
+                    height: 80,
+                    decoration: BoxDecoration(
+                      color: Colors.grey.shade100,
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: Icon(
+                      Icons.image_outlined,
+                      color: Colors.grey.shade400,
+                      size: 30,
+                    ),
+                  ),
             const SizedBox(width: 16),
 
             // 商品信息和库存
@@ -68,23 +103,45 @@ class InventoryItemCard extends StatelessWidget {
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                   ),
+                  if (shelfLifeText != null) ...[
+                    const SizedBox(height: 4),
+                    Text(
+                      shelfLifeText,
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: shelfLifeText == '已过期'
+                            ? Colors.red
+                            : Colors.grey[600],
+                      ),
+                    ),
+                  ],
                   const SizedBox(height: 12),
 
                   // 库存信息
                   Row(
                     children: [
-                      const Icon(
-                        Icons.inventory_2,
-                        size: 20,
-                        color: Colors.blue,
-                      ),
+                      
                       const SizedBox(width: 8),
-                      Text(
-                        '库存: ${quantity.toInt()} ($unit)',
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                        ),
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.baseline,
+                        textBaseline: TextBaseline.alphabetic,
+                        children: [
+                          Text(
+                            '$quantity',
+                            style: const TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            unit,
+                            style: TextStyle(
+                              fontSize: 14,
+                              color: Colors.grey[600],
+                            ),
+                          ),
+                        ],
                       ),
                       const Spacer(),
 
@@ -93,57 +150,6 @@ class InventoryItemCard extends StatelessWidget {
                     ],
                   ),
                   const SizedBox(height: 8),
-
-                  // 其他信息
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Row(
-                          children: [
-                            const Icon(
-                              Icons.category,
-                              size: 16,
-                              color: Colors.grey,
-                            ),
-                            const SizedBox(width: 4),
-                            Flexible(
-                              child: Text(
-                                categoryName,
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  color: Colors.grey[600],
-                                ),
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: Row(
-                          children: [
-                            const Icon(
-                              Icons.store,
-                              size: 16,
-                              color: Colors.grey,
-                            ),
-                            const SizedBox(width: 4),
-                            Flexible(
-                              child: Text(
-                                shopName,
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  color: Colors.grey[600],
-                                ),
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
                 ],
               ),
             ),
@@ -154,7 +160,7 @@ class InventoryItemCard extends StatelessWidget {
   }
 
   /// 根据库存数量获取状态
-  _StockStatus _getStockStatus(double quantity) {
+  _StockStatus _getStockStatus(int quantity) {
     if (quantity <= 0) {
       return _StockStatus.outOfStock;
     } else if (quantity <= 10) {

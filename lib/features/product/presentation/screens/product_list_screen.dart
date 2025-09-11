@@ -4,6 +4,9 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/constants/app_routes.dart';
 import '../../../../core/widgets/product_list/product_list.dart';
 import '../../application/category_notifier.dart';
+import '../../../inventory/application/inventory_service.dart';
+import '../../../inventory/application/provider/shop_providers.dart';
+import '../../../inventory/domain/model/shop.dart';
 import '../../application/provider/product_providers.dart';
 import '../../domain/model/category.dart';
 import '../../domain/model/product.dart';
@@ -15,7 +18,7 @@ class ProductListScreen extends ConsumerWidget {
   Future<void> _showDeleteConfirmDialog(
     BuildContext context,
     WidgetRef ref,
-    Product product,
+    ProductModel product,
   ) async {
     final confirmed = await showDialog<bool>(
       context: context,
@@ -38,7 +41,117 @@ class ProductListScreen extends ConsumerWidget {
     if (confirmed == true) {
       await ref
           .read(productOperationsProvider.notifier)
-          .deleteProduct(product.id);
+          .deleteProduct(product.id!);
+    }
+  }
+
+  Future<void> _showAdjustInventoryDialog(
+    BuildContext context,
+    WidgetRef ref,
+    ProductModel product,
+  ) async {
+    final quantityController = TextEditingController();
+    final shops = await ref.read(allShopsProvider.future);
+    Shop? selectedShop = shops.isNotEmpty ? shops.first : null;
+
+    // ignore: use_build_context_synchronously
+    if (shops.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('没有可用的店铺，请先添加店铺')),
+      );
+      return;
+    }
+
+    final inventory = await ref
+        .read(inventoryServiceProvider)
+        .getInventory(product.id!, selectedShop!.id!);
+    if (inventory != null) {
+      quantityController.text = inventory.quantity.toStringAsFixed(0);
+    }
+
+    final result = await showDialog<Map<String, dynamic>>(
+      context: context,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return AlertDialog(
+              title: Text('调整库存: ${product.name}'),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  DropdownButtonFormField<Shop>(
+                    value: selectedShop,
+                    decoration: const InputDecoration(labelText: '店铺'),
+                    items: shops.map((shop) {
+                      return DropdownMenuItem<Shop>(
+                        value: shop,
+                        child: Text(shop.name),
+                      );
+                    }).toList(),
+                    onChanged: (shop) {
+                      setState(() {
+                        selectedShop = shop;
+                      });
+                    },
+                  ),
+                  TextField(
+                    controller: quantityController,
+                    keyboardType: TextInputType.number,
+                    decoration: const InputDecoration(labelText: '新库存数量'),
+                    autofocus: true,
+                  ),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: const Text('取消'),
+                ),
+                TextButton(
+                  onPressed: () {
+                    Navigator.of(context).pop({
+                      'quantity': quantityController.text,
+                      'shop': selectedShop,
+                    });
+                  },
+                  child: const Text('确定'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+
+    if (result != null) {
+      final newQuantityString = result['quantity'] as String;
+      final shop = result['shop'] as Shop;
+
+      if (newQuantityString.isNotEmpty) {
+        final newQuantity = int.tryParse(newQuantityString);
+        if (newQuantity == null) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('无效的数字格式')),
+          );
+          return;
+        }
+
+        try {
+          await ref.read(inventoryServiceProvider).adjustInventory(
+                productId: product.id!,
+                quantity: newQuantity,
+                shopId: shop.id!,
+              );
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('库存调整成功')),
+          );
+          ref.invalidate(filteredProductsProvider); // Refresh the product list
+        } catch (e) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('库存调整失败: $e')),
+          );
+        }
+      }
     }
   }
 
@@ -85,19 +198,9 @@ class ProductListScreen extends ConsumerWidget {
       ),
     );
 
-    print('*****************************************************************');
-    print('***** 🔍 Search Dialog Closed 🔍 *****');
-    print('*****************************************************************');
-    print('  - Dialog-provided search query: "$newQuery"');
-
     if (newQuery != null) {
-      print('  - ✅ Query is not null. Updating provider...');
       ref.read(searchQueryProvider.notifier).state = newQuery;
-      print('  - 🟢 SUCCESS: searchQueryProvider updated to "$newQuery"');
-    } else {
-      print('  - 🟡 Query is null. No update will be performed.');
     }
-    print('*****************************************************************');
   }
 
   @override
@@ -105,20 +208,14 @@ class ProductListScreen extends ConsumerWidget {
     final productsAsyncValue = ref.watch(filteredProductsProvider);
     final selectedCategoryId = ref.watch(selectedCategoryIdProvider);
     final searchQuery = ref.watch(searchQueryProvider);
-    final allCategories = ref.watch(categoriesProvider);
+    final allCategories = ref.watch(categoryListProvider).categories;
 
-    print('=================================================================');
-    print('==== 📺 ProductListScreen BUILD Method Executed 📺 ====');
-    print('=================================================================');
-    print('  - ⚡️ Current Search Query: "$searchQuery"');
-    print('  - ⚡️ Current Category ID: "$selectedCategoryId"');
-    print('  - ⚡️ productsAsyncValue state: ${productsAsyncValue.runtimeType}');
 
     String? categoryName;
     if (selectedCategoryId != null) {
       final category = allCategories.firstWhere(
         (c) => c.id == selectedCategoryId,
-        orElse: () => const Category(id: '', name: '未知分类'),
+        orElse: () => const CategoryModel(id: -1, name: '未知分类'),
       );
       categoryName = category.name;
     }
@@ -144,6 +241,11 @@ class ProductListScreen extends ConsumerWidget {
       appBar: AppBar(
         title: titleWidget,
         actions: [
+          IconButton(
+            icon: const Icon(Icons.leaderboard),
+            tooltip: '商品排行榜',
+            onPressed: () => context.push(AppRoutes.productRanking),
+          ),
           if (searchQuery.isNotEmpty || selectedCategoryId != null)
             IconButton(
               icon: const Icon(Icons.clear_all),
@@ -162,7 +264,7 @@ class ProductListScreen extends ConsumerWidget {
             icon: const Icon(Icons.filter_list),
             tooltip: '按分类筛选',
             onPressed: () async {
-              final selectedCategory = await Navigator.push<Category>(
+              final selectedCategory = await Navigator.push<CategoryModel>(
                 context,
                 MaterialPageRoute(
                   builder: (context) => const CategorySelectionScreen(),
@@ -183,32 +285,28 @@ class ProductListScreen extends ConsumerWidget {
       ),
       body: productsAsyncValue.when(
         data: (products) {
-          print(
-            '  -> 📊 [Data] Received ${products.length} products to display.',
-          );
-          if (products.isNotEmpty) {
-            print('  -> Sample: ${products.first.name}');
-          }
           final sortedProducts = [...products]
             ..sort(
               (a, b) =>
                   (b.lastUpdated ??
                           DateTime.fromMillisecondsSinceEpoch(
-                            int.tryParse(b.id) ?? 0,
+                            b.id ?? 0,
                           ))
                       .compareTo(
                         a.lastUpdated ??
                             DateTime.fromMillisecondsSinceEpoch(
-                              int.tryParse(a.id) ?? 0,
+                              a.id ?? 0,
                             ),
                       ),
             );
           return ProductList(
             data: sortedProducts,
             onEdit: (product) =>
-                context.push(AppRoutes.productEditPath(product.id)),
+                context.push(AppRoutes.productEditPath(product.id.toString())),
             onDelete: (product) =>
                 _showDeleteConfirmDialog(context, ref, product),
+            onAdjustInventory: (product) =>
+                _showAdjustInventoryDialog(context, ref, product),
           );
         },
         loading: () => const Center(child: CircularProgressIndicator()),

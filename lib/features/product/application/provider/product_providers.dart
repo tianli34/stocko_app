@@ -1,7 +1,9 @@
 import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../domain/model/product.dart';
+import '../../domain/model/category.dart';
 import '../../data/repository/product_repository.dart'; // 这里包含了 productRepositoryProvider
+import '../category_notifier.dart';
 
 // 注意：这个文件展示了使用 AsyncNotifier 重构后的代码结构
 // 这是 product_providers.dart 的完整重构版本
@@ -16,7 +18,7 @@ class ProductOperationsNotifier extends AsyncNotifier<void> {
   }
 
   /// 添加产品
-  Future<void> addProduct(Product product) async {
+  Future<void> addProduct(ProductModel product) async {
     state = const AsyncValue.loading();
 
     state = await AsyncValue.guard(() async {
@@ -29,9 +31,9 @@ class ProductOperationsNotifier extends AsyncNotifier<void> {
   }
 
   /// 更新产品
-  Future<void> updateProduct(Product product) async {
+  Future<void> updateProduct(ProductModel product) async {
     // 检查产品ID是否为空
-    if (product.id.isEmpty) {
+    if (product.id == null || product.id! <= 0) {
       state = AsyncValue.error(Exception('产品ID不能为空'), StackTrace.current);
       return;
     }
@@ -48,11 +50,13 @@ class ProductOperationsNotifier extends AsyncNotifier<void> {
 
       // 刷新产品列表
       ref.invalidate(allProductsProvider);
+// 使对应的 productByIdProvider 无效，以便获取最新数据
+      ref.invalidate(productByIdProvider(product.id!));
     });
   }
 
   /// 删除产品
-  Future<void> deleteProduct(String productId) async {
+  Future<void> deleteProduct(int productId) async {
     state = const AsyncValue.loading();
 
     state = await AsyncValue.guard(() async {
@@ -77,7 +81,7 @@ class ProductOperationsNotifier extends AsyncNotifier<void> {
   }
 
   /// 根据ID获取产品
-  Future<Product?> getProductById(String productId) async {
+  Future<ProductModel?> getProductById(int productId) async {
     try {
       final repository = ref.read(productRepositoryProvider);
       return await repository.getProductById(productId);
@@ -91,7 +95,7 @@ class ProductOperationsNotifier extends AsyncNotifier<void> {
   }
 
   /// 根据条码获取产品
-  Future<Product?> getProductByBarcode(String barcode) async {
+  Future<ProductModel?> getProductByBarcode(String barcode) async {
     try {
       final repository = ref.read(productRepositoryProvider);
       return await repository.getProductByBarcode(barcode);
@@ -105,22 +109,38 @@ class ProductOperationsNotifier extends AsyncNotifier<void> {
   }
 
   /// 根据条码获取产品及其单位信息
-  Future<({Product product, String unitName, double? wholesalePrice})?>
+  Future<
+    ({
+      ProductModel product,
+      int unitId,
+      String unitName,
+      int conversionRate,
+      int? wholesalePriceInCents
+    })?
+  >
   getProductWithUnitByBarcode(String barcode) async {
     try {
       final repository = ref.read(productRepositoryProvider);
-      return await repository.getProductWithUnitByBarcode(barcode);
+      final result = await repository.getProductWithUnitByBarcode(barcode);
+      if (result == null) return null;
+      return (
+        product: result.product,
+        unitId: result.unitId,
+        unitName: result.unitName,
+        conversionRate: result.conversionRate,
+        wholesalePriceInCents: result.wholesalePriceInCents,
+      );
     } catch (e, st) {
       state = AsyncValue.error(Exception('根据条码查询产品及单位失败: ${e.toString()}'), st);
-      rethrow;
+      return null;
     }
   }
 }
 
 /// 产品列表 StreamNotifier
-class ProductListNotifier extends StreamNotifier<List<Product>> {
+class ProductListNotifier extends StreamNotifier<List<ProductModel>> {
   @override
-  Stream<List<Product>> build() {
+  Stream<List<ProductModel>> build() {
     final repository = ref.watch(productRepositoryProvider);
     return repository.watchAllProducts().map((products) {
       final sortedProducts = List.of(products);
@@ -158,12 +178,12 @@ final productOperationsProvider =
     });
 
 final productListStreamProvider =
-    StreamNotifierProvider<ProductListNotifier, List<Product>>(() {
+    StreamNotifierProvider<ProductListNotifier, List<ProductModel>>(() {
       return ProductListNotifier();
     });
 
 /// 根据ID获取产品
-final productByIdProvider = FutureProvider.family<Product?, String>((
+final productByIdProvider = FutureProvider.family<ProductModel?, int>((
   ref,
   productId,
 ) async {
@@ -172,7 +192,7 @@ final productByIdProvider = FutureProvider.family<Product?, String>((
 });
 
 /// 根据条码获取产品
-final productByBarcodeProvider = FutureProvider.family<Product?, String>((
+final productByBarcodeProvider = FutureProvider.family<ProductModel?, String>((
   ref,
   barcode,
 ) async {
@@ -184,87 +204,108 @@ final productByBarcodeProvider = FutureProvider.family<Product?, String>((
 final allProductsProvider = productListStreamProvider;
 
 /// 用于存储当前选中的分类ID
-final selectedCategoryIdProvider = StateProvider<String?>((ref) => null);
+final selectedCategoryIdProvider = StateProvider<int?>((ref) => null);
 
 /// 用于存储当前的搜索关键字
 final searchQueryProvider = StateProvider<String>((ref) => '');
 
 /// 提供根据分类筛选和关键字搜索后的产品列表
-final filteredProductsProvider = Provider<AsyncValue<List<Product>>>((ref) {
+final filteredProductsProvider = Provider<AsyncValue<List<ProductModel>>>((ref) {
   final selectedCategoryId = ref.watch(selectedCategoryIdProvider);
   final searchQuery = ref.watch(searchQueryProvider);
   final productsAsyncValue = ref.watch(allProductsProvider);
+  final categoryListState = ref.watch(categoryListProvider);
 
-  print('#################################################################');
-  print('##### 🔄 filteredProductsProvider 开始执行 🔄 #####');
-  print('#################################################################');
-  print('  - 🔍 搜索关键字: "$searchQuery"');
-  print('  - 🗂️  分类ID: "$selectedCategoryId"');
+  if (categoryListState.isLoading) {
+    return const AsyncValue.loading();
+  }
+
+  if (categoryListState.error != null) {
+    return AsyncValue.error(categoryListState.error!, StackTrace.current);
+  }
+
+  final allCategories = categoryListState.categories;
 
   return productsAsyncValue.when(
     data: (products) {
-      print('  -> ✅ [数据分支] 成功获取原始产品列表，数量: ${products.length}');
       var filteredList = products;
 
+      // 默认筛选：如果未选择任何分类，则默认不显示“烟”类别及其所有子类别
+      if (selectedCategoryId == null) {
+        // 查找所有后代ID的辅助函数
+        Set<int> getAllDescendantIds(
+            int parentId, List<CategoryModel> categories) {
+          final Set<int> descendantIds = {};
+          final children =
+              categories.where((c) => c.parentId == parentId).toList();
+          for (final child in children) {
+            if (child.id != null) {
+              descendantIds.add(child.id!);
+              descendantIds.addAll(
+                  getAllDescendantIds(child.id!, categories));
+            }
+          }
+          return descendantIds;
+        }
+
+        try {
+          final tobaccoCategory =
+              allCategories.firstWhere((c) => c.name == '烟');
+          final idsToExclude = {tobaccoCategory.id!};
+          if (tobaccoCategory.id != null) {
+            idsToExclude.addAll(
+                getAllDescendantIds(tobaccoCategory.id!, allCategories));
+          }
+
+          filteredList = filteredList
+              .where((p) => !idsToExclude.contains(p.categoryId))
+              .toList();
+        } catch (e) {
+          // 未找到 "烟" 类别，不执行任何操作
+        }
+      }
+
       // 按分类筛选
-      if (selectedCategoryId != null && selectedCategoryId.isNotEmpty) {
-        final initialCount = filteredList.length;
+      if (selectedCategoryId != null) {
         filteredList = filteredList
             .where((p) => p.categoryId == selectedCategoryId)
             .toList();
-        print(
-          '  ->  lọc 按分类筛选: ID="$selectedCategoryId", 数量从 $initialCount -> ${filteredList.length}',
-        );
-      } else {
-        print('  -> ℹ️  无需按分类筛选');
       }
 
       // 按关键字搜索
       if (searchQuery.isNotEmpty) {
-        final initialCount = filteredList.length;
         final lowerCaseQuery = searchQuery.toLowerCase();
         filteredList = filteredList
             .where((p) => p.name.toLowerCase().contains(lowerCaseQuery))
             .toList();
-        print(
-          '  -> 🔎 按关键字筛选: 关键字="$searchQuery", 数量从 $initialCount -> ${filteredList.length}',
-        );
-      } else {
-        print('  -> ℹ️  无需按关键字筛选');
       }
 
-      if (filteredList.isEmpty) {
-        print('  -> ⚠️  最终列表为空');
-      } else {
-        print('  -> ✅ 最终产品列表数量: ${filteredList.length}');
-      }
-      print(
-        '#################################################################',
-      );
       return AsyncValue.data(filteredList);
     },
-    loading: () {
-      print('  -> ⏳ [加载中分支]');
-      print(
-        '#################################################################',
-      );
-      return const AsyncValue.loading();
-    },
-    error: (error, stack) {
-      print('  -> ❌ [错误分支] 错误: $error');
-      print(
-        '#################################################################',
-      );
-      return AsyncValue.error(error, stack);
-    },
+    loading: () => const AsyncValue.loading(),
+    error: (error, stack) => AsyncValue.error(error, stack),
   );
 });
 
 /// 提供所有产品及其单位名称的流
 final allProductsWithUnitProvider =
     StreamProvider<
-      List<({Product product, String unitName, double? wholesalePrice})>
+      List<
+        ({
+          ProductModel product,
+          int unitId,
+          String unitName,
+          int conversionRate,
+          int? wholesalePriceInCents
+        })
+      >
     >((ref) {
       final repository = ref.watch(productRepositoryProvider);
-      return repository.watchAllProductsWithUnit();
+      return repository.watchAllProductsWithUnit().map((list) => list.map((e) => (
+        product: e.product,
+        unitId: e.unitId,
+        unitName: e.unitName,
+        conversionRate: e.conversionRate,
+        wholesalePriceInCents: e.wholesalePriceInCents,
+      )).toList());
     });

@@ -15,37 +15,39 @@ import '../../application/provider/product_unit_providers.dart';
 import '../../application/provider/barcode_providers.dart';
 import '../../application/category_service.dart';
 import '../../application/provider/unit_edit_form_providers.dart';
+import '../../data/repository/product_unit_repository.dart';
 
 /// 辅单位条码数据
 class AuxiliaryUnitBarcodeData {
-  final String productUnitId;
+  final int id;
   final String barcode;
 
   const AuxiliaryUnitBarcodeData({
-    required this.productUnitId,
+    required this.id,
     required this.barcode,
   });
 }
 
 /// 表单数据封装
 class ProductFormData {
-  final String? productId;
+  final int? productId;
   final String name;
-  final String? selectedCategoryId;
+  final int? selectedCategoryId;
   final String newCategoryName;
-  final String? selectedUnitId;
+  final int? selectedUnitId;
   final String newUnitName;
   final String? imagePath;
   final String barcode;
-  final double? retailPrice;
-  final double? promotionalPrice;
-  final double? suggestedRetailPrice;
+  // 价格（元）
+  final double? retailPriceInCents;
+  final double? promotionalPriceInCents;
+  final double? suggestedRetailPriceInCents;
   final int? stockWarningValue;
   final int? shelfLife;
   final String shelfLifeUnit;
   final bool enableBatchManagement;
   final String? remarks;
-  final List<ProductUnit>? productUnits;
+  final List<UnitProduct>? productUnits;
   final List<AuxiliaryUnitBarcodeData>? auxiliaryUnitBarcodes;
 
   const ProductFormData({
@@ -57,9 +59,9 @@ class ProductFormData {
     this.newUnitName = '',
     this.imagePath,
     this.barcode = '',
-    this.retailPrice,
-    this.promotionalPrice,
-    this.suggestedRetailPrice,
+    this.retailPriceInCents,
+    this.promotionalPriceInCents,
+    this.suggestedRetailPriceInCents,
     this.stockWarningValue,
     this.shelfLife,
     this.shelfLifeUnit = 'months',
@@ -74,11 +76,11 @@ class ProductFormData {
 class ProductOperationResult {
   final bool success;
   final String? message;
-  final Product? product;
+  final ProductModel? product;
 
   const ProductOperationResult._(this.success, {this.message, this.product});
 
-  factory ProductOperationResult.success({String? message, Product? product}) =>
+  factory ProductOperationResult.success({String? message, ProductModel? product}) =>
       ProductOperationResult._(true, message: message, product: product);
 
   factory ProductOperationResult.failure(String message) =>
@@ -99,51 +101,59 @@ class ProductAddEditController {
   Future<ProductOperationResult> submitForm(ProductFormData data) async {
     try {
       // 1. 处理类别
-      String? categoryId = data.selectedCategoryId;
-      if ((categoryId == null || categoryId.isEmpty) &&
-          data.newCategoryName.trim().isNotEmpty) {
-        final categories = ref.read(categoriesProvider);
-        final existingCat = categories.firstWhere(
-          (c) =>
-              c.name.toLowerCase() == data.newCategoryName.trim().toLowerCase(),
-          orElse: () => Category(id: '', name: ''),
-        );
-        if (existingCat.id.isNotEmpty) {
+      int? categoryId = data.selectedCategoryId;
+      if ((categoryId == null) && data.newCategoryName.trim().isNotEmpty) {
+        final categoryNotifier = ref.read(categoryListProvider.notifier);
+        await categoryNotifier.loadCategories();
+        final categories = ref.read(categoryListProvider).categories;
+        CategoryModel? existingCat;
+        try {
+          existingCat = categories.firstWhere(
+            (c) =>
+                c.name.toLowerCase() == data.newCategoryName.trim().toLowerCase(),
+          );
+        } catch (e) {
+          existingCat = null;
+        }
+        if (existingCat != null) {
           categoryId = existingCat.id;
         } else {
           final service = ref.read(categoryServiceProvider);
-          categoryId = service.generateCategoryId();
           await service.addCategory(
-            id: categoryId,
             name: data.newCategoryName.trim(),
           );
           // 立即刷新类别缓存，确保新类别在编辑时可见
-          await ref.read(categoryListProvider.notifier).loadCategories();
+          ref.invalidate(categoryListProvider);
+          // 再次获取以找到新创建的类别ID
+          await categoryNotifier.loadCategories();
+          final newCategories = ref.read(categoryListProvider).categories;
+          final foundCategory = newCategories.where((c) => c.name == data.newCategoryName.trim()).firstOrNull;
+          categoryId = foundCategory?.id;
         }
       }
 
       // 2. 处理单位
-      String? unitId = data.selectedUnitId;
-      if ((unitId == null || unitId.isEmpty) &&
-          data.newUnitName.trim().isNotEmpty) {
+      int? unitId = data.selectedUnitId;
+      if (unitId == null && data.newUnitName.trim().isNotEmpty) {
         final units = ref
             .read(allUnitsProvider)
             .maybeWhen(data: (u) => u, orElse: () => <Unit>[]);
-        final existingUnit = units.firstWhere(
+        Unit? existingUnit;
+        existingUnit = units.where(
           (u) => u.name.toLowerCase() == data.newUnitName.trim().toLowerCase(),
-          orElse: () => Unit(id: '', name: ''),
-        );
-        if (existingUnit.id.isNotEmpty) {
+        ).firstOrNull;
+
+        if (existingUnit != null) {
           unitId = existingUnit.id;
         } else {
           final unitCtrl = ref.read(unitControllerProvider.notifier);
-          unitId = 'unit_${DateTime.now().millisecondsSinceEpoch}';
-          await unitCtrl.addUnit(
-            Unit(id: unitId, name: data.newUnitName.trim()),
+          final newUnit = await unitCtrl.addUnit(
+            Unit(name: data.newUnitName.trim()),
           );
+          unitId = newUnit.id;
         }
       }
-      if (unitId == null || unitId.isEmpty) {
+      if (unitId == null) {
         return ProductOperationResult.failure('请选择计量单位');
       }
 
@@ -151,20 +161,23 @@ class ProductAddEditController {
       await _processAuxiliaryUnits(data.productUnits);
 
       // 3. 构建产品对象
-      final product = Product(
-        id: data.productId?.isNotEmpty == true
-            ? data.productId!
-            : DateTime.now().millisecondsSinceEpoch.toString(),
+      Money? toMoney(double? yuan) =>
+          yuan == null ? null : Money((yuan * 100).round());
+
+      final product = ProductModel(
+        id: data.productId ?? DateTime.now().millisecondsSinceEpoch,
+        // 确保id为整数类型
         name: data.name.trim(),
         image: data.imagePath,
         categoryId: categoryId,
-        unitId: unitId,
-        retailPrice: data.retailPrice,
-        promotionalPrice: data.promotionalPrice,
-        suggestedRetailPrice: data.suggestedRetailPrice,
+        baseUnitId: unitId,
+        // 可选字段按需传入
+        suggestedRetailPrice: toMoney(data.suggestedRetailPriceInCents),
+        retailPrice: toMoney(data.retailPriceInCents),
+        promotionalPrice: toMoney(data.promotionalPriceInCents),
         stockWarningValue: data.stockWarningValue,
         shelfLife: data.shelfLife,
-        shelfLifeUnit: data.shelfLifeUnit,
+        shelfLifeUnit: ShelfLifeUnit.values.byName(data.shelfLifeUnit),
         enableBatchManagement: data.enableBatchManagement,
         remarks: data.remarks?.trim(),
         lastUpdated: DateTime.now(),
@@ -172,7 +185,7 @@ class ProductAddEditController {
 
       // 4. 保存产品
       final ops = ref.read(productOperationsProvider.notifier);
-      if (data.productId == null || data.productId!.isEmpty) {
+      if (data.productId == null) {
         await ops.addProduct(product);
       } else {
         await ops.updateProduct(product);
@@ -190,9 +203,11 @@ class ProductAddEditController {
       // 修复：在所有数据库操作（包括单位和条码）完成后，再次强制刷新产品列表，
       // 确保UI获取到包含最新单位信息的货品数据。
       ref.invalidate(allProductsProvider);
+      // 关键修复：同时使主条码的Provider失效，以便下次进入页面时能重新获取
+      ref.invalidate(mainBarcodeProvider(product.id!));
 
       return ProductOperationResult.success(
-        message: data.productId == null || data.productId!.isEmpty
+        message: data.productId == null
             ? '创建成功'
             : '更新成功',
         product: product,
@@ -204,8 +219,8 @@ class ProductAddEditController {
 
   /// 保存或替换产品单位配置
   Future<void> _saveProductUnits(
-    Product product,
-    List<ProductUnit>? units,
+    ProductModel product,
+    List<UnitProduct>? units,
   ) async {
     print('🔍 [DEBUG] ==================== 开始保存产品单位 ====================');
     print('🔍 [DEBUG] 产品ID: ${product.id}');
@@ -216,7 +231,7 @@ class ProductAddEditController {
       for (int i = 0; i < units.length; i++) {
         final unit = units[i];
         print(
-          '🔍 [DEBUG] 单位 ${i + 1}: ${unit.productUnitId} (换算率: ${unit.conversionRate})',
+          '🔍 [DEBUG] 单位 ${i + 1}: ${unit.id} (换算率: ${unit.conversionRate})',
         );
       }
     }
@@ -227,27 +242,19 @@ class ProductAddEditController {
     print('🔍 [DEBUG] 表单中辅单位数量: ${auxiliaryUnits.length}');
 
     final ctrl = ref.read(productUnitControllerProvider.notifier);
-    final list = <ProductUnit>[];
+    final list = <UnitProduct>[];
 
     // 添加基础单位
     list.add(
-      ProductUnit(
-        productUnitId: 'pu_${product.id}_${product.unitId!}',
-        productId: product.id,
-        unitId: product.unitId!,
-        conversionRate: 1.0,
+      UnitProduct(
+        productId: product.id!,
+        unitId: product.baseUnitId,
+        conversionRate: 1,
       ),
     );
 
-    // 添加辅单位 - 重新刷新单位数据并等待加载完成
-    ref.invalidate(allUnitsProvider);
-
-    // 等待数据重新加载
-    await Future.delayed(const Duration(milliseconds: 100));
-
-    final allUnits = ref
-        .read(allUnitsProvider)
-        .maybeWhen(data: (u) => u, orElse: () => <Unit>[]);
+    // 直接从provider获取最新的单位列表，.future会自动处理加载状态
+    final allUnits = await ref.read(allUnitsProvider.future);
     print('🔍 [DEBUG] 刷新后单位总数: ${allUnits.length}');
 
     for (final auxUnit in auxiliaryUnits) {
@@ -259,39 +266,29 @@ class ProductAddEditController {
         continue;
       }
 
-      var unit = allUnits.firstWhere(
-        (u) => u.name.toLowerCase() == unitName.toLowerCase(),
-        orElse: () => Unit(id: '', name: ''),
-      );
-
-      // 如果未找到单位，尝试重新刷新数据并再次查找
-      if (unit.id.isEmpty) {
-        print('🔍 [DEBUG] 首次未找到单位 "$unitName"，重新刷新数据');
-        ref.invalidate(allUnitsProvider);
-        await Future.delayed(const Duration(milliseconds: 200));
-
-        final refreshedUnits = ref
-            .read(allUnitsProvider)
-            .maybeWhen(data: (u) => u, orElse: () => <Unit>[]);
-
-        unit = refreshedUnits.firstWhere(
+      Unit? unit;
+      try {
+        unit = allUnits.where(
           (u) => u.name.toLowerCase() == unitName.toLowerCase(),
-          orElse: () => Unit(id: '', name: ''),
-        );
+        ).firstOrNull;
+      } catch (e) {
+        unit = null;
       }
 
-      if (unit.id.isNotEmpty) {
+      // 如果在这里找不到单位，说明有一个辅单位的名称在单位表中不存在，
+      // 这在正常流程下不应该发生，因为所有新单位都应在_processAuxiliaryUnits中被添加。
+      // 因此，这是一个关键错误，需要抛出异常而不是静默失败。
+      if (unit != null && unit.id != null) {
         list.add(
-          ProductUnit(
-            productUnitId: 'pu_${product.id}_${unit.id}',
-            productId: product.id,
-            unitId: unit.id,
+          UnitProduct(
+            productId: product.id!,
+            unitId: unit.id!,
             conversionRate: auxUnit.conversionRate,
-            sellingPrice: auxUnit.retailPrice.trim().isNotEmpty
-                ? double.tryParse(auxUnit.retailPrice.trim())
+            sellingPriceInCents: auxUnit.retailPriceInCents.trim().isNotEmpty
+                ? int.tryParse(auxUnit.retailPriceInCents.trim())
                 : null,
-            wholesalePrice: auxUnit.wholesalePrice.trim().isNotEmpty
-                ? double.tryParse(auxUnit.wholesalePrice.trim())
+            wholesalePriceInCents: auxUnit.wholesalePriceInCents.trim().isNotEmpty
+                ? int.tryParse(auxUnit.wholesalePriceInCents.trim())
                 : null,
           ),
         );
@@ -299,9 +296,10 @@ class ProductAddEditController {
           '🔍 [DEBUG] ✅ 添加辅单位: ${unit.name} (ID: ${unit.id}, 换算率: ${auxUnit.conversionRate})',
         );
       } else {
-        print('🔍 [DEBUG] ❌ 未找到单位: "$unitName"');
-        // 可以选择跳过这个单位或抛出异常
-        // throw Exception('未找到单位: $unitName');
+        print('🔍 [DEBUG] ❌ 在_saveProductUnits中未找到单位: "$unitName"');
+        // 这是一个关键错误，意味着在表单提交时，一个预期的单位没有被正确创建或找到。
+        // 抛出异常以阻止不完整的数据被保存。
+        throw Exception('保存产品单位失败：无法找到单位 "$unitName"。请检查单位是否已正确添加。');
       }
     }
 
@@ -309,12 +307,12 @@ class ProductAddEditController {
     for (int i = 0; i < list.length; i++) {
       final unit = list[i];
       print(
-        '🔍 [DEBUG] 保存单位 ${i + 1}: ${unit.productUnitId} (换算率: ${unit.conversionRate})',
+        '🔍 [DEBUG] 保存单位 ${i + 1}: ${unit.id} (换算率: ${unit.conversionRate})',
       );
     }
 
     try {
-      await ctrl.replaceProductUnits(product.id, list);
+      await ctrl.replaceProductUnits(product.id!, list);
       print('🔍 [DEBUG] ✅ 产品单位保存成功');
     } catch (e) {
       print('🔍 [DEBUG] ❌ 产品单位保存失败: $e');
@@ -325,38 +323,73 @@ class ProductAddEditController {
   }
 
   /// 保存主条码
-  Future<void> _saveMainBarcode(Product product, String barcode) async {
+  Future<void> _saveMainBarcode(ProductModel product, String barcode) async {
     final code = barcode.trim();
-    if (code.isEmpty) return;
+    final barcodeCtrl = ref.read(barcodeControllerProvider.notifier);
+    final productUnitRepository = ref.read(productUnitRepositoryProvider);
 
-    // 找到基础产品单位ID
-    final productUnitController = ref.read(
-      productUnitControllerProvider.notifier,
-    );
-    final productUnits = await productUnitController.getProductUnitsByProductId(
-      product.id,
-    );
-    final baseProductUnit = productUnits.firstWhere(
-      (pu) => pu.conversionRate == 1.0,
-      orElse: () => throw Exception('未找到基础产品单位'),
-    );
+    // 1. 找到新的基础产品单位ID (在 _saveProductUnits 执行后)
+    final productUnitController =
+        ref.read(productUnitControllerProvider.notifier);
+    final productUnits =
+        await productUnitController.getProductUnitsByProductId(product.id!);
+    final baseProductUnit = productUnits.where((pu) => pu.conversionRate == 1.0).firstOrNull;
+    if (baseProductUnit == null) {
+      throw Exception('保存主条码失败：未找到基础产品单位。');
+    }
+    final baseUnitProductId = baseProductUnit.id!;
 
-    final ctrl = ref.read(barcodeControllerProvider.notifier);
-    final id = 'barcode_${product.id}_${DateTime.now().millisecondsSinceEpoch}';
-    await ctrl.addBarcode(
-      Barcode(
-        id: id,
-        productUnitId: baseProductUnit.productUnitId, // 使用正确的productUnitId
-        barcode: code,
-        createdAt: DateTime.now(),
-        updatedAt: DateTime.now(),
-      ),
-    );
+    // 2. 查找与输入条码匹配的现有条码
+    final existingBarcode =
+        code.isEmpty ? null : await barcodeCtrl.getBarcodeByValue(code);
+
+    // 3. 验证条码是否被其他货品占用
+    if (existingBarcode != null) {
+      // 通过 unitProductId 找到对应的 product_unit 记录
+      final productUnit = await productUnitRepository
+          .getProductUnitById(existingBarcode.unitProductId);
+      // 如果能找到 product_unit 记录，并且其 productId 不是当前产品的 ID，则说明条码被占用
+      if (productUnit != null && productUnit.productId != product.id) {
+        throw Exception('条码 "$code" 已被其他货品使用，无法重复添加。');
+      }
+    }
+
+    // 4. 查找与当前产品关联的所有条码，并找到主条码
+    // 由于 unit_id 已变，直接查找会很困难。我们转而处理与当前产品关联的所有条码。
+    // 此处简化逻辑：我们信任验证步骤，并直接进行 upsert 操作。
+    // 我们需要先删除所有与该产品基础单位无关的条码（即旧的条码）。
+    // 这部分逻辑比较复杂，暂时的修复方案是只处理当前条码的更新。
+
+    // 5. 同步主条码
+    if (code.isEmpty) {
+      // 如果输入为空，则删除现有的主条码（如果存在）
+      if (existingBarcode != null &&
+          existingBarcode.unitProductId == baseUnitProductId) {
+        await barcodeCtrl.deleteBarcode(existingBarcode.id!);
+      }
+    } else {
+      // 输入不为空
+      if (existingBarcode != null) {
+        // 条码已存在（验证已确认它属于当前产品），更新其 unitProductId 指向新的基础单位
+        if (existingBarcode.unitProductId != baseUnitProductId) {
+          await barcodeCtrl.updateBarcode(
+              existingBarcode.copyWith(unitProductId: baseUnitProductId));
+        }
+      } else {
+        // 条码不存在，添加新条码
+        await barcodeCtrl.addBarcode(
+          BarcodeModel(
+            unitProductId: baseUnitProductId,
+            barcodeValue: code,
+          ),
+        );
+      }
+    }
   }
 
   /// 保存辅单位条码
   Future<void> _saveAuxiliaryUnitBarcodes(
-    Product product,
+    ProductModel product,
     List<AuxiliaryUnitBarcodeData>? auxiliaryBarcodes,
   ) async {
     print('🔍 [DEBUG] ==================== 开始保存辅单位条码 ====================');
@@ -377,11 +410,11 @@ class ProductAddEditController {
       productUnitControllerProvider.notifier,
     );
     final productUnits = await productUnitController.getProductUnitsByProductId(
-      product.id,
+      product.id!,
     );
 
     final ctrl = ref.read(barcodeControllerProvider.notifier);
-    final barcodes = <Barcode>[];
+    final barcodes = <BarcodeModel>[];
 
     for (final auxUnit in auxiliaryUnits) {
       final code = auxUnit.barcode.trim();
@@ -394,38 +427,40 @@ class ProductAddEditController {
       final allUnits = ref
           .read(allUnitsProvider)
           .maybeWhen(data: (u) => u, orElse: () => <Unit>[]);
-      final targetUnit = allUnits.firstWhere(
-        (u) => u.name.toLowerCase() == auxUnit.unitName.trim().toLowerCase(),
-        orElse: () => Unit(id: '', name: ''),
-      );
+      Unit? targetUnit;
+      try {
+        targetUnit = allUnits.where(
+          (u) => u.name.toLowerCase() == auxUnit.unitName.trim().toLowerCase(),
+        ).firstOrNull;
+      } catch (e) {
+        targetUnit = null;
+      }
 
-      if (targetUnit.id.isNotEmpty) {
-        final matchingProductUnit = productUnits.firstWhere(
+      if (targetUnit != null) {
+        final finalTargetUnit = targetUnit;
+        UnitProduct? matchingProductUnit;
+        matchingProductUnit = productUnits.where(
           (pu) =>
-              pu.unitId == targetUnit.id &&
+              pu.unitId == finalTargetUnit.id &&
               pu.conversionRate == auxUnit.conversionRate,
-          orElse: () => ProductUnit(
-            productUnitId: '',
-            productId: '',
-            unitId: '',
-            conversionRate: 0,
-          ),
-        );
+        ).firstOrNull;
 
-        if (matchingProductUnit.productUnitId.isNotEmpty) {
-          final id =
-              'barcode_${product.id}_${matchingProductUnit.productUnitId}_${DateTime.now().millisecondsSinceEpoch}';
+        if (matchingProductUnit == null) {
+          throw Exception(
+              '数据不一致：在产品单位列表中找不到单位 ${finalTargetUnit.name} (换算率: ${auxUnit.conversionRate})');
+        }
+
+        if ((matchingProductUnit.id ?? 0) > 0) {
+          
           barcodes.add(
-            Barcode(
-              id: id,
-              productUnitId: matchingProductUnit.productUnitId,
-              barcode: code,
-              createdAt: DateTime.now(),
-              updatedAt: DateTime.now(),
+            BarcodeModel(
+              
+              unitProductId: matchingProductUnit.id!,
+              barcodeValue: code,
             ),
           );
           print(
-            '🔍 [DEBUG] ✅ 添加辅单位条码: ${auxUnit.unitName} -> $code (ProductUnitId: ${matchingProductUnit.productUnitId})',
+            '🔍 [DEBUG] ✅ 添加辅单位条码: ${auxUnit.unitName} -> $code (ProductUnitId: ${matchingProductUnit.id})',
           );
         } else {
           print(
@@ -448,7 +483,7 @@ class ProductAddEditController {
   }
 
   /// 处理辅单位 - 检查并插入新的辅单位到单位表
-  Future<void> _processAuxiliaryUnits(List<ProductUnit>? productUnits) async {
+  Future<void> _processAuxiliaryUnits(List<UnitProduct>? productUnits) async {
     print('🔍 [DEBUG] ==================== 开始处理辅单位 ====================');
 
     // 获取辅单位表单数据
@@ -479,26 +514,27 @@ class ProductAddEditController {
       }
 
       // 检查单位是否已存在
-      final existingUnit = units.firstWhere(
+      Unit? existingUnit;
+      existingUnit = units.where(
         (u) => u.name.toLowerCase() == unitName.toLowerCase(),
-        orElse: () => Unit(id: '', name: ''),
-      );
+      ).firstOrNull;
 
-      if (existingUnit.id.isNotEmpty) {
+      if (existingUnit != null) {
         print(
           '🔍 [DEBUG] 单位已存在: ID=${existingUnit.id}, 名称="${existingUnit.name}"',
         );
       } else {
         // 如果单位不存在，创建新单位
-        final newUnitId =
-            'unit_${DateTime.now().millisecondsSinceEpoch}_${unitName.hashCode}';
-        print('🔍 [DEBUG] 创建新单位: ID=$newUnitId, 名称="$unitName"');
+        print('🔍 [DEBUG] 创建新单位: 名称="$unitName"');
 
         try {
-          await unitCtrl.addUnit(Unit(id: newUnitId, name: unitName));
-          print('🔍 [DEBUG] ✅ 新单位创建成功');
-
-          // 刷新单位缓存以确保新单位可被查找到
+          // 调用新的addUnit方法，它会处理一切
+          final newUnit = await unitCtrl.addUnit(Unit(name: unitName));
+          print('🔍 [DEBUG] ✅ 新单位创建成功, ID: ${newUnit.id}');
+          
+          // 将新创建的单位添加到当前循环的单位列表中，
+          // 以便在同一个循环中处理依赖于这个新单位的其他逻辑。
+          units.add(newUnit);
           ref.invalidate(allUnitsProvider);
         } catch (e) {
           print('🔍 [DEBUG] ❌ 新单位创建失败: $e');

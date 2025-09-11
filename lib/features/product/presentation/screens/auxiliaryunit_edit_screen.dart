@@ -12,14 +12,14 @@ import '../../../../core/utils/snackbar_helper.dart';
 import 'unit_selection_screen.dart';
 
 class AuxiliaryUnitEditScreen extends ConsumerStatefulWidget {
-  final String? productId;
-  final String? baseUnitId;
+  final int? productId;
+  final String baseUnitId;
   final String? baseUnitName;
 
   const AuxiliaryUnitEditScreen({
     super.key,
     this.productId,
-    this.baseUnitId,
+    required this.baseUnitId,
     this.baseUnitName,
   });
 
@@ -112,31 +112,31 @@ class _AuxiliaryUnitEditScreenState
     }
   }
 
-  Future<void> _loadAuxiliaryUnits(List<ProductUnit> auxiliaryUnits) async {
+  Future<void> _loadAuxiliaryUnits(List<UnitProduct> auxiliaryUnits) async {
     final List<_AuxiliaryUnit> tempAuxiliaryUnits = [];
 
-    for (final productUnit in auxiliaryUnits) {
+    for (final unitProduct in auxiliaryUnits) {
       try {
         print('=================【仓储层调试】=================');
-        print('ProductUnit ID: ${productUnit.productUnitId}');
-        print('SELLING PRICE: ${productUnit.sellingPrice}');
-        print('WHOLESALE PRICE: ${productUnit.wholesalePrice}');
+        print('UnitProduct ID: ${unitProduct.id}');
+        print('SELLING PRICE: ${unitProduct.sellingPriceInCents}');
+        print('WHOLESALE PRICE: ${unitProduct.wholesalePriceInCents}');
         print(
-          'productId: ${productUnit.productId}, unitId: ${productUnit.unitId}, conversionRate: ${productUnit.conversionRate}',
+          'productId: ${unitProduct.productId}, unitId: ${unitProduct.unitId}, conversionRate: ${unitProduct.conversionRate}',
         );
         print('==============================================');
         final allUnits = await ref.read(allUnitsProvider.future);
         final unit = allUnits.firstWhere(
-          (u) => u.id == productUnit.unitId,
+          (u) => u.id == unitProduct.unitId,
           orElse: () =>
-              throw Exception('Unit not found: ${productUnit.unitId}'),
+              throw Exception('Unit not found: ${unitProduct.unitId}'),
         );
         final auxiliaryUnit = _AuxiliaryUnit(
           id: _auxiliaryCounter,
           unit: unit,
-          conversionRate: productUnit.conversionRate,
-          initialSellingPrice: productUnit.sellingPrice,
-          initialWholesalePrice: productUnit.wholesalePrice,
+          conversionRate: unitProduct.conversionRate,
+          initialSellingPrice: (unitProduct.sellingPriceInCents ?? 0)/100,
+          initialWholesalePrice: (unitProduct.wholesalePriceInCents ?? 0)/100,
         );
         print('🔍 控制器初始化后售价: ${auxiliaryUnit.retailPriceController.text}');
         print('🔍 控制器初始化后批发价: ${auxiliaryUnit.wholesalePriceController.text}');
@@ -145,10 +145,10 @@ class _AuxiliaryUnitEditScreenState
 
         final barcodeController = ref.read(barcodeControllerProvider.notifier);
         final barcodes = await barcodeController.getBarcodesByProductUnitId(
-          productUnit.productUnitId,
+          unitProduct.id,
         );
         if (barcodes.isNotEmpty) {
-          auxiliaryUnit.barcodeController.text = barcodes.first.barcode;
+          auxiliaryUnit.barcodeController.text = barcodes.first.barcodeValue;
         }
 
         tempAuxiliaryUnits.add(auxiliaryUnit);
@@ -350,7 +350,7 @@ class _AuxiliaryUnitEditScreenState
                 return null;
               },
               onChanged: (value) {
-                final rate = double.tryParse(value.trim());
+                final rate = int.tryParse(value.trim());
                 if (rate != null) {
                   auxiliaryUnit.conversionRate = rate;
                   ref
@@ -478,13 +478,12 @@ class _AuxiliaryUnitEditScreenState
 
       Unit? existingUnit = allUnits.firstWhere(
         (unit) => unit.name == trimmedName,
-        orElse: () => Unit(id: '', name: ''),
+        orElse: () => Unit.empty(),
       );
 
-      if (existingUnit.id.isEmpty) {
+      if (existingUnit.isNew) {
         print('🔍 单位不存在，创建新单位对象: "$trimmedName"');
         existingUnit = Unit(
-          id: 'unit_${DateTime.now().millisecondsSinceEpoch}',
           name: trimmedName,
         );
         print('🔍 新单位对象已创建: ID=${existingUnit.id}, 名称="${existingUnit.name}"');
@@ -559,7 +558,7 @@ class _AuxiliaryUnitEditScreenState
       final Unit? selectedUnit = await Navigator.of(context).push<Unit>(
         MaterialPageRoute(
           builder: (context) => UnitSelectionScreen(
-            selectedUnitId: _auxiliaryUnits[index].unit?.id,
+            initialUnit: _auxiliaryUnits[index].unit,
           ),
         ),
       );
@@ -630,29 +629,33 @@ class _AuxiliaryUnitEditScreenState
     }
   }
 
-  List<ProductUnit> _buildProductUnits() {
+  List<UnitProduct> _buildProductUnits() {
     print('🔍 [DEBUG] ==================== 开始构建产品单位 ====================');
     print('🔍 [DEBUG] 产品ID: ${widget.productId}');
     print('🔍 [DEBUG] 基本单位ID: ${widget.baseUnitId}');
     print('🔍 [DEBUG] 基本单位名称: ${widget.baseUnitName}');
     print('🔍 [DEBUG] 辅单位数量: ${_auxiliaryUnits.length}');
 
-    final List<ProductUnit> productUnits = [];
+    final List<UnitProduct> productUnits = [];
 
     // 添加基本单位
-    if (widget.baseUnitId != null) {
-      final baseUnit = ProductUnit(
-        productUnitId: '${widget.productId ?? 'new'}_${widget.baseUnitId!}',
-        productId: widget.productId ?? 'new',
-        unitId: widget.baseUnitId!,
-        conversionRate: 1.0,
-      );
-      productUnits.add(baseUnit);
-      print('🔍 [DEBUG] ✅ 添加基本单位: ${baseUnit.productUnitId}');
-    } else {
-      print('🔍 [DEBUG] ❌ 警告: 基本单位ID为null');
+    final int? parsedBaseUnitId = int.tryParse(widget.baseUnitId);
+    if (parsedBaseUnitId == null) {
+      print('❌ 基本单位ID无效: ${widget.baseUnitId}');
+      // 如果基本单位ID无效，直接返回
+      Navigator.of(context).pop();
+      return [];
     }
 
+    final baseUnit = UnitProduct(
+      // id: '${widget.productId ?? 'new'}_${widget.baseUnitId!}',
+      productId: widget.productId ?? 0,
+      unitId: parsedBaseUnitId,
+      conversionRate: 1,
+    );
+    productUnits.add(baseUnit);
+    print('🔍 [DEBUG] ✅ 添加基本单位: ${baseUnit.id}');
+  
     // 处理辅单位
     for (int i = 0; i < _auxiliaryUnits.length; i++) {
       final aux = _auxiliaryUnits[i];
@@ -674,29 +677,28 @@ class _AuxiliaryUnitEditScreenState
         print(
           'wholesalePriceController.text: "${aux.wholesalePriceController.text}"',
         );
-        final sellingPrice = aux.retailPriceController.text.trim().isNotEmpty
-            ? double.tryParse(aux.retailPriceController.text.trim())
+        final sellingPriceInCents = aux.retailPriceController.text.trim().isNotEmpty
+            ? int.tryParse(aux.retailPriceController.text.trim())
             : null;
-        final wholesalePrice =
+        final wholesalePriceInCents =
             aux.wholesalePriceController.text.trim().isNotEmpty
-            ? double.tryParse(aux.wholesalePriceController.text.trim())
+            ? int.tryParse(aux.wholesalePriceController.text.trim())
             : null;
-        print('解析后的sellingPrice: $sellingPrice');
-        print('解析后的wholesalePrice: $wholesalePrice');
+        print('解析后的sellingPrice: $sellingPriceInCents');
+        print('解析后的wholesalePrice: $wholesalePriceInCents');
         print('========================');
 
-        final auxUnit = ProductUnit(
-          productUnitId: '${widget.productId ?? 'new'}_${aux.unit!.id}',
-          productId: widget.productId ?? 'new',
-          unitId: aux.unit!.id,
+        final auxUnit = UnitProduct(
+          productId: widget.productId ?? 0,
+          unitId: aux.unit!.id!,
           conversionRate: aux.conversionRate,
-          sellingPrice: sellingPrice,
-          wholesalePrice: wholesalePrice,
+          sellingPriceInCents: sellingPriceInCents,
+          wholesalePriceInCents: wholesalePriceInCents,
           lastUpdated: DateTime.now(),
         );
         productUnits.add(auxUnit);
         print(
-          '🔍 [DEBUG]   ✅ 添加辅单位: ${auxUnit.productUnitId} 批发价: ${auxUnit.wholesalePrice}',
+          '🔍 [DEBUG]   ✅ 添加辅单位: ${auxUnit.id} 批发价: ${auxUnit.wholesalePriceInCents}',
         );
       } else {
         print('🔍 [DEBUG]   ❌ 跳过无效辅单位:');
@@ -714,7 +716,7 @@ class _AuxiliaryUnitEditScreenState
     for (int i = 0; i < productUnits.length; i++) {
       final pu = productUnits[i];
       print(
-        '🔍 [DEBUG] 产品单位 ${i + 1}: ${pu.productUnitId} (换算率: ${pu.conversionRate})',
+        '🔍 [DEBUG] 产品单位 ${i + 1}: ${pu.id} (换算率: ${pu.conversionRate})',
       );
     }
     print('🔍 [DEBUG] ==================== 构建完成 ====================');
@@ -729,7 +731,7 @@ class _AuxiliaryUnitEditScreenState
     for (final aux in _auxiliaryUnits) {
       if (aux.unit != null && aux.barcodeController.text.trim().isNotEmpty) {
         barcodes.add({
-          'productUnitId': '${widget.productId ?? 'new'}_${aux.unit!.id}',
+          'id': '${widget.productId ?? 'new'}_${aux.unit!.id}',
           'barcode': aux.barcodeController.text.trim(),
         });
       }
@@ -740,19 +742,25 @@ class _AuxiliaryUnitEditScreenState
 
   void _handleReturn() {
     print('🔍 处理返回，开始构建数据...');
-    final productUnits = _buildProductUnits();
-    final auxiliaryBarcodes = _buildAuxiliaryUnitBarcodes();
+    try {
+      final productUnits = _buildProductUnits();
+      final auxiliaryBarcodes = _buildAuxiliaryUnitBarcodes();
 
-    if (productUnits.isNotEmpty && widget.baseUnitId != null) {
-      print('🔍 数据有效，返回产品单位数据');
+      if (productUnits.isNotEmpty) {
+        print('🔍 数据有效，返回产品单位数据');
 
-      // 返回包含产品单位和条码信息的数据
-      Navigator.of(context).pop({
-        'productUnits': productUnits,
-        'auxiliaryBarcodes': auxiliaryBarcodes,
-      });
-    } else {
-      print('🔍 数据无效或缺少基本单位，直接返回');
+        // 返回包含产品单位和条码信息的数据
+        Navigator.of(context).pop({
+          'productUnits': productUnits,
+          'auxiliaryBarcodes': auxiliaryBarcodes,
+        });
+      } else {
+        print('🔍 数据无效或缺少基本单位，直接返回');
+        Navigator.of(context).pop();
+      }
+    } catch (e, s) {
+      print('❌ 返回处理异常: $e\n$s');
+      // 发生异常时，简单返回
       Navigator.of(context).pop();
     }
   }
@@ -780,8 +788,8 @@ class _AuxiliaryUnitEditScreenState
         print('AuxiliaryUnitData ID: ${auxData.id}');
         print('unitName: ${auxData.unitName}, unitId: ${auxData.unitId}');
         print('conversionRate: ${auxData.conversionRate}');
-        print('retailPrice: ${auxData.retailPrice}');
-        print('wholesalePrice: ${auxData.wholesalePrice}');
+        print('retailPriceInCents: ${auxData.retailPriceInCents}');
+        print('wholesalePriceInCents: ${auxData.wholesalePriceInCents}');
         print('barcode: ${auxData.barcode}');
         print('===============================================');
         Unit? unit;
@@ -789,14 +797,12 @@ class _AuxiliaryUnitEditScreenState
         if (auxData.unitName.trim().isNotEmpty) {
           unit = allUnits.firstWhere(
             (u) => u.name == auxData.unitName.trim(),
-            orElse: () => Unit(id: '', name: ''),
+            orElse: () => Unit.empty(),
           );
 
-          if (unit.id.isEmpty) {
+          if (unit.isNew) {
             unit = Unit(
-              id:
-                  auxData.unitId ??
-                  'unit_${DateTime.now().millisecondsSinceEpoch}',
+              id: auxData.unitId,
               name: auxData.unitName.trim(),
             );
           }
@@ -806,8 +812,8 @@ class _AuxiliaryUnitEditScreenState
           id: auxData.id,
           unit: unit,
           conversionRate: auxData.conversionRate,
-          initialSellingPrice: double.tryParse(auxData.retailPrice),
-          initialWholesalePrice: double.tryParse(auxData.wholesalePrice),
+          initialSellingPrice: double.tryParse(auxData.retailPriceInCents),
+          initialWholesalePrice: double.tryParse(auxData.wholesalePriceInCents),
         );
 
         auxiliaryUnit.unitController.text = auxData.unitName;
@@ -838,7 +844,7 @@ class _AuxiliaryUnitEditScreenState
 class _AuxiliaryUnit {
   final int id;
   Unit? unit;
-  double conversionRate;
+  int conversionRate;
   late TextEditingController unitController;
   late TextEditingController barcodeController;
   late TextEditingController retailPriceController;

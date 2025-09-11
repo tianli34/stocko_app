@@ -24,7 +24,7 @@ class ShopRepository implements IShopRepository {
   }
 
   @override
-  Future<Shop?> getShopById(String id) async {
+  Future<Shop?> getShopById(int id) async {
     try {
       final data = await _shopDao.getShopById(id);
       return data != null ? _dataToShop(data) : null;
@@ -80,7 +80,7 @@ class ShopRepository implements IShopRepository {
   }
 
   @override
-  Future<int> deleteShop(String id) async {
+  Future<int> deleteShop(int id) async {
     try {
       print('🏪 仓储层：删除店铺，ID: $id');
       return await _shopDao.deleteShop(id);
@@ -91,7 +91,7 @@ class ShopRepository implements IShopRepository {
   }
 
   @override
-  Future<bool> isShopNameExists(String name, [String? excludeId]) async {
+  Future<bool> isShopNameExists(String name, [int? excludeId]) async {
     try {
       return await _shopDao.isShopNameExists(name, excludeId);
     } catch (e) {
@@ -133,9 +133,9 @@ class ShopRepository implements IShopRepository {
   }
 
   /// 将Shop模型转换为数据库Companion对象
-  ShopsTableCompanion _shopToCompanion(Shop shop) {
-    return ShopsTableCompanion(
-      id: Value(shop.id),
+  ShopCompanion _shopToCompanion(Shop shop) {
+    return ShopCompanion(
+      id: shop.id == null ? const Value.absent() : Value(shop.id!),
       name: Value(shop.name),
       manager: Value(shop.manager),
       createdAt: shop.createdAt != null
@@ -146,7 +146,7 @@ class ShopRepository implements IShopRepository {
   }
 
   /// 将数据库数据转换为Shop模型
-  Shop _dataToShop(ShopsTableData data) {
+  Shop _dataToShop(ShopData data) {
     return Shop(
       id: data.id,
       name: data.name,

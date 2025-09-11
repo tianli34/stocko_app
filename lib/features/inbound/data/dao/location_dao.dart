@@ -24,7 +24,7 @@ class LocationDao extends DatabaseAccessor<AppDatabase>
   }
 
   /// 根据编码获取货位
-  Future<LocationsTableData?> getLocationByCode(String code, String shopId) {
+  Future<LocationsTableData?> getLocationByCode(String code, int shopId) {
     return (select(locationsTable)
           ..where((t) => t.code.equals(code) & t.shopId.equals(shopId)))
         .getSingleOrNull();
@@ -36,7 +36,7 @@ class LocationDao extends DatabaseAccessor<AppDatabase>
   }
 
   /// 根据店铺ID获取货位
-  Future<List<LocationsTableData>> getLocationsByShop(String shopId) {
+  Future<List<LocationsTableData>> getLocationsByShop(int shopId) {
     return (select(
       locationsTable,
     )..where((t) => t.shopId.equals(shopId))).get();
@@ -50,7 +50,7 @@ class LocationDao extends DatabaseAccessor<AppDatabase>
   }
 
   /// 获取活跃货位
-  Future<List<LocationsTableData>> getActiveLocationsByShop(String shopId) {
+  Future<List<LocationsTableData>> getActiveLocationsByShop(int shopId) {
     return (select(
       locationsTable,
     )..where((t) => t.shopId.equals(shopId) & t.status.equals('active'))).get();
@@ -62,7 +62,7 @@ class LocationDao extends DatabaseAccessor<AppDatabase>
   }
 
   /// 监听指定店铺的货位变化
-  Stream<List<LocationsTableData>> watchLocationsByShop(String shopId) {
+  Stream<List<LocationsTableData>> watchLocationsByShop(int shopId) {
     return (select(
       locationsTable,
     )..where((t) => t.shopId.equals(shopId))).watch();
@@ -84,14 +84,14 @@ class LocationDao extends DatabaseAccessor<AppDatabase>
   /// 检查货位编码是否已存在（同一店铺内）
   Future<bool> isLocationCodeExists(
     String code,
-    String shopId, [
-    String? excludeId,
+    int shopId, [
+    int? excludeId,
   ]) async {
     var query = select(locationsTable)
       ..where((t) => t.code.equals(code) & t.shopId.equals(shopId));
 
     if (excludeId != null) {
-      query = query..where((t) => t.id.isNotValue(excludeId));
+      query = query..where((t) => t.id.isNotValue(excludeId.toString()));
     }
 
     final result = await query.getSingleOrNull();

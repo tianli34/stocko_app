@@ -8,7 +8,7 @@ import '../../data/repository/product_repository.dart';
 /// 类别选择屏幕
 /// 支持选择、新增、重命名、删除类别的功能
 class CategorySelectionScreen extends ConsumerStatefulWidget {
-  final String? selectedCategoryId;
+  final int? selectedCategoryId;
   final bool isSelectionMode;
 
   const CategorySelectionScreen({
@@ -25,7 +25,7 @@ class CategorySelectionScreen extends ConsumerStatefulWidget {
 class _CategorySelectionScreenState
     extends ConsumerState<CategorySelectionScreen> {
   // 用于管理每个类别的展开/收起状态
-  final Map<String, bool> _expandedCategories = {};
+  final Map<int, bool> _expandedCategories = {};
 
   @override
   void initState() {
@@ -34,7 +34,8 @@ class _CategorySelectionScreenState
 
   @override
   Widget build(BuildContext context) {
-    final categories = ref.watch(categoriesProvider);
+    final categoryState = ref.watch(categoryListProvider);
+    final categories = categoryState.categories;
 
     return Scaffold(
       appBar: AppBar(
@@ -79,7 +80,7 @@ class _CategorySelectionScreenState
     );
   }
 
-  List<Widget> _buildHierarchicalList(List<Category> categories) {
+  List<Widget> _buildHierarchicalList(List<CategoryModel> categories) {
     final widgets = <Widget>[];
 
     // 获取顶级类别（无父级的类别）
@@ -96,35 +97,37 @@ class _CategorySelectionScreenState
 
   void _buildCategoryWithChildren(
     List<Widget> widgets,
-    List<Category> allCategories,
-    Category category,
+    List<CategoryModel> allCategories,
+    CategoryModel category,
     int level,
   ) {
     widgets.add(_buildCategoryTile(context, category, level, allCategories));
 
     // 获取当前类别的子类别
-    final subCategories = allCategories
-        .where((subCat) => subCat.parentId == category.id)
-        .toList(); // 只有在展开状态下才递归添加子类别
-    final isExpanded =
-        _expandedCategories[category.id] ?? (level == 0); // 顶级类别默认展开，子类别默认收起
-    if (isExpanded && subCategories.isNotEmpty) {
-      for (final subCategory in subCategories) {
-        _buildCategoryWithChildren(
-          widgets,
-          allCategories,
-          subCategory,
-          level + 1,
-        );
+    if (category.id != null) {
+      final subCategories = allCategories
+          .where((subCat) => subCat.parentId == category.id)
+          .toList(); // 只有在展开状态下才递归添加子类别
+      final isExpanded = _expandedCategories[category.id!] ??
+          (level == 0); // 顶级类别默认展开，子类别默认收起
+      if (isExpanded && subCategories.isNotEmpty) {
+        for (final subCategory in subCategories) {
+          _buildCategoryWithChildren(
+            widgets,
+            allCategories,
+            subCategory,
+            level + 1,
+          );
+        }
       }
     }
   }
 
   Widget _buildCategoryTile(
     BuildContext context,
-    Category category, [
+    CategoryModel category, [
     int level = 0,
-    List<Category>? allCategories,
+    List<CategoryModel>? allCategories,
   ]) {
     final isSelected = widget.selectedCategoryId == category.id;
     final isSubCategory = level > 0;
@@ -133,8 +136,8 @@ class _CategorySelectionScreenState
     // 检查是否有子类别
     final hasSubCategories =
         allCategories?.any((cat) => cat.parentId == category.id) ?? false;
-    final isExpanded =
-        _expandedCategories[category.id] ?? (level == 0); // 顶级类别默认展开，子类别默认收起
+    final isExpanded = _expandedCategories[category.id!] ??
+        (level == 0); // 顶级类别默认展开，子类别默认收起
 
     // 计算左侧边距
     final leftMargin = level * 24.0;
@@ -154,7 +157,9 @@ class _CategorySelectionScreenState
                 GestureDetector(
                   onTap: () {
                     setState(() {
-                      _expandedCategories[category.id] = !isExpanded;
+                      if (category.id != null) {
+                        _expandedCategories[category.id!] = !isExpanded;
+                      }
                     });
                   },
                   child: Icon(
@@ -242,12 +247,24 @@ class _CategorySelectionScreenState
           ),
           onTap: () {
             if (widget.isSelectionMode) {
-              // 选择模式：直接返回选中的类别
-              Navigator.of(context).pop(category);
+              // 检查是否为"烟"类别且是一级类别
+              if (category.name == '烟' && level == 0 && hasSubCategories) {
+                // "烟"类别且有子类别：切换展开/收起状态
+                setState(() {
+                  if (category.id != null) {
+                    _expandedCategories[category.id!] = !isExpanded;
+                  }
+                });
+              } else {
+                // 选择模式：直接返回选中的类别
+                Navigator.of(context).pop(category);
+              }
             } else if (hasSubCategories) {
               // 非选择模式且有子类别：切换展开/收起状态
               setState(() {
-                _expandedCategories[category.id] = !isExpanded;
+                if (category.id != null) {
+                  _expandedCategories[category.id!] = !isExpanded;
+                }
               });
             }
           },
@@ -258,7 +275,7 @@ class _CategorySelectionScreenState
 
   void _handleCategoryAction(
     BuildContext context,
-    Category category,
+    CategoryModel category,
     String action,
   ) {
     switch (action) {
@@ -295,7 +312,7 @@ class _CategorySelectionScreenState
               if (value == null || value.trim().isEmpty) {
                 return '请输入类别名称';
               }
-              final categories = ref.read(categoriesProvider);
+              final categories = ref.read(categoryListProvider).categories;
               if (categories.any((cat) => cat.name == value.trim())) {
                 return '类别名称已存在';
               }
@@ -332,7 +349,7 @@ class _CategorySelectionScreenState
 
   void _showAddParentCategoryDialog(
     BuildContext context,
-    Category childCategory,
+    CategoryModel childCategory,
   ) {
     final nameController = TextEditingController();
     final formKey = GlobalKey<FormState>();
@@ -354,7 +371,7 @@ class _CategorySelectionScreenState
               if (value == null || value.trim().isEmpty) {
                 return '请输入父类名称';
               }
-              final categories = ref.read(categoriesProvider);
+              final categories = ref.read(categoryListProvider).categories;
               if (categories.any((cat) => cat.name == value.trim())) {
                 return '类别名称已存在';
               }
@@ -384,7 +401,8 @@ class _CategorySelectionScreenState
                   await ref
                       .read(categoryListProvider.notifier)
                       .loadCategories();
-                  final updatedCategories = ref.read(categoriesProvider);
+                  final updatedCategories =
+                      ref.read(categoryListProvider).categories;
                   final newParent = updatedCategories.firstWhere(
                     (cat) => cat.name == nameController.text.trim(),
                   );
@@ -393,7 +411,7 @@ class _CategorySelectionScreenState
                   await ref
                       .read(categoryListProvider.notifier)
                       .updateCategory(
-                        id: childCategory.id,
+                        id: childCategory.id!,
                         name: childCategory.name,
                         parentId: newParent.id, // 设置新创建的父类为父级
                       );
@@ -413,7 +431,7 @@ class _CategorySelectionScreenState
     );
   }
 
-  void _showEditCategoryDialog(BuildContext context, Category category) {
+  void _showEditCategoryDialog(BuildContext context, CategoryModel category) {
     final nameController = TextEditingController(text: category.name);
     final formKey = GlobalKey<FormState>();
 
@@ -433,7 +451,7 @@ class _CategorySelectionScreenState
               if (value == null || value.trim().isEmpty) {
                 return '请输入类别名称';
               }
-              final categories = ref.read(categoriesProvider);
+              final categories = ref.read(categoryListProvider).categories;
               if (categories.any(
                 (cat) => cat.name == value.trim() && cat.id != category.id,
               )) {
@@ -456,7 +474,7 @@ class _CategorySelectionScreenState
                   await ref
                       .read(categoryListProvider.notifier)
                       .updateCategory(
-                        id: category.id,
+                        id: category.id!,
                         name: nameController.text.trim(),
                       );
                   Navigator.of(context).pop();
@@ -475,10 +493,10 @@ class _CategorySelectionScreenState
 
   void _showDeleteCategoryDialog(
     BuildContext context,
-    Category category,
+    CategoryModel category,
   ) async {
-    final categories = ref.read(categoriesProvider);
-    final allSubCategories = _getAllSubCategories(categories, category.id);
+    final categories = ref.read(categoryListProvider).categories;
+    final allSubCategories = _getAllSubCategories(categories, category.id!);
     final hasSubCategories = allSubCategories.isNotEmpty;
 
     // 获取关联产品数量
@@ -505,7 +523,7 @@ class _CategorySelectionScreenState
           try {
             await ref
                 .read(categoryListProvider.notifier)
-                .deleteCategoryOnly(category.id);
+                .deleteCategoryOnly(category.id!);
             Navigator.of(context).pop();
             showAppSnackBar(context, message: '类别删除成功，子类别和产品已保留');
           } catch (e) {
@@ -517,7 +535,7 @@ class _CategorySelectionScreenState
           try {
             await ref
                 .read(categoryListProvider.notifier)
-                .deleteCategoryCascade(category.id);
+                .deleteCategoryCascade(category.id!);
             Navigator.of(context).pop();
             showAppSnackBar(context, message: '类别及所有关联内容删除成功', isError: true);
           } catch (e) {
@@ -530,11 +548,11 @@ class _CategorySelectionScreenState
   }
 
   // 递归获取所有子类别
-  List<Category> _getAllSubCategories(
-    List<Category> allCategories,
-    String parentId,
+  List<CategoryModel> _getAllSubCategories(
+    List<CategoryModel> allCategories,
+    int parentId,
   ) {
-    final result = <Category>[];
+    final result = <CategoryModel>[];
 
     // 获取直接子类别
     final directSubCategories = allCategories
@@ -544,7 +562,9 @@ class _CategorySelectionScreenState
     for (final subCategory in directSubCategories) {
       result.add(subCategory);
       // 递归获取子类别的子类别
-      result.addAll(_getAllSubCategories(allCategories, subCategory.id));
+      if (subCategory.id != null) {
+        result.addAll(_getAllSubCategories(allCategories, subCategory.id!));
+      }
     }
     return result;
   }
@@ -552,7 +572,7 @@ class _CategorySelectionScreenState
 
 /// 删除类别对话框组件
 class _DeleteCategoryDialog extends StatefulWidget {
-  final Category category;
+  final CategoryModel category;
   final bool hasSubCategories;
   final int subCategoriesCount;
   final int relatedProductsCount;

@@ -11,7 +11,7 @@ import '../../../../core/widgets/full_screen_image_viewer.dart';
 
 /// 商品详情页面
 class ProductDetailScreen extends ConsumerWidget {
-  final String productId;
+  final int productId;
 
   const ProductDetailScreen({super.key, required this.productId});
 
@@ -26,7 +26,7 @@ class ProductDetailScreen extends ConsumerWidget {
           // 编辑按钮
           IconButton(
             onPressed: () {
-              context.go(AppRoutes.productEditPath(productId));
+              context.go(AppRoutes.productEditPath(productId.toString()));
             },
             icon: const Icon(Icons.edit),
             tooltip: '编辑商品',
@@ -53,7 +53,7 @@ class ProductDetailScreen extends ConsumerWidget {
   Widget _buildProductDetail(
     BuildContext context,
     WidgetRef ref,
-    Product product,
+    ProductModel product,
   ) {
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
@@ -130,7 +130,7 @@ class ProductDetailScreen extends ConsumerWidget {
                         ),
                         const Spacer(),
                         Text(
-                          '￥${product.effectivePrice!.toStringAsFixed(2)}',
+                          product.effectivePrice!.format(),
                           style: Theme.of(context).textTheme.titleLarge
                               ?.copyWith(
                                 color: Theme.of(context).primaryColor,
@@ -153,7 +153,7 @@ class ProductDetailScreen extends ConsumerWidget {
                           ),
                           const Spacer(),
                           Text(
-                            '￥${product.retailPrice!.toStringAsFixed(2)}',
+                            product.retailPrice!.format(),
                             style: Theme.of(context).textTheme.bodyLarge
                                 ?.copyWith(color: Colors.grey.shade700),
                           ),
@@ -177,7 +177,7 @@ class ProductDetailScreen extends ConsumerWidget {
                           ),
                           const Spacer(),
                           Text(
-                            '￥${product.promotionalPrice!.toStringAsFixed(2)}',
+                            product.promotionalPrice!.format(),
                             style: Theme.of(context).textTheme.bodyLarge
                                 ?.copyWith(
                                   color: Colors.red.shade600,
@@ -250,7 +250,7 @@ class ProductDetailScreen extends ConsumerWidget {
               Expanded(
                 child: OutlinedButton.icon(
                   onPressed: () {
-                    context.go(AppRoutes.productEditPath(productId));
+                    context.go(AppRoutes.productEditPath(productId.toString()));
                   },
                   icon: const Icon(Icons.edit),
                   label: const Text('编辑商品'),
@@ -326,9 +326,9 @@ class ProductDetailScreen extends ConsumerWidget {
   }
 
   /// 获取产品的保质期单位
-  String _getProductShelfLifeUnit(Product product) {
+  String _getProductShelfLifeUnit(ProductModel product) {
     // 返回产品实际的保质期单位
-    return product.shelfLifeUnit;
+    return product.shelfLifeUnit.name;
   }
 
   /// 显示全屏图片查看器

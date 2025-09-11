@@ -1,3 +1,5 @@
+import 'package:stocko_app/features/inventory/domain/model/batch.dart';
+
 import '../../domain/repository/i_product_repository.dart';
 import '../../domain/model/product.dart';
 import '../../../../core/database/database.dart';
@@ -12,7 +14,7 @@ class ProductRepository implements IProductRepository {
 
   ProductRepository(AppDatabase database) : _productDao = database.productDao;
   @override
-  Future<int> addProduct(Product product) async {
+  Future<int> addProduct(ProductModel product) async {
     try {
       print('🗃️ 仓储层：添加产品，ID: ${product.id}, 名称: ${product.name}');
       await _productDao.insertProduct(
@@ -27,9 +29,9 @@ class ProductRepository implements IProductRepository {
   }
 
   @override
-  Future<bool> updateProduct(Product product) async {
+  Future<bool> updateProduct(ProductModel product) async {
     // 检查产品ID是否为空
-    if (product.id.isEmpty) {
+    if (product.id == null || product.id! <= 0) {
       throw Exception('产品ID不能为空');
     }
 
@@ -41,7 +43,7 @@ class ProductRepository implements IProductRepository {
   }
 
   @override
-  Future<int> deleteProduct(String id) async {
+  Future<int> deleteProduct(int id) async {
     print('🗃️ 仓储层：删除产品，ID: $id');
     try {
       final productUnitDao = (_productDao.db).productUnitDao;
@@ -54,7 +56,7 @@ class ProductRepository implements IProductRepository {
       int barcodeTotal = 0;
       for (final unit in productUnits) {
         final barcodeResult = await barcodeDao.deleteBarcodesByProductUnitId(
-          unit.productUnitId,
+          unit.id,
         );
         barcodeTotal += barcodeResult;
       }
@@ -75,7 +77,7 @@ class ProductRepository implements IProductRepository {
   }
 
   @override
-  Future<Product?> getProductById(String id) async {
+  Future<ProductModel?> getProductById(int id) async {
     try {
       final result = await _productDao.getProductById(id);
       return result != null ? _dataToProduct(result) : null;
@@ -85,7 +87,7 @@ class ProductRepository implements IProductRepository {
   }
 
   @override
-  Stream<List<Product>> watchAllProducts() {
+  Stream<List<ProductModel>> watchAllProducts() {
     return _productDao
         .watchAllProducts()
         .map((data) => data.map(_dataToProduct).toList())
@@ -95,28 +97,57 @@ class ProductRepository implements IProductRepository {
   }
 
   @override
-  Stream<List<({Product product, String unitName, double? wholesalePrice})>>
+  Stream<
+    List<
+      ({
+        ProductModel product,
+        int unitId,
+        String unitName,
+        int conversionRate,
+        int? wholesalePriceInCents
+      })
+    >
+  >
   watchAllProductsWithUnit() {
     return _productDao
         .watchAllProductsWithUnit()
         .map(
           (data) => data
               .map(
-                (e) => (
-                  product: _dataToProduct(e.product),
-                  unitName: e.unitName,
-                  wholesalePrice: e.wholesalePrice,
-                ),
+                (e) {
+                  try {
+                    return (
+                      product: _dataToProduct(e.product),
+                      unitId: e.unitId,
+                      unitName: e.unitName,
+                      conversionRate: e.conversionRate,
+                      wholesalePriceInCents: e.wholesalePriceInCents,
+                    );
+                  } catch (error) {
+                    print('转换产品数据时出错: $error');
+                    print('问题产品ID: ${e.product.id}');
+                    // 返回一个安全的默认值，但跳过这个有问题的项
+                    rethrow;
+                  }
+                },
               )
               .toList(),
         )
         .handleError((error) {
-          throw Exception('监听产品及其单位失败: $error');
+          print('监听产品及其单位失败: $error');
+          // 返回空列表而不是抛出异常
+          return <({
+            ProductModel product,
+            int unitId,
+            String unitName,
+            int conversionRate,
+            int? wholesalePriceInCents
+          })>[];
         });
   }
 
   @override
-  Future<List<Product>> getAllProducts() async {
+  Future<List<ProductModel>> getAllProducts() async {
     try {
       final data = await _productDao.getAllProducts();
       return data.map(_dataToProduct).toList();
@@ -127,8 +158,8 @@ class ProductRepository implements IProductRepository {
 
   /// 根据条件查询产品
   @override
-  Future<List<Product>> getProductsByCondition({
-    String? categoryId,
+  Future<List<ProductModel>> getProductsByCondition({
+    int? categoryId,
     String? status,
     String? keyword,
   }) async {
@@ -146,7 +177,7 @@ class ProductRepository implements IProductRepository {
 
   /// 监听指定类别的产品
   @override
-  Stream<List<Product>> watchProductsByCategory(String categoryId) {
+  Stream<List<ProductModel>> watchProductsByCategory(int categoryId) {
     return _productDao
         .watchProductsByCategory(categoryId)
         .map((data) => data.map(_dataToProduct).toList())
@@ -157,7 +188,7 @@ class ProductRepository implements IProductRepository {
 
   /// 根据条码查询产品
   @override
-  Future<Product?> getProductByBarcode(String barcode) async {
+  Future<ProductModel?> getProductByBarcode(String barcode) async {
     try {
       final result = await _productDao.getProductByBarcode(barcode);
       return result != null ? _dataToProduct(result) : null;
@@ -168,7 +199,15 @@ class ProductRepository implements IProductRepository {
 
   /// 根据条码获取产品及其单位信息
   @override
-  Future<({Product product, String unitName, double? wholesalePrice})?>
+  Future<
+    ({
+      ProductModel product,
+      int unitId,
+      String unitName,
+      int conversionRate,
+      int? wholesalePriceInCents
+    })?
+  >
   getProductWithUnitByBarcode(String barcode) async {
     try {
       final result = await _productDao.getProductWithUnitByBarcode(barcode);
@@ -176,8 +215,10 @@ class ProductRepository implements IProductRepository {
 
       return (
         product: _dataToProduct(result.product),
+        unitId: result.unitId,
         unitName: result.unitName,
-        wholesalePrice: result.wholesalePrice,
+        conversionRate: result.conversionRate,
+        wholesalePriceInCents: result.wholesalePriceInCents,
       );
     } catch (e) {
       throw Exception('根据条码查询产品及单位失败: $e');
@@ -185,7 +226,7 @@ class ProductRepository implements IProductRepository {
   }
 
   /// 获取库存预警产品
-  Future<List<Product>> getStockWarningProducts() async {
+  Future<List<ProductModel>> getStockWarningProducts() async {
     try {
       final data = await _productDao.getStockWarningProducts();
       return data.map(_dataToProduct).toList();
@@ -195,7 +236,7 @@ class ProductRepository implements IProductRepository {
   }
 
   /// 批量添加产品
-  Future<void> addMultipleProducts(List<Product> products) async {
+  Future<void> addMultipleProducts(List<ProductModel> products) async {
     try {
       final companions = products.map(_productToCompanion).toList();
       await _productDao.insertMultipleProducts(companions);
@@ -205,7 +246,7 @@ class ProductRepository implements IProductRepository {
   }
 
   /// 批量更新产品
-  Future<void> updateMultipleProducts(List<Product> products) async {
+  Future<void> updateMultipleProducts(List<ProductModel> products) async {
     try {
       final companions = products.map(_productToCompanion).toList();
       await _productDao.updateMultipleProducts(companions);
@@ -215,7 +256,7 @@ class ProductRepository implements IProductRepository {
   }
 
   /// 检查产品是否存在
-  Future<bool> productExists(String id) async {
+  Future<bool> productExists(int id) async {
     try {
       return await _productDao.productExists(id);
     } catch (e) {
@@ -233,16 +274,18 @@ class ProductRepository implements IProductRepository {
   }
 
   /// 将Product模型转换为数据库Companion
-  ProductsTableCompanion _productToCompanion(Product product) {
-    return ProductsTableCompanion(
-      id: Value(product.id),
+  ProductCompanion _productToCompanion(ProductModel product) {
+    return ProductCompanion(
+      // 自增ID：插入时应当缺省，更新时需要提供
+      id: product.id == null ? const Value.absent() : Value(product.id!),
       name: Value(product.name),
       sku: Value(product.sku),
       image: Value(product.image),
       categoryId: Value(product.categoryId),
-      unitId: Value(product.unitId),
+      baseUnitId: Value(product.baseUnitId),
       specification: Value(product.specification),
       brand: Value(product.brand),
+      // Money 字段，直接映射对应列名
       suggestedRetailPrice: Value(product.suggestedRetailPrice),
       retailPrice: Value(product.retailPrice),
       promotionalPrice: Value(product.promotionalPrice),
@@ -257,36 +300,65 @@ class ProductRepository implements IProductRepository {
   }
 
   /// 将数据库数据转换为Product模型
-  Product _dataToProduct(ProductsTableData data) {
-    return Product(
-      id: data.id, // ID现在是必需的，不需要null检查
-      name: data.name,
-      sku: data.sku,
-      image: data.image,
-      categoryId: data.categoryId,
-      unitId: data.unitId,
-      specification: data.specification,
-      brand: data.brand,
-      suggestedRetailPrice: data.suggestedRetailPrice,
-      retailPrice: data.retailPrice,
-      promotionalPrice: data.promotionalPrice,
-      stockWarningValue: data.stockWarningValue,
-      shelfLife: data.shelfLife,
-      shelfLifeUnit: data.shelfLifeUnit,
-      enableBatchManagement: data.enableBatchManagement,
-      status: data.status,
-      remarks: data.remarks,
-      lastUpdated: data.lastUpdated,
-    );
+  ProductModel _dataToProduct(ProductData data) {
+    try {
+      return ProductModel(
+        id: data.id, // 直接使用int类型的id
+        name: data.name,
+        sku: data.sku,
+        image: data.image,
+        categoryId: data.categoryId,
+        baseUnitId: data.baseUnitId,
+        specification: data.specification,
+        brand: data.brand,
+        suggestedRetailPrice: data.suggestedRetailPrice,
+        retailPrice: data.retailPrice,
+        promotionalPrice: data.promotionalPrice,
+        stockWarningValue: data.stockWarningValue,
+        shelfLife: data.shelfLife,
+        shelfLifeUnit: data.shelfLifeUnit,
+        enableBatchManagement: data.enableBatchManagement,
+        status: data.status,
+        remarks: data.remarks,
+        lastUpdated: data.lastUpdated,
+      );
+    } catch (e) {
+      print('转换产品数据时出错: $e');
+      print('问题数据: id=${data.id}, name=${data.name}, baseUnitId=${data.baseUnitId}');
+      rethrow;
+    }
   }
 
   @override
-  Future<bool> isUnitUsed(String unitId) async {
+  Future<bool> isUnitUsed(int unitId) async {
     try {
       return await _productDao.isUnitUsed(unitId);
     } catch (e) {
       throw Exception('检查单位是否被使用失败: $e');
     }
+  }
+  @override
+  Future<List<BatchModel>> getBatchesByProductAndShop(
+      int productId, int shopId) async {
+    try {
+      final batchDao = (_productDao.db).batchDao;
+      final data = await batchDao.getBatchesByProductAndShop(productId, shopId);
+      return data.map(_dataToBatch).toList();
+    } catch (e) {
+      throw Exception('根据产品和店铺获取批次失败: $e');
+    }
+  }
+
+  BatchModel _dataToBatch(ProductBatchData data) {
+    return BatchModel(
+      id: data.id,
+      productId: data.productId,
+      productionDate: data.productionDate,
+      totalInboundQuantity: data.totalInboundQuantity,
+      shopId: data.shopId,
+      createdAt: data.createdAt,
+      updatedAt: data.updatedAt,
+    );
   }
 }
 
@@ -297,7 +369,7 @@ final productRepositoryProvider = Provider<IProductRepository>((ref) {
 });
 
 /// Provider to get a single product by its ID.
-final productByIdProvider = FutureProvider.family<Product?, String>((
+final productByIdProvider = FutureProvider.family<ProductModel?, int>((
   ref,
   id,
 ) async {

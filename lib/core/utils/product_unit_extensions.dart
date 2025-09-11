@@ -1,7 +1,7 @@
 import '../../../features/product/domain/model/product_unit.dart';
 
-/// ProductUnit 的扩展方法
-extension ProductUnitExtensions on ProductUnit {
+/// UnitProduct 的扩展方法
+extension ProductUnitExtensions on UnitProduct {
   /// 判断是否为基础单位
   bool get isBaseUnit => conversionRate == 1.0;
 
@@ -19,24 +19,24 @@ extension ProductUnitExtensions on ProductUnit {
   }
 }
 
-/// List<ProductUnit> 的扩展方法
-extension ProductUnitListExtensions on List<ProductUnit> {
+/// List<UnitProduct> 的扩展方法
+extension ProductUnitListExtensions on List<UnitProduct> {
   /// 按换算率从大到小排序
-  List<ProductUnit> get sortedByConversionRateDesc {
-    final sorted = List<ProductUnit>.from(this);
+  List<UnitProduct> get sortedByConversionRateDesc {
+    final sorted = List<UnitProduct>.from(this);
     sorted.sort((a, b) => b.conversionRate.compareTo(a.conversionRate));
     return sorted;
   }
 
   /// 按换算率从小到大排序
-  List<ProductUnit> get sortedByConversionRateAsc {
-    final sorted = List<ProductUnit>.from(this);
+  List<UnitProduct> get sortedByConversionRateAsc {
+    final sorted = List<UnitProduct>.from(this);
     sorted.sort((a, b) => a.conversionRate.compareTo(b.conversionRate));
     return sorted;
   }
 
   /// 查找基础单位
-  ProductUnit? get baseUnit {
+  UnitProduct? get baseUnit {
     try {
       return firstWhere((unit) => unit.isBaseUnit);
     } catch (e) {
@@ -45,19 +45,19 @@ extension ProductUnitListExtensions on List<ProductUnit> {
   }
 
   /// 查找最大单位（换算率最大）
-  ProductUnit? get largestUnit {
+  UnitProduct? get largestUnit {
     if (isEmpty) return null;
     return reduce((a, b) => a.conversionRate > b.conversionRate ? a : b);
   }
 
   /// 查找最小单位（换算率最小）
-  ProductUnit? get smallestUnit {
+  UnitProduct? get smallestUnit {
     if (isEmpty) return null;
     return reduce((a, b) => a.conversionRate < b.conversionRate ? a : b);
   }
 
   /// 根据单位ID查找ProductUnit
-  ProductUnit? findByUnitId(String unitId) {
+  UnitProduct? findByUnitId(int unitId) {
     try {
       return firstWhere((pu) => pu.unitId == unitId);
     } catch (e) {
@@ -81,12 +81,14 @@ extension ProductUnitListExtensions on List<ProductUnit> {
   String? get configurationError {
     if (isEmpty) return '至少需要配置一个单位';
 
-    final baseUnits = where((unit) => unit.isBaseUnit).toList();
-    if (baseUnits.isEmpty) return '必须有一个基础单位（换算率为1）';
-    if (baseUnits.length > 1) return '只能有一个基础单位（换算率为1）';
+  // 先校验换算率有效性（优先级更高）
+  final invalidRates = where((unit) => unit.conversionRate <= 0);
+  if (invalidRates.isNotEmpty) return '换算率必须大于0';
 
-    final invalidRates = where((unit) => unit.conversionRate <= 0);
-    if (invalidRates.isNotEmpty) return '换算率必须大于0';
+  // 再校验基础单位约束
+  final baseUnits = where((unit) => unit.isBaseUnit).toList();
+  if (baseUnits.isEmpty) return '必须有一个基础单位（换算率为1）';
+  if (baseUnits.length > 1) return '只能有一个基础单位（换算率为1）';
 
     return null;
   }

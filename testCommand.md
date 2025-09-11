@@ -2,20 +2,24 @@
 
 cd E:\stocko_app\
 git add .
-git commit -m "0729 2 627"
+git commit -m "910 4 636 采购入库单位换算修复"
 git push
 
 
 
 
 cd E:\stocko_app\
-flutter run -v
-adb connect 192.168.5.83:37141 
+flutter run --flavor generic -t lib\main_generic.dart
+flutter run --flavor personalized -t lib\main_personalized.dart
+adb pair 192.168.5.83:37785 
+adb connect 192.168.5.83:40547
+flutter run
 
 
 cd E:\stocko_app\lib
 gemini
 
+cd E:\stocko_app\
 dart run build_runner build --delete-conflicting-outputs
 
 flutter run
@@ -26,13 +30,14 @@ cd E:\stocko_app\
 flutter devices
 
 ancient-medium-456903-f3
-
+root-gist-467921-s7
 AIzaSyAIsu3ZFPCAHmDvDdXnQw4kyMLvkRnjF0w
 
-在"扫码添加商品"按钮旁边添加"连续扫码"滑动开关，默认为关闭状态
 
-注意：
-以上任务完成即可！其它功能留待后续实现！
-请勿运行pub get! 
-请勿运行flutter analyze！
-如你有任何质疑或建议，请提出。
+https://api-inference.modelscope.cn/v1
+sk-ufXdeSXiQS2vvK7EeTLtOnRBR+f2iJn9/LyG51PazFZttVIrPUf04hVXQ0b85TzNUnrVrm94eeT3kVUM3pFpDlND+5vIOLTzKwSHnvLFggk=
+
+
+dart run flutter_launcher_icons -f flutter_launcher_icons-generic.yaml
+dart run flutter_launcher_icons -f flutter_launcher_icons-personalized.yaml
+

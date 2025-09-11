@@ -1,18 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../features/product/domain/model/product.dart';
-import '../../../features/product/application/provider/unit_providers.dart';
-import '../../widgets/cached_image_widget.dart';
+import 'package:stocko_app/features/inventory/presentation/widgets/adjust_inventory_dialog.dart';
+import 'package:stocko_app/features/product/domain/model/product.dart';
+import 'package:stocko_app/features/product/application/provider/unit_providers.dart';
+import 'package:stocko_app/core/widgets/cached_image_widget.dart';
 import 'package:flutter/services.dart';
-import 'product_list.dart';
 
 class ProductItem extends ConsumerStatefulWidget {
-  final Product item;
+  final ProductModel item;
   final String mode;
   final bool isSelected;
   final Function(dynamic)? onToggleSelect;
-  final Function(Product)? onEdit;
-  final Function(Product)? onDelete;
+  final Function(ProductModel)? onEdit;
+  final Function(ProductModel)? onDelete;
+  final Function(ProductModel)? onAdjustInventory;
   final VoidCallback? onHideActions;
 
   const ProductItem({
@@ -23,6 +24,7 @@ class ProductItem extends ConsumerStatefulWidget {
     this.onToggleSelect,
     this.onEdit,
     this.onDelete,
+    this.onAdjustInventory,
     this.onHideActions,
   });
 
@@ -31,41 +33,31 @@ class ProductItem extends ConsumerStatefulWidget {
 }
 
 class _ProductItemState extends ConsumerState<ProductItem> {
-  static _ProductItemState? _activeItem;
-  bool _showActions = false;
   String? _unitName;
   bool _unitLoaded = false;
+  int? _lastBaseUnitId;
 
   @override
   void initState() {
     super.initState();
-    ProductItemManager.setHideAllActions(() {
-      _activeItem?.hideActions();
-      _activeItem = null;
-    });
-    _loadUnitName();
+    _lastBaseUnitId = widget.item.baseUnitId;
   }
 
   @override
   void didUpdateWidget(covariant ProductItem oldWidget) {
     super.didUpdateWidget(oldWidget);
-    // 当外部传入的 item 的 unitId 发生变化时，重新加载单位名称
-    if (widget.item.unitId != oldWidget.item.unitId) {
-      // 重置标志位，允许重新加载
+    if (widget.item.baseUnitId != oldWidget.item.baseUnitId) {
+      _lastBaseUnitId = widget.item.baseUnitId;
       _unitLoaded = false;
-      _loadUnitName();
     }
   }
 
-  Future<void> _loadUnitName() async {
-    print('🔍 产品 ${widget.item.name} 的 unitId: ${widget.item.unitId}');
-    if (widget.item.unitId != null && !_unitLoaded) {
+  Future<void> _loadUnitName(WidgetRef ref) async {
+    if (!_unitLoaded && _lastBaseUnitId != null) {
       try {
-        print('🔍 正在获取单位信息，unitId: ${widget.item.unitId}');
         final unit = await ref
             .read(unitControllerProvider.notifier)
-            .getUnitById(widget.item.unitId!);
-        print('🔍 获取到的单位: ${unit?.name}');
+            .getUnitById(_lastBaseUnitId!);
         if (mounted) {
           setState(() {
             _unitName = unit?.name;
@@ -80,50 +72,65 @@ class _ProductItemState extends ConsumerState<ProductItem> {
           });
         }
       }
-    } else {
-      print('🔍 产品 ${widget.item.name} 没有 unitId 或已加载');
     }
   }
 
-  void hideActions() {
-    if (_showActions) {
-      setState(() => _showActions = false);
-    }
-  }
-
-  static void hideAllActions() {
-    _activeItem?.hideActions();
-    _activeItem = null;
-  }
-
-  @override
-  void dispose() {
-    if (_activeItem == this) {
-      _activeItem = null;
-    }
-    super.dispose();
+  void _showMenu(BuildContext context, LongPressStartDetails details) {
+    final RenderBox overlay =
+        Overlay.of(context).context.findRenderObject() as RenderBox;
+    showMenu<String>(
+      context: context,
+      position: RelativeRect.fromLTRB(
+        details.globalPosition.dx,
+        details.globalPosition.dy,
+        overlay.size.width - details.globalPosition.dx,
+        overlay.size.height - details.globalPosition.dy,
+      ),
+      items: [
+        const PopupMenuItem<String>(
+          value: 'edit',
+          child: Text('编辑'),
+        ),
+        const PopupMenuItem<String>(
+          value: 'delete',
+          child: Text('删除', style: TextStyle(color: Colors.red)),
+        ),
+        const PopupMenuItem<String>(
+          value: 'adjust_inventory',
+          child: Text('调整库存'),
+        ),
+      ],
+    ).then((value) {
+      if (value == 'edit') {
+        widget.onEdit?.call(widget.item);
+      } else if (value == 'delete') {
+        widget.onDelete?.call(widget.item);
+      } else if (value == 'adjust_inventory') {
+        showDialog(
+          context: context,
+          builder: (context) => AdjustInventoryDialog(product: widget.item),
+        );
+      }
+    });
   }
 
   @override
   Widget build(BuildContext context) {
+    // 在build方法中加载单位名称，确保ref.read()在正确的上下文中使用
+    if (!_unitLoaded) {
+      _loadUnitName(ref);
+    }
+    
     return GestureDetector(
       onTap: () {
         if (widget.mode == 'select') {
           widget.onToggleSelect?.call(widget.item.id);
-        } else if (widget.mode == 'display') {
-          ProductItemManager.hideAllActions();
         }
       },
-      onLongPress: () {
+      onLongPressStart: (details) {
         if (widget.mode == 'display') {
           HapticFeedback.mediumImpact();
-          // 隐藏其他按钮
-          if (_activeItem != null && _activeItem != this) {
-            _activeItem!.hideActions();
-          }
-          setState(() => _showActions = !_showActions);
-          _activeItem = _showActions ? this : null;
-          print('长按触发，_showActions: $_showActions');
+          _showMenu(context, details);
         }
       },
       child: Container(
@@ -137,80 +144,46 @@ class _ProductItemState extends ConsumerState<ProductItem> {
           borderRadius: BorderRadius.circular(8),
           color: widget.isSelected ? Colors.blue.shade50 : Colors.white,
         ),
-        child: Column(
+        child: Row(
           children: [
-            Row(
-              children: [
-                const SizedBox(width: 12),
-                if (widget.item.image != null && widget.item.image!.isNotEmpty)
-                  ProductThumbnailImage(imagePath: widget.item.image!)
-                else
-                  // 当没有图片时，显示一个占位符，以保持布局一致
-                  Container(
-                    width: 60,
-                    height: 80,
-                    decoration: BoxDecoration(
-                      color: Colors.grey.shade100,
-                      borderRadius: BorderRadius.circular(6),
-                    ),
-                    child: Icon(
-                      Icons.image_outlined,
-                      color: Colors.grey.shade400,
-                      size: 30,
-                    ),
-                  ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        widget.item.name,
-                        style: const TextStyle(fontWeight: FontWeight.bold),
-                      ),
-                      Text(widget.item.formattedPrice),
-                      if (_unitName != null)
-                        Text(
-                          '单位: $_unitName',
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: Colors.grey.shade600,
-                          ),
-                        ),
-                    ],
-                  ),
+            const SizedBox(width: 12),
+            if (widget.item.image != null && widget.item.image!.isNotEmpty)
+              ProductThumbnailImage(imagePath: widget.item.image!)
+            else
+              Container(
+                width: 60,
+                height: 80,
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade100,
+                  borderRadius: BorderRadius.circular(6),
                 ),
-              ],
-            ),
-            if (_showActions && widget.mode == 'display')
-              Padding(
-                padding: const EdgeInsets.only(top: 8),
-                child: Align(
-                  alignment: Alignment.centerRight,
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      TextButton.icon(
-                        onPressed: () => widget.onEdit?.call(widget.item),
-                        icon: const Icon(Icons.edit, size: 16),
-                        label: const Text('编辑'),
-                      ),
-                      TextButton.icon(
-                        onPressed: () => widget.onDelete?.call(widget.item),
-                        icon: const Icon(
-                          Icons.delete,
-                          size: 16,
-                          color: Colors.red,
-                        ),
-                        label: const Text(
-                          '删除',
-                          style: TextStyle(color: Colors.red),
-                        ),
-                      ),
-                    ],
-                  ),
+                child: Icon(
+                  Icons.image_outlined,
+                  color: Colors.grey.shade400,
+                  size: 30,
                 ),
               ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    widget.item.name,
+                    style: const TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  Text(widget.item.formattedPrice),
+                  if (_unitName != null)
+                    Text(
+                      '单位: $_unitName',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Colors.grey.shade600,
+                      ),
+                    ),
+                ],
+              ),
+            ),
           ],
         ),
       ),

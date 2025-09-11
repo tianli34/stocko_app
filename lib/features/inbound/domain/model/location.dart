@@ -5,7 +5,7 @@ class Location {
   final String code;
   final String name;
   final String? description;
-  final String shopId;
+  final int shopId;
   final String status;
   final DateTime createdAt;
   final DateTime updatedAt;
@@ -46,7 +46,7 @@ class Location {
     String? code,
     String? name,
     String? description,
-    String? shopId,
+    int? shopId,
     String? status,
     DateTime? createdAt,
     DateTime? updatedAt,
@@ -68,7 +68,7 @@ class Location {
     required String code,
     required String name,
     String? description,
-    required String shopId,
+    required int shopId,
   }) {
     final now = DateTime.now();
     return Location(

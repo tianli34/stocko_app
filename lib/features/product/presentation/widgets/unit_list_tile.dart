@@ -143,7 +143,9 @@ class UnitListTile extends ConsumerWidget {
               } else {
                 // 默认删除操作
                 final controller = ref.read(unitControllerProvider.notifier);
-                controller.deleteUnit(unit.id);
+                if (unit.id != null) {
+                  controller.deleteUnit(unit.id!);
+                }
               }
             },
             style: TextButton.styleFrom(foregroundColor: Colors.red.shade600),

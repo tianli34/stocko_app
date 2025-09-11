@@ -4,7 +4,6 @@ import '../../../product/application/provider/product_providers.dart';
 import '../../../../core/widgets/custom_date_picker.dart';
 import '../../../../core/widgets/cached_image_widget.dart';
 import '../../application/provider/inbound_list_provider.dart';
-import '../../domain/model/inbound_item.dart';
 
 /// 入库单商品项卡片
 /// 显示商品信息、价格、数量和金额输入等
@@ -49,7 +48,8 @@ class _InboundItemCardState extends ConsumerState<InboundItemCard> {
         final item = ref
             .read(inboundListProvider)
             .firstWhere((it) => it.id == widget.itemId);
-        _unitPriceController.text = item.unitPrice.toStringAsFixed(2);
+        _unitPriceController.text = (item.unitPriceInCents / 100)
+            .toStringAsFixed(2);
       }
     }
   }
@@ -75,7 +75,7 @@ class _InboundItemCardState extends ConsumerState<InboundItemCard> {
         final item = ref
             .read(inboundListProvider)
             .firstWhere((it) => it.id == widget.itemId);
-        _amountController.text = item.amount.toStringAsFixed(2);
+        _amountController.text = (item.amountInCents / 100).toStringAsFixed(2);
       }
     }
   }
@@ -115,41 +115,37 @@ class _InboundItemCardState extends ConsumerState<InboundItemCard> {
     super.dispose();
   }
 
-  void _updateItem(InboundItem item, {DateTime? newProductionDate}) {
-    final unitPrice = double.tryParse(_unitPriceController.text) ?? 0.0;
-    final quantity = double.tryParse(_quantityController.text) ?? 0.0;
-    final amount = unitPrice * quantity;
+  void _updateItem(InboundItemState item, {DateTime? newProductionDate}) {
+    final unitPrice = (double.tryParse(_unitPriceController.text) ?? 0.0) * 100;
+    final quantity = int.tryParse(_quantityController.text) ?? 0;
+    final amount = unitPrice * quantity / 100;
 
     if (!_isUpdatingFromAmount) {
-      _amountController.text = amount.toStringAsFixed(2);
+      _amountController.text = (amount / 100).toStringAsFixed(2);
     }
 
     final updatedItem = item.copyWith(
-      unitPrice: unitPrice,
+      unitPriceInCents: unitPrice.toInt(),
       quantity: quantity,
-      amount: _isUpdatingFromAmount
-          ? (double.tryParse(_amountController.text) ?? amount)
-          : amount,
       productionDate: newProductionDate ?? item.productionDate,
     );
 
     ref.read(inboundListProvider.notifier).updateItem(updatedItem);
   }
 
-  void _updateFromAmount(InboundItem item) {
-    final amount = double.tryParse(_amountController.text) ?? 0.0;
-    final quantity = double.tryParse(_quantityController.text) ?? 1.0;
+  void _updateFromAmount(InboundItemState item) {
+    final amount = (double.tryParse(_amountController.text) ?? 0.0) * 100;
+    final quantity = int.tryParse(_quantityController.text) ?? 1;
 
     if (quantity > 0) {
-      final unitPrice = amount / quantity;
+      final unitPriceInCents = amount / quantity;
 
       _isUpdatingFromAmount = true;
-      _unitPriceController.text = unitPrice.toStringAsFixed(2);
+      _unitPriceController.text = (unitPriceInCents / 100).toStringAsFixed(2);
 
       final updatedItem = item.copyWith(
-        unitPrice: unitPrice,
+        unitPriceInCents: unitPriceInCents.toInt(),
         quantity: quantity,
-        amount: amount,
       );
 
       ref.read(inboundListProvider.notifier).updateItem(updatedItem);
@@ -158,7 +154,7 @@ class _InboundItemCardState extends ConsumerState<InboundItemCard> {
     }
   }
 
-  Future<void> _selectProductionDate(InboundItem item) async {
+  Future<void> _selectProductionDate(InboundItemState item) async {
     final DateTime? picked = await CustomDatePicker.show(
       context: context,
       initialDate: item.productionDate ?? DateTime.now(),
@@ -189,8 +185,11 @@ class _InboundItemCardState extends ConsumerState<InboundItemCard> {
     // --- 同步Controller与State ---
     // 只有在非焦点且文本不同时才更新，避免覆盖用户输入
     if (!_unitPriceFocusNode.hasFocus &&
-        _unitPriceController.text != item.unitPrice.toStringAsFixed(2)) {
-      _unitPriceController.text = item.unitPrice.toStringAsFixed(2);
+        _unitPriceController.text !=
+            (item.unitPriceInCents / 100).toStringAsFixed(2)) {
+      _unitPriceController.text = (item.unitPriceInCents / 100).toStringAsFixed(
+        2,
+      );
     }
     if (widget.quantityFocusNode?.hasFocus == false &&
         _quantityController.text != item.quantity.toStringAsFixed(0)) {
@@ -198,13 +197,21 @@ class _InboundItemCardState extends ConsumerState<InboundItemCard> {
     }
     if (widget.amountFocusNode?.hasFocus == false &&
         !_isUpdatingFromAmount &&
-        _amountController.text != item.amount.toStringAsFixed(2)) {
-      _amountController.text = item.amount.toStringAsFixed(2);
+        _amountController.text !=
+            (item.amountInCents / 100).toStringAsFixed(2)) {
+      _amountController.text = (item.amountInCents / 100).toStringAsFixed(2);
     }
     // --------------------------
 
     return Card(
       elevation: 2,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(8),
+        side: BorderSide(
+          color: Colors.blue.shade300,
+          width: 1.5,
+        ),
+      ),
       child: Stack(
         children: [
           Padding(
@@ -212,8 +219,9 @@ class _InboundItemCardState extends ConsumerState<InboundItemCard> {
             child: Consumer(
               builder: (context, ref, _) {
                 // 将product provider的监听提升到顶层，以便在多个地方共享其状态
-                final productAsync =
-                    ref.watch(productByIdProvider(item.productId));
+                final productAsync = ref.watch(
+                  productByIdProvider(item.productId),
+                );
 
                 return productAsync.when(
                   loading: () => const SizedBox(
@@ -223,7 +231,8 @@ class _InboundItemCardState extends ConsumerState<InboundItemCard> {
                   error: (e, st) => SizedBox(
                     height: 80,
                     child: Center(
-                        child: Icon(Icons.error, color: Colors.red, size: 30)),
+                      child: Icon(Icons.error, color: Colors.red, size: 30),
+                    ),
                   ),
                   data: (product) {
                     // 根据产品是否需要批次管理，决定日期选择器是否可见
@@ -284,10 +293,10 @@ class _InboundItemCardState extends ConsumerState<InboundItemCard> {
                                       child: TextFormField(
                                         controller: _quantityController,
                                         focusNode: widget.quantityFocusNode,
-                                        keyboardType: const TextInputType
-                                            .numberWithOptions(
-                                          decimal: false,
-                                        ),
+                                        keyboardType:
+                                            const TextInputType.numberWithOptions(
+                                              decimal: false,
+                                            ),
                                         textAlign: TextAlign.center,
                                         textInputAction: TextInputAction.next,
                                         decoration: const InputDecoration(
@@ -295,8 +304,7 @@ class _InboundItemCardState extends ConsumerState<InboundItemCard> {
                                           border: OutlineInputBorder(),
                                           contentPadding: EdgeInsets.zero,
                                         ),
-                                        onChanged: (value) =>
-                                            _updateItem(item),
+                                        onChanged: (value) => _updateItem(item),
                                         onFieldSubmitted: (value) =>
                                             widget.onAmountSubmitted?.call(),
                                       ),
@@ -306,8 +314,9 @@ class _InboundItemCardState extends ConsumerState<InboundItemCard> {
                                   Text(
                                     item.unitName,
                                     style: TextStyle(
-                                        fontSize: 12,
-                                        color: Colors.grey[600]),
+                                      fontSize: 12,
+                                      color: Colors.grey[600],
+                                    ),
                                   ),
                                   const SizedBox(width: 55),
                                 ],
@@ -321,34 +330,35 @@ class _InboundItemCardState extends ConsumerState<InboundItemCard> {
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Expanded(
-                                      flex: 2,
+                                      flex: 6,
                                       child: Column(
                                         crossAxisAlignment:
                                             CrossAxisAlignment.start,
                                         children: [
-                                          const Text('单价',
-                                              style: TextStyle(
-                                                  fontSize: 12,
-                                                  color: Colors.grey)),
+                                          const Text(
+                                            '单价',
+                                            style: TextStyle(
+                                              fontSize: 12,
+                                              color: Colors.grey,
+                                            ),
+                                          ),
                                           const SizedBox(height: 4),
                                           SizedBox(
                                             height: 27,
                                             child: TextFormField(
-                                              controller:
-                                                  _unitPriceController,
+                                              controller: _unitPriceController,
                                               focusNode: _unitPriceFocusNode,
                                               keyboardType:
-                                                  const TextInputType
-                                                      .numberWithOptions(
-                                                decimal: true,
-                                              ),
-                                              decoration:
-                                                  const InputDecoration(
+                                                  const TextInputType.numberWithOptions(
+                                                    decimal: true,
+                                                  ),
+                                              decoration: const InputDecoration(
                                                 border: OutlineInputBorder(),
-                                                contentPadding: EdgeInsets
-                                                    .symmetric(
-                                                        horizontal: 12,
-                                                        vertical: 7),
+                                                contentPadding:
+                                                    EdgeInsets.symmetric(
+                                                      horizontal: 12,
+                                                      vertical: 7,
+                                                    ),
                                                 prefixText: '¥',
                                               ),
                                               onChanged: (value) =>
@@ -360,37 +370,38 @@ class _InboundItemCardState extends ConsumerState<InboundItemCard> {
                                     ),
                                     const SizedBox.square(dimension: 12.0),
                                     Expanded(
-                                      flex: 1,
+                                      flex: 3,
                                       child: Column(
                                         crossAxisAlignment:
                                             CrossAxisAlignment.start,
                                         children: [
-                                          const Text('数量',
-                                              style: TextStyle(
-                                                  fontSize: 12,
-                                                  color: Colors.grey)),
+                                          const Text(
+                                            '数量',
+                                            style: TextStyle(
+                                              fontSize: 12,
+                                              color: Colors.grey,
+                                            ),
+                                          ),
                                           const SizedBox(height: 4),
                                           SizedBox(
                                             height: 27,
                                             child: TextFormField(
-                                              controller:
-                                                  _quantityController,
+                                              controller: _quantityController,
                                               focusNode:
                                                   widget.quantityFocusNode,
                                               keyboardType:
-                                                  const TextInputType
-                                                      .numberWithOptions(
-                                                decimal: false,
-                                              ),
+                                                  const TextInputType.numberWithOptions(
+                                                    decimal: false,
+                                                  ),
                                               textInputAction:
                                                   TextInputAction.next,
-                                              decoration:
-                                                  const InputDecoration(
+                                              decoration: const InputDecoration(
                                                 border: OutlineInputBorder(),
-                                                contentPadding: EdgeInsets
-                                                    .symmetric(
-                                                        horizontal: 12,
-                                                        vertical: 7),
+                                                contentPadding:
+                                                    EdgeInsets.symmetric(
+                                                      horizontal: 12,
+                                                      vertical: 4,
+                                                    ),
                                               ),
                                               onChanged: (value) =>
                                                   _updateItem(item),
@@ -400,11 +411,12 @@ class _InboundItemCardState extends ConsumerState<InboundItemCard> {
                                                   widget.amountFocusNode!
                                                       .requestFocus();
                                                   WidgetsBinding.instance
-                                                      .addPostFrameCallback(
-                                                          (_) {
-                                                    _amountController
-                                                        .clear();
-                                                  });
+                                                      .addPostFrameCallback((
+                                                        _,
+                                                      ) {
+                                                        _amountController
+                                                            .clear();
+                                                      });
                                                 }
                                               },
                                             ),
@@ -414,36 +426,37 @@ class _InboundItemCardState extends ConsumerState<InboundItemCard> {
                                     ),
                                     const SizedBox.square(dimension: 12.0),
                                     Expanded(
-                                      flex: 2,
+                                      flex: 7,
                                       child: Column(
                                         crossAxisAlignment:
                                             CrossAxisAlignment.start,
                                         children: [
-                                          const Text('金额',
-                                              style: TextStyle(
-                                                  fontSize: 12,
-                                                  color: Colors.grey)),
+                                          const Text(
+                                            '金额',
+                                            style: TextStyle(
+                                              fontSize: 12,
+                                              color: Colors.grey,
+                                            ),
+                                          ),
                                           const SizedBox(height: 4),
                                           SizedBox(
                                             height: 27,
                                             child: TextFormField(
                                               controller: _amountController,
-                                              focusNode:
-                                                  widget.amountFocusNode,
+                                              focusNode: widget.amountFocusNode,
                                               keyboardType:
-                                                  const TextInputType
-                                                      .numberWithOptions(
-                                                decimal: true,
-                                              ),
+                                                  const TextInputType.numberWithOptions(
+                                                    decimal: true,
+                                                  ),
                                               textInputAction:
                                                   TextInputAction.done,
-                                              decoration:
-                                                  const InputDecoration(
+                                              decoration: const InputDecoration(
                                                 border: OutlineInputBorder(),
-                                                contentPadding: EdgeInsets
-                                                    .symmetric(
-                                                        horizontal: 12,
-                                                        vertical: 7),
+                                                contentPadding:
+                                                    EdgeInsets.symmetric(
+                                                      horizontal: 12,
+                                                      vertical: 7,
+                                                    ),
                                                 prefixText: '¥',
                                               ),
                                               onChanged: (value) =>
@@ -478,8 +491,7 @@ class _InboundItemCardState extends ConsumerState<InboundItemCard> {
                                         onTap: () =>
                                             _selectProductionDate(item),
                                         child: Container(
-                                          padding:
-                                              const EdgeInsets.symmetric(
+                                          padding: const EdgeInsets.symmetric(
                                             horizontal: 12,
                                             vertical: 4,
                                           ),
@@ -487,22 +499,24 @@ class _InboundItemCardState extends ConsumerState<InboundItemCard> {
                                             border: Border.all(
                                               color: Colors.grey.shade300,
                                             ),
-                                            borderRadius:
-                                                BorderRadius.circular(4),
+                                            borderRadius: BorderRadius.circular(
+                                              4,
+                                            ),
                                           ),
                                           child: Row(
                                             children: [
                                               Text(
                                                 _formatDate(
-                                                    item.productionDate),
+                                                  item.productionDate,
+                                                ),
                                                 style: TextStyle(
                                                   fontSize: 12,
-                                                  color: item.productionDate ==
+                                                  color:
+                                                      item.productionDate ==
                                                           null
                                                       ? Colors.grey[600]
                                                       : Colors.black,
-                                                  fontWeight:
-                                                      FontWeight.w500,
+                                                  fontWeight: FontWeight.w500,
                                                 ),
                                               ),
                                               const Spacer(),
@@ -532,8 +546,9 @@ class _InboundItemCardState extends ConsumerState<InboundItemCard> {
             top: -15,
             right: -15,
             child: IconButton(
-              onPressed: () =>
-                  ref.read(inboundListProvider.notifier).removeItem(widget.itemId),
+              onPressed: () => ref
+                  .read(inboundListProvider.notifier)
+                  .removeItem(widget.itemId),
               icon: const Icon(Icons.close, size: 18),
               style: IconButton.styleFrom(
                 backgroundColor: Colors.red.shade50,

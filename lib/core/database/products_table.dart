@@ -1,30 +1,55 @@
 import 'package:drift/drift.dart';
+import 'package:stocko_app/features/product/domain/model/product.dart';
+import 'categories_table.dart';
+import 'units_table.dart';
 
-class ProductsTable extends Table {
+// --- 类型转换器 ---
+class MoneyConverter extends TypeConverter<Money, int> {
+  const MoneyConverter();
   @override
-  String get tableName => 'products';
-  TextColumn get id => text()(); // 改为不可为空的主键
-  TextColumn get name => text()(); // 名称必须
-  TextColumn get sku => text().nullable()();
-  TextColumn get image => text().nullable()(); // 图片
-  TextColumn get categoryId => text().nullable()(); // 类别ID
-  TextColumn get unitId => text().nullable()(); // 单位ID
-  TextColumn get specification => text().nullable()(); // 型号/规格
-  TextColumn get brand => text().nullable()(); // 品牌
-  RealColumn get suggestedRetailPrice => real().nullable()(); // 建议零售价
-  RealColumn get retailPrice => real().nullable()(); // 零售价
-  RealColumn get promotionalPrice => real().nullable()(); // 促销价
-  IntColumn get stockWarningValue => integer().nullable()(); // 库存预警值
-  IntColumn get shelfLife => integer().nullable()(); // 保质期(天数)
-  TextColumn get shelfLifeUnit =>
-      text().withDefault(const Constant('months'))(); // 保质期单位
+  Money fromSql(int fromDb) {
+    return Money(fromDb);
+  }
+
+  @override
+  int toSql(Money value) {
+    return value.cents;
+  }
+}
+
+class Product extends Table {
+  IntColumn get id => integer().autoIncrement()();
+  TextColumn get name => text()();
+  TextColumn get sku => text().nullable().customConstraint('UNIQUE')();
+  TextColumn get image => text().nullable()();
+  IntColumn get baseUnitId => integer().references(Unit, #id)();
+  IntColumn get categoryId => integer().references(Category, #id).nullable()();
+  TextColumn get specification => text().nullable()();
+  TextColumn get brand => text().nullable()();
+
+  // 使用 MoneyConverter，列名更简洁
+  IntColumn get suggestedRetailPrice =>
+      integer().map(const MoneyConverter()).nullable()();
+  IntColumn get retailPrice =>
+      integer().map(const MoneyConverter()).nullable()();
+  IntColumn get promotionalPrice =>
+      integer().map(const MoneyConverter()).nullable()();
+
+  IntColumn get stockWarningValue => integer().nullable()();
+  IntColumn get shelfLife =>
+      integer().nullable()(); // 注释：保质期数值，单位由 shelfLifeUnit 决定
+
+  TextColumn get shelfLifeUnit => text()
+      .map(const EnumNameConverter(ShelfLifeUnit.values))
+      .withDefault(Constant(ShelfLifeUnit.months.name))();
+
   BoolColumn get enableBatchManagement =>
-      boolean().withDefault(const Constant(false))(); // 批量管理开关，默认为false
-  TextColumn get status =>
-      text().withDefault(const Constant('active'))(); // 状态，默认为 'active'
-  TextColumn get remarks => text().nullable()(); // 备注
-  DateTimeColumn get lastUpdated => dateTime().nullable()(); // 最后更新日期
+      boolean().withDefault(const Constant(false))();
 
-  @override
-  Set<Column> get primaryKey => {id};
+  TextColumn get status => text()
+      .map(const EnumNameConverter(ProductStatus.values))
+      .withDefault(Constant(ProductStatus.active.name))();
+
+  TextColumn get remarks => text().nullable()();
+  DateTimeColumn get lastUpdated => dateTime().nullable()();
 }

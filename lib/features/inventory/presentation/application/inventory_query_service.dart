@@ -1,4 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../../core/database/database.dart';
+import '../../domain/model/inventory.dart';
 import '../../domain/repository/i_inventory_repository.dart';
 import '../../data/repository/inventory_repository.dart';
 import '../../../product/domain/repository/i_product_repository.dart';
@@ -9,6 +11,7 @@ import '../../../product/domain/repository/i_unit_repository.dart';
 import '../../../product/data/repository/unit_repository.dart';
 import '../../application/provider/shop_providers.dart';
 import '../../../product/application/category_notifier.dart';
+import '../../../product/data/dao/batch_dao.dart';
 
 /// 库存查询服务
 /// 提供库存信息的复合查询功能，包含产品、单位、分类等详细信息
@@ -17,6 +20,7 @@ class InventoryQueryService {
   final IProductRepository _productRepository;
   final IProductUnitRepository _productUnitRepository;
   final IUnitRepository _unitRepository;
+  final BatchDao _batchDao;
   final Ref _ref;
 
   InventoryQueryService(
@@ -24,11 +28,13 @@ class InventoryQueryService {
     this._productRepository,
     this._productUnitRepository,
     this._unitRepository,
+    this._batchDao,
     this._ref,
   );
 
   /// 获取库存详细信息
   /// 包含产品名称、图片、库存数量、单位、分类、店铺等信息
+  /// 新入库的记录会显示在顶部
   Future<List<Map<String, dynamic>>> getInventoryWithDetails({
     String? shopFilter,
     String? categoryFilter,
@@ -73,6 +79,16 @@ class InventoryQueryService {
       // 6. 构建详细的库存信息列表
       final result = <Map<String, dynamic>>[];
 
+      // 先按时间排序，最新的在前
+      inventoryList.sort((a, b) {
+        if (a.updatedAt != null && b.updatedAt != null) {
+          return b.updatedAt!.compareTo(a.updatedAt!);
+        }
+        if (a.updatedAt != null) return -1;
+        if (b.updatedAt != null) return 1;
+        return 0;
+      });
+
       for (final inventory in inventoryList) {
         final product = productMap[inventory.productId];
         if (product == null) {
@@ -91,13 +107,14 @@ class InventoryQueryService {
             if (unit != null) {
               unitName = unit.name;
             }
-          } else if (product.unitId != null) {
+          } else {
             // 如果没有配置产品单位，使用产品主表的单位
-            final unit = unitMap[product.unitId!];
+            final unit = unitMap[product.baseUnitId];
             if (unit != null) {
               unitName = unit.name;
             }
           }
+        
         } catch (e) {
           print('📦 库存查询服务：获取单位失败: $e');
         }
@@ -152,6 +169,17 @@ class InventoryQueryService {
 
         if (!shouldInclude) continue;
 
+        // 获取批次信息
+        ProductBatchData? batch;
+        if (inventory.batchId != null) {
+          try {
+            batch = await _batchDao.getBatchByNumber(inventory.batchId!);
+          } catch (e) {
+            print('📦 获取批次信息失败 (batchId: ${inventory.batchId}): $e');
+            batch = null; // 如果获取批次失败，设为null
+          }
+        }
+
         // 构建库存项目数据
         final inventoryItem = {
           'id': inventory.id,
@@ -164,8 +192,21 @@ class InventoryQueryService {
           'categoryId': product.categoryId,
           'categoryName': categoryName ?? '未分类',
           'productId': inventory.productId,
-          'batchNumber': inventory.batchNumber,
         };
+
+        if (batch != null) {
+          inventoryItem['batchNumber'] = batch.id;
+          // 安全处理日期，确保格式正确
+          try {
+            inventoryItem['productionDate'] = batch.productionDate.toIso8601String();
+                    } catch (e) {
+            print('日期转换失败: ${batch.productionDate}, 错误: $e');
+            // 如果日期转换失败，使用当前日期作为默认值
+            inventoryItem['productionDate'] = DateTime.now().toIso8601String();
+          }
+          inventoryItem['shelfLifeDays'] = product.shelfLife;
+          inventoryItem['shelfLifeUnit'] = product.shelfLifeUnit.name;
+        }
 
         result.add(inventoryItem);
       }
@@ -174,10 +215,63 @@ class InventoryQueryService {
       return result;
     } catch (e) {
       print('📦 库存查询服务：获取库存详细信息失败: $e');
+      print('📦 错误堆栈: ${e.toString()}');
+      rethrow;
+    }
+  }
+
+  /// 调整库存
+  /// 如果找到记录，则更新其数量，否则创建新记录
+  Future<void> adjustStock({
+    required int productId,
+    required int shopId,
+    required int newQuantity,
+    int? batchId,
+  }) async {
+    try {
+      print(
+          '📦 库存调整服务：开始调整库存 - Product: $productId, Shop: $shopId, Batch: $batchId, New Quantity: $newQuantity');
+
+      final existingStock =
+          await _inventoryRepository.getInventoryByProductShopAndBatch(
+        productId,
+        shopId,
+        batchId,
+      );
+
+      if (existingStock != null) {
+        print('📦 库存调整服务：找到现有库存记录，准备更新');
+        final updatedStock = existingStock.copyWith(
+          quantity: newQuantity,
+          updatedAt: DateTime.now(),
+        );
+        await _inventoryRepository.updateInventory(updatedStock);
+        print('📦 库存调整服务：库存更新成功');
+      } else {
+        print('📦 库存调整服务：未找到现有库存记录，准备创建新记录');
+        final newStock = StockModel(
+          productId: productId,
+          shopId: shopId,
+          quantity: newQuantity,
+          batchId: batchId,
+          createdAt: DateTime.now(),
+          updatedAt: DateTime.now(),
+        );
+        await _inventoryRepository.addInventory(newStock);
+        print('📦 库存调整服务：新库存记录创建成功');
+      }
+    } catch (e) {
+      print('📦 库存调整服务：调整库存失败: $e');
       rethrow;
     }
   }
 }
+
+/// BatchDao Provider
+final batchDaoProvider = Provider<BatchDao>((ref) {
+  final db = ref.watch(appDatabaseProvider);
+  return db.batchDao;
+});
 
 /// 库存查询服务 Provider
 final inventoryQueryServiceProvider = Provider<InventoryQueryService>((ref) {
@@ -185,12 +279,14 @@ final inventoryQueryServiceProvider = Provider<InventoryQueryService>((ref) {
   final productRepository = ref.watch(productRepositoryProvider);
   final productUnitRepository = ref.watch(productUnitRepositoryProvider);
   final unitRepository = ref.watch(unitRepositoryProvider);
+  final batchDao = ref.watch(batchDaoProvider);
 
   return InventoryQueryService(
     inventoryRepository,
     productRepository,
     productUnitRepository,
     unitRepository,
+    batchDao,
     ref,
   );
 });

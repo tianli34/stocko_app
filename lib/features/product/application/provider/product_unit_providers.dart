@@ -10,7 +10,7 @@ enum ProductUnitOperationStatus { initial, loading, success, error }
 class ProductUnitControllerState {
   final ProductUnitOperationStatus status;
   final String? errorMessage;
-  final List<ProductUnit>? lastOperatedProductUnits;
+  final List<UnitProduct>? lastOperatedProductUnits;
 
   const ProductUnitControllerState({
     this.status = ProductUnitOperationStatus.initial,
@@ -21,7 +21,7 @@ class ProductUnitControllerState {
   ProductUnitControllerState copyWith({
     ProductUnitOperationStatus? status,
     String? errorMessage,
-    List<ProductUnit>? lastOperatedProductUnits,
+    List<UnitProduct>? lastOperatedProductUnits,
   }) {
     return ProductUnitControllerState(
       status: status ?? this.status,
@@ -45,19 +45,19 @@ class ProductUnitController extends StateNotifier<ProductUnitControllerState> {
     : super(const ProductUnitControllerState());
 
   /// 添加产品单位
-  Future<void> addProductUnit(ProductUnit productUnit) async {
+  Future<void> addProductUnit(UnitProduct unitProduct) async {
     state = state.copyWith(status: ProductUnitOperationStatus.loading);
 
     try {
-      await _repository.addProductUnit(productUnit);
+      await _repository.addProductUnit(unitProduct);
       state = state.copyWith(
         status: ProductUnitOperationStatus.success,
-        lastOperatedProductUnits: [productUnit],
+        lastOperatedProductUnits: [unitProduct],
         errorMessage: null,
       );
 
       // 刷新相关的Provider
-      _ref.invalidate(productUnitsProvider(productUnit.productId));
+      _ref.invalidate(productUnitsProvider(unitProduct.productId));
     } catch (e) {
       state = state.copyWith(
         status: ProductUnitOperationStatus.error,
@@ -67,7 +67,7 @@ class ProductUnitController extends StateNotifier<ProductUnitControllerState> {
   }
 
   /// 批量添加产品单位
-  Future<void> addMultipleProductUnits(List<ProductUnit> productUnits) async {
+  Future<void> addMultipleProductUnits(List<UnitProduct> productUnits) async {
     if (productUnits.isEmpty) return;
 
     state = state.copyWith(status: ProductUnitOperationStatus.loading);
@@ -94,20 +94,20 @@ class ProductUnitController extends StateNotifier<ProductUnitControllerState> {
   }
 
   /// 更新产品单位
-  Future<void> updateProductUnit(ProductUnit productUnit) async {
+  Future<void> updateProductUnit(UnitProduct unitProduct) async {
     state = state.copyWith(status: ProductUnitOperationStatus.loading);
 
     try {
-      final success = await _repository.updateProductUnit(productUnit);
+      final success = await _repository.updateProductUnit(unitProduct);
       if (success) {
         state = state.copyWith(
           status: ProductUnitOperationStatus.success,
-          lastOperatedProductUnits: [productUnit],
+          lastOperatedProductUnits: [unitProduct],
           errorMessage: null,
         );
 
         // 刷新相关的Provider
-        _ref.invalidate(productUnitsProvider(productUnit.productId));
+        _ref.invalidate(productUnitsProvider(unitProduct.productId));
       } else {
         state = state.copyWith(
           status: ProductUnitOperationStatus.error,
@@ -123,11 +123,11 @@ class ProductUnitController extends StateNotifier<ProductUnitControllerState> {
   }
 
   /// 删除产品单位
-  Future<void> deleteProductUnit(String productUnitId, String productId) async {
+  Future<void> deleteProductUnit(int id, int productId) async {
     state = state.copyWith(status: ProductUnitOperationStatus.loading);
 
     try {
-      final deletedCount = await _repository.deleteProductUnit(productUnitId);
+      final deletedCount = await _repository.deleteProductUnit(id);
       if (deletedCount > 0) {
         state = state.copyWith(
           status: ProductUnitOperationStatus.success,
@@ -152,8 +152,8 @@ class ProductUnitController extends StateNotifier<ProductUnitControllerState> {
 
   /// 替换产品的所有单位配置
   Future<void> replaceProductUnits(
-    String productId,
-    List<ProductUnit> productUnits,
+    int productId,
+    List<UnitProduct> productUnits,
   ) async {
     print('🎯 ProductUnitController.replaceProductUnits - 开始替换产品单位配置');
     print('🎯 产品ID: $productId');
@@ -191,7 +191,7 @@ class ProductUnitController extends StateNotifier<ProductUnitControllerState> {
   }
 
   /// 根据产品ID获取产品单位
-  Future<List<ProductUnit>> getProductUnitsByProductId(String productId) async {
+  Future<List<UnitProduct>> getProductUnitsByProductId(int productId) async {
     try {
       return await _repository.getProductUnitsByProductId(productId);
     } catch (e) {
@@ -204,7 +204,7 @@ class ProductUnitController extends StateNotifier<ProductUnitControllerState> {
   }
 
   /// 获取产品的基础单位
-  Future<ProductUnit?> getBaseUnitForProduct(String productId) async {
+  Future<UnitProduct?> getBaseUnitForProduct(int productId) async {
     try {
       return await _repository.getBaseUnitForProduct(productId);
     } catch (e) {
@@ -218,8 +218,8 @@ class ProductUnitController extends StateNotifier<ProductUnitControllerState> {
 
   /// 检查产品是否已配置某个单位
   Future<bool> isUnitConfiguredForProduct(
-    String productId,
-    String unitId,
+    int productId,
+    int unitId,
   ) async {
     try {
       return await _repository.isUnitConfiguredForProduct(productId, unitId);
@@ -249,7 +249,7 @@ class ProductUnitController extends StateNotifier<ProductUnitControllerState> {
 }
 
 /// 根据产品ID获取产品单位列表的StreamProvider
-final productUnitsProvider = StreamProvider.family<List<ProductUnit>, String>((
+final productUnitsProvider = StreamProvider.family<List<UnitProduct>, int>((
   ref,
   productId,
 ) {
@@ -267,7 +267,7 @@ final productUnitControllerProvider =
     });
 
 /// 根据产品ID获取基础单位的FutureProvider
-final baseUnitProvider = FutureProvider.family<ProductUnit?, String>((
+final baseUnitProvider = FutureProvider.family<UnitProduct?, int>((
   ref,
   productId,
 ) {

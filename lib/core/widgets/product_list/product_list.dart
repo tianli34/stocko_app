@@ -16,12 +16,13 @@ class ProductItemManager {
 }
 
 class ProductList extends StatefulWidget {
-  final List<Product> data;
+  final List<ProductModel> data;
   final String mode;
   final List<dynamic> selectedIds;
   final Function(List<dynamic>)? onSelectionChange;
-  final Function(Product)? onEdit;
-  final Function(Product)? onDelete;
+  final Function(ProductModel)? onEdit;
+  final Function(ProductModel)? onDelete;
+  final Function(ProductModel)? onAdjustInventory;
 
   const ProductList({
     super.key,
@@ -31,6 +32,7 @@ class ProductList extends StatefulWidget {
     this.onSelectionChange,
     this.onEdit,
     this.onDelete,
+    this.onAdjustInventory,
   });
 
   @override
@@ -108,6 +110,7 @@ class _ProductListState extends State<ProductList> {
                     : null,
                 onEdit: widget.onEdit,
                 onDelete: widget.onDelete,
+                onAdjustInventory: widget.onAdjustInventory,
                 onHideActions: _hideAllActions,
               );
             }, childCount: widget.data.length),

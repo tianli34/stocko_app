@@ -15,7 +15,7 @@ class InventoryTransactionRepository
     : _transactionDao = database.inventoryTransactionDao;
 
   @override
-  Future<int> addTransaction(InventoryTransaction transaction) async {
+  Future<int> addTransaction(InventoryTransactionModel transaction) async {
     try {
       print('📋 仓储层：添加库存流水记录，ID: ${transaction.id}');
       return await _transactionDao.insertTransaction(
@@ -28,7 +28,7 @@ class InventoryTransactionRepository
   }
 
   @override
-  Future<InventoryTransaction?> getTransactionById(String id) async {
+  Future<InventoryTransactionModel?> getTransactionById(int id) async {
     try {
       final data = await _transactionDao.getTransactionById(id);
       return data != null ? _dataToTransaction(data) : null;
@@ -39,7 +39,7 @@ class InventoryTransactionRepository
   }
 
   @override
-  Future<List<InventoryTransaction>> getAllTransactions() async {
+  Future<List<InventoryTransactionModel>> getAllTransactions() async {
     try {
       final dataList = await _transactionDao.getAllTransactions();
       return dataList.map(_dataToTransaction).toList();
@@ -50,8 +50,8 @@ class InventoryTransactionRepository
   }
 
   @override
-  Future<List<InventoryTransaction>> getTransactionsByProduct(
-    String productId,
+  Future<List<InventoryTransactionModel>> getTransactionsByProduct(
+    int productId,
   ) async {
     try {
       final dataList = await _transactionDao.getTransactionsByProduct(
@@ -65,8 +65,8 @@ class InventoryTransactionRepository
   }
 
   @override
-  Future<List<InventoryTransaction>> getTransactionsByShop(
-    String shopId,
+  Future<List<InventoryTransactionModel>> getTransactionsByShop(
+    int shopId,
   ) async {
     try {
       final dataList = await _transactionDao.getTransactionsByShop(shopId);
@@ -78,9 +78,11 @@ class InventoryTransactionRepository
   }
 
   @override
-  Future<List<InventoryTransaction>> getTransactionsByType(String type) async {
+  Future<List<InventoryTransactionModel>> getTransactionsByType(String type) async {
     try {
-      final dataList = await _transactionDao.getTransactionsByType(type);
+      final dataList = await _transactionDao.getTransactionsByType(
+        _normalizeTypeToDbCode(type),
+      );
       return dataList.map(_dataToTransaction).toList();
     } catch (e) {
       print('📋 仓储层：根据类型获取库存流水失败: $e');
@@ -89,9 +91,9 @@ class InventoryTransactionRepository
   }
 
   @override
-  Future<List<InventoryTransaction>> getTransactionsByProductAndShop(
-    String productId,
-    String shopId,
+  Future<List<InventoryTransactionModel>> getTransactionsByProductAndShop(
+    int productId,
+    int shopId,
   ) async {
     try {
       final dataList = await _transactionDao.getTransactionsByProductAndShop(
@@ -106,11 +108,11 @@ class InventoryTransactionRepository
   }
 
   @override
-  Future<List<InventoryTransaction>> getTransactionsByDateRange(
+  Future<List<InventoryTransactionModel>> getTransactionsByDateRange(
     DateTime startDate,
     DateTime endDate, {
-    String? shopId,
-    String? productId,
+    int? shopId,
+    int? productId,
   }) async {
     try {
       final dataList = await _transactionDao.getTransactionsByDateRange(
@@ -127,7 +129,7 @@ class InventoryTransactionRepository
   }
 
   @override
-  Stream<List<InventoryTransaction>> watchAllTransactions() {
+  Stream<List<InventoryTransactionModel>> watchAllTransactions() {
     try {
       return _transactionDao.watchAllTransactions().map(
         (dataList) => dataList.map(_dataToTransaction).toList(),
@@ -139,8 +141,8 @@ class InventoryTransactionRepository
   }
 
   @override
-  Stream<List<InventoryTransaction>> watchTransactionsByProduct(
-    String productId,
+  Stream<List<InventoryTransactionModel>> watchTransactionsByProduct(
+    int productId,
   ) {
     try {
       return _transactionDao
@@ -153,7 +155,7 @@ class InventoryTransactionRepository
   }
 
   @override
-  Stream<List<InventoryTransaction>> watchTransactionsByShop(String shopId) {
+  Stream<List<InventoryTransactionModel>> watchTransactionsByShop(int shopId) {
     try {
       return _transactionDao
           .watchTransactionsByShop(shopId)
@@ -165,7 +167,7 @@ class InventoryTransactionRepository
   }
 
   @override
-  Future<bool> updateTransaction(InventoryTransaction transaction) async {
+  Future<bool> updateTransaction(InventoryTransactionModel transaction) async {
     try {
       print('📋 仓储层：更新库存流水，ID: ${transaction.id}');
       return await _transactionDao.updateTransaction(
@@ -178,7 +180,7 @@ class InventoryTransactionRepository
   }
 
   @override
-  Future<int> deleteTransaction(String id) async {
+  Future<int> deleteTransaction(int id) async {
     try {
       print('📋 仓储层：删除库存流水记录，ID: $id');
       return await _transactionDao.deleteTransaction(id);
@@ -189,7 +191,7 @@ class InventoryTransactionRepository
   }
 
   @override
-  Future<int> deleteTransactionsByProduct(String productId) async {
+  Future<int> deleteTransactionsByProduct(int productId) async {
     try {
       return await _transactionDao.deleteTransactionsByProduct(productId);
     } catch (e) {
@@ -199,7 +201,7 @@ class InventoryTransactionRepository
   }
 
   @override
-  Future<int> deleteTransactionsByShop(String shopId) async {
+  Future<int> deleteTransactionsByShop(int shopId) async {
     try {
       return await _transactionDao.deleteTransactionsByShop(shopId);
     } catch (e) {
@@ -209,35 +211,36 @@ class InventoryTransactionRepository
   }
 
   @override
-  Future<List<InventoryTransaction>> getInboundTransactions({
-    String? shopId,
-    String? productId,
+  Future<List<InventoryTransactionModel>> getInboundTransactions({
+    int? shopId,
+    int? productId,
   }) async {
-    return getTransactionsByType(InventoryTransaction.typeIn);
+  // 使用数据库短码，避免 name 与 DB 存储不一致
+  return getTransactionsByType(InventoryTransactionType.inbound.toDbCode);
   }
 
   @override
-  Future<List<InventoryTransaction>> getOutboundTransactions({
-    String? shopId,
-    String? productId,
+  Future<List<InventoryTransactionModel>> getOutboundTransactions({
+    int? shopId,
+    int? productId,
   }) async {
-    return getTransactionsByType(InventoryTransaction.typeOut);
+  return getTransactionsByType(InventoryTransactionType.outbound.toDbCode);
   }
 
   @override
-  Future<List<InventoryTransaction>> getAdjustmentTransactions({
-    String? shopId,
-    String? productId,
+  Future<List<InventoryTransactionModel>> getAdjustmentTransactions({
+    int? shopId,
+    int? productId,
   }) async {
-    return getTransactionsByType(InventoryTransaction.typeAdjust);
+  return getTransactionsByType(InventoryTransactionType.adjustment.toDbCode);
   }
 
   @override
   Future<Map<String, double>> getTransactionSummaryByDateRange(
     DateTime startDate,
     DateTime endDate, {
-    String? shopId,
-    String? productId,
+    int? shopId,
+    int? productId,
   }) async {
     try {
       final transactions = await getTransactionsByDateRange(
@@ -249,8 +252,8 @@ class InventoryTransactionRepository
 
       final summary = <String, double>{};
       for (final transaction in transactions) {
-        summary[transaction.type] =
-            (summary[transaction.type] ?? 0.0) + transaction.quantity;
+        summary[transaction.type.name] =
+            (summary[transaction.type.name] ?? 0.0) + transaction.quantity;
       }
 
       return summary;
@@ -261,10 +264,10 @@ class InventoryTransactionRepository
   }
 
   @override
-  Future<List<InventoryTransaction>> getRecentTransactions(
+  Future<List<InventoryTransactionModel>> getRecentTransactions(
     int limit, {
-    String? shopId,
-    String? productId,
+    int? shopId,
+    int? productId,
   }) async {
     try {
       final dataList = await _transactionDao.getRecentTransactions(
@@ -281,15 +284,15 @@ class InventoryTransactionRepository
 
   @override
   Future<int> getTransactionCount({
-    String? shopId,
-    String? productId,
+    int? shopId,
+    int? productId,
     String? type,
   }) async {
     try {
       return await _transactionDao.getTransactionCount(
         shopId: shopId,
         productId: productId,
-        type: type,
+  type: type == null ? null : _normalizeTypeToDbCode(type),
       );
     } catch (e) {
       print('📋 仓储层：获取库存流水数量失败: $e');
@@ -298,16 +301,19 @@ class InventoryTransactionRepository
   }
 
   /// 将InventoryTransaction模型转换为数据库Companion对象
-  InventoryTransactionsTableCompanion _transactionToCompanion(
-    InventoryTransaction transaction,
+  InventoryTransactionCompanion _transactionToCompanion(
+    InventoryTransactionModel transaction,
   ) {
-    return InventoryTransactionsTableCompanion(
-      id: Value(transaction.id),
+    return InventoryTransactionCompanion(
+      id: transaction.id == null ? const Value.absent() : Value(transaction.id!),
       productId: Value(transaction.productId),
-      type: Value(transaction.type),
+    // 数据库存的 type 字段使用短码（in/out/adjust/transfer/return）
+    transactionType: Value(transaction.type.toDbCode),
       quantity: Value(transaction.quantity),
       shopId: Value(transaction.shopId),
-      time: Value(transaction.time),
+    batchId: transaction.batchId != null
+      ? Value(transaction.batchId!)
+      : const Value.absent(),
       createdAt: transaction.createdAt != null
           ? Value(transaction.createdAt!)
           : const Value.absent(),
@@ -315,16 +321,40 @@ class InventoryTransactionRepository
   }
 
   /// 将数据库数据转换为InventoryTransaction模型
-  InventoryTransaction _dataToTransaction(InventoryTransactionsTableData data) {
-    return InventoryTransaction(
+  InventoryTransactionModel _dataToTransaction(InventoryTransactionData data) {
+    return InventoryTransactionModel(
       id: data.id,
       productId: data.productId,
-      type: data.type,
+  type: inventoryTransactionTypeFromDbCode(data.transactionType),
       quantity: data.quantity,
       shopId: data.shopId,
-      time: data.time,
+  batchId: data.batchId,
       createdAt: data.createdAt,
     );
+  }
+
+  /// 将外部传入的类型字符串标准化为数据库短码
+  /// 支持传入 enum.name（如 'inbound'）或已是短码（如 'in'）
+  String _normalizeTypeToDbCode(String type) {
+    final t = type.toLowerCase();
+    switch (t) {
+      case 'in':
+      case 'inbound':
+        return 'in';
+      case 'out':
+      case 'outbound':
+        return 'out';
+      case 'adjust':
+      case 'adjustment':
+        return 'adjust';
+      case 'transfer':
+        return 'transfer';
+      case 'return':
+      case 'returned':
+        return 'return';
+      default:
+        return t;
+    }
   }
 }
 

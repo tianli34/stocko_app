@@ -14,12 +14,21 @@ class InventoryRepository implements IInventoryRepository {
     : _inventoryDao = database.inventoryDao;
 
   @override
-  Future<int> addInventory(Inventory inventory) async {
+  Future<int> addInventory(StockModel inventory) async {
     try {
       print('📦 仓储层：添加库存记录，ID: ${inventory.id}');
-      return await _inventoryDao.insertInventory(
-        _inventoryToCompanion(inventory),
+      // 新增时不应强制携带自增主键 ID
+      final companion = StockCompanion(
+        productId: Value(inventory.productId),
+        quantity: Value(inventory.quantity),
+        shopId: Value(inventory.shopId),
+        batchId: Value(inventory.batchId),
+        createdAt: inventory.createdAt != null
+            ? Value(inventory.createdAt!)
+            : const Value.absent(),
+        updatedAt: Value(inventory.updatedAt ?? DateTime.now()),
       );
+      return await _inventoryDao.insertInventory(companion);
     } catch (e) {
       print('📦 仓储层：添加库存记录失败: $e');
       rethrow;
@@ -27,7 +36,7 @@ class InventoryRepository implements IInventoryRepository {
   }
 
   @override
-  Future<Inventory?> getInventoryById(String id) async {
+  Future<StockModel?> getInventoryById(int id) async {
     try {
       final data = await _inventoryDao.getInventoryById(id);
       return data != null ? _dataToInventory(data) : null;
@@ -38,9 +47,9 @@ class InventoryRepository implements IInventoryRepository {
   }
 
   @override
-  Future<Inventory?> getInventoryByProductAndShop(
-    String productId,
-    String shopId,
+  Future<StockModel?> getInventoryByProductAndShop(
+    int productId,
+    int shopId,
   ) async {
     try {
       final data = await _inventoryDao.getInventoryByProductAndShop(
@@ -55,18 +64,38 @@ class InventoryRepository implements IInventoryRepository {
   }
 
   @override
-  Future<List<Inventory>> getAllInventory() async {
+  Future<StockModel?> getInventoryByProductShopAndBatch(
+    int productId,
+    int shopId,
+    int? batchId,
+  ) async {
     try {
-      final dataList = await _inventoryDao.getAllInventory();
-      return dataList.map(_dataToInventory).toList();
+      final data = await _inventoryDao.getInventoryByProductShopAndBatch(
+        productId,
+        shopId,
+        batchId,
+      );
+      return data != null ? _dataToInventory(data) : null;
     } catch (e) {
-      print('📦 仓储层：获取所有库存失败: $e');
+      print('📦 仓储层：根据产品/店铺/批次获取库存失败: $e');
       rethrow;
     }
   }
 
   @override
-  Future<List<Inventory>> getInventoryByShop(String shopId) async {
+  Future<List<StockModel>> getAllInventory() async {
+    try {
+      final dataList = await _inventoryDao.getAllInventory();
+      return dataList.map(_dataToInventory).toList();
+    } catch (e) {
+      print('📦 仓储层：获取所有库存失败: $e');
+      // 返回空列表而不是抛出异常
+      return [];
+    }
+  }
+
+  @override
+  Future<List<StockModel>> getInventoryByShop(int shopId) async {
     try {
       final dataList = await _inventoryDao.getInventoryByShop(shopId);
       return dataList.map(_dataToInventory).toList();
@@ -77,7 +106,7 @@ class InventoryRepository implements IInventoryRepository {
   }
 
   @override
-  Future<List<Inventory>> getInventoryByProduct(String productId) async {
+  Future<List<StockModel>> getInventoryByProduct(int productId) async {
     try {
       final dataList = await _inventoryDao.getInventoryByProduct(productId);
       return dataList.map(_dataToInventory).toList();
@@ -88,7 +117,7 @@ class InventoryRepository implements IInventoryRepository {
   }
 
   @override
-  Stream<List<Inventory>> watchAllInventory() {
+  Stream<List<StockModel>> watchAllInventory() {
     try {
       return _inventoryDao.watchAllInventory().map(
         (dataList) => dataList.map(_dataToInventory).toList(),
@@ -100,7 +129,7 @@ class InventoryRepository implements IInventoryRepository {
   }
 
   @override
-  Stream<List<Inventory>> watchInventoryByShop(String shopId) {
+  Stream<List<StockModel>> watchInventoryByShop(int shopId) {
     try {
       return _inventoryDao
           .watchInventoryByShop(shopId)
@@ -112,7 +141,7 @@ class InventoryRepository implements IInventoryRepository {
   }
 
   @override
-  Stream<List<Inventory>> watchInventoryByProduct(String productId) {
+  Stream<List<StockModel>> watchInventoryByProduct(int productId) {
     try {
       return _inventoryDao
           .watchInventoryByProduct(productId)
@@ -124,7 +153,7 @@ class InventoryRepository implements IInventoryRepository {
   }
 
   @override
-  Future<bool> updateInventory(Inventory inventory) async {
+  Future<bool> updateInventory(StockModel inventory) async {
     try {
       print('📦 仓储层：更新库存，ID: ${inventory.id}');
       return await _inventoryDao.updateInventory(
@@ -137,7 +166,7 @@ class InventoryRepository implements IInventoryRepository {
   }
 
   @override
-  Future<int> deleteInventory(String id) async {
+  Future<int> deleteInventory(int id) async {
     try {
       print('📦 仓储层：删除库存记录，ID: $id');
       return await _inventoryDao.deleteInventory(id);
@@ -149,8 +178,8 @@ class InventoryRepository implements IInventoryRepository {
 
   @override
   Future<int> deleteInventoryByProductAndShop(
-    String productId,
-    String shopId,
+    int productId,
+    int shopId,
   ) async {
     try {
       print('📦 仓储层：删除库存记录，产品ID: $productId, 店铺ID: $shopId');
@@ -166,9 +195,9 @@ class InventoryRepository implements IInventoryRepository {
 
   @override
   Future<bool> updateInventoryQuantity(
-    String productId,
-    String shopId,
-    double quantity,
+    int productId,
+    int shopId,
+    int quantity,
   ) async {
     try {
       return await _inventoryDao.updateInventoryQuantity(
@@ -183,21 +212,39 @@ class InventoryRepository implements IInventoryRepository {
   }
 
   @override
-  Future<bool> addInventoryQuantity(
-    String productId,
-    String shopId,
-    double amount,
+  Future<bool> updateInventoryQuantityByBatch(
+    int productId,
+    int shopId,
+    int? batchId,
+    int quantity,
   ) async {
     try {
-      final current = await getInventoryByProductAndShop(productId, shopId);
-      if (current != null) {
-        return await updateInventoryQuantity(
-          productId,
-          shopId,
-          current.quantity + amount,
-        );
-      }
-      return false;
+      return await _inventoryDao.updateInventoryQuantityByBatch(
+        productId,
+        shopId,
+        batchId,
+        quantity,
+      );
+    } catch (e) {
+      print('📦 仓储层：按批次更新库存数量失败: $e');
+      rethrow;
+    }
+  }
+
+  @override
+  Future<bool> addInventoryQuantity(
+    int productId,
+    int shopId,
+    int amount,
+  ) async {
+    try {
+      final affected = await _inventoryDao.incrementQuantity(
+        productId,
+        shopId,
+        null,
+        amount,
+      );
+      return affected > 0;
     } catch (e) {
       print('📦 仓储层：增加库存数量失败: $e');
       rethrow;
@@ -205,21 +252,40 @@ class InventoryRepository implements IInventoryRepository {
   }
 
   @override
-  Future<bool> subtractInventoryQuantity(
-    String productId,
-    String shopId,
-    double amount,
+  Future<bool> addInventoryQuantityByBatch(
+    int productId,
+    int shopId,
+    int? batchId,
+    int amount,
   ) async {
     try {
-      final current = await getInventoryByProductAndShop(productId, shopId);
-      if (current != null) {
-        return await updateInventoryQuantity(
-          productId,
-          shopId,
-          current.quantity - amount,
-        );
-      }
-      return false;
+      final affected = await _inventoryDao.incrementQuantity(
+        productId,
+        shopId,
+        batchId,
+        amount,
+      );
+      return affected > 0;
+    } catch (e) {
+      print('📦 仓储层：按批次增加库存数量失败: $e');
+      rethrow;
+    }
+  }
+
+  @override
+  Future<bool> subtractInventoryQuantity(
+    int productId,
+    int shopId,
+    int amount,
+  ) async {
+    try {
+      final affected = await _inventoryDao.decrementQuantity(
+        productId,
+        shopId,
+        null,
+        amount,
+      );
+      return affected > 0;
     } catch (e) {
       print('📦 仓储层：减少库存数量失败: $e');
       rethrow;
@@ -227,8 +293,29 @@ class InventoryRepository implements IInventoryRepository {
   }
 
   @override
-  Future<List<Inventory>> getLowStockInventory(
-    String shopId,
+  Future<bool> subtractInventoryQuantityByBatch(
+    int productId,
+    int shopId,
+    int? batchId,
+    int amount,
+  ) async {
+    try {
+      final affected = await _inventoryDao.decrementQuantity(
+        productId,
+        shopId,
+        batchId,
+        amount,
+      );
+      return affected > 0;
+    } catch (e) {
+      print('📦 仓储层：按批次减少库存数量失败: $e');
+      rethrow;
+    }
+  }
+
+  @override
+  Future<List<StockModel>> getLowStockInventory(
+    int shopId,
     int warningLevel,
   ) async {
     try {
@@ -244,7 +331,7 @@ class InventoryRepository implements IInventoryRepository {
   }
 
   @override
-  Future<List<Inventory>> getOutOfStockInventory(String shopId) async {
+  Future<List<StockModel>> getOutOfStockInventory(int shopId) async {
     try {
       final dataList = await _inventoryDao.getOutOfStockInventory(shopId);
       return dataList.map(_dataToInventory).toList();
@@ -255,7 +342,7 @@ class InventoryRepository implements IInventoryRepository {
   }
 
   @override
-  Future<double> getTotalInventoryByShop(String shopId) async {
+  Future<double> getTotalInventoryByShop(int shopId) async {
     try {
       return await _inventoryDao.getTotalInventoryByShop(shopId);
     } catch (e) {
@@ -265,7 +352,7 @@ class InventoryRepository implements IInventoryRepository {
   }
 
   @override
-  Future<double> getTotalInventoryByProduct(String productId) async {
+  Future<double> getTotalInventoryByProduct(int productId) async {
     try {
       return await _inventoryDao.getTotalInventoryByProduct(productId);
     } catch (e) {
@@ -275,7 +362,7 @@ class InventoryRepository implements IInventoryRepository {
   }
 
   @override
-  Future<bool> inventoryExists(String productId, String shopId) async {
+  Future<bool> inventoryExists(int productId, int shopId) async {
     try {
       return await _inventoryDao.inventoryExists(productId, shopId);
     } catch (e) {
@@ -285,14 +372,14 @@ class InventoryRepository implements IInventoryRepository {
   }
 
   /// 将Inventory模型转换为数据库Companion对象
-  InventoryTableCompanion _inventoryToCompanion(Inventory inventory) {
-    return InventoryTableCompanion(
-      id: Value(inventory.id),
+  StockCompanion _inventoryToCompanion(StockModel inventory) {
+    return StockCompanion(
+      // 对于更新等需要指定行的场景，id 需由调用方通过 where 子句控制；此处避免强制要求
+      id: inventory.id != null ? Value(inventory.id!) : const Value.absent(),
       productId: Value(inventory.productId),
       quantity: Value(inventory.quantity),
       shopId: Value(inventory.shopId),
-      // TODO: 添加批次号字段，等待代码生成
-      batchNumber: Value(inventory.batchNumber),
+      batchId: Value(inventory.batchId),
       createdAt: inventory.createdAt != null
           ? Value(inventory.createdAt!)
           : const Value.absent(),
@@ -301,16 +388,22 @@ class InventoryRepository implements IInventoryRepository {
   }
 
   /// 将数据库数据转换为Inventory模型
-  Inventory _dataToInventory(InventoryTableData data) {
-    return Inventory(
-      id: data.id,
-      productId: data.productId,
-      quantity: data.quantity,
-      shopId: data.shopId,
-      batchNumber: 'temp_batch', // TODO: 临时值，等待代码生成后使用 data.batchNumber
-      createdAt: data.createdAt,
-      updatedAt: data.updatedAt,
-    );
+  StockModel _dataToInventory(StockData data) {
+    try {
+      return StockModel(
+        id: data.id,
+        productId: data.productId,
+        quantity: data.quantity,
+        shopId: data.shopId,
+        batchId: data.batchId,
+        createdAt: data.createdAt,
+        updatedAt: data.updatedAt,
+      );
+    } catch (e) {
+      print('📦 数据转换失败: $e');
+      print('📦 原始数据: id=${data.id}, productId=${data.productId}, quantity=${data.quantity}');
+      rethrow;
+    }
   }
 }
 
