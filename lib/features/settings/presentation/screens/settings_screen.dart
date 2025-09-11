@@ -5,12 +5,15 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/services.dart' show rootBundle;
 import 'package:fluttertoast/fluttertoast.dart';
-
-import '../../../../core/database/database.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter/foundation.dart';
+ 
+ import '../../../../core/database/database.dart';
 import '../../../../core/services/toast_service.dart';
 import '../../../product/application/product_import_service.dart';
 import 'image_cache_management_screen.dart';
 import 'privacy_policy_screen.dart';
+import 'terms_of_service_screen.dart';
 
 /// 通用设置页面
 class SettingsScreen extends StatelessWidget {
@@ -49,7 +52,36 @@ class SettingsScreen extends StatelessWidget {
             },
           ),
           const Divider(),
+          ListTile(
+            leading: const Icon(Icons.description_outlined),
+            title: const Text('用户协议'),
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const TermsOfServiceScreen(),
+                ),
+              );
+            },
+          ),
+          const Divider(),
           const _DataManagementSection(),
+          if (kDebugMode) ...[
+           const Divider(),
+           ListTile(
+             leading: const Icon(Icons.restore),
+             title: const Text('重置隐私政策状态'),
+             subtitle: const Text('仅在开发模式下可见'),
+             onTap: () async {
+               final prefs = await SharedPreferences.getInstance();
+               await prefs.setBool('isPrivacyPolicyAgreed', false);
+               ToastService.show(
+                 '隐私政策状态已重置，请重启应用',
+                 length: Toast.LENGTH_LONG,
+               );
+             },
+           ),
+         ],
         ],
       ),
     );

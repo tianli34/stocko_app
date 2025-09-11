@@ -3,18 +3,25 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../database/database_providers.dart';
 
 /// 应用启动初始化Widget
-/// 在应用启动时自动进行数据库初始化
-class AppInitializer extends ConsumerWidget {
+/// 1. 进行数据库初始化
+/// 2. 检查并显示隐私政策弹窗
+class AppInitializer extends ConsumerStatefulWidget {
   final Widget child;
 
   const AppInitializer({super.key, required this.child});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<AppInitializer> createState() => _AppInitializerState();
+}
+
+class _AppInitializerState extends ConsumerState<AppInitializer> {
+  @override
+  Widget build(BuildContext context) {
+    // 仍然依赖数据库初始化
     final initializationState = ref.watch(databaseInitializationProvider);
 
     return initializationState.when(
-      data: (_) => child, // 初始化完成，显示主应用
+      data: (_) => widget.child, // 初始化完成，显示主应用
       loading: () => const _LoadingScreen(), // 显示加载界面
       error: (error, stackTrace) => _ErrorScreen(
         error: error,

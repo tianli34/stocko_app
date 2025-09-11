@@ -26,26 +26,149 @@ class _CategorySelectionScreenState
     extends ConsumerState<CategorySelectionScreen> {
   // 用于管理每个类别的展开/收起状态
   final Map<int, bool> _expandedCategories = {};
+  // 搜索关键字
+  String _searchQuery = '';
+  // 缓存每个类别的产品数量
+  final Map<int, int> _categoryProductCounts = {};
 
   @override
   void initState() {
     super.initState();
+    _loadProductCounts();
+  }
+
+  /// 加载所有类别的产品数量
+  Future<void> _loadProductCounts() async {
+    final categoryState = ref.read(categoryListProvider);
+    final productRepository = ref.read(productRepositoryProvider);
+    
+    for (final category in categoryState.categories) {
+      if (category.id != null) {
+        try {
+          final products = await productRepository.getProductsByCondition(
+            categoryId: category.id,
+          );
+          _categoryProductCounts[category.id!] = products.length;
+        } catch (e) {
+          _categoryProductCounts[category.id!] = 0;
+        }
+      }
+    }
+    
+    if (mounted) {
+      setState(() {});
+    }
+  }
+
+  Future<void> _showSearchDialog(BuildContext context) async {
+    final searchController = TextEditingController();
+    searchController.text = _searchQuery;
+
+    final newQuery = await showDialog<String>(
+      context: context,
+      builder: (context) => Transform.translate(
+        offset: const Offset(0, 150),
+        child: Dialog(
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          insetPadding: const EdgeInsets.symmetric(horizontal: 9.0),
+          child: TextField(
+            controller: searchController,
+            autofocus: true,
+            onSubmitted: (value) => Navigator.of(context).pop(value),
+            decoration: InputDecoration(
+              filled: true,
+              fillColor: Theme.of(context).scaffoldBackgroundColor,
+              border: const OutlineInputBorder(
+                borderSide: BorderSide.none,
+              ),
+              contentPadding: const EdgeInsets.symmetric(
+                vertical: 15.0,
+                horizontal: 10.0,
+              ),
+              suffixIcon: Padding(
+                padding: const EdgeInsets.only(right: 4.0),
+                child: TextButton(
+                  onPressed: () =>
+                      Navigator.of(context).pop(searchController.text),
+                  child: const Text('搜索'),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+
+    if (newQuery != null) {
+      setState(() {
+        _searchQuery = newQuery;
+      });
+    }
+  }
+
+  List<CategoryModel> _getFilteredCategories(List<CategoryModel> categories) {
+    if (_searchQuery.isEmpty) {
+      return categories;
+    }
+    
+    final lowerCaseQuery = _searchQuery.toLowerCase();
+    return categories
+        .where((category) => category.name.toLowerCase().contains(lowerCaseQuery))
+        .toList();
   }
 
   @override
   Widget build(BuildContext context) {
     final categoryState = ref.watch(categoryListProvider);
-    final categories = categoryState.categories;
+    final allCategories = categoryState.categories;
+    final filteredCategories = _getFilteredCategories(allCategories);
+    
+    // 当类别列表发生变化时，重新加载产品数量
+    ref.listen(categoryListProvider, (previous, next) {
+      if (previous?.categories != next.categories) {
+        _loadProductCounts();
+      }
+    });
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.isSelectionMode ? '选择类别' : '类别管理'),
+        title: _searchQuery.isNotEmpty
+            ? Row(
+                children: [
+                  const Icon(Icons.search, size: 20),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      _searchQuery,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  Text('(${filteredCategories.length})'),
+                ],
+              )
+            : Text(widget.isSelectionMode ? '选择类别' : '类别管理'),
         leading: IconButton(
           onPressed: () => Navigator.of(context).pop(),
           icon: const Icon(Icons.arrow_back),
           tooltip: '返回',
         ),
         actions: [
+          if (_searchQuery.isNotEmpty)
+            IconButton(
+              icon: const Icon(Icons.clear),
+              tooltip: '清除搜索',
+              onPressed: () {
+                setState(() {
+                  _searchQuery = '';
+                });
+              },
+            ),
+          IconButton(
+            icon: const Icon(Icons.search),
+            tooltip: '搜索',
+            onPressed: () => _showSearchDialog(context),
+          ),
           IconButton(
             onPressed: () => _showAddCategoryDialog(context),
             icon: const Icon(Icons.add),
@@ -53,28 +176,36 @@ class _CategorySelectionScreenState
           ),
         ],
       ),
-      body: categories.isEmpty
-          ? const Center(
+      body: filteredCategories.isEmpty
+          ? Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  // Icon(Icons.category_outlined, size: 64, color: Colors.grey),
-                  SizedBox(height: 16),
+                  const SizedBox(height: 16),
                   Text(
-                    '暂无类别',
-                    style: TextStyle(fontSize: 18, color: Colors.grey),
+                    _searchQuery.isNotEmpty ? '未找到匹配的类别' : '暂无类别',
+                    style: const TextStyle(fontSize: 18, color: Colors.grey),
                   ),
-                  SizedBox(height: 8),
-                  Text('点击右上角 + 号添加新类别'),
+                  const SizedBox(height: 8),
+                  Text(_searchQuery.isNotEmpty ? '尝试其他关键词' : '点击右上角 + 号添加新类别'),
                 ],
               ),
             )
           : ListView.builder(
               padding: const EdgeInsets.all(16),
-              itemCount: _buildHierarchicalList(categories).length,
+              itemCount: _searchQuery.isNotEmpty
+                  ? filteredCategories.length
+                  : _buildHierarchicalList(filteredCategories).length,
               itemBuilder: (context, index) {
-                final item = _buildHierarchicalList(categories)[index];
-                return item;
+                if (_searchQuery.isNotEmpty) {
+                  // 搜索模式：显示扁平列表
+                  final category = filteredCategories[index];
+                  return _buildCategoryTile(context, category, 0, allCategories);
+                } else {
+                  // 正常模式：显示层级结构
+                  final item = _buildHierarchicalList(filteredCategories)[index];
+                  return item;
+                }
               },
             ),
     );
@@ -142,6 +273,9 @@ class _CategorySelectionScreenState
     // 计算左侧边距
     final leftMargin = level * 24.0;
 
+    // 获取产品数量
+    final productCount = _categoryProductCounts[category.id] ?? 0;
+
     return Container(
       margin: EdgeInsets.only(bottom: 8, left: leftMargin),
       child: Card(
@@ -171,29 +305,44 @@ class _CategorySelectionScreenState
                 const SizedBox(width: 8),
               ],
               Expanded(
-                child: Text(
-                  category.name,
-                  style: TextStyle(
-                    fontWeight: isSelected
-                        ? FontWeight.bold
-                        : FontWeight.normal,
-                    fontSize: isSubCategory ? 14 : 16,
-                  ),
+                child: Row(
+                  children: [
+                    Text(
+                      category.name,
+                      style: TextStyle(
+                        fontWeight: isSelected
+                            ? FontWeight.bold
+                            : FontWeight.normal,
+                        fontSize: isSubCategory ? 14 : 16,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: Colors.blue.shade100,
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Text(
+                        '$productCount',
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: Colors.blue.shade700,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ],
           ),
-          subtitle: isSubCategory
-              ? Text(
-                  isThirdLevel ? '三级类别' : '子类别',
-                  style: const TextStyle(fontSize: 12, color: Colors.grey),
-                )
-              : hasSubCategories
-              ? Text(
-                  '${allCategories?.where((cat) => cat.parentId == category.id).length ?? 0} 个子类别',
-                  style: const TextStyle(fontSize: 12, color: Colors.grey),
-                )
-              : null,
+          subtitle: hasSubCategories
+          ? Text(
+              '${allCategories?.where((cat) => cat.parentId == category.id).length ?? 0} 个子类别',
+              style: const TextStyle(fontSize: 12, color: Colors.grey),
+            )
+          : null,
           trailing: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -335,6 +484,7 @@ class _CategorySelectionScreenState
                       .addCategory(name: nameController.text.trim());
                   Navigator.of(context).pop();
                   showAppSnackBar(context, message: '类别添加成功');
+                  _loadProductCounts(); // 重新加载产品数量
                 } catch (e) {
                   showAppSnackBar(context, message: '添加失败: $e', isError: true);
                 }
@@ -419,6 +569,7 @@ class _CategorySelectionScreenState
                   Navigator.of(context).pop();
                   showAppSnackBar(context,
                       message: '父类"${nameController.text.trim()}"创建成功');
+                  _loadProductCounts(); // 重新加载产品数量
                 } catch (e) {
                   showAppSnackBar(context, message: '添加失败: $e', isError: true);
                 }
@@ -479,6 +630,7 @@ class _CategorySelectionScreenState
                       );
                   Navigator.of(context).pop();
                   showAppSnackBar(context, message: '类别重命名成功');
+                  _loadProductCounts(); // 重新加载产品数量
                 } catch (e) {
                   showAppSnackBar(context, message: '重命名失败: $e', isError: true);
                 }
@@ -526,6 +678,7 @@ class _CategorySelectionScreenState
                 .deleteCategoryOnly(category.id!);
             Navigator.of(context).pop();
             showAppSnackBar(context, message: '类别删除成功，子类别和产品已保留');
+            _loadProductCounts(); // 重新加载产品数量
           } catch (e) {
             Navigator.of(context).pop();
             showAppSnackBar(context, message: '删除失败: $e', isError: true);
@@ -538,6 +691,7 @@ class _CategorySelectionScreenState
                 .deleteCategoryCascade(category.id!);
             Navigator.of(context).pop();
             showAppSnackBar(context, message: '类别及所有关联内容删除成功', isError: true);
+            _loadProductCounts(); // 重新加载产品数量
           } catch (e) {
             Navigator.of(context).pop();
             showAppSnackBar(context, message: '删除失败: $e', isError: true);

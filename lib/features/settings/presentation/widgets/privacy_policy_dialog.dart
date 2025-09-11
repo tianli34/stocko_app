@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 class PrivacyPolicyDialog extends StatefulWidget {
-  final VoidCallback onAgreed;
+  final Future<void> Function() onAgreed;
 
   const PrivacyPolicyDialog({super.key, required this.onAgreed});
 
@@ -56,9 +56,14 @@ class _PrivacyPolicyDialogState extends State<PrivacyPolicyDialog> {
         ),
         TextButton(
           onPressed: _agreed
-              ? () {
-                  widget.onAgreed();
-                  Navigator.of(context).pop(true);
+              ? () async {
+                  widget.onAgreed().then((_) {
+                    // 在 onAgreed 完成后（即 SharedPreferences 已设置）
+                    // 再关闭对话框
+                    if (context.mounted) {
+                      Navigator.of(context).pop();
+                    }
+                  });
                 }
               : null,
           child: const Text('同意'),

@@ -198,7 +198,6 @@ class _UniversalBarcodeScannerState extends State<UniversalBarcodeScanner> {
             setState(() {
               _isScanning = false;
             });
-            _playSuccessSound();
             widget.onBarcodeScanned(code);
 
             // 连续扫码模式下，延迟后重新启用扫码
@@ -341,6 +340,31 @@ class _UniversalBarcodeScannerState extends State<UniversalBarcodeScanner> {
   void _showManualInputDialog() {
     final TextEditingController controller = TextEditingController();
 
+    // 定义确定按钮的点击逻辑，方便复用
+    void _onConfirm() {
+      final code = controller.text.trim();
+      if (code.isNotEmpty) {
+        Navigator.of(context).pop();
+        widget.onBarcodeScanned(code);
+
+        // 连续扫码模式下，延迟后重新启用扫码
+        if (widget.config.continuousMode) {
+          Future.delayed(
+            Duration(
+              milliseconds: widget.config.continuousDelay ?? 1000,
+            ),
+            () {
+              if (mounted) {
+                setState(() {
+                  _isScanning = true;
+                });
+              }
+            },
+          );
+        }
+      }
+    }
+
     showDialog(
       context: context,
       builder: (BuildContext context) {
@@ -358,6 +382,8 @@ class _UniversalBarcodeScannerState extends State<UniversalBarcodeScanner> {
               hintText: '请输入条码',
               border: OutlineInputBorder(),
             ),
+            // 添加回车键监听
+            onSubmitted: (value) => _onConfirm(),
           ),
           actions: [
             TextButton(
@@ -365,29 +391,7 @@ class _UniversalBarcodeScannerState extends State<UniversalBarcodeScanner> {
               child: const Text('取消'),
             ),
             ElevatedButton(
-              onPressed: () {
-                final code = controller.text.trim();
-                if (code.isNotEmpty) {
-                  Navigator.of(context).pop();
-                  widget.onBarcodeScanned(code);
-
-                  // 连续扫码模式下，延迟后重新启用扫码
-                  if (widget.config.continuousMode) {
-                    Future.delayed(
-                      Duration(
-                        milliseconds: widget.config.continuousDelay ?? 1000,
-                      ),
-                      () {
-                        if (mounted) {
-                          setState(() {
-                            _isScanning = true;
-                          });
-                        }
-                      },
-                    );
-                  }
-                }
-              },
+              onPressed: _onConfirm,
               style: ElevatedButton.styleFrom(
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(8),

@@ -97,6 +97,7 @@ flutter:
     - assets/sounds/ # 声明整个文件夹
     - assets/data/   # 声明数据文件夹
     - assets/text/privacy_policy.md
+    - assets/text/terms_of_service.md
 
   # To add assets to your application, add an assets section, like this:
   # assets:

@@ -1,12 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../../../config/flavor_config.dart';
 import '../../../../core/constants/app_routes.dart';
 
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final flavorConfig = ref.watch(flavorConfigProvider);
     return Scaffold(
       appBar: AppBar(title: const Text('Stocko - 首页')),
       body: Padding(
@@ -45,10 +48,7 @@ class HomeScreen extends StatelessWidget {
                     onPressed: () => context.push(AppRoutes.productRanking),
                     child: const Text('产品排行'),
                   ),
-                  ElevatedButton(
-                    onPressed: () => context.push(AppRoutes.categories),
-                    child: const Text('类别管理'),
-                  ),
+                  
                   ElevatedButton(
                     onPressed: () => context.push(AppRoutes.inventory),
                     child: const Text('库存管理'),
@@ -85,20 +85,22 @@ class HomeScreen extends StatelessWidget {
                     ),
                     child: const Text('设置'),
                   ),
-                  ElevatedButton(
-                    onPressed: () =>
-                        context.push(AppRoutes.databaseManagement),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.orange.shade600,
-                      foregroundColor: Colors.white,
+                  if (flavorConfig.featureFlags[Feature.showDatabaseTools] == true) ...[
+                    ElevatedButton(
+                      onPressed: () =>
+                          context.push(AppRoutes.databaseManagement),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.orange.shade600,
+                        foregroundColor: Colors.white,
+                      ),
+                      child: const Text('数据库管理'),
                     ),
-                    child: const Text('数据库管理'),
-                  ),
-                  ElevatedButton(
-                    onPressed: () =>
-                        context.push(AppRoutes.databaseViewer),
-                    child: const Text('数据库查看器'),
-                  ),
+                    ElevatedButton(
+                      onPressed: () =>
+                          context.push(AppRoutes.databaseViewer),
+                      child: const Text('数据库查看器'),
+                    ),
+                  ],
                   // ElevatedButton(
                   //   onPressed: () =>
                   //       context.push(AppRoutes.categoryTest),

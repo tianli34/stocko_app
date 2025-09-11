@@ -21,6 +21,7 @@ import '../../../product/application/provider/product_providers.dart';
 import '../../../product/presentation/screens/product_selection_screen.dart';
 import '../widgets/sale_item_card.dart';
 import '../../../../core/utils/snackbar_helper.dart';
+import '../../../../core/utils/sound_helper.dart';
 import '../../../../core/widgets/universal_barcode_scanner.dart';
 
 enum SaleMode { sale, nonSale }
@@ -457,6 +458,9 @@ class _CreateSaleScreenState extends ConsumerState<CreateSaleScreen> {
               sellingPriceInCents: price != null ? price.cents : 0,
               conversionRate: result.conversionRate,
             );
+        // 成功添加商品后播放音效
+        HapticFeedback.lightImpact();
+        SoundHelper.playSuccessSound();
       } else {
         // 如果没有找到产品，显示对话框
         _showProductNotFoundDialog(barcode);
@@ -498,6 +502,8 @@ class _CreateSaleScreenState extends ConsumerState<CreateSaleScreen> {
               conversionRate: result.conversionRate,
             );
         _lastScannedBarcode = barcode; // 仅在成功时更新上一个条码
+        // 成功添加商品后播放音效
+        SoundHelper.playSuccessSound();
         // 成功添加后给予一个更明确的提示
         showAppSnackBar(context, message: '✅ ${result.product.name} 已添加');
       } else {
