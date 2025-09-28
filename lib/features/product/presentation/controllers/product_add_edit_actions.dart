@@ -156,8 +156,14 @@ class ProductAddEditActions {
     if (ui.auxiliaryUnitBarcodes != null && ui.auxiliaryUnitBarcodes!.isNotEmpty) {
       auxiliaryBarcodeData = ui.auxiliaryUnitBarcodes!
           .map((item) => AuxiliaryUnitBarcodeData(
-                id: int.parse(item['id']!),
-                barcode: item['barcode']!,
+                // 某些临时ID可能包含下划线等非数字字符，例如 "1757666934778_8"，
+                // 为避免 int.parse 抛出异常，这里先移除非数字字符再尝试解析，失败则置为 0。
+                id: int.tryParse(
+                      (item['id'] ?? '')
+                          .replaceAll(RegExp(r'[^0-9]'), ''),
+                    ) ??
+                    0,
+                barcode: item['barcode'] ?? '',
               ))
           .toList();
     }
@@ -187,6 +193,8 @@ class ProductAddEditActions {
       final result = await controller.submitForm(formData);
       if (result.success) {
         ToastService.success('✅ ${result.message ?? '操作成功'}');
+        // 提交成功，清空辅单位临时表单状态，避免下次进入串数据
+        ref.read(unitEditFormProvider.notifier).resetUnitEditForm();
         onSuccess();
       } else {
         onError('❌ ${result.message ?? '操作失败'}');

@@ -341,7 +341,7 @@ class _UniversalBarcodeScannerState extends State<UniversalBarcodeScanner> {
     final TextEditingController controller = TextEditingController();
 
     // 定义确定按钮的点击逻辑，方便复用
-    void _onConfirm() {
+    void onConfirm() {
       final code = controller.text.trim();
       if (code.isNotEmpty) {
         Navigator.of(context).pop();
@@ -383,7 +383,7 @@ class _UniversalBarcodeScannerState extends State<UniversalBarcodeScanner> {
               border: OutlineInputBorder(),
             ),
             // 添加回车键监听
-            onSubmitted: (value) => _onConfirm(),
+            onSubmitted: (value) => onConfirm(),
           ),
           actions: [
             TextButton(
@@ -391,7 +391,7 @@ class _UniversalBarcodeScannerState extends State<UniversalBarcodeScanner> {
               child: const Text('取消'),
             ),
             ElevatedButton(
-              onPressed: _onConfirm,
+              onPressed: onConfirm,
               style: ElevatedButton.styleFrom(
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(8),

@@ -13,6 +13,7 @@ abstract class StockModel with _$StockModel {
     required int quantity,
     required int shopId,
     int? batchId,
+    @Default(0) int averageUnitPriceInCents,
     DateTime? createdAt,
     DateTime? updatedAt,
   }) = _StockModel;

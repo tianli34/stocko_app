@@ -14,6 +14,7 @@ import 'package:stocko_app/features/inventory/domain/model/shop.dart';
 import 'package:stocko_app/features/product/application/category_notifier.dart';
 import 'package:stocko_app/features/product/domain/model/category.dart';
 import 'package:stocko_app/features/product/data/dao/batch_dao.dart';
+import 'package:stocko_app/features/purchase/data/dao/purchase_dao.dart';
 import 'package:stocko_app/features/inventory/data/repository/inventory_repository.dart';
 import 'package:stocko_app/features/product/data/repository/product_repository.dart';
 import 'package:stocko_app/features/product/data/repository/product_unit_repository.dart';
@@ -24,6 +25,7 @@ class MockProductRepository extends Mock implements IProductRepository {}
 class MockProductUnitRepository extends Mock implements IProductUnitRepository {}
 class MockUnitRepository extends Mock implements IUnitRepository {}
 class MockBatchDao extends Mock implements BatchDao {}
+class MockPurchaseDao extends Mock implements PurchaseDao {}
 
 void main() {
   group('InventoryQueryService', () {
@@ -33,6 +35,7 @@ void main() {
     late MockProductUnitRepository productUnitRepo;
     late MockUnitRepository unitRepo;
     late MockBatchDao batchDao;
+    late MockPurchaseDao purchaseDao;
 
     setUpAll(() {
       // Register fallback value for StockModel to be used with mocktail `any()`
@@ -42,11 +45,15 @@ void main() {
     });
 
   setUp(() {
+      // 初始化Flutter绑定
+      TestWidgetsFlutterBinding.ensureInitialized();
+      
       inventoryRepo = MockInventoryRepository();
       productRepo = MockProductRepository();
       productUnitRepo = MockProductUnitRepository();
       unitRepo = MockUnitRepository();
       batchDao = MockBatchDao();
+      purchaseDao = MockPurchaseDao();
 
       container = ProviderContainer(overrides: [
         // Provide simple streams/futures for shops and categories
@@ -57,6 +64,7 @@ void main() {
               const CategoryModel(id: 10, name: '饮料', parentId: null),
             ])),
         batchDaoProvider.overrideWithValue(batchDao),
+        purchaseDaoProvider.overrideWithValue(purchaseDao),
         // repository overrides
         inventoryRepositoryProvider.overrideWithValue(inventoryRepo),
         productRepositoryProvider.overrideWithValue(productRepo),
@@ -86,6 +94,10 @@ void main() {
 
       // product base unit mapping (optional in service; simulate null to fallback to product.baseUnitId)
       when(() => productUnitRepo.getBaseUnitForProduct(100))
+          .thenAnswer((_) async => null);
+      
+      // mock purchase dao
+      when(() => purchaseDao.getLatestPurchasePrice(any()))
           .thenAnswer((_) async => null);
 
   final service = container.read(inventoryQueryServiceProvider);

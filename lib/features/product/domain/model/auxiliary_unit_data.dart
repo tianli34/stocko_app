@@ -29,7 +29,7 @@ class AuxiliaryUnitData {
     required this.id,
     this.unitId,
     this.unitName = '',
-    this.conversionRate = 1,
+    this.conversionRate = 0,
     this.barcode = '',
     this.retailPriceInCents = '',
     this.wholesalePriceInCents = '',
@@ -39,7 +39,7 @@ class AuxiliaryUnitData {
   const AuxiliaryUnitData.empty(this.id)
     : unitId = null,
       unitName = '',
-      conversionRate = 1,
+      conversionRate = 0,
       barcode = '',
       retailPriceInCents = '',
       wholesalePriceInCents = '';
@@ -84,7 +84,7 @@ class AuxiliaryUnitData {
       id: json['id'] as int,
       unitId: json['unitId'] as int?,
       unitName: json['unitName'] as String? ?? '',
-      conversionRate: (json['conversionRate']) ?? 1,
+      conversionRate: (json['conversionRate'] as int?) ?? 0,
       barcode: json['barcode'] as String? ?? '',
       retailPriceInCents: json['retailPriceInCents'] as String? ?? '',
       wholesalePriceInCents: json['wholesalePriceInCents'] as String? ?? '',

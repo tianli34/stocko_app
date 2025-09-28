@@ -15,7 +15,7 @@ class CategoryService {
   CategoryService(this._repository, [this._productRepository]);
 
   /// 添加新类别
-  Future<void> addCategory({
+  Future<int> addCategory({
     int? id,
     required String name,
     int? parentId,
@@ -47,7 +47,7 @@ class CategoryService {
       parentId: parentId,
     );
 
-    await _repository.addCategory(category);
+    return await _repository.addCategory(category);
   }
 
   /// 更新类别

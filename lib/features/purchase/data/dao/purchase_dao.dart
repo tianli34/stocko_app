@@ -147,4 +147,14 @@ class PurchaseDao extends DatabaseAccessor<AppDatabase>
   // 工具方法
   // ===========================================================================
 
+  /// 根据产品ID获取最近一次的采购单价
+  Future<int?> getLatestPurchasePrice(int productId) async {
+    final query = select(db.purchaseOrderItem)
+      ..where((tbl) => tbl.productId.equals(productId))
+      ..orderBy([(t) => OrderingTerm.desc(t.id)])
+      ..limit(1);
+
+    final result = await query.getSingleOrNull();
+    return result?.unitPriceInCents;
+  }
 }

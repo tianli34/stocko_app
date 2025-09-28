@@ -175,7 +175,7 @@ class _AuxiliaryUnitEditScreenState
       },
       child: Scaffold(
         appBar: AppBar(
-          title: const Text('添加辅单位'),
+          title: const Text('编辑辅单位'),
           leading: IconButton(
             icon: const Icon(Icons.arrow_back),
             onPressed: _handleReturn,

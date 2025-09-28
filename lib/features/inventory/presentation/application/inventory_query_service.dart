@@ -12,6 +12,7 @@ import '../../../product/data/repository/unit_repository.dart';
 import '../../application/provider/shop_providers.dart';
 import '../../../product/application/category_notifier.dart';
 import '../../../product/data/dao/batch_dao.dart';
+import '../../../purchase/data/dao/purchase_dao.dart';
 
 /// 库存查询服务
 /// 提供库存信息的复合查询功能，包含产品、单位、分类等详细信息
@@ -21,6 +22,7 @@ class InventoryQueryService {
   final IProductUnitRepository _productUnitRepository;
   final IUnitRepository _unitRepository;
   final BatchDao _batchDao;
+  final PurchaseDao _purchaseDao;
   final Ref _ref;
 
   InventoryQueryService(
@@ -29,6 +31,7 @@ class InventoryQueryService {
     this._productUnitRepository,
     this._unitRepository,
     this._batchDao,
+    this._purchaseDao,
     this._ref,
   );
 
@@ -192,6 +195,7 @@ class InventoryQueryService {
           'categoryId': product.categoryId,
           'categoryName': categoryName ?? '未分类',
           'productId': inventory.productId,
+          'purchasePrice': await _purchaseDao.getLatestPurchasePrice(inventory.productId) ?? 0,
         };
 
         if (batch != null) {
@@ -274,12 +278,18 @@ final batchDaoProvider = Provider<BatchDao>((ref) {
 });
 
 /// 库存查询服务 Provider
+final purchaseDaoProvider = Provider<PurchaseDao>((ref) {
+  final db = ref.watch(appDatabaseProvider);
+  return db.purchaseDao;
+});
+
 final inventoryQueryServiceProvider = Provider<InventoryQueryService>((ref) {
   final inventoryRepository = ref.watch(inventoryRepositoryProvider);
   final productRepository = ref.watch(productRepositoryProvider);
   final productUnitRepository = ref.watch(productUnitRepositoryProvider);
   final unitRepository = ref.watch(unitRepositoryProvider);
   final batchDao = ref.watch(batchDaoProvider);
+  final purchaseDao = ref.watch(purchaseDaoProvider);
 
   return InventoryQueryService(
     inventoryRepository,
@@ -287,6 +297,7 @@ final inventoryQueryServiceProvider = Provider<InventoryQueryService>((ref) {
     productUnitRepository,
     unitRepository,
     batchDao,
+    purchaseDao,
     ref,
   );
 });

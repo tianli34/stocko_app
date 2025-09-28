@@ -60,15 +60,16 @@ class CategoryListNotifier extends StateNotifier<CategoryListState> {
   }
 
   /// 添加类别
-  Future<void> addCategory({required String name, int? parentId}) async {
+  Future<int> addCategory({required String name, int? parentId}) async {
     try {
       // final id = _categoryService.generateCategoryId();
-      await _categoryService.addCategory(
+      final newId = await _categoryService.addCategory(
         // id: id,
         name: name,
         parentId: parentId,
       );
       await loadCategories(); // 重新加载列表
+      return newId;
     } catch (e) {
       state = state.copyWith(error: e.toString());
       rethrow;
@@ -168,7 +169,7 @@ final categoriesProvider = Provider<List<CategoryModel>>((ref) {
 });
 
 /// 根据ID获取类别的 Provider
-final getCategoryByIdProvider = Provider.family<CategoryModel?, String>((
+final getCategoryByIdProvider = Provider.family<CategoryModel?, int>((
   ref,
   categoryId,
 ) {

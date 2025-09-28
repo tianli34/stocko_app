@@ -20,5 +20,4 @@ class InboundItem extends Table {
 
   /// 入库数量
   IntColumn get quantity => integer()();
-
 }

@@ -17,8 +17,9 @@ class CategoryRepository implements ICategoryRepository {
   Future<int> addCategory(CategoryModel category) async {
     try {
       print('🏷️ 仓储层：添加类别，ID: ${category.id}, 名称: ${category.name}');
-      await _categoryDao.insertCategory(_categoryToCompanion(category));
-      return 1; // 返回成功标识
+      final newId = await _categoryDao.insertCategory(_categoryToCompanion(category));
+      print('🏷️ 仓储层：类别添加成功，新ID: $newId');
+      return newId; // 返回新创建的类别ID
     } catch (e) {
       print('🏷️ 仓储层：添加类别失败: $e');
       throw Exception('添加类别失败: $e');

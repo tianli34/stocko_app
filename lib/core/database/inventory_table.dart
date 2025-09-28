@@ -19,6 +19,9 @@ class Stock extends Table {
   /// 数量
   IntColumn get quantity => integer()();
 
+  /// 移动加权平均单价（以分为单位）
+  IntColumn get averageUnitPriceInCents => integer().withDefault(const Constant(0))();
+
   /// 外键 - 店铺ID
   IntColumn get shopId => integer().references(Shop, #id)();
 

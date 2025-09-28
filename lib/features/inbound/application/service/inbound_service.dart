@@ -7,6 +7,7 @@ import '../../../inbound/data/dao/inbound_receipt_dao.dart';
 import '../../../inbound/data/dao/inbound_item_dao.dart';
 // import '../../../purchase/data/dao/product_supplier_dao.dart';
 import '../../../inventory/application/inventory_service.dart';
+import '../../../inventory/application/service/weighted_average_price_service.dart';
 import '../../application/provider/inbound_list_provider.dart';
 import '../../domain/model/inbound_item.dart';
 import '../../../purchase/domain/repository/i_supplier_repository.dart';
@@ -33,11 +34,13 @@ class InboundService {
   final InboundItemDao _inboundItemDao;
   // final ProductSupplierDao _productSupplierDao;
   final InventoryService _inventoryService;
+  final WeightedAveragePriceService _weightedAveragePriceService;
   final ISupplierRepository _supplierRepository;
 
   InboundService(
     this._database,
     this._inventoryService,
+    this._weightedAveragePriceService,
     this._supplierRepository,
   ) : _purchaseDao = _database.purchaseDao,
       _batchDao = _database.batchDao,
@@ -308,10 +311,10 @@ class InboundService {
         receiptId: drift.Value(receiptId),
         productId: drift.Value(item.model.productId),
         quantity: drift.Value(item.model.quantity),
-    // 正确写入批次列到 batchId，而不是误写到主键 id
-    batchId: resolvedBatchNumber != null
-      ? drift.Value(resolvedBatchNumber)
-      : const drift.Value.absent(),
+        // 正确写入批次列到 batchId，而不是误写到主键 id
+        batchId: resolvedBatchNumber != null
+          ? drift.Value(resolvedBatchNumber)
+          : const drift.Value.absent(),
       );
       itemCompanions.add(itemCompanion);
     }
@@ -343,7 +346,16 @@ class InboundService {
   batchId = batchIdOnly;
       }
 
-      // 无论是否启用批次管理，都必须更新库存；未启用批次时 batchId 为空
+      // 更新移动加权平均价格
+      await _weightedAveragePriceService.updateWeightedAveragePrice(
+        productId: item.model.productId,
+        shopId: shopId,
+        batchId: batchId,
+        inboundQuantity: item.model.quantity,
+        inboundUnitPriceInCents: item.unitPriceInCents,
+      );
+
+      // 记录库存流水
       final success = await _inventoryService.inbound(
         productId: item.model.productId,
         shopId: shopId,
@@ -355,7 +367,7 @@ class InboundService {
       if (!success) {
         throw Exception('商品 ${item.productName} 库存更新失败');
       }
-      print('✅ 商品 ${item.productName} 库存更新完成');
+      print('✅ 商品 ${item.productName} 库存和移动加权平均价格更新完成');
     }
   }
 
@@ -408,6 +420,7 @@ class InboundService {
 final inboundServiceProvider = Provider<InboundService>((ref) {
   final database = ref.watch(appDatabaseProvider);
   final inventoryService = ref.watch(inventoryServiceProvider);
+  final weightedAveragePriceService = ref.watch(weightedAveragePriceServiceProvider);
   final supplierRepository = ref.watch(supplierRepositoryProvider);
-  return InboundService(database, inventoryService, supplierRepository);
+  return InboundService(database, inventoryService, weightedAveragePriceService, supplierRepository);
 });

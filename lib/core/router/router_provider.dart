@@ -19,6 +19,7 @@ import '../../features/purchase/presentation/screens/purchase_records_screen.dar
 import '../../features/settings/presentation/screens/settings_screen.dart';
 import '../../features/sale/presentation/screens/customer_selection_screen.dart';
 import '../../features/home/presentation/screens/home_screen.dart';
+import '../../core/models/scanned_product_payload.dart';
 
 // GoRouter Provider
 final routerProvider = Provider<GoRouter>((ref) {
@@ -242,7 +243,12 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: AppRoutes.inboundCreate,
         name: 'inbound-create',
-        builder: (context, state) => const CreateInboundScreen(),
+        builder: (context, state) {
+          final payload = state.extra is ScannedProductPayload
+              ? state.extra as ScannedProductPayload
+              : null;
+          return CreateInboundScreen(payload: payload);
+        },
       ),
       GoRoute(
         path: AppRoutes.purchase,
@@ -298,7 +304,12 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: AppRoutes.saleCreate,
         name: 'sale-create',
-        builder: (context, state) => const CreateSaleScreen(),
+        builder: (context, state) {
+          final payload = state.extra is ScannedProductPayload
+              ? state.extra as ScannedProductPayload
+              : null;
+          return CreateSaleScreen(payload: payload);
+        },
       ),
       GoRoute(
         path: AppRoutes.inventoryQuery,

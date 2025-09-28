@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:intl/intl.dart';
 import '../../../../core/database/database.dart';
 import '../../../product/application/provider/product_providers.dart';
 import '../../application/provider/batch_providers.dart';
@@ -52,21 +51,7 @@ class InboundRecordItemTile extends ConsumerWidget {
           Text(
             '数量: ${item.quantity.toStringAsFixed(item.quantity.truncateToDouble() == item.quantity ? 0 : 2)}',
           ),
-          batchAsync.when(
-            data: (batch) {
-              if (batch?.productionDate == null) return const SizedBox.shrink();
-              return Text(
-                '生产日期: ${DateFormat('yyyy-MM-dd').format(batch!.productionDate)}',
-                style: const TextStyle(fontSize: 12, color: Colors.grey),
-              );
-            },
-            loading: () => const SizedBox(
-              width: 12,
-              height: 12,
-              child: CircularProgressIndicator(strokeWidth: 2),
-            ),
-            error: (e, s) => const SizedBox.shrink(),
-          ),
+          
         ],
       ),
     );

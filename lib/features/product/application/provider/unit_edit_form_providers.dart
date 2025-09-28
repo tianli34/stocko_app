@@ -170,7 +170,7 @@ class UnitEditFormNotifier extends Notifier<UnitEditFormState> {
             id: auxUnit.id as int,
             unitId: auxUnit.unit?.id as int?,
             unitName: auxUnit.unitController?.text as String? ?? '',
-            conversionRate: auxUnit.conversionRate ?? 1,
+            conversionRate: auxUnit.conversionRate ?? 0,
             barcode: auxUnit.barcodeController?.text as String? ?? '',
             retailPriceInCents: auxUnit.retailPriceController?.text as String? ?? '',
             wholesalePriceInCents:
@@ -187,7 +187,7 @@ class UnitEditFormNotifier extends Notifier<UnitEditFormState> {
   }
 }
 
-/// 单位编辑页面表单状态提供者
+/// 单位编辑页面表单状态提供者（保留状态，父页结束时手动清理）
 final unitEditFormProvider =
     NotifierProvider<UnitEditFormNotifier, UnitEditFormState>(() {
       return UnitEditFormNotifier();

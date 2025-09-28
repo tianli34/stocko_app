@@ -1,4 +1,8 @@
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:go_router/go_router.dart';
+import 'package:markdown_widget/markdown_widget.dart';
 
 class PrivacyPolicyDialog extends StatefulWidget {
   final Future<void> Function() onAgreed;
@@ -11,6 +15,21 @@ class PrivacyPolicyDialog extends StatefulWidget {
 
 class _PrivacyPolicyDialogState extends State<PrivacyPolicyDialog> {
   bool _agreed = false;
+  String? _privacyPolicy;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadPrivacyPolicy();
+  }
+
+  Future<void> _loadPrivacyPolicy() async {
+    final policy =
+        await rootBundle.loadString('assets/text/privacy_policy.md');
+    setState(() {
+      _privacyPolicy = policy;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -21,15 +40,42 @@ class _PrivacyPolicyDialogState extends State<PrivacyPolicyDialog> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
-              '请您在使用本应用前，仔细阅读并充分理解《隐私政策》的全部内容。当您点击“同意”并开始使用我们的产品或服务，即表示您已充分理解并同意本政策。',
+            RichText(
+              text: TextSpan(
+                style: Theme.of(context).textTheme.bodyMedium,
+                children: [
+                  const TextSpan(
+                    text: '请您在使用本应用前，仔细阅读并充分理解',
+                  ),
+                  TextSpan(
+                    text: '《隐私政策》',
+                    style: const TextStyle(color: Colors.blue),
+                    recognizer: TapGestureRecognizer()
+                      ..onTap = () {
+                        context.push('/settings/privacy-policy');
+                      },
+                  ),
+                  const TextSpan(
+                    text: '的全部内容。当您点击“同意”并开始使用我们的产品或服务，即表示您已充分理解并同意本政策。',
+                  ),
+                ],
+              ),
             ),
             const SizedBox(height: 16),
-            // 在此处添加您的完整隐私政策文本
-            const Text(
-              '完整的隐私政策文本...',
-              style: TextStyle(fontSize: 12, color: Colors.grey),
-            ),
+            if (_privacyPolicy != null)
+              ConstrainedBox(
+                constraints: const BoxConstraints(maxHeight: 300),
+                child: Scrollbar(
+                  child: SingleChildScrollView(
+                    child: MarkdownWidget(
+                      data: _privacyPolicy!,
+                      shrinkWrap: true,
+                    ),
+                  ),
+                ),
+              )
+            else
+              const Center(child: CircularProgressIndicator()),
             const SizedBox(height: 16),
             Row(
               children: [
@@ -57,13 +103,7 @@ class _PrivacyPolicyDialogState extends State<PrivacyPolicyDialog> {
         TextButton(
           onPressed: _agreed
               ? () async {
-                  widget.onAgreed().then((_) {
-                    // 在 onAgreed 完成后（即 SharedPreferences 已设置）
-                    // 再关闭对话框
-                    if (context.mounted) {
-                      Navigator.of(context).pop();
-                    }
-                  });
+                  await widget.onAgreed();
                 }
               : null,
           child: const Text('同意'),

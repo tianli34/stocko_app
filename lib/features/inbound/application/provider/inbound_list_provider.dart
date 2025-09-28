@@ -95,6 +95,7 @@ class InboundListNotifier extends StateNotifier<List<InboundItemState>> {
   }
 
   /// 添加一个新货品，或如果已存在则更新其数量
+  /// 合并策略：优先按条码匹配，如果没有条码或条码不匹配，则按产品ID+单位ID匹配
   void addOrUpdateItem({
     required ProductModel product,
     required int unitId,
@@ -104,10 +105,18 @@ class InboundListNotifier extends StateNotifier<List<InboundItemState>> {
     int? wholesalePriceInCents,
     int quantity = 1,
   }) {
-    final existingItemIndex = state.indexWhere((item) =>
-        item.productId == product.id &&
-        item.unitId == unitId &&
-        item.barcode == barcode);
+    int existingItemIndex = -1;
+    
+    // 优先按条码匹配（如果提供了条码）
+    if (barcode != null && barcode.isNotEmpty) {
+      existingItemIndex = state.indexWhere((item) => item.barcode == barcode);
+    }
+    
+    // 如果按条码没找到，则按产品ID+单位ID匹配
+    if (existingItemIndex == -1) {
+      existingItemIndex = state.indexWhere((item) =>
+          item.productId == product.id && item.unitId == unitId);
+    }
 
     if (existingItemIndex != -1) {
       final existingItem = state[existingItemIndex];

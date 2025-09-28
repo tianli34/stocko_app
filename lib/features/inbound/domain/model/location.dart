@@ -71,8 +71,10 @@ class Location {
     required int shopId,
   }) {
     final now = DateTime.now();
+    // 使用微秒、对象哈希码和随机数确保ID唯一性
+    final uniqueId = 'location_${now.microsecondsSinceEpoch}_${Object().hashCode}';
     return Location(
-      id: 'location_${now.millisecondsSinceEpoch}',
+      id: uniqueId,
       code: code,
       name: name,
       description: description,

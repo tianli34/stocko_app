@@ -63,7 +63,7 @@ class InventoryDao extends DatabaseAccessor<AppDatabase>
       // 如果标准查询失败，尝试使用原始 SQL 过滤有问题的记录
       try {
         final result = await customSelect(
-          'SELECT id, product_id, batch_id, quantity, shop_id, '
+          'SELECT id, product_id, batch_id, quantity, average_unit_price_in_cents, shop_id, '
           'datetime(COALESCE(created_at, CURRENT_TIMESTAMP)) as created_at, '
           'datetime(COALESCE(updated_at, CURRENT_TIMESTAMP)) as updated_at '
           'FROM stock WHERE id IS NOT NULL AND product_id IS NOT NULL',
@@ -79,6 +79,7 @@ class InventoryDao extends DatabaseAccessor<AppDatabase>
             productId: row.read<int>('product_id'),
             batchId: row.readNullable<int>('batch_id'),
             quantity: row.read<int>('quantity'),
+            averageUnitPriceInCents: row.read<int>('average_unit_price_in_cents'),
             shopId: row.read<int>('shop_id'),
             createdAt: DateTime.tryParse(createdAtStr ?? '') ?? DateTime.now(),
             updatedAt: DateTime.tryParse(updatedAtStr ?? '') ?? DateTime.now(),
@@ -310,5 +311,60 @@ class InventoryDao extends DatabaseAccessor<AppDatabase>
           ..limit(1))
         .get();
     return rows.isNotEmpty;
+  }
+
+  /// 获取库存的移动加权平均价格
+  Future<int> getAverageUnitPrice(int productId, int shopId, int? batchId) async {
+    final stock = await getInventoryByProductShopAndBatch(productId, shopId, batchId);
+    return stock?.averageUnitPriceInCents ?? 0;
+  }
+
+  /// 更新库存的移动加权平均价格
+  Future<bool> updateAverageUnitPrice(
+    int productId,
+    int shopId,
+    int? batchId,
+    int averageUnitPriceInCents,
+  ) async {
+    final updater = update(stock)
+      ..where((t) => t.productId.equals(productId) & t.shopId.equals(shopId));
+
+    if (batchId == null) {
+      updater.where((t) => t.batchId.isNull());
+    } else {
+      updater.where((t) => t.batchId.equals(batchId));
+    }
+
+    final result = await updater.write(
+      StockCompanion(
+        averageUnitPriceInCents: Value(averageUnitPriceInCents),
+        updatedAt: Value(DateTime.now()),
+      ),
+    );
+    return result > 0;
+  }
+
+  /// 获取库存总价值（数量 × 移动加权平均价格）
+  Future<double> getTotalInventoryValue(int shopId) async {
+    final result = await customSelect(
+      'SELECT SUM(quantity * average_unit_price_in_cents) as total_value FROM stock WHERE shop_id = ?',
+      variables: [Variable.withInt(shopId)],
+      readsFrom: {stock},
+    ).getSingleOrNull();
+    
+    final totalValueInCents = result?.read<int>('total_value') ?? 0;
+    return totalValueInCents / 100.0; // 转换为元
+  }
+
+  /// 获取指定产品的库存总价值
+  Future<double> getProductInventoryValue(int productId) async {
+    final result = await customSelect(
+      'SELECT SUM(quantity * average_unit_price_in_cents) as total_value FROM stock WHERE product_id = ?',
+      variables: [Variable.withInt(productId)],
+      readsFrom: {stock},
+    ).getSingleOrNull();
+    
+    final totalValueInCents = result?.read<int>('total_value') ?? 0;
+    return totalValueInCents / 100.0; // 转换为元
   }
 }

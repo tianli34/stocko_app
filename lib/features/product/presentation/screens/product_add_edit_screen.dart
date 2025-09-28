@@ -4,7 +4,6 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/shared_widgets/shared_widgets.dart';
 import '../../domain/model/product.dart';
 import '../../domain/model/unit.dart';
-import '../../domain/model/category.dart';
 import '../../application/provider/product_providers.dart';
 import '../../application/category_notifier.dart';
 import '../../application/provider/unit_providers.dart';
@@ -19,6 +18,7 @@ import '../widgets/product_form_action_bar.dart';
 import '../controllers/product_form_controllers.dart';
 import '../state/product_form_ui_provider.dart';
 import '../controllers/product_add_edit_actions.dart';
+import '../../application/provider/unit_edit_form_providers.dart';
 
 /// 货品添加/编辑页面
 /// 表单页面，提交时调用 ref.read(productOperationsProvider.notifier).addProduct(...)
@@ -48,7 +48,12 @@ class _ProductAddEditScreenState extends ConsumerState<ProductAddEditScreen> {
   @override
   void initState() {
     super.initState();
+    // 首帧后做必要的初始化（不要在这里重置 unitEditFormProvider，以便父页生命周期内多次进入子页可保留数据）
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      // 编辑模式：每次打开父页即清空辅单位缓存，避免沿用上一次编辑的临时数据
+      if (widget.product != null) {
+        ref.read(unitEditFormProvider.notifier).resetUnitEditForm();
+      }
       if (widget.product?.id != null) {
         ref.invalidate(mainBarcodeProvider(widget.product!.id!));
       }
@@ -67,6 +72,10 @@ class _ProductAddEditScreenState extends ConsumerState<ProductAddEditScreen> {
 
   @override
   void dispose() {
+    // 在父页结束时异步清空辅单位临时状态，避免在 dispose 生命周期直接修改 provider
+    Future.microtask(() {
+      ref.read(unitEditFormProvider.notifier).resetUnitEditForm();
+    });
     _c.dispose();
     super.dispose();
   }
@@ -416,6 +425,11 @@ class _ProductAddEditScreenState extends ConsumerState<ProductAddEditScreen> {
   Future<void> _populateUnitAndCategoryData() async {
     if (widget.product == null || !mounted) return;
 
+    // 设置图片路径
+    if (widget.product!.image != null && widget.product!.image!.isNotEmpty) {
+      ref.read(productFormUiProvider.notifier).setImagePath(widget.product!.image);
+    }
+
     // 设置单位ID和名称
     ref.read(productFormUiProvider.notifier).setUnitId(widget.product!.baseUnitId);
 
@@ -431,14 +445,24 @@ class _ProductAddEditScreenState extends ConsumerState<ProductAddEditScreen> {
     if (widget.product!.categoryId != null && mounted) {
       ref.read(productFormUiProvider.notifier).setCategoryId(widget.product!.categoryId);
 
+      // 确保类别列表是最新的
+      await ref.read(categoryListProvider.notifier).loadCategories();
+      
       // 从类别列表中获取类别名称
       final categories = ref.read(categoryListProvider).categories;
-      final category = categories.where((c) => c.id == widget.product!.categoryId).firstOrNull ?? 
-          const CategoryModel(name: '未分类');
+      final category = categories.where((c) => c.id == widget.product!.categoryId).firstOrNull;
 
-      setState(() {
-        _c.categoryController.text = category.name.replaceAll(' ', '');
-      });
+      if (category != null && mounted) {
+        setState(() {
+          _c.categoryController.text = category.name.replaceAll(' ', '');
+        });
+      } else if (mounted) {
+        // 如果在类别列表中找不到对应的类别，可能是数据不一致的问题
+        print('⚠️ [WARNING] 产品的类别ID ${widget.product!.categoryId} 在类别列表中不存在');
+        setState(() {
+          _c.categoryController.text = '未分类';
+        });
+      }
     } else if (mounted) {
       // 如果没有类别，设置为未分类
       setState(() {

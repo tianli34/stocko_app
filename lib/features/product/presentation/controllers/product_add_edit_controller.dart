@@ -118,17 +118,19 @@ class ProductAddEditController {
         if (existingCat != null) {
           categoryId = existingCat.id;
         } else {
+          // 调试信息
+          print('🔍 [DEBUG] 创建新类别: "${data.newCategoryName.trim()}"');
+          
           final service = ref.read(categoryServiceProvider);
-          await service.addCategory(
+          categoryId = await service.addCategory(
             name: data.newCategoryName.trim(),
           );
+          
+          // 调试信息
+          print('🔍 [DEBUG] 新类别创建成功，ID: $categoryId');
+          
           // 立即刷新类别缓存，确保新类别在编辑时可见
           ref.invalidate(categoryListProvider);
-          // 再次获取以找到新创建的类别ID
-          await categoryNotifier.loadCategories();
-          final newCategories = ref.read(categoryListProvider).categories;
-          final foundCategory = newCategories.where((c) => c.name == data.newCategoryName.trim()).firstOrNull;
-          categoryId = foundCategory?.id;
         }
       }
 
@@ -163,6 +165,14 @@ class ProductAddEditController {
       // 3. 构建产品对象
       Money? toMoney(double? yuan) =>
           yuan == null ? null : Money((yuan * 100).round());
+
+      // 调试信息
+      print('🔍 [DEBUG] ==================== 创建产品 ====================');
+      print('🔍 [DEBUG] 产品名称: "${data.name.trim()}"');
+      print('🔍 [DEBUG] 选中的类别ID: ${data.selectedCategoryId}');
+      print('🔍 [DEBUG] 新类别名称: "${data.newCategoryName.trim()}"');
+      print('🔍 [DEBUG] 最终类别ID: $categoryId');
+      print('🔍 [DEBUG] 单位ID: $unitId');
 
       final product = ProductModel(
         id: data.productId ?? DateTime.now().millisecondsSinceEpoch,
@@ -205,6 +215,8 @@ class ProductAddEditController {
       ref.invalidate(allProductsProvider);
       // 关键修复：同时使主条码的Provider失效，以便下次进入页面时能重新获取
       ref.invalidate(mainBarcodeProvider(product.id!));
+      // 确保类别列表也被刷新，以便编辑页面能正确显示新创建的类别
+      ref.invalidate(categoryListProvider);
 
       return ProductOperationResult.success(
         message: data.productId == null

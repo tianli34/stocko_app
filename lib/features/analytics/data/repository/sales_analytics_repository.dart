@@ -25,11 +25,7 @@ class SalesAnalyticsRepository {
     addSafely(() => _db.salesTransactionItem);
     addSafely(() => _db.salesTransaction);
     addSafely(() => _db.product);
-    addSafely(() => _db.productBatch);
-    addSafely(() => _db.inboundItem);
-    addSafely(() => _db.inboundReceipt);
-    addSafely(() => _db.purchaseOrder);
-    addSafely(() => _db.purchaseOrderItem);
+    addSafely(() => _db.stock);
     return set;
   }
 
@@ -53,55 +49,6 @@ class SalesAnalyticsRepository {
 
   final query = _db.customSelect(
       '''
-      WITH batch_cost AS (
-        SELECT 
-          pb.id AS batch_id,
-          CASE 
-            WHEN SUM(ii.quantity) IS NOT NULL AND SUM(ii.quantity) > 0 
-              THEN CAST(ROUND(SUM(ii.quantity * poi.unit_price_in_cents) * 1.0 / SUM(ii.quantity)) AS INT)
-            ELSE NULL
-          END AS unit_cost_in_cents
-        FROM product_batch pb
-        LEFT JOIN inbound_item ii ON ii.batch_id = pb.id
-        LEFT JOIN inbound_receipt ir ON ir.id = ii.receipt_id
-        LEFT JOIN purchase_order po ON po.id = ir.purchase_order_id
-        LEFT JOIN purchase_order_item poi 
-          ON poi.purchase_order_id = po.id 
-         AND poi.product_id = pb.product_id 
-         AND poi.production_date = pb.production_date
-        GROUP BY pb.id
-      ),
-      poi_avg AS (
-        SELECT 
-          purchase_order_id,
-          product_id,
-          CAST(ROUND(SUM(quantity * unit_price_in_cents) * 1.0 / SUM(quantity)) AS INT) AS avg_price_in_cents
-        FROM purchase_order_item
-        GROUP BY purchase_order_id, product_id
-      ),
-      global_poi_avg AS (
-        SELECT 
-          product_id,
-          CAST(ROUND(SUM(quantity * unit_price_in_cents) * 1.0 / SUM(quantity)) AS INT) AS avg_price_in_cents
-        FROM purchase_order_item
-        GROUP BY product_id
-      ),
-      unbatched_cost AS (
-        SELECT 
-          ii.product_id AS product_id,
-          CASE 
-            WHEN SUM(ii.quantity) IS NOT NULL AND SUM(ii.quantity) > 0 
-              THEN CAST(ROUND(SUM(ii.quantity * COALESCE(pa.avg_price_in_cents, gpa.avg_price_in_cents)) * 1.0 / SUM(ii.quantity)) AS INT)
-            ELSE NULL
-          END AS unit_cost_in_cents
-        FROM inbound_item ii
-        INNER JOIN inbound_receipt ir ON ir.id = ii.receipt_id
-        INNER JOIN purchase_order po ON po.id = ir.purchase_order_id
-        LEFT JOIN poi_avg pa ON pa.purchase_order_id = po.id AND pa.product_id = ii.product_id
-        LEFT JOIN global_poi_avg gpa ON gpa.product_id = ii.product_id
-        WHERE ii.batch_id IS NULL
-        GROUP BY ii.product_id
-      )
       SELECT 
         p.id AS product_id,
         p.name AS name,
@@ -109,24 +56,19 @@ class SalesAnalyticsRepository {
         SUM(si.quantity) AS total_qty,
         SUM(si.quantity * si.price_in_cents) AS total_amount_in_cents,
         SUM(CASE 
-              WHEN si.batch_id IS NULL THEN 
-                CASE WHEN COALESCE(uc.unit_cost_in_cents, gpa.avg_price_in_cents) IS NULL THEN 0 
-                     ELSE si.quantity * (si.price_in_cents - COALESCE(uc.unit_cost_in_cents, gpa.avg_price_in_cents)) END
-              ELSE 
-                CASE WHEN bc.unit_cost_in_cents IS NULL THEN 0 
-                     ELSE si.quantity * (si.price_in_cents - bc.unit_cost_in_cents) END
+              WHEN s.average_unit_price_in_cents IS NULL OR s.average_unit_price_in_cents = 0 THEN 0 
+              ELSE si.quantity * (si.price_in_cents - s.average_unit_price_in_cents) 
             END) AS total_profit_in_cents,
         SUM(CASE 
-              WHEN si.batch_id IS NULL THEN CASE WHEN COALESCE(uc.unit_cost_in_cents, gpa.avg_price_in_cents) IS NULL THEN 1 ELSE 0 END
-              ELSE CASE WHEN bc.unit_cost_in_cents IS NULL THEN 1 ELSE 0 END
+              WHEN s.average_unit_price_in_cents IS NULL OR s.average_unit_price_in_cents = 0 THEN 1 
+              ELSE 0 
             END) AS missing_cost_count
       FROM sales_transaction_item si
       INNER JOIN sales_transaction st ON st.id = si.sales_transaction_id
       INNER JOIN product p ON p.id = si.product_id
-      LEFT JOIN product_batch pb ON pb.id = si.batch_id
-      LEFT JOIN batch_cost bc ON bc.batch_id = pb.id
-  LEFT JOIN unbatched_cost uc ON uc.product_id = si.product_id
-  LEFT JOIN global_poi_avg gpa ON gpa.product_id = si.product_id
+      LEFT JOIN stock s ON s.product_id = si.product_id 
+        AND s.shop_id = st.shop_id 
+        AND (s.batch_id = si.batch_id OR (s.batch_id IS NULL AND si.batch_id IS NULL))
       WHERE st.created_at >= ? AND st.created_at < ? AND st.status != 'cancelled'
       GROUP BY p.id, p.name, p.sku
       HAVING SUM(si.quantity) > 0
@@ -168,55 +110,6 @@ class SalesAnalyticsRepository {
     };
   final selectable = _db.customSelect(
       '''
-      WITH batch_cost AS (
-        SELECT 
-          pb.id AS batch_id,
-          CASE 
-            WHEN SUM(ii.quantity) IS NOT NULL AND SUM(ii.quantity) > 0 
-              THEN CAST(ROUND(SUM(ii.quantity * poi.unit_price_in_cents) * 1.0 / SUM(ii.quantity)) AS INT)
-            ELSE NULL
-          END AS unit_cost_in_cents
-        FROM product_batch pb
-        LEFT JOIN inbound_item ii ON ii.batch_id = pb.id
-        LEFT JOIN inbound_receipt ir ON ir.id = ii.receipt_id
-        LEFT JOIN purchase_order po ON po.id = ir.purchase_order_id
-        LEFT JOIN purchase_order_item poi 
-          ON poi.purchase_order_id = po.id 
-         AND poi.product_id = pb.product_id 
-         AND poi.production_date = pb.production_date
-        GROUP BY pb.id
-      ),
-      poi_avg AS (
-        SELECT 
-          purchase_order_id,
-          product_id,
-          CAST(ROUND(SUM(quantity * unit_price_in_cents) * 1.0 / SUM(quantity)) AS INT) AS avg_price_in_cents
-        FROM purchase_order_item
-        GROUP BY purchase_order_id, product_id
-      ),
-      global_poi_avg AS (
-        SELECT 
-          product_id,
-          CAST(ROUND(SUM(quantity * unit_price_in_cents) * 1.0 / SUM(quantity)) AS INT) AS avg_price_in_cents
-        FROM purchase_order_item
-        GROUP BY product_id
-      ),
-      unbatched_cost AS (
-        SELECT 
-          ii.product_id AS product_id,
-          CASE 
-            WHEN SUM(ii.quantity) IS NOT NULL AND SUM(ii.quantity) > 0 
-              THEN CAST(ROUND(SUM(ii.quantity * COALESCE(pa.avg_price_in_cents, gpa.avg_price_in_cents)) * 1.0 / SUM(ii.quantity)) AS INT)
-            ELSE NULL
-          END AS unit_cost_in_cents
-        FROM inbound_item ii
-        INNER JOIN inbound_receipt ir ON ir.id = ii.receipt_id
-        INNER JOIN purchase_order po ON po.id = ir.purchase_order_id
-        LEFT JOIN poi_avg pa ON pa.purchase_order_id = po.id AND pa.product_id = ii.product_id
-        LEFT JOIN global_poi_avg gpa ON gpa.product_id = ii.product_id
-        WHERE ii.batch_id IS NULL
-        GROUP BY ii.product_id
-      )
       SELECT 
         p.id AS product_id,
         p.name AS name,
@@ -224,24 +117,19 @@ class SalesAnalyticsRepository {
         SUM(si.quantity) AS total_qty,
         SUM(si.quantity * si.price_in_cents) AS total_amount_in_cents,
         SUM(CASE 
-              WHEN si.batch_id IS NULL THEN 
-                CASE WHEN COALESCE(uc.unit_cost_in_cents, gpa.avg_price_in_cents) IS NULL THEN 0 
-                     ELSE si.quantity * (si.price_in_cents - COALESCE(uc.unit_cost_in_cents, gpa.avg_price_in_cents)) END
-              ELSE 
-                CASE WHEN bc.unit_cost_in_cents IS NULL THEN 0 
-                     ELSE si.quantity * (si.price_in_cents - bc.unit_cost_in_cents) END
+              WHEN s.average_unit_price_in_cents IS NULL OR s.average_unit_price_in_cents = 0 THEN 0 
+              ELSE si.quantity * (si.price_in_cents - s.average_unit_price_in_cents) 
             END) AS total_profit_in_cents,
         SUM(CASE 
-              WHEN si.batch_id IS NULL THEN CASE WHEN COALESCE(uc.unit_cost_in_cents, gpa.avg_price_in_cents) IS NULL THEN 1 ELSE 0 END
-              ELSE CASE WHEN bc.unit_cost_in_cents IS NULL THEN 1 ELSE 0 END
+              WHEN s.average_unit_price_in_cents IS NULL OR s.average_unit_price_in_cents = 0 THEN 1 
+              ELSE 0 
             END) AS missing_cost_count
       FROM sales_transaction_item si
       INNER JOIN sales_transaction st ON st.id = si.sales_transaction_id
       INNER JOIN product p ON p.id = si.product_id
-      LEFT JOIN product_batch pb ON pb.id = si.batch_id
-      LEFT JOIN batch_cost bc ON bc.batch_id = pb.id
-  LEFT JOIN unbatched_cost uc ON uc.product_id = si.product_id
-  LEFT JOIN global_poi_avg gpa ON gpa.product_id = si.product_id
+      LEFT JOIN stock s ON s.product_id = si.product_id 
+        AND s.shop_id = st.shop_id 
+        AND (s.batch_id = si.batch_id OR (s.batch_id IS NULL AND si.batch_id IS NULL))
       WHERE st.created_at >= ? AND st.created_at < ? AND st.status != 'cancelled'
       GROUP BY p.id, p.name, p.sku
       HAVING SUM(si.quantity) > 0

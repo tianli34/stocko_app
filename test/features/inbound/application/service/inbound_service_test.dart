@@ -10,6 +10,7 @@ import 'package:stocko_app/features/inbound/data/dao/inbound_receipt_dao.dart';
 import 'package:stocko_app/features/product/data/dao/batch_dao.dart';
 import 'package:stocko_app/features/product/data/dao/product_dao.dart';
 import 'package:stocko_app/features/inventory/application/inventory_service.dart';
+import 'package:stocko_app/features/inventory/application/service/weighted_average_price_service.dart';
 import 'package:stocko_app/features/purchase/data/dao/purchase_dao.dart';
 import 'package:stocko_app/features/purchase/domain/repository/i_supplier_repository.dart';
 import 'package:stocko_app/features/purchase/domain/model/supplier.dart';
@@ -25,6 +26,7 @@ class MockInboundItemDao extends Mock implements InboundItemDao {}
 class MockProductDao extends Mock implements ProductDao {}
 class MockInventoryService extends Mock implements InventoryService {}
 class MockSupplierRepository extends Mock implements ISupplierRepository {}
+class MockWeightedAveragePriceService extends Mock implements WeightedAveragePriceService {}
 
 void main() {
   setUpAll(() {
@@ -68,6 +70,7 @@ void main() {
     late MockInboundItemDao inboundItemDao;
     late MockProductDao productDao;
     late MockInventoryService inventoryService;
+    late MockWeightedAveragePriceService weightedAveragePriceService;
     late MockSupplierRepository supplierRepo;
     late InboundService service;
 
@@ -79,6 +82,7 @@ void main() {
       inboundItemDao = MockInboundItemDao();
       productDao = MockProductDao();
       inventoryService = MockInventoryService();
+      weightedAveragePriceService = MockWeightedAveragePriceService();
       supplierRepo = MockSupplierRepository();
 
       // transaction passthrough
@@ -95,7 +99,16 @@ void main() {
       when(() => db.inboundItemDao).thenReturn(inboundItemDao);
       when(() => db.productDao).thenReturn(productDao);
 
-      service = InboundService(db, inventoryService, supplierRepo);
+      service = InboundService(db, inventoryService, weightedAveragePriceService, supplierRepo);
+      
+      // Mock weightedAveragePriceService methods
+      when(() => weightedAveragePriceService.updateWeightedAveragePrice(
+        productId: any(named: 'productId'),
+        shopId: any(named: 'shopId'),
+        batchId: any(named: 'batchId'),
+        inboundQuantity: any(named: 'inboundQuantity'),
+        inboundUnitPriceInCents: any(named: 'inboundUnitPriceInCents'),
+      )).thenAnswer((_) async => {});
     });
 
     test('采购模式：自动创建供应商 + 创建采购单 + 写批次 + 入库单/明细(含批次) + 更新库存', () async {

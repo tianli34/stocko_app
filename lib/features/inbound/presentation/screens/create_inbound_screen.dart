@@ -21,13 +21,15 @@ import '../widgets/inbound_item_card.dart';
 import '../../../../core/utils/snackbar_helper.dart';
 import '../../../../core/utils/sound_helper.dart';
 import '../../../../core/widgets/universal_barcode_scanner.dart';
+import '../../../../core/models/scanned_product_payload.dart';
 import '../../../../core/widgets/custom_date_picker.dart';
 
 enum InboundMode { purchase, nonPurchase }
 
 /// 新建入库单页面
 class CreateInboundScreen extends ConsumerStatefulWidget {
-  const CreateInboundScreen({super.key});
+  final ScannedProductPayload? payload;
+  const CreateInboundScreen({super.key, this.payload});
 
   @override
   ConsumerState<CreateInboundScreen> createState() =>
@@ -55,6 +57,22 @@ class _CreateInboundScreenState extends ConsumerState<CreateInboundScreen> {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref.read(inboundListProvider.notifier).clear();
+      // 接收来自首页或其他页面的扫码货品，自动添加到入库清单
+      final p = widget.payload;
+      if (p != null) {
+        try {
+          ref.read(inboundListProvider.notifier).addOrUpdateItem(
+                product: p.product,
+                unitId: p.unitId,
+                unitName: p.unitName,
+                conversionRate: p.conversionRate,
+                barcode: p.barcode,
+                wholesalePriceInCents: p.wholesalePriceInCents,
+              );
+          // 可选：提示已添加
+          // showAppSnackBar(context, message: '已添加：${p.product.name}');
+        } catch (_) {}
+      }
     });
   }
 

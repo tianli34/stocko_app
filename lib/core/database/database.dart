@@ -96,7 +96,7 @@ part 'database.g.dart';
 class AppDatabase extends _$AppDatabase {
   AppDatabase(super.e);
   @override
-  int get schemaVersion => 21; // 提升版本以应用新的迁移
+  int get schemaVersion => 22; // 添加库存表移动加权平均价格字段
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -158,6 +158,12 @@ class AppDatabase extends _$AppDatabase {
       );
     },
     onUpgrade: (Migrator m, int from, int to) async {
+      if (from < 22 && to >= 22) {
+        // 添加移动加权平均价格字段
+        await m.addColumn(stock, stock.averageUnitPriceInCents);
+        // 添加入库单明细表单价字段
+        // await m.addColumn(inboundItem, inboundItem.unitPriceInCents);
+      }
       if (from < 21 && to >= 21) {
         // 删除旧的唯一索引（如果存在）
         await customStatement('DROP INDEX IF EXISTS poi_unique_line;');

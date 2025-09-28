@@ -23,12 +23,14 @@ import '../widgets/sale_item_card.dart';
 import '../../../../core/utils/snackbar_helper.dart';
 import '../../../../core/utils/sound_helper.dart';
 import '../../../../core/widgets/universal_barcode_scanner.dart';
+import '../../../../core/models/scanned_product_payload.dart';
 
 enum SaleMode { sale, nonSale }
 
 /// 新建销售单页面
 class CreateSaleScreen extends ConsumerStatefulWidget {
-  const CreateSaleScreen({super.key});
+  final ScannedProductPayload? payload;
+  const CreateSaleScreen({super.key, this.payload});
 
   @override
   ConsumerState<CreateSaleScreen> createState() => _CreateSaleScreenState();
@@ -65,6 +67,22 @@ class _CreateSaleScreenState extends ConsumerState<CreateSaleScreen> {
     _paymentController.addListener(() => setState(() {}));
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref.read(saleListProvider.notifier).clear();
+      // 接收来自首页或其他页面的扫码货品，自动添加到销售清单
+      final p = widget.payload;
+      if (p != null) {
+        final priceCents = p.product.effectivePrice?.cents ?? 0;
+        try {
+          ref.read(saleListProvider.notifier).addOrUpdateItem(
+                product: p.product,
+                unitId: p.unitId,
+                unitName: p.unitName,
+                sellingPriceInCents: priceCents,
+                conversionRate: p.conversionRate,
+              );
+          // 可选：提示已添加
+          // showAppSnackBar(context, message: '已添加：${p.product.name}');
+        } catch (_) {}
+      }
     });
   }
 

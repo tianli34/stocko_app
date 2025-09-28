@@ -4,5 +4,6 @@
         "*.plist": "plist"
     },
     "xml.validate.enable": false,
-    "workbench.editor.enablePreview": false
+    "workbench.editor.enablePreview": false,
+    "kiroAgent.configureMCP": "Disabled"
 }

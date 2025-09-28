@@ -45,7 +45,7 @@ class InboundRecordCard extends ConsumerWidget {
             shopAsync.when(
               data: (shop) => Text('店铺: ${shop?.name ?? '未知'}'),
               loading: () => const Text('店铺: 加载中...'),
-              error: (_, __) => const Text('店铺: 加载失败'),
+              error: (_, _) => const Text('店铺: 加载失败'),
             ),
             if (record.source.isNotEmpty) Text('来源: ${record.source}'),
           ],

@@ -44,7 +44,7 @@ class ProductRankingScreen extends ConsumerWidget {
                 }
                 return ListView.separated(
                   itemCount: list.length,
-                  separatorBuilder: (_, ____) => const Divider(height: 1),
+                  separatorBuilder: (_, __) => const Divider(height: 1),
                   itemBuilder: (context, index) {
                     final it = list[index];
                     final hasMissingCost = it.missingCostCount > 0;
@@ -54,14 +54,24 @@ class ProductRankingScreen extends ConsumerWidget {
                         : (profitYuan < 0 ? Colors.red : Colors.green);
                     return ListTile(
                       leading: _RankBadge(rank: index + 1),
-                      title: Text(it.name, maxLines: 1, overflow: TextOverflow.ellipsis),
+                      title: Text(
+                        it.name,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
                       subtitle: Text(it.sku ?? ''),
                       trailing: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         crossAxisAlignment: CrossAxisAlignment.end,
                         children: [
-                          Text('${it.totalQty} 件', style: const TextStyle(fontWeight: FontWeight.w600)),
-                          Text('￥${(it.totalAmountInCents / 100).toStringAsFixed(2)}', style: const TextStyle(color: Colors.grey)),
+                          Text(
+                            '${it.totalQty} 件',
+                            style: const TextStyle(fontWeight: FontWeight.w600),
+                          ),
+                          Text(
+                            '￥${(it.totalAmountInCents / 100).toStringAsFixed(2)}',
+                            style: const TextStyle(color: Colors.grey),
+                          ),
                           const SizedBox(height: 2),
                           Row(
                             mainAxisSize: MainAxisSize.min,
@@ -69,7 +79,11 @@ class ProductRankingScreen extends ConsumerWidget {
                               if (hasMissingCost)
                                 const Tooltip(
                                   message: '无采购记录，利润按0计算',
-                                  child: Icon(Icons.info_outline, size: 14, color: Colors.orange),
+                                  child: Icon(
+                                    Icons.info_outline,
+                                    size: 14,
+                                    color: Colors.orange,
+                                  ),
                                 ),
                               const SizedBox(width: 4),
                               Text(
@@ -107,13 +121,15 @@ class _SortToggle extends ConsumerWidget {
         ChoiceChip(
           label: const Text('按销量'),
           selected: sort == ProductRankingSort.byQtyDesc,
-          onSelected: (_) => ref.read(rankingSortProvider.notifier).state = ProductRankingSort.byQtyDesc,
+          onSelected: (_) => ref.read(rankingSortProvider.notifier).state =
+              ProductRankingSort.byQtyDesc,
         ),
         const SizedBox(width: 8),
         ChoiceChip(
           label: const Text('按利润'),
           selected: sort == ProductRankingSort.byProfitDesc,
-          onSelected: (_) => ref.read(rankingSortProvider.notifier).state = ProductRankingSort.byProfitDesc,
+          onSelected: (_) => ref.read(rankingSortProvider.notifier).state =
+              ProductRankingSort.byProfitDesc,
         ),
         const SizedBox(width: 8),
       ],
@@ -156,7 +172,11 @@ String _getTimeFilterText(RankingRange range) {
   final today = DateTime(now.year, now.month, now.day);
   final yesterday = today.subtract(const Duration(days: 1));
   final start = DateTime(range.start.year, range.start.month, range.start.day);
-  final end = DateTime(range.endOpen.year, range.endOpen.month, range.endOpen.day).subtract(const Duration(days: 1));
+  final end = DateTime(
+    range.endOpen.year,
+    range.endOpen.month,
+    range.endOpen.day,
+  ).subtract(const Duration(days: 1));
 
   // 检查是否是今天
   if (start == today && end == today) {
@@ -184,14 +204,22 @@ String _getTimeFilterText(RankingRange range) {
 
   // 检查是否是本月
   final startOfMonth = DateTime(today.year, today.month, 1);
-  final endOfMonth = DateTime(today.year, today.month + 1, 1).subtract(const Duration(days: 1));
+  final endOfMonth = DateTime(
+    today.year,
+    today.month + 1,
+    1,
+  ).subtract(const Duration(days: 1));
   if (start == startOfMonth && end == endOfMonth) {
     return now.year == start.year ? '本月' : '${start.year}年本月';
   }
 
   // 检查是否是上月
   final startOfLastMonth = DateTime(today.year, today.month - 1, 1);
-  final endOfLastMonth = DateTime(today.year, today.month, 1).subtract(const Duration(days: 1));
+  final endOfLastMonth = DateTime(
+    today.year,
+    today.month,
+    1,
+  ).subtract(const Duration(days: 1));
   if (start == startOfLastMonth && end == endOfLastMonth) {
     return now.year == start.year ? '上月' : '${start.year}年上月';
   }

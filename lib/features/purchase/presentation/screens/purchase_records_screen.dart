@@ -80,76 +80,104 @@ class PurchaseRecordsScreen extends ConsumerWidget {
   }
 }
 
-class PurchaseOrderCard extends ConsumerWidget {
+class PurchaseOrderCard extends ConsumerStatefulWidget {
   final PurchaseOrderData order;
 
   const PurchaseOrderCard({super.key, required this.order});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<PurchaseOrderCard> createState() => _PurchaseOrderCardState();
+}
+
+class _PurchaseOrderCardState extends ConsumerState<PurchaseOrderCard> {
+  bool _isExpanded = false;
+
+  @override
+  Widget build(BuildContext context) {
     final suppliersAsync = ref.watch(allSuppliersProvider);
-    final itemsAsync = ref.watch(purchaseOrderItemsProvider(order.id));
+    final itemsAsync = ref.watch(purchaseOrderItemsProvider(widget.order.id));
 
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
-      child: InkWell(
-        child: ExpansionTile(
-          title: Text(
-            '订单号: ${order.id}',
-            style: const TextStyle(fontWeight: FontWeight.bold),
-          ),
-          subtitle: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text('日期: ${order.createdAt.toString().substring(0, 10)}'),
-              suppliersAsync.when(
-                data: (suppliers) {
-                  final supplier = suppliers
-                      .where((s) => s.id == order.supplierId)
-                      .firstOrNull;
-                  return Text('供应商: ${supplier?.name ?? '未知'}');
-                },
-                loading: () => const Text('供应商: 加载中...'),
-                error: (_, __) => const Text('供应商: 加载失败'),
-              ),
-            ],
-          ),
-          trailing: itemsAsync.when(
-            data: (items) {
-              final totalAmount = items.fold<double>(
-                0,
-                (sum, item) => sum + (item.unitPriceInCents * item.quantity),
-              );
-              final totalQuantity = items.fold<double>(
-                0,
-                (sum, item) => sum + item.quantity,
-              );
-              return Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.end,
+      child: Column(
+        children: [
+          InkWell(
+            onTap: () {
+              setState(() {
+                _isExpanded = !_isExpanded;
+              });
+            },
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              child: Row(
                 children: [
-                  Text(
-                    '￥${(totalAmount / 100).toStringAsFixed(2)}',
-                    style: const TextStyle(
-                      fontWeight: FontWeight.bold,
-                      color: Colors.green,
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          '订单号: ${widget.order.id}',
+                          style: const TextStyle(fontWeight: FontWeight.bold),
+                        ),
+                        const SizedBox(height: 4),
+                        Text('日期: ${widget.order.createdAt.toString().substring(0, 10)}'),
+                        suppliersAsync.when(
+                          data: (suppliers) {
+                            final supplier = suppliers
+                                .where((s) => s.id == widget.order.supplierId)
+                                .firstOrNull;
+                            return Text('供应商: ${supplier?.name ?? '未知'}');
+                          },
+                          loading: () => const Text('供应商: 加载中...'),
+                          error: (_, __) => const Text('供应商: 加载失败'),
+                        ),
+                      ],
                     ),
                   ),
-                  Text(
-                    '${totalQuantity.toInt()}件',
-                    style: const TextStyle(fontSize: 12, color: Colors.grey),
+                  Column(
+                    children: [
+                      itemsAsync.when(
+                        data: (items) {
+                          final totalAmount = items.fold<double>(
+                            0,
+                            (sum, item) => sum + (item.unitPriceInCents * item.quantity),
+                          );
+                          final totalQuantity = items.fold<double>(
+                            0,
+                            (sum, item) => sum + item.quantity,
+                          );
+                          return Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            crossAxisAlignment: CrossAxisAlignment.end,
+                            children: [
+                              Text(
+                                '￥${(totalAmount / 100).toStringAsFixed(2)}',
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.green,
+                                ),
+                              ),
+                              Text(
+                                '${totalQuantity.toInt()}件',
+                                style: const TextStyle(fontSize: 12, color: Colors.grey),
+                              ),
+                            ],
+                          );
+                        },
+                        loading: () => const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        ),
+                        error: (_, __) => const Icon(Icons.error, color: Colors.red),
+                      ),
+                    ],
                   ),
                 ],
-              );
-            },
-            loading: () => const SizedBox(
-              width: 20,
-              height: 20,
-              child: CircularProgressIndicator(strokeWidth: 2),
+              ),
             ),
-            error: (_, __) => const Icon(Icons.error, color: Colors.red),
           ),
-          children: [
+          if (_isExpanded)
             itemsAsync.when(
               data: (items) => Column(
                 children: items
@@ -165,8 +193,7 @@ class PurchaseOrderCard extends ConsumerWidget {
                 child: Center(child: Text('加载明细失败: $e')),
               ),
             ),
-          ],
-        ),
+        ],
       ),
     );
   }

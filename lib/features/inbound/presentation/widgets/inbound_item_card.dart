@@ -357,7 +357,7 @@ class _InboundItemCardState extends ConsumerState<InboundItemCard> {
                                                 contentPadding:
                                                     EdgeInsets.symmetric(
                                                       horizontal: 12,
-                                                      vertical: 7,
+                                                      vertical: 0,
                                                     ),
                                                 prefixText: '¥',
                                               ),
@@ -400,7 +400,7 @@ class _InboundItemCardState extends ConsumerState<InboundItemCard> {
                                                 contentPadding:
                                                     EdgeInsets.symmetric(
                                                       horizontal: 12,
-                                                      vertical: 4,
+                                                      vertical: 0,
                                                     ),
                                               ),
                                               onChanged: (value) =>
@@ -455,7 +455,7 @@ class _InboundItemCardState extends ConsumerState<InboundItemCard> {
                                                 contentPadding:
                                                     EdgeInsets.symmetric(
                                                       horizontal: 12,
-                                                      vertical: 7,
+                                                      vertical: 0,
                                                     ),
                                                 prefixText: '¥',
                                               ),
@@ -464,9 +464,9 @@ class _InboundItemCardState extends ConsumerState<InboundItemCard> {
                                               onFieldSubmitted: (value) =>
                                                   widget.onAmountSubmitted
                                                       ?.call(),
-                                              style: const TextStyle(
-                                                fontWeight: FontWeight.w500,
-                                              ),
+                                              // style: const TextStyle(
+                                              //   fontWeight: FontWeight.w500,
+                                              // ),
                                             ),
                                           ),
                                         ],
