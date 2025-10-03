@@ -1,6 +1,11 @@
+import 'dart:io';
+import 'dart:typed_data';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:path/path.dart' as path;
 
 import '../../domain/models/backup_metadata.dart';
 import '../../domain/models/restore_preview.dart';
@@ -9,6 +14,7 @@ import '../../domain/models/restore_mode.dart';
 import '../../domain/services/i_restore_service.dart';
 import '../../domain/common/backup_common.dart';
 import '../../data/providers/restore_service_provider.dart';
+import '../../data/utils/file_access_helper.dart';
 
 part 'restore_controller.freezed.dart';
 
@@ -69,10 +75,28 @@ class RestoreController extends StateNotifier<RestoreState> {
         type: FileType.custom,
         allowedExtensions: ['json', 'backup'],
         allowMultiple: false,
+        withData: true, // 确保获取文件数据
       );
 
       if (result != null && result.files.isNotEmpty) {
-        final filePath = result.files.first.path;
+        final platformFile = result.files.first;
+        String? filePath = platformFile.path;
+        
+        // 如果无法获取路径或路径无效，尝试使用文件数据
+        if (filePath == null || !await FileAccessHelper.isFileAccessible(filePath)) {
+          if (platformFile.bytes != null) {
+            // 将文件数据保存到临时位置
+            filePath = await FileAccessHelper.saveToTempFile(platformFile.bytes!, platformFile.name);
+            
+            // 提示用户文件已复制到临时位置
+            state = state.copyWith(
+              errorMessage: '原文件路径无法访问，已自动复制到临时位置进行处理',
+            );
+          } else {
+            throw Exception('无法访问选择的文件。请将备份文件复制到下载或文档文件夹后重新选择。');
+          }
+        }
+        
         if (filePath != null) {
           state = state.copyWith(
             selectedFilePath: filePath,
@@ -144,6 +168,7 @@ class RestoreController extends StateNotifier<RestoreState> {
     try {
       final preview = await _restoreService.previewRestore(
         filePath,
+        mode: state.restoreMode,
         password: password,
       );
 
@@ -158,6 +183,11 @@ class RestoreController extends StateNotifier<RestoreState> {
   /// 设置恢复模式
   void setRestoreMode(RestoreMode mode) {
     state = state.copyWith(restoreMode: mode);
+    
+    // 如果已经选择了文件，重新生成预览以反映新的模式
+    if (state.selectedFilePath != null && state.backupMetadata != null) {
+      _generatePreview(state.selectedFilePath!, password: state.password);
+    }
   }
 
   /// 设置选择的表
@@ -205,6 +235,13 @@ class RestoreController extends StateNotifier<RestoreState> {
           isCompleted: true,
         ),
       );
+    } on RestoreCancelledException {
+      state = state.copyWith(
+        progressInfo: state.progressInfo?.copyWith(
+          isCancelled: true,
+          isCompleted: true,
+        ),
+      );
     } catch (e) {
       state = state.copyWith(
         errorMessage: '恢复失败: ${e.toString()}',
@@ -236,6 +273,8 @@ class RestoreController extends StateNotifier<RestoreState> {
   void clearError() {
     state = state.copyWith(errorMessage: null);
   }
+
+
 }
 
 /// 恢复控制器提供者

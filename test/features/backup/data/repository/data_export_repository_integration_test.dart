@@ -1,17 +1,17 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:stocko_app/features/backup/data/repository/data_export_repository.dart';
+import 'package:stocko_app/features/backup/data/repository/optimized_data_export_repository.dart';
 import 'package:stocko_app/core/database/database.dart';
 import 'package:drift/native.dart';
 
 void main() {
-  group('DataExportRepository Integration Tests', () {
+  group('OptimizedDataExportRepository Integration Tests', () {
     late AppDatabase database;
-    late DataExportRepository repository;
+    late OptimizedDataExportRepository repository;
 
     setUp(() async {
       // Create an in-memory database for testing
       database = AppDatabase(NativeDatabase.memory());
-      repository = DataExportRepository(database);
+      repository = OptimizedDataExportRepository(database);
     });
 
     tearDown(() async {

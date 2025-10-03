@@ -1,12 +1,12 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/database/database.dart';
-import '../repository/data_export_repository.dart';
+import '../repository/optimized_data_export_repository.dart';
 
 /// 数据导出仓储 Provider
-/// 提供 DataExportRepository 的实例
-final dataExportRepositoryProvider = Provider<DataExportRepository>((ref) {
+/// 提供 OptimizedDataExportRepository 的实例
+final dataExportRepositoryProvider = Provider<OptimizedDataExportRepository>((ref) {
   final database = ref.watch(appDatabaseProvider);
-  return DataExportRepository(database);
+  return OptimizedDataExportRepository(database);
 });
 
 /// 获取表记录数量统计的 Provider

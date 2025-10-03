@@ -6,8 +6,8 @@ import 'package:mocktail/mocktail.dart';
 import 'package:path/path.dart' as path;
 
 import 'package:stocko_app/core/database/database.dart';
-import 'package:stocko_app/features/backup/data/services/backup_service.dart';
-import 'package:stocko_app/features/backup/data/repository/data_export_repository.dart';
+import 'package:stocko_app/features/backup/data/services/unified_backup_service.dart';
+import 'package:stocko_app/features/backup/data/repository/optimized_data_export_repository.dart';
 import 'package:stocko_app/features/backup/domain/models/backup_options.dart';
 import 'package:stocko_app/features/backup/domain/models/backup_metadata.dart';
 import 'package:stocko_app/features/backup/domain/models/backup_exception.dart';
@@ -17,7 +17,7 @@ import 'package:stocko_app/features/backup/domain/common/backup_common.dart';
 
 // Mock classes
 class MockAppDatabase extends Mock implements AppDatabase {}
-class MockDataExportRepository extends Mock implements DataExportRepository {}
+class MockDataExportRepository extends Mock implements OptimizedDataExportRepository {}
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -35,7 +35,7 @@ void main() {
 
     setUp(() async {
       mockDatabase = MockAppDatabase();
-      backupService = BackupService(mockDatabase);
+      backupService = UnifiedBackupService(mockDatabase);
       
       // Create temporary directory for test files
       tempDir = await Directory.systemTemp.createTemp('backup_service_test');
@@ -50,7 +50,7 @@ void main() {
 
     group('Instance Creation', () {
       test('should create backup service instance', () {
-        expect(backupService, isA<BackupService>());
+        expect(backupService, isA<UnifiedBackupService>());
         expect(backupService, isA<IBackupService>());
       });
     });
@@ -340,8 +340,8 @@ void main() {
       test('should generate unique backup IDs', () {
         // Since we can't directly test the private method, we test through behavior
         // Multiple backup operations should generate different IDs
-        final service1 = BackupService(mockDatabase);
-        final service2 = BackupService(mockDatabase);
+        final service1 = UnifiedBackupService(mockDatabase);
+        final service2 = UnifiedBackupService(mockDatabase);
         
         expect(service1, isNot(equals(service2)));
       });

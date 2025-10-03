@@ -16,6 +16,8 @@ import 'privacy_policy_screen.dart';
 import 'terms_of_service_screen.dart';
 import '../../../backup/presentation/screens/backup_management_screen.dart';
 import '../../../backup/presentation/screens/auto_backup_settings_screen.dart';
+import '../../../../core/constants/app_routes.dart';
+import 'package:go_router/go_router.dart';
 
 /// 通用设置页面
 class SettingsScreen extends StatelessWidget {
@@ -230,6 +232,13 @@ class SettingsScreen extends StatelessWidget {
           const _DataManagementSection(),
           if (kDebugMode) ...[
            const Divider(),
+           _buildSectionHeader(context, '开发调试'),
+           ListTile(
+             leading: const Icon(Icons.bug_report),
+             title: const Text('产品恢复测试'),
+             subtitle: const Text('测试产品数据恢复功能'),
+             onTap: () => context.push(AppRoutes.productRestoreDebug),
+           ),
            ListTile(
              leading: const Icon(Icons.restore),
              title: const Text('重置隐私政策状态'),

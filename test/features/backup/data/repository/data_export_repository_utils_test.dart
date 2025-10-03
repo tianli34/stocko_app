@@ -1,18 +1,18 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:stocko_app/features/backup/data/repository/data_export_repository.dart';
+import 'package:stocko_app/features/backup/data/repository/optimized_data_export_repository.dart';
 import 'package:stocko_app/core/database/database.dart';
 import 'package:mocktail/mocktail.dart';
 
 class MockAppDatabase extends Mock implements AppDatabase {}
 
 void main() {
-  group('DataExportRepository Utility Methods', () {
-    late DataExportRepository repository;
+  group('OptimizedDataExportRepository Utility Methods', () {
+    late OptimizedDataExportRepository repository;
     late MockAppDatabase mockDatabase;
 
     setUp(() {
       mockDatabase = MockAppDatabase();
-      repository = DataExportRepository(mockDatabase);
+      repository = OptimizedDataExportRepository(mockDatabase);
     });
 
     group('serializeToJson', () {

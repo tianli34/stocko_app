@@ -3,7 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:drift/drift.dart' hide isNull;
 import 'package:stocko_app/core/database/database.dart';
-import 'package:stocko_app/features/backup/data/repository/data_export_repository.dart';
+import 'package:stocko_app/features/backup/data/repository/optimized_data_export_repository.dart';
 
 // Mock classes
 class MockAppDatabase extends Mock implements AppDatabase {}
@@ -17,18 +17,18 @@ class MockQueryRow extends Mock implements QueryRow {
 }
 
 void main() {
-  group('DataExportRepository', () {
-    late DataExportRepository repository;
+  group('OptimizedDataExportRepository', () {
+    late OptimizedDataExportRepository repository;
     late MockAppDatabase mockDatabase;
 
     setUp(() {
       mockDatabase = MockAppDatabase();
-      repository = DataExportRepository(mockDatabase);
+      repository = OptimizedDataExportRepository(mockDatabase);
     });
 
     group('Instance Creation', () {
       test('should create data export repository instance', () {
-        expect(repository, isA<DataExportRepository>());
+        expect(repository, isA<OptimizedDataExportRepository>());
       });
     });
 

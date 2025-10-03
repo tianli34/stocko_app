@@ -96,7 +96,7 @@ part 'database.g.dart';
 class AppDatabase extends _$AppDatabase {
   AppDatabase(super.e);
   @override
-  int get schemaVersion => 22; // 添加库存表移动加权平均价格字段
+  int get schemaVersion => 22; 
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -158,6 +158,7 @@ class AppDatabase extends _$AppDatabase {
       );
     },
     onUpgrade: (Migrator m, int from, int to) async {
+      
       if (from < 22 && to >= 22) {
         // 添加移动加权平均价格字段
         await m.addColumn(stock, stock.averageUnitPriceInCents);

@@ -5,7 +5,7 @@ import 'package:mocktail/mocktail.dart';
 import 'package:path/path.dart' as path;
 
 import 'package:stocko_app/core/database/database.dart';
-import 'package:stocko_app/features/backup/data/services/restore_service.dart';
+import 'package:stocko_app/features/backup/data/services/optimized_restore_service.dart';
 import 'package:stocko_app/features/backup/domain/models/backup_data.dart';
 import 'package:stocko_app/features/backup/domain/models/backup_metadata.dart';
 import 'package:stocko_app/features/backup/domain/models/backup_exception.dart';
@@ -48,7 +48,7 @@ void main() {
       mockDatabase = MockAppDatabase();
       mockEncryptionService = MockIEncryptionService();
       mockValidationService = MockIValidationService();
-      restoreService = RestoreService(mockDatabase, mockEncryptionService, mockValidationService);
+      restoreService = OptimizedRestoreService(mockDatabase, mockEncryptionService, mockValidationService);
       
       // Create temporary directory for test files
       tempDir = await Directory.systemTemp.createTemp('restore_service_test');
@@ -265,7 +265,7 @@ void main() {
 
     group('Instance Creation', () {
       test('should create restore service instance', () {
-        expect(restoreService, isA<RestoreService>());
+        expect(restoreService, isA<OptimizedRestoreService>());
         expect(restoreService, isA<IRestoreService>());
       });
     });

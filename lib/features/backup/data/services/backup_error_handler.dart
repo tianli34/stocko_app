@@ -392,9 +392,106 @@ class BackupErrorHandler {
 
   /// 处理通用错误
   static UserFriendlyError _handleGenericError(Object error) {
+    // 尝试从错误信息中提取更具体的信息
+    final errorMessage = error.toString().toLowerCase();
+    
+    // 检查是否是数据库相关错误
+    if (errorMessage.contains('database') || 
+        errorMessage.contains('sqlite') || 
+        errorMessage.contains('sql')) {
+      return UserFriendlyError(
+        title: '数据库操作失败',
+        message: '数据库访问出现问题，可能是数据库文件损坏或被占用。',
+        technicalDetails: error.toString(),
+        suggestion: const ErrorRecoverySuggestion(
+          title: '解决建议',
+          description: '请尝试以下解决方案：',
+          steps: [
+            '关闭应用后重新打开',
+            '确保没有其他应用在使用数据库',
+            '检查设备存储空间是否充足',
+            '如果问题持续，可能需要重新安装应用',
+          ],
+          canRetry: true,
+        ),
+        canRetry: true,
+      );
+    }
+    
+    // 检查是否是文件系统相关错误
+    if (errorMessage.contains('file') || 
+        errorMessage.contains('directory') || 
+        errorMessage.contains('path') ||
+        errorMessage.contains('permission')) {
+      return UserFriendlyError(
+        title: '文件操作失败',
+        message: '无法访问或创建备份文件，请检查存储权限和可用空间。',
+        technicalDetails: error.toString(),
+        suggestion: const ErrorRecoverySuggestion(
+          title: '解决建议',
+          description: '请尝试以下解决方案：',
+          steps: [
+            '检查应用是否有存储权限',
+            '确保设备有足够的可用存储空间',
+            '尝试选择其他存储位置',
+            '重启应用后重试',
+          ],
+          canRetry: true,
+        ),
+        canRetry: true,
+      );
+    }
+    
+    // 检查是否是内存相关错误
+    if (errorMessage.contains('memory') || 
+        errorMessage.contains('out of memory') ||
+        errorMessage.contains('heap')) {
+      return UserFriendlyError(
+        title: '内存不足',
+        message: '设备内存不足，无法完成备份操作。',
+        technicalDetails: error.toString(),
+        suggestion: const ErrorRecoverySuggestion(
+          title: '解决建议',
+          description: '请尝试以下解决方案：',
+          steps: [
+            '关闭其他正在运行的应用',
+            '重启设备释放内存',
+            '尝试分批备份数据',
+            '清理设备缓存',
+          ],
+          canRetry: true,
+        ),
+        canRetry: true,
+      );
+    }
+    
+    // 检查是否是网络相关错误
+    if (errorMessage.contains('network') || 
+        errorMessage.contains('connection') ||
+        errorMessage.contains('timeout')) {
+      return UserFriendlyError(
+        title: '网络连接问题',
+        message: '网络连接不稳定，影响了备份操作。',
+        technicalDetails: error.toString(),
+        suggestion: const ErrorRecoverySuggestion(
+          title: '解决建议',
+          description: '请尝试以下解决方案：',
+          steps: [
+            '检查网络连接是否正常',
+            '尝试切换到其他网络',
+            '稍后重试操作',
+            '使用本地备份功能',
+          ],
+          canRetry: true,
+        ),
+        canRetry: true,
+      );
+    }
+    
+    // 默认的通用错误处理
     return UserFriendlyError(
       title: '操作失败',
-      message: '操作过程中发生了意外错误，请稍后重试。',
+      message: '操作过程中发生了意外错误。错误详情：${_extractKeyErrorInfo(error.toString())}',
       technicalDetails: error.toString(),
       suggestion: const ErrorRecoverySuggestion(
         title: '解决建议',
@@ -403,12 +500,30 @@ class BackupErrorHandler {
           '稍后重试操作',
           '重启应用',
           '检查设备状态',
-          '联系技术支持',
+          '联系技术支持并提供错误详情',
         ],
         canRetry: true,
       ),
       canRetry: true,
     );
+  }
+  
+  /// 从错误信息中提取关键信息
+  static String _extractKeyErrorInfo(String errorMessage) {
+    // 移除堆栈跟踪信息，只保留关键错误信息
+    final lines = errorMessage.split('\n');
+    if (lines.isNotEmpty) {
+      final firstLine = lines.first.trim();
+      // 如果第一行包含有用信息，返回它
+      if (firstLine.isNotEmpty && !firstLine.startsWith('#')) {
+        return firstLine.length > 100 
+            ? '${firstLine.substring(0, 100)}...' 
+            : firstLine;
+      }
+    }
+    
+    // 如果无法提取有用信息，返回通用描述
+    return '请查看技术详情了解更多信息';
   }
 
   /// 记录错误日志

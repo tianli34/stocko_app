@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'auto_backup_scheduler.dart';
 import 'backup_notification_service.dart';
-import 'backup_service.dart';
+import 'unified_backup_service.dart';
 import '../../../../core/database/database.dart';
 
 /// 备份功能初始化服务
@@ -24,7 +24,7 @@ class BackupInitializationService {
       await BackupNotificationService.initialize();
 
       // 创建备份服务
-      final backupService = BackupService(database);
+      final backupService = UnifiedBackupService(database);
 
       // 创建并初始化自动备份调度器
       _scheduler = AutoBackupScheduler(backupService);

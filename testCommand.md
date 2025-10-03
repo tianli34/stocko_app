@@ -2,15 +2,15 @@
 
 cd E:\stocko_app\
 git add .
-git commit -m "911 6 633 小修改"
+git commit -m "928 39 762 备份恢复"
 git push
 
 
 
 
 cd E:\stocko_app\
-flutter run --flavor generic -t lib\main_generic.dart
 flutter run --flavor personalized -t lib\main_personalized.dart
+flutter run --flavor generic -t lib\main_generic.dart
 adb pair 192.168.5.83:37785 
 adb connect 192.168.5.83:40547
 flutter run

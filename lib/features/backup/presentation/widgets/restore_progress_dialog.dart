@@ -149,6 +149,11 @@ class RestoreProgressDialog extends ConsumerWidget {
   }
 
   Widget _buildSuccessContent(BuildContext context, RestoreResult result) {
+    final duration = result.endTime.difference(result.startTime);
+    final durationText = duration.inMinutes > 0
+        ? '${duration.inMinutes}分${duration.inSeconds % 60}秒'
+        : '${duration.inSeconds}秒';
+
     return Column(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -181,7 +186,14 @@ class RestoreProgressDialog extends ConsumerWidget {
                 ],
               ),
               const SizedBox(height: 12),
-              _buildResultSummary(context, result),
+              _buildInfoRow(context, '总记录数', result.totalRecordsRestored.toString()),
+              _buildInfoRow(context, '耗时', durationText),
+              _buildInfoRow(context, '开始时间', _formatDateTime(result.startTime)),
+              _buildInfoRow(context, '结束时间', _formatDateTime(result.endTime)),
+              if (result.tableRecordCounts.isNotEmpty) ...[
+                const SizedBox(height: 12),
+                _buildTableCounts(context, result.tableRecordCounts),
+              ],
             ],
           ),
         ),
@@ -193,56 +205,7 @@ class RestoreProgressDialog extends ConsumerWidget {
     );
   }
 
-  Widget _buildResultSummary(BuildContext context, RestoreResult result) {
-    final duration = result.endTime.difference(result.startTime);
-    final durationText = duration.inMinutes > 0 
-        ? '${duration.inMinutes}分${duration.inSeconds % 60}秒'
-        : '${duration.inSeconds}秒';
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          '恢复摘要:',
-          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-            color: Theme.of(context).colorScheme.onPrimaryContainer,
-            fontWeight: FontWeight.w500,
-          ),
-        ),
-        const SizedBox(height: 8),
-        Text(
-          '• 总记录数: ${result.totalRecordsRestored}',
-          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-            color: Theme.of(context).colorScheme.onPrimaryContainer,
-          ),
-        ),
-        Text(
-          '• 耗时: $durationText',
-          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-            color: Theme.of(context).colorScheme.onPrimaryContainer,
-          ),
-        ),
-        if (result.tableRecordCounts.isNotEmpty) ...[
-          const SizedBox(height: 4),
-          Text(
-            '• 表记录数:',
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              color: Theme.of(context).colorScheme.onPrimaryContainer,
-            ),
-          ),
-          ...result.tableRecordCounts.entries.map((entry) => Padding(
-            padding: const EdgeInsets.only(left: 16),
-            child: Text(
-              '${entry.key}: ${entry.value}',
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: Theme.of(context).colorScheme.onPrimaryContainer,
-              ),
-            ),
-          )),
-        ],
-      ],
-    );
-  }
+  // 移除 _buildResultSummary 方法，其内容已整合进 _buildSuccessContent
 
   Widget _buildWarnings(BuildContext context, List<String> warnings) {
     return Container(
@@ -366,7 +329,7 @@ class RestoreProgressDialog extends ConsumerWidget {
     );
   }
 
-  List<Widget> _buildActions(BuildContext context, WidgetRef ref, 
+  List<Widget> _buildActions(BuildContext context, WidgetRef ref,
                             RestoreProgressInfo progressInfo, String? errorMessage) {
     if (errorMessage != null) {
       return [
@@ -380,7 +343,14 @@ class RestoreProgressDialog extends ConsumerWidget {
             child: const Text('重试'),
           ),
       ];
-    } else if (progressInfo.isCompleted || progressInfo.isCancelled) {
+    } else if (progressInfo.isCompleted) {
+      return [
+        ElevatedButton(
+          onPressed: onClose,
+          child: const Text('完成'),
+        ),
+      ];
+    } else if (progressInfo.isCancelled) {
       return [
         ElevatedButton(
           onPressed: onClose,
@@ -422,5 +392,113 @@ class RestoreProgressDialog extends ConsumerWidget {
         ],
       ),
     );
+  }
+
+  // 新增方法：格式化日期时间
+  String _formatDateTime(DateTime dateTime) {
+    return '${dateTime.year}-${dateTime.month.toString().padLeft(2, '0')}-${dateTime.day.toString().padLeft(2, '0')} '
+           '${dateTime.hour.toString().padLeft(2, '0')}:${dateTime.minute.toString().padLeft(2, '0')}';
+  }
+
+  // 新增方法：构建信息行（与 OperationResultDialog 一致）
+  Widget _buildInfoRow(BuildContext context, String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 4),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            width: 80,
+            child: Text(
+              '$label:',
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: Theme.of(context).colorScheme.onPrimaryContainer,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ),
+          Expanded(
+            child: Text(
+              value,
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: Theme.of(context).colorScheme.onPrimaryContainer,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // 新增方法：构建表记录统计（与 OperationResultDialog 一致）
+  Widget _buildTableCounts(BuildContext context, Map<String, int> tableCounts) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.secondaryContainer,
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            '数据统计:',
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+              color: Theme.of(context).colorScheme.onSecondaryContainer,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+          const SizedBox(height: 8),
+          ...tableCounts.entries.map((entry) => Padding(
+            padding: const EdgeInsets.only(bottom: 2),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  _getTableDisplayName(entry.key),
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: Theme.of(context).colorScheme.onSecondaryContainer,
+                  ),
+                ),
+                Text(
+                  entry.value.toString(),
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: Theme.of(context).colorScheme.onSecondaryContainer,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
+            ),
+          )),
+        ],
+      ),
+    );
+  }
+
+  // 新增方法：获取表名显示名称（与 OperationResultDialog 一致）
+  String _getTableDisplayName(String tableName) {
+    const tableNames = {
+      'product': '产品',
+      'category': '分类',
+      'unit': '单位',
+      'unit_product': '产品单位',
+      'shop': '店铺',
+      'supplier': '供应商',
+      'customers': '客户',
+      'product_batch': '产品批次',
+      'stock': '库存',
+      'inventory_transaction': '库存交易',
+      'locations': '货位',
+      'inbound_receipt': '入库单',
+      'inbound_item': '入库明细',
+      'outbound_receipt': '出库单',
+      'outbound_item': '出库明细',
+      'purchase_order': '采购单',
+      'purchase_order_item': '采购明细',
+      'sales_transaction': '销售交易',
+      'sales_transaction_item': '销售明细',
+      'barcode': '条码',
+    };
+    return tableNames[tableName] ?? tableName;
   }
 }

@@ -6,6 +6,8 @@ import '../controllers/restore_controller.dart';
 import 'backup_progress_dialog.dart';
 import 'restore_progress_dialog.dart';
 import 'operation_result_dialog.dart';
+import 'enhanced_error_dialog.dart';
+import '../../data/services/backup_error_handler.dart';
 
 /// 进度管理器 - 统一管理备份和恢复的进度显示
 class ProgressManager extends ConsumerWidget {
@@ -66,23 +68,30 @@ class ProgressManager extends ConsumerWidget {
     RestoreState current,
   ) {
     // 显示恢复进度对话框
-    if (current.progressInfo != null && !current.progressInfo!.isCompleted) {
-      if (previous?.progressInfo == null) {
+    // 只有在开始恢复时才显示对话框，避免在恢复完成时重复显示
+    if (current.progressInfo != null && 
+        !current.progressInfo!.isCompleted && 
+        !current.progressInfo!.isCancelled) {
+      // 检查是否已经显示了对话框
+      bool isDialogAlreadyShown = false;
+      if (previous?.progressInfo != null && 
+          !previous!.progressInfo!.isCompleted && 
+          !previous!.progressInfo!.isCancelled) {
+        isDialogAlreadyShown = true;
+      }
+      
+      if (!isDialogAlreadyShown) {
         _showRestoreProgressDialog(context, ref);
       }
     }
 
-    // 显示恢复结果
-    if (previous?.progressInfo?.isCompleted != true && 
+    // 处理恢复完成的情况
+    // 当恢复完成时，不需要额外操作，因为用户会点击"完成"按钮关闭对话框
+    if (previous?.progressInfo?.isCompleted != true &&
         current.progressInfo?.isCompleted == true) {
       
-      // 延迟一下再显示结果，让进度对话框有时间更新
-      Future.delayed(const Duration(milliseconds: 500), () {
-        if (context.mounted) {
-          Navigator.of(context).pop(); // 关闭进度对话框
-          _showRestoreResultDialog(context, ref, current);
-        }
-      });
+      // 不需要额外操作，RestoreProgressDialog 会自动更新显示完成状态
+      // 用户点击"完成"按钮后会关闭对话框
     }
   }
 
@@ -124,7 +133,10 @@ class ProgressManager extends ConsumerWidget {
       barrierDismissible: false,
       builder: (context) => RestoreProgressDialog(
         onClose: () {
-          Navigator.of(context).pop();
+          // 确保完全关闭所有对话框
+          if (Navigator.of(context).canPop()) {
+            Navigator.of(context).popUntil((route) => route.isFirst);
+          }
           ref.read(restoreControllerProvider.notifier).reset();
         },
         onRetry: () {
@@ -142,27 +154,47 @@ class ProgressManager extends ConsumerWidget {
   ) {
     final isSuccess = state.resultMetadata != null && state.errorMessage == null;
     
-    showDialog(
-      context: context,
-      builder: (context) => OperationResultDialog.backup(
-        isSuccess: isSuccess,
-        errorMessage: state.errorMessage,
-        metadata: state.resultMetadata,
-        filePath: state.resultFilePath,
-        onClose: () {
-          Navigator.of(context).pop();
-          ref.read(backupControllerProvider.notifier).reset();
-        },
+    if (!isSuccess && state.errorMessage != null) {
+      // 显示增强的错误对话框
+      final userError = UserFriendlyError(
+        title: '备份失败',
+        message: state.errorMessage!,
+        canRetry: true,
+      );
+      
+      EnhancedErrorDialog.show(
+        context,
+        error: userError,
         onRetry: () {
-          Navigator.of(context).pop();
           ref.read(backupControllerProvider.notifier).retryBackup();
         },
-        onShare: state.resultFilePath != null ? () {
-          Navigator.of(context).pop();
-          _shareBackupFile(context, state.resultFilePath!);
-        } : null,
-      ),
-    );
+      ).then((_) {
+        ref.read(backupControllerProvider.notifier).reset();
+      });
+    } else {
+      // 显示成功结果对话框
+      showDialog(
+        context: context,
+        builder: (context) => OperationResultDialog.backup(
+          isSuccess: isSuccess,
+          errorMessage: state.errorMessage,
+          metadata: state.resultMetadata,
+          filePath: state.resultFilePath,
+          onClose: () {
+            Navigator.of(context).pop();
+            ref.read(backupControllerProvider.notifier).reset();
+          },
+          onRetry: () {
+            Navigator.of(context).pop();
+            ref.read(backupControllerProvider.notifier).retryBackup();
+          },
+          onShare: state.resultFilePath != null ? () {
+            Navigator.of(context).pop();
+            _shareBackupFile(context, state.resultFilePath!);
+          } : null,
+        ),
+      );
+    }
   }
 
   void _showRestoreResultDialog(
@@ -170,24 +202,8 @@ class ProgressManager extends ConsumerWidget {
     WidgetRef ref,
     RestoreState state,
   ) {
-    final isSuccess = state.restoreResult?.success == true && state.errorMessage == null;
-    
-    showDialog(
-      context: context,
-      builder: (context) => OperationResultDialog.restore(
-        isSuccess: isSuccess,
-        errorMessage: state.errorMessage ?? state.restoreResult?.errorMessage,
-        result: state.restoreResult,
-        onClose: () {
-          Navigator.of(context).pop();
-          ref.read(restoreControllerProvider.notifier).reset();
-        },
-        onRetry: () {
-          Navigator.of(context).pop();
-          ref.read(restoreControllerProvider.notifier).startRestore();
-        },
-      ),
-    );
+    // 已由 RestoreProgressDialog 自动处理，无需额外弹窗
+    // 保留此方法以避免编译错误，但不执行任何操作
   }
 
   void _shareBackupFile(BuildContext context, String filePath) {

@@ -29,6 +29,7 @@ abstract class IRestoreService {
   /// 返回恢复预览信息，包含将要恢复的数据统计
   Future<RestorePreview> previewRestore(
     String filePath, {
+    RestoreMode mode,
     String? password,
   });
 

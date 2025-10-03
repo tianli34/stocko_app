@@ -25,6 +25,7 @@ class AppRoutes {
   static const String databaseManagement = '/database-management';
   static const String settings = '/settings';
   static const String customers = '/customers';
+  static const String productRestoreDebug = '/debug/product-restore';
 
   // 辅助方法，用于生成带参数的路由
   static String productDetailPath(String id) => '/products/$id';

@@ -2,7 +2,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../domain/models/auto_backup_settings.dart';
 import '../../data/services/auto_backup_scheduler.dart';
-import '../../data/services/backup_service.dart';
+import '../../data/services/unified_backup_service.dart';
 import '../../../../core/database/database.dart';
 
 part 'auto_backup_controller.g.dart';
@@ -11,7 +11,7 @@ part 'auto_backup_controller.g.dart';
 @riverpod
 AutoBackupScheduler autoBackupScheduler(AutoBackupSchedulerRef ref) {
   final database = ref.watch(appDatabaseProvider);
-  final backupService = BackupService(database);
+  final backupService = UnifiedBackupService(database);
   return AutoBackupScheduler(backupService);
 }
 

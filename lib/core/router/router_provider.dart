@@ -20,6 +20,7 @@ import '../../features/settings/presentation/screens/settings_screen.dart';
 import '../../features/sale/presentation/screens/customer_selection_screen.dart';
 import '../../features/home/presentation/screens/home_screen.dart';
 import '../../core/models/scanned_product_payload.dart';
+import '../../debug/product_restore_debug_page.dart';
 
 // GoRouter Provider
 final routerProvider = Provider<GoRouter>((ref) {
@@ -315,6 +316,11 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: AppRoutes.inventoryQuery,
         name: 'inventory-query',
         builder: (context, state) => const InventoryQueryScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.productRestoreDebug,
+        name: 'product-restore-debug',
+        builder: (context, state) => const ProductRestoreDebugPage(),
       ),
     ],
     errorBuilder: (context, state) => Scaffold(

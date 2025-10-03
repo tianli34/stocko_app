@@ -234,7 +234,7 @@ class OperationResultDialog extends StatelessWidget {
                   const SizedBox(width: 12),
                   Expanded(
                     child: Text(
-                      '数据恢复成功！',
+                      '数据恢复成功！“什么时候才能帮窗台的老盆栽擦掉年轮呀？”',
                       style: Theme.of(context).textTheme.titleMedium?.copyWith(
                         color: Theme.of(context).colorScheme.onPrimaryContainer,
                         fontWeight: FontWeight.w600,
@@ -484,7 +484,7 @@ class OperationResultDialog extends StatelessWidget {
       'customers': '客户',
       'product_batches': '产品批次',
       'stock': '库存',
-      'inventory_transactions': '库存交易',
+      'inventory_transaction': '库存交易',
       'locations': '货位',
       'inbound_receipts': '入库单',
       'inbound_items': '入库明细',

@@ -6,6 +6,7 @@ import '../../domain/models/backup_metadata.dart';
 import '../../domain/services/i_backup_service.dart';
 import '../../domain/common/backup_common.dart';
 import '../../data/providers/backup_service_provider.dart';
+import '../../data/services/backup_error_service.dart';
 import '../widgets/backup_progress_dialog.dart';
 
 part 'backup_controller.freezed.dart';
@@ -108,13 +109,19 @@ class BackupController extends StateNotifier<BackupState> {
     } catch (e) {
       if (!mounted) return;
       
-      final errorMessage = '备份失败: ${e.toString()}';
+      // 使用错误服务处理错误，获取用户友好的错误信息
+      final userError = await BackupErrorService.instance.handleError(
+        e,
+        operation: 'CreateBackup',
+        context: {'controllerState': 'backup'},
+      );
+      
       state = state.copyWith(
         isBackingUp: false,
-        errorMessage: errorMessage,
+        errorMessage: userError.message,
         progressInfo: state.progressInfo?.copyWith(
           isCompleted: true,
-          errorMessage: errorMessage,
+          errorMessage: userError.message,
         ),
       );
     }

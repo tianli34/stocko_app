@@ -265,6 +265,7 @@ class _RestoreScreenState extends ConsumerState<RestoreScreen> {
   void _showPasswordDialog(BuildContext context) {
     showDialog(
       context: context,
+      barrierDismissible: false,
       builder: (context) => PasswordInputDialog(
         onPasswordSubmitted: (password) {
           ref.read(restoreControllerProvider.notifier).validateWithPassword(password);
@@ -279,6 +280,7 @@ class _RestoreScreenState extends ConsumerState<RestoreScreen> {
     
     showDialog(
       context: context,
+      barrierDismissible: false,
       builder: (context) => AlertDialog(
         title: const Text('确认恢复'),
         content: Column(

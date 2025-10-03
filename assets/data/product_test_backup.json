@@ -1,0 +1,83 @@
+{
+  "metadata": {
+    "id": "product_test_backup_20251001_1400",
+    "fileName": "product_test_backup.json",
+    "createdAt": "2025-10-01T14:00:00.000000",
+    "fileSize": 1856,
+    "version": "2.0.0",
+    "tableCounts": {
+      "category": 2,
+      "unit": 2,
+      "product": 2
+    },
+    "checksum": "16914aebf7ab8dde1cffac20f770255340cffb72095b8bc4e46d2fe60c300975",
+    "isEncrypted": false,
+    "description": "产品恢复功能测试备份文件",
+    "appVersion": "1.0.0+1",
+    "schemaVersion": 22
+  },
+  "tables": {
+    "category": [
+      {
+        "id": 1,
+        "name": "饮料",
+        "description": "各类饮料产品",
+        "created_at": "2025-10-01T10:00:00.000000",
+        "updated_at": "2025-10-01T10:00:00.000000"
+      },
+      {
+        "id": 2,
+        "name": "零食",
+        "description": "各类零食产品",
+        "created_at": "2025-10-01T10:00:00.000000",
+        "updated_at": "2025-10-01T10:00:00.000000"
+      }
+    ],
+    "unit": [
+      {
+        "id": 1,
+        "name": "瓶",
+        "symbol": "瓶",
+        "created_at": "2025-10-01T10:00:00.000000",
+        "updated_at": "2025-10-01T10:00:00.000000"
+      },
+      {
+        "id": 2,
+        "name": "包",
+        "symbol": "包",
+        "created_at": "2025-10-01T10:00:00.000000",
+        "updated_at": "2025-10-01T10:00:00.000000"
+      }
+    ],
+    "product": [
+      {
+        "id": 1,
+        "name": "可口可乐",
+        "sku": "COLA001",
+        "specification": "500ml",
+        "brand": "可口可乐",
+        "category_id": 1,
+        "base_unit_id": 1,
+        "retail_price": 350,
+        "status": "active",
+        "remarks": "经典口味可乐，500ml装",
+        "created_at": "2025-10-01T12:00:00.000000",
+        "updated_at": "2025-10-01T12:00:00.000000"
+      },
+      {
+        "id": 2,
+        "name": "薯片",
+        "sku": "CHIPS001",
+        "specification": "100g",
+        "brand": "乐事",
+        "category_id": 2,
+        "base_unit_id": 2,
+        "retail_price": 650,
+        "status": "active",
+        "remarks": "原味薯片，100g装",
+        "created_at": "2025-10-01T12:30:00.000000",
+        "updated_at": "2025-10-01T12:30:00.000000"
+      }
+    ]
+  }
+}

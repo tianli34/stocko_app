@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:share_plus/share_plus.dart';
 
+import '../../data/utils/backup_file_manager.dart';
 import '../../domain/models/backup_metadata.dart';
 import '../../domain/models/backup_options.dart';
 import '../controllers/backup_controller.dart';
@@ -10,6 +11,8 @@ import '../controllers/backup_management_controller.dart';
 import '../widgets/progress_manager.dart';
 import '../widgets/create_backup_dialog.dart';
 import '../widgets/backup_details_dialog.dart';
+import '../widgets/backup_troubleshooting_guide.dart';
+import '../widgets/backup_diagnostic_dialog.dart';
 import 'restore_screen.dart';
 import '../../../../core/services/toast_service.dart';
 
@@ -40,6 +43,16 @@ class _BackupManagementScreenState extends ConsumerState<BackupManagementScreen>
         appBar: AppBar(
           title: const Text('备份管理'),
           actions: [
+            IconButton(
+              icon: const Icon(Icons.healing),
+              onPressed: () => _showDiagnosticDialog(context),
+              tooltip: '系统诊断',
+            ),
+            IconButton(
+              icon: const Icon(Icons.help_outline),
+              onPressed: () => BackupTroubleshootingGuide.show(context),
+              tooltip: '故障排除',
+            ),
             IconButton(
               icon: const Icon(Icons.restore),
               onPressed: () {
@@ -409,12 +422,8 @@ class _BackupManagementScreenState extends ConsumerState<BackupManagementScreen>
 
   void _shareBackup(BuildContext context, BackupMetadata backup) async {
     try {
-      // 这里需要获取备份文件的实际路径
-      // 暂时使用文件名作为占位符
-      await Share.shareXFiles(
-        [XFile(backup.fileName)],
-        text: '分享备份文件: ${backup.fileName}',
-      );
+      await BackupFileManager.shareBackupFile(backup);
+      ToastService.success('分享成功');
     } catch (e) {
       ToastService.error('分享失败: $e');
     }
@@ -451,6 +460,13 @@ class _BackupManagementScreenState extends ConsumerState<BackupManagementScreen>
           ),
         ],
       ),
+    );
+  }
+
+  void _showDiagnosticDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) => const BackupDiagnosticDialog(),
     );
   }
 }

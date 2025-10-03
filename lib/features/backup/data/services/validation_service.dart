@@ -12,16 +12,16 @@ import '../../domain/models/integrity_check_result.dart';
 import '../../domain/models/compatibility_check_result.dart';
 import '../../domain/services/i_validation_service.dart';
 import '../../domain/services/i_encryption_service.dart';
-import '../repository/data_export_repository.dart';
+import '../repository/optimized_data_export_repository.dart';
 
 /// 数据验证服务实现类
 class ValidationService implements IValidationService {
   final AppDatabase _database;
   final IEncryptionService _encryptionService;
-  final DataExportRepository _dataExportRepository;
+  final OptimizedDataExportRepository _dataExportRepository;
 
   // 支持的备份格式版本
-  static const List<String> _supportedBackupVersions = ['1.0.0'];
+  static const List<String> _supportedBackupVersions = ['1.0.0', '2.0.0'];
   
   // 支持的数据库架构版本范围
   static const int _minSupportedSchemaVersion = 1;
@@ -30,7 +30,7 @@ class ValidationService implements IValidationService {
   ValidationService(
     this._database,
     this._encryptionService,
-  ) : _dataExportRepository = DataExportRepository(_database);
+  ) : _dataExportRepository = OptimizedDataExportRepository(_database);
 
   @override
   Future<ValidationResult> validateBackupFormat(

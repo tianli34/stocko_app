@@ -197,7 +197,8 @@ class BackupDetailsDialog extends StatelessWidget {
 
   String _getTableDisplayName(String tableName) {
     // 将数据库表名转换为用户友好的显示名称
-    switch (tableName.toLowerCase()) {
+    final lowerTableName = tableName.toLowerCase();
+    switch (lowerTableName) {
       case 'products':
         return '产品';
       case 'inventory':

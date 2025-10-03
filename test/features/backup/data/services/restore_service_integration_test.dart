@@ -5,7 +5,7 @@ import 'package:path/path.dart' as path;
 import 'package:drift/native.dart';
 
 import 'package:stocko_app/core/database/database.dart';
-import 'package:stocko_app/features/backup/data/services/restore_service.dart';
+import 'package:stocko_app/features/backup/data/services/optimized_restore_service.dart';
 import 'package:stocko_app/features/backup/data/services/encryption_service.dart';
 import 'package:stocko_app/features/backup/data/services/validation_service.dart';
 import 'package:stocko_app/features/backup/domain/models/backup_data.dart';
@@ -28,7 +28,7 @@ void main() {
       final encryptionService = EncryptionService();
       
       final validationService = ValidationService(database, encryptionService);
-      restoreService = RestoreService(database, encryptionService, validationService);
+      restoreService = OptimizedRestoreService(database, encryptionService, validationService);
     });
 
     tearDown(() async {

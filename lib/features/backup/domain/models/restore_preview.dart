@@ -12,6 +12,8 @@ abstract class RestorePreview with _$RestorePreview {
     required BackupMetadata metadata,
     /// 各表将要恢复的记录数
     required Map<String, int> recordCounts,
+    /// 当前数据库各表的记录数
+    @Default({}) Map<String, int> currentDatabaseCounts,
     /// 预计的数据冲突数量
     @Default(0) int estimatedConflicts,
     /// 兼容性检查结果
