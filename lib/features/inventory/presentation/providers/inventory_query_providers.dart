@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../application/inventory_query_service.dart';
 import '../../../product/application/provider/product_providers.dart';
+import '../../domain/model/aggregated_inventory.dart';
 
 enum InventorySortType { none, byQuantity, byShelfLife }
 
@@ -69,7 +70,8 @@ final inventoryFilterProvider =
 
 /// 库存查询数据Provider - 使用真实数据库查询
 /// 添加对产品数据变化的监听，确保产品图片更新后库存页面能同步刷新
-final inventoryQueryProvider = FutureProvider<List<Map<String, dynamic>>>((
+/// 支持聚合模式：未筛选店铺时返回聚合数据，筛选店铺时返回原始数据
+final inventoryQueryProvider = FutureProvider<dynamic>((
   ref,
 ) async {
   final filterState = ref.watch(inventoryFilterProvider);
@@ -89,20 +91,66 @@ final inventoryQueryProvider = FutureProvider<List<Map<String, dynamic>>>((
       ? null
       : filterState.selectedStatus;
 
-  // 调用真实的库存查询服务
-  // 调用真实的库存查询服务
-  final data = await queryService.getInventoryWithDetails(
-    shopFilter: shopFilter,
-    categoryFilter: categoryFilter,
-    statusFilter: statusFilter,
-  );
+  final sortBy = filterState.sortBy;
 
-  final sortBy = ref.watch(inventoryFilterProvider).sortBy;
+  // 判断是否需要聚合：未筛选店铺时使用聚合模式
+  if (shopFilter == null) {
+    // 聚合模式：返回聚合数据
+    final aggregatedData = await queryService.getAggregatedInventory(
+      categoryFilter: categoryFilter,
+      statusFilter: statusFilter,
+    );
 
+    // 应用排序到聚合数据
+    _applySortToAggregated(aggregatedData, sortBy);
+
+    return aggregatedData;
+  } else {
+    // 原始模式：返回原始数据
+    final data = await queryService.getInventoryWithDetails(
+      shopFilter: shopFilter,
+      categoryFilter: categoryFilter,
+      statusFilter: statusFilter,
+    );
+
+    // 应用排序到原始数据
+    _applySortToOriginal(data, sortBy);
+
+    return data;
+  }
+});
+
+/// 对聚合数据应用排序
+void _applySortToAggregated(
+  List<AggregatedInventoryItem> data,
+  InventorySortType sortBy,
+) {
+  if (sortBy == InventorySortType.byQuantity) {
+    data.sort((a, b) => a.totalQuantity.compareTo(b.totalQuantity));
+  } else if (sortBy == InventorySortType.byShelfLife) {
+    // 按最短剩余保质期排序
+    data.sort((a, b) {
+      final aMinDays = a.minRemainingDays;
+      final bMinDays = b.minRemainingDays;
+      
+      // 没有保质期信息的排在后面
+      if (aMinDays == null && bMinDays == null) return 0;
+      if (aMinDays == null) return 1;
+      if (bMinDays == null) return -1;
+      
+      return aMinDays.compareTo(bMinDays);
+    });
+  }
+}
+
+/// 对原始数据应用排序
+void _applySortToOriginal(
+  List<Map<String, dynamic>> data,
+  InventorySortType sortBy,
+) {
   if (sortBy == InventorySortType.byQuantity) {
     data.sort((a, b) => (a['quantity'] as num).compareTo(b['quantity'] as num));
   } else if (sortBy == InventorySortType.byShelfLife) {
-    print('==================== 开始按保质期排序 ====================');
     final now = DateTime.now();
     final filteredData = data.where((item) {
       final productionDateStr = item['productionDate'];
@@ -113,8 +161,6 @@ final inventoryQueryProvider = FutureProvider<List<Map<String, dynamic>>>((
           shelfLifeDays is int &&
           shelfLifeUnit is String;
     }).toList();
-
-    print('找到 ${filteredData.length} 个有完整批次信息的商品进行排序。');
 
     filteredData.sort((a, b) {
       try {
@@ -129,14 +175,12 @@ final inventoryQueryProvider = FutureProvider<List<Map<String, dynamic>>>((
         try {
           aProductionDate = DateTime.parse(aDateStr);
         } catch (e) {
-          print('无法解析日期A: $aDateStr, 错误: $e');
           return 1; // 解析失败的项排在后面
         }
         
         try {
           bProductionDate = DateTime.parse(bDateStr);
         } catch (e) {
-          print('无法解析日期B: $bDateStr, 错误: $e');
           return -1; // 解析失败的项排在后面
         }
         
@@ -184,25 +228,15 @@ final inventoryQueryProvider = FutureProvider<List<Map<String, dynamic>>>((
         final bExpiryDate = bProductionDate.add(Duration(days: bShelfLifeInDays));
         final bRemaining = bExpiryDate.difference(now);
 
-        print('--- 比较项 A: ${a['productName']} | 批号: ${a['batchNumber']} ---');
-        print(
-            '生产日期: $aProductionDate, 保质期: $aShelfLife $aShelfLifeUnit, 到期日: $aExpiryDate, 剩余天数: ${aRemaining.inDays}');
-        print('--- 比较项 B: ${b['productName']} | 批号: ${b['batchNumber']} ---');
-        print(
-            '生产日期: $bProductionDate, 保质期: $bShelfLife $bShelfLifeUnit, 到期日: $bExpiryDate, 剩余天数: ${bRemaining.inDays}');
-        print('----------------------------------------------------');
-
         return aRemaining.compareTo(bRemaining);
       } catch (e) {
-        print('排序时发生错误: $e');
-        print('问题数据: A=${a['productionDate']}, B=${b['productionDate']}');
         // 如果解析失败，则将该项排在后面
         return 1;
       }
     });
-    print('==================== 保质期排序完成 ====================');
-    return filteredData;
+    
+    // 将排序后的数据复制回原列表
+    data.clear();
+    data.addAll(filteredData);
   }
-
-  return data;
-});
+}

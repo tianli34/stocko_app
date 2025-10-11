@@ -11,6 +11,7 @@ class WeightedAveragePriceService {
 
   /// 计算并更新移动加权平均价格
   /// 当有新的入库时调用此方法
+  /// 注意：此方法只更新平均价格，不更新库存数量（库存数量由 InventoryService.inbound 负责）
   Future<void> updateWeightedAveragePrice({
     required int productId,
     required int shopId,
@@ -24,34 +25,30 @@ class WeightedAveragePriceService {
           .getInventoryByProductShopAndBatch(productId, shopId, batchId);
 
       if (currentStock == null) {
-        // 如果没有现有库存，直接使用入库价格作为平均价格
-        await _database.inventoryDao.insertInventory(
-          StockCompanion(
-            productId: drift.Value(productId),
-            shopId: drift.Value(shopId),
-            batchId: batchId != null ? drift.Value(batchId) : const drift.Value.absent(),
-            quantity: drift.Value(inboundQuantity),
-            averageUnitPriceInCents: drift.Value(inboundUnitPriceInCents),
-          ),
-        );
+        // 如果没有现有库存，不做任何操作
+        // 库存记录会由 InventoryService.inbound 创建
+        // 这里只需要在库存创建后更新平均价格即可
+        return;
       } else {
         // 计算新的移动加权平均价格
         final currentQuantity = currentStock.quantity;
         final currentAveragePrice = currentStock.averageUnitPriceInCents;
-        
+
         // 移动加权平均价格公式：
         // 新平均价格 = (现有库存数量 × 现有平均价格 + 入库数量 × 入库单价) ÷ (现有库存数量 + 入库数量)
-        final totalValue = (currentQuantity * currentAveragePrice) + 
-                          (inboundQuantity * inboundUnitPriceInCents);
+        final totalValue =
+            (currentQuantity * currentAveragePrice) +
+            (inboundQuantity * inboundUnitPriceInCents);
         final totalQuantity = currentQuantity + inboundQuantity;
-        
-        final newAveragePrice = totalQuantity > 0 ? (totalValue / totalQuantity).round() : 0;
-        
-        // 更新库存数量和平均价格
+
+        final newAveragePrice = totalQuantity > 0
+            ? (totalValue / totalQuantity).round()
+            : 0;
+
+        // 只更新平均价格，不更新库存数量
         await _database.inventoryDao.updateInventory(
           StockCompanion(
             id: drift.Value(currentStock.id),
-            quantity: drift.Value(totalQuantity),
             averageUnitPriceInCents: drift.Value(newAveragePrice),
             updatedAt: drift.Value(DateTime.now()),
           ),
@@ -73,7 +70,7 @@ class WeightedAveragePriceService {
 
     if (currentStock != null) {
       final newQuantity = currentStock.quantity - outboundQuantity;
-      
+
       await _database.inventoryDao.updateInventory(
         StockCompanion(
           id: drift.Value(currentStock.id),
@@ -92,7 +89,7 @@ class WeightedAveragePriceService {
   }) async {
     final stock = await _database.inventoryDao
         .getInventoryByProductShopAndBatch(productId, shopId, batchId);
-    
+
     return stock?.averageUnitPriceInCents ?? 0;
   }
 
@@ -102,7 +99,7 @@ class WeightedAveragePriceService {
     await _database.transaction(() async {
       // 获取所有库存记录
       final allStocks = await _database.inventoryDao.getAllInventory();
-      
+
       for (final stock in allStocks) {
         await _recalculateStockWeightedAveragePrice(
           productId: stock.productId,
@@ -141,19 +138,20 @@ class WeightedAveragePriceService {
         weightedAveragePrice = inboundPrice;
       } else {
         // 计算新的移动加权平均价格
-        final totalValue = (cumulativeQuantity * weightedAveragePrice) + 
-                          (inboundQuantity * inboundPrice);
+        final totalValue =
+            (cumulativeQuantity * weightedAveragePrice) +
+            (inboundQuantity * inboundPrice);
         final totalQuantity = cumulativeQuantity + inboundQuantity;
         weightedAveragePrice = (totalValue / totalQuantity).round();
       }
-      
+
       cumulativeQuantity += inboundQuantity;
     }
 
     // 更新库存的移动加权平均价格
     final currentStock = await _database.inventoryDao
         .getInventoryByProductShopAndBatch(productId, shopId, batchId);
-    
+
     if (currentStock != null) {
       await _database.inventoryDao.updateInventory(
         StockCompanion(
@@ -171,34 +169,41 @@ class WeightedAveragePriceService {
     required int shopId,
     int? batchId,
   }) async {
-    final batchCondition = batchId != null 
+    final batchCondition = batchId != null
         ? 'AND ii.batch_id = $batchId'
         : 'AND ii.batch_id IS NULL';
 
-    final result = await _database.customSelect(
-      '''
+    final result = await _database
+        .customSelect(
+          '''
       SELECT ii.quantity, ii.unit_price_in_cents, ir.created_at
       FROM inbound_item ii
       JOIN inbound_receipt ir ON ii.receipt_id = ir.id
       WHERE ii.product_id = ? AND ir.shop_id = ? $batchCondition
       ORDER BY ir.created_at ASC
       ''',
-      variables: [
-        drift.Variable.withInt(productId),
-        drift.Variable.withInt(shopId),
-      ],
-    ).get();
+          variables: [
+            drift.Variable.withInt(productId),
+            drift.Variable.withInt(shopId),
+          ],
+        )
+        .get();
 
-    return result.map((row) => {
-      'quantity': row.read<int>('quantity'),
-      'unitPriceInCents': row.read<int>('unit_price_in_cents'),
-      'createdAt': row.read<DateTime>('created_at'),
-    }).toList();
+    return result
+        .map(
+          (row) => {
+            'quantity': row.read<int>('quantity'),
+            'unitPriceInCents': row.read<int>('unit_price_in_cents'),
+            'createdAt': row.read<DateTime>('created_at'),
+          },
+        )
+        .toList();
   }
 }
 
 /// 移动加权平均价格服务提供者
-final weightedAveragePriceServiceProvider = Provider<WeightedAveragePriceService>((ref) {
-  final database = ref.watch(appDatabaseProvider);
-  return WeightedAveragePriceService(database);
-});
+final weightedAveragePriceServiceProvider =
+    Provider<WeightedAveragePriceService>((ref) {
+      final database = ref.watch(appDatabaseProvider);
+      return WeightedAveragePriceService(database);
+    });

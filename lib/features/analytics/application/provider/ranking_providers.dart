@@ -24,7 +24,7 @@ class RankingRange {
 final rankingRangeProvider = StateProvider<RankingRange>((ref) {
   final now = DateTime.now();
   final endOpen = DateTime(now.year, now.month, now.day).add(const Duration(days: 1)); // 明日 00:00
-  final start = endOpen.subtract(const Duration(days: 7)); // 近7天
+  final start = DateTime(2000, 1, 1); // 无限制：从2000年开始到现在
   return RankingRange(start, endOpen);
 });
 

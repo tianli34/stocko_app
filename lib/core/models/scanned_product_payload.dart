@@ -8,6 +8,7 @@ class ScannedProductPayload extends Equatable {
   final int unitId;
   final String unitName;
   final int conversionRate;
+  final int? sellingPriceInCents;
   final int? wholesalePriceInCents;
   final int? averageUnitPriceInCents;
 
@@ -17,6 +18,7 @@ class ScannedProductPayload extends Equatable {
     required this.unitId,
     required this.unitName,
     required this.conversionRate,
+    this.sellingPriceInCents,
     this.wholesalePriceInCents,
     this.averageUnitPriceInCents,
   });
@@ -28,6 +30,7 @@ class ScannedProductPayload extends Equatable {
         unitId,
         unitName,
         conversionRate,
+        sellingPriceInCents,
         wholesalePriceInCents,
         averageUnitPriceInCents,
       ];

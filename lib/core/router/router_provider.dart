@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../constants/app_routes.dart';
 import '../widgets/scaffold_with_nav_bar.dart';
+import '../widgets/privacy_policy_checker.dart';
 import '../../features/product/presentation/screens/product_list_screen.dart';
 import '../../features/product/presentation/screens/product_add_edit_screen.dart';
 import '../../features/product/presentation/screens/product_detail_screen.dart';
@@ -17,6 +18,8 @@ import '../../features/sale/presentation/screens/create_sale_screen.dart';
 import '../../features/sale/presentation/screens/sales_records_screen.dart';
 import '../../features/purchase/presentation/screens/purchase_records_screen.dart';
 import '../../features/settings/presentation/screens/settings_screen.dart';
+import '../../features/settings/presentation/screens/terms_of_service_screen.dart';
+import '../../features/settings/presentation/screens/privacy_policy_screen.dart';
 import '../../features/sale/presentation/screens/customer_selection_screen.dart';
 import '../../features/home/presentation/screens/home_screen.dart';
 import '../../core/models/scanned_product_payload.dart';
@@ -27,10 +30,11 @@ final routerProvider = Provider<GoRouter>((ref) {
   return GoRouter(
     initialLocation: AppRoutes.home,
     routes: [
-      // 底部导航栏承载的 5 个主分支
+      // 底部导航栏承载的 4 个主分支
       StatefulShellRoute.indexedStack(
-        builder: (context, state, navigationShell) =>
-            ScaffoldWithNavBar(navigationShell: navigationShell),
+        builder: (context, state, navigationShell) => PrivacyPolicyChecker(
+          child: ScaffoldWithNavBar(navigationShell: navigationShell),
+        ),
         branches: [
           // 首页
           StatefulShellBranch(
@@ -163,8 +167,7 @@ final routerProvider = Provider<GoRouter>((ref) {
                         SizedBox(
                           width: 200,
                           child: ElevatedButton(
-                            onPressed: () =>
-                                context.push('/inventory-query'),
+                            onPressed: () => context.push('/inventory-query'),
                             child: const Text('库存查询'),
                           ),
                         ),
@@ -187,24 +190,34 @@ final routerProvider = Provider<GoRouter>((ref) {
               ),
             ],
           ),
-          // 设置
-          StatefulShellBranch(
-            routes: [
-              GoRoute(
-                path: AppRoutes.settings,
-                name: 'settings',
-                builder: (context, state) => const SettingsScreen(),
-              ),
-            ],
-          ),
         ],
       ),
 
       // 其余（不在底部导航中的）功能路由
       GoRoute(
+        path: AppRoutes.settings,
+        name: 'settings',
+        builder: (context, state) => const SettingsScreen(),
+        routes: [
+          GoRoute(
+            path: 'user-agreement',
+            name: 'user-agreement',
+            builder: (context, state) => const TermsOfServiceScreen(),
+          ),
+          GoRoute(
+            path: 'privacy-policy',
+            name: 'privacy-policy',
+            builder: (context, state) => const PrivacyPolicyScreen(),
+          ),
+        ],
+      ),
+      GoRoute(
         path: '/product/new',
         name: 'product-new',
-        builder: (context, state) => const ProductAddEditScreen(),
+        builder: (context, state) {
+          final barcode = state.extra is String ? state.extra as String : null;
+          return ProductAddEditScreen(initialBarcode: barcode);
+        },
       ),
       GoRoute(
         path: '/product/:id/edit',

@@ -73,16 +73,14 @@ class OperationResultDialog extends StatelessWidget {
   Widget build(BuildContext context) {
     return AlertDialog(
       title: _buildTitle(context),
-      content: SingleChildScrollView(
-        child: _buildContent(context),
-      ),
+      content: SingleChildScrollView(child: _buildContent(context)),
       actions: _buildActions(context),
     );
   }
 
   Widget _buildTitle(BuildContext context) {
     final iconData = isSuccess ? Icons.check_circle : Icons.error;
-    final iconColor = isSuccess 
+    final iconColor = isSuccess
         ? Theme.of(context).colorScheme.primary
         : Theme.of(context).colorScheme.error;
 
@@ -153,7 +151,10 @@ class OperationResultDialog extends StatelessWidget {
 
   Widget _buildBackupSuccessContent(BuildContext context) {
     final metadata = backupMetadata!;
-    final totalRecords = metadata.tableCounts.values.fold<int>(0, (sum, count) => sum + count);
+    final totalRecords = metadata.tableCounts.values.fold<int>(
+      0,
+      (sum, count) => sum + count,
+    );
     final fileSizeText = _formatFileSize(metadata.fileSize);
 
     return Column(
@@ -188,7 +189,11 @@ class OperationResultDialog extends StatelessWidget {
               ),
               const SizedBox(height: 12),
               _buildInfoRow(context, '备份名称', metadata.fileName),
-              _buildInfoRow(context, '创建时间', _formatDateTime(metadata.createdAt)),
+              _buildInfoRow(
+                context,
+                '创建时间',
+                _formatDateTime(metadata.createdAt),
+              ),
               _buildInfoRow(context, '文件大小', fileSizeText),
               _buildInfoRow(context, '总记录数', totalRecords.toString()),
               if (metadata.description != null)
@@ -209,7 +214,7 @@ class OperationResultDialog extends StatelessWidget {
   Widget _buildRestoreSuccessContent(BuildContext context) {
     final result = restoreResult!;
     final duration = result.endTime.difference(result.startTime);
-    final durationText = duration.inMinutes > 0 
+    final durationText = duration.inMinutes > 0
         ? '${duration.inMinutes}分${duration.inSeconds % 60}秒'
         : '${duration.inSeconds}秒';
 
@@ -244,7 +249,11 @@ class OperationResultDialog extends StatelessWidget {
                 ],
               ),
               const SizedBox(height: 12),
-              _buildInfoRow(context, '总记录数', result.totalRecordsRestored.toString()),
+              _buildInfoRow(
+                context,
+                '总记录数',
+                result.totalRecordsRestored.toString(),
+              ),
               _buildInfoRow(context, '耗时', durationText),
               _buildInfoRow(context, '开始时间', _formatDateTime(result.startTime)),
               _buildInfoRow(context, '结束时间', _formatDateTime(result.endTime)),
@@ -310,27 +319,29 @@ class OperationResultDialog extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 8),
-          ...tableCounts.entries.map((entry) => Padding(
-            padding: const EdgeInsets.only(bottom: 2),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  _getTableDisplayName(entry.key),
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: Theme.of(context).colorScheme.onSecondaryContainer,
+          ...tableCounts.entries.map(
+            (entry) => Padding(
+              padding: const EdgeInsets.only(bottom: 2),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    _getTableDisplayName(entry.key),
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: Theme.of(context).colorScheme.onSecondaryContainer,
+                    ),
                   ),
-                ),
-                Text(
-                  entry.value.toString(),
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: Theme.of(context).colorScheme.onSecondaryContainer,
-                    fontWeight: FontWeight.w500,
+                  Text(
+                    entry.value.toString(),
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: Theme.of(context).colorScheme.onSecondaryContainer,
+                      fontWeight: FontWeight.w500,
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-          )),
+          ),
         ],
       ),
     );
@@ -364,15 +375,17 @@ class OperationResultDialog extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 8),
-          ...warnings.map((warning) => Padding(
-            padding: const EdgeInsets.only(bottom: 4),
-            child: Text(
-              '• $warning',
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: Theme.of(context).colorScheme.onTertiaryContainer,
+          ...warnings.map(
+            (warning) => Padding(
+              padding: const EdgeInsets.only(bottom: 4),
+              child: Text(
+                '• $warning',
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: Theme.of(context).colorScheme.onTertiaryContainer,
+                ),
               ),
             ),
-          )),
+          ),
         ],
       ),
     );
@@ -432,30 +445,21 @@ class OperationResultDialog extends StatelessWidget {
   List<Widget> _buildActions(BuildContext context) {
     if (!isSuccess) {
       return [
-        TextButton(
-          onPressed: onClose,
-          child: const Text('关闭'),
-        ),
+        TextButton(onPressed: onClose, child: const Text('关闭')),
         if (onRetry != null)
-          ElevatedButton(
-            onPressed: onRetry,
-            child: const Text('重试'),
-          ),
+          ElevatedButton(onPressed: onRetry, child: const Text('重试')),
       ];
     }
 
     final actions = <Widget>[
-      TextButton(
-        onPressed: onClose,
-        child: const Text('关闭'),
-      ),
+      TextButton(onPressed: onClose, child: const Text('关闭')),
     ];
 
     if (onShare != null) {
-      actions.insert(0, TextButton(
-        onPressed: onShare,
-        child: const Text('分享'),
-      ));
+      actions.insert(
+        0,
+        TextButton(onPressed: onShare, child: const Text('分享')),
+      );
     }
 
     return actions;
@@ -464,37 +468,38 @@ class OperationResultDialog extends StatelessWidget {
   String _formatFileSize(int bytes) {
     if (bytes < 1024) return '${bytes}B';
     if (bytes < 1024 * 1024) return '${(bytes / 1024).toStringAsFixed(1)}KB';
-    if (bytes < 1024 * 1024 * 1024) return '${(bytes / (1024 * 1024)).toStringAsFixed(1)}MB';
+    if (bytes < 1024 * 1024 * 1024)
+      return '${(bytes / (1024 * 1024)).toStringAsFixed(1)}MB';
     return '${(bytes / (1024 * 1024 * 1024)).toStringAsFixed(1)}GB';
   }
 
   String _formatDateTime(DateTime dateTime) {
     return '${dateTime.year}-${dateTime.month.toString().padLeft(2, '0')}-${dateTime.day.toString().padLeft(2, '0')} '
-           '${dateTime.hour.toString().padLeft(2, '0')}:${dateTime.minute.toString().padLeft(2, '0')}';
+        '${dateTime.hour.toString().padLeft(2, '0')}:${dateTime.minute.toString().padLeft(2, '0')}';
   }
 
   String _getTableDisplayName(String tableName) {
     const tableNames = {
-      'products': '产品',
-      'categories': '分类',
-      'units': '单位',
-      'unit_products': '产品单位',
-      'shops': '店铺',
-      'suppliers': '供应商',
+      'product': '产品',
+      'category': '分类',
+      'unit': '单位',
+      'unit_product': '产品单位',
+      'shop': '店铺',
+      'supplier': '供应商',
       'customers': '客户',
-      'product_batches': '产品批次',
+      'product_batch': '产品批次',
       'stock': '库存',
       'inventory_transaction': '库存交易',
       'locations': '货位',
-      'inbound_receipts': '入库单',
-      'inbound_items': '入库明细',
-      'outbound_receipts': '出库单',
-      'outbound_items': '出库明细',
-      'purchase_orders': '采购单',
-      'purchase_order_items': '采购明细',
-      'sales_transactions': '销售交易',
-      'sales_transaction_items': '销售明细',
-      'barcodes': '条码',
+      'inbound_receipt': '入库单',
+      'inbound_item': '入库明细',
+      'outbound_receipt': '出库单',
+      'outbound_item': '出库明细',
+      'purchase_order': '采购单',
+      'purchase_order_item': '采购明细',
+      'sales_transaction': '销售交易',
+      'sales_transaction_item': '销售明细',
+      'barcode': '条码',
     };
     return tableNames[tableName] ?? tableName;
   }

@@ -18,7 +18,6 @@ class BarcodeSection extends StatefulWidget {
 class _BarcodeSectionState extends State<BarcodeSection> {
   late FocusNode _focusNode;
   bool _isFocused = false;
-  final String _hintText = '建议最先扫码';
 
   @override
   void initState() {
@@ -44,24 +43,35 @@ class _BarcodeSectionState extends State<BarcodeSection> {
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Expanded(
-          child: Padding(
-            padding: const EdgeInsets.only(top: 8.0), // 只给条码输入框添加上边距
-            child: TextFormField(
-              controller: widget.controller,
-              focusNode: _focusNode,
-              decoration: InputDecoration(
-                hintText: _isFocused ? '' : _hintText,
+    return Container(
+      decoration: BoxDecoration(
+        border: Border.all(color: Colors.grey.shade300),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          // 标签显示在左边
+          SizedBox(
+            width: 100,
+            child: Padding(
+              padding: const EdgeInsets.only(right: 12),
+              child: Text(
+                '条码',
+                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
               ),
             ),
           ),
-        ),
-        const SizedBox(width: 32),
-        Padding(
-          padding: const EdgeInsets.only(right: 12.0), // 给扫码按钮添加右边距
-          child: SizedBox(
+          Expanded(
+            child: TextFormField(
+              controller: widget.controller,
+              focusNode: _focusNode,
+              decoration: InputDecoration(hintText: _isFocused ? '' : '建议优先扫码'),
+            ),
+          ),
+          const SizedBox(width: 8),
+          SizedBox(
             height: 33,
             child: ElevatedButton.icon(
               onPressed: widget.onScan,
@@ -75,8 +85,8 @@ class _BarcodeSectionState extends State<BarcodeSection> {
               ),
             ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }

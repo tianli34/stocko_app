@@ -24,8 +24,9 @@ import '../../application/provider/unit_edit_form_providers.dart';
 /// 表单页面，提交时调用 ref.read(productOperationsProvider.notifier).addProduct(...)
 class ProductAddEditScreen extends ConsumerStatefulWidget {
   final ProductModel? product; // 如果传入货品则为编辑模式，否则为新增模式
+  final String? initialBarcode; // 初始条码（从扫码进入时传入）
 
-  const ProductAddEditScreen({super.key, this.product});
+  const ProductAddEditScreen({super.key, this.product, this.initialBarcode});
 
   @override
   ConsumerState<ProductAddEditScreen> createState() =>
@@ -64,6 +65,15 @@ class _ProductAddEditScreenState extends ConsumerState<ProductAddEditScreen> {
     });
     // 初始化表单控制器
     _c = ProductFormControllers()..init(widget.product);
+    
+    // 如果有初始条码，填充到条码输入框并让名称输入框获得焦点
+    if (widget.initialBarcode != null && widget.initialBarcode!.isNotEmpty) {
+      _c.barcodeController.text = widget.initialBarcode!;
+      // 延迟让名称输入框获得焦点，确保页面完全加载后再执行
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _c.nameFocusNode.requestFocus();
+      });
+    }
 
     // 条码监听将在 build 方法中处理，确保 ref.listen 在正确的上下文中使用
   }
@@ -83,7 +93,7 @@ class _ProductAddEditScreenState extends ConsumerState<ProductAddEditScreen> {
   @override
   Widget build(BuildContext context) {
     final operationsState = ref.watch(productOperationsProvider);
-    
+
     // 条码监听必须在 build 方法中处理
     if (widget.product?.id != null) {
       ref.listen<AsyncValue<String?>>(
@@ -126,10 +136,10 @@ class _ProductAddEditScreenState extends ConsumerState<ProductAddEditScreen> {
               // 显示加载状态
               if (operationsState.isLoading) const LinearProgressIndicator(),
 
-              // 表单内容
+               // 表单内容
               Expanded(
                 child: SingleChildScrollView(
-                  padding: const EdgeInsets.all(0),
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -149,7 +159,7 @@ class _ProductAddEditScreenState extends ConsumerState<ProductAddEditScreen> {
                           nextFocus: _c.nameFocusNode,
                         ),
                       ),
-                      const SizedBox(height: 32),
+                      const SizedBox(height: 16),
                       // 单位 + 类别组合
                       unitsAsyncValue.when(
                         data: (units) {
@@ -278,7 +288,7 @@ class _ProductAddEditScreenState extends ConsumerState<ProductAddEditScreen> {
                           ],
                         ),
                       ),
-                      const SizedBox(height: 32),
+                      const SizedBox(height: 16),
                       AppTextField(
                         controller: _c.retailPriceController,
                         label: '零售价',
@@ -288,21 +298,21 @@ class _ProductAddEditScreenState extends ConsumerState<ProductAddEditScreen> {
                         onFieldSubmitted: (_) =>
                             _c.shelfLifeFocusNode.requestFocus(),
                       ),
-                      const SizedBox(height: 44),
+                      const SizedBox(height: 16),
                       PricingSection(
                         promotionalPriceController:
                             _c.promotionalPriceController,
                         suggestedRetailPriceController:
                             _c.suggestedRetailPriceController,
                       ),
-                      const SizedBox(height: 44),
+                      const SizedBox(height: 16),
                       AppTextField(
                         controller: _c.stockWarningValueController,
-                        label: '库存预警值（默认值5）',
+                        label: '库存预警值',
                         keyboardType: TextInputType.number,
                         focusNode: _c.stockWarningValueFocusNode,
                       ),
-                      const SizedBox(height: 44),
+                      const SizedBox(height: 16),
                       // 保质期
                       ShelfLifeSection(
                         shelfLifeController: _c.shelfLifeController,
@@ -316,7 +326,7 @@ class _ProductAddEditScreenState extends ConsumerState<ProductAddEditScreen> {
                         },
                         onSubmitted: _submitForm,
                       ),
-                      const SizedBox(height: 44),
+                      const SizedBox(height: 16),
                     ],
                   ),
                 ),
@@ -427,30 +437,40 @@ class _ProductAddEditScreenState extends ConsumerState<ProductAddEditScreen> {
 
     // 设置图片路径
     if (widget.product!.image != null && widget.product!.image!.isNotEmpty) {
-      ref.read(productFormUiProvider.notifier).setImagePath(widget.product!.image);
+      ref
+          .read(productFormUiProvider.notifier)
+          .setImagePath(widget.product!.image);
     }
 
     // 设置单位ID和名称
-    ref.read(productFormUiProvider.notifier).setUnitId(widget.product!.baseUnitId);
+    ref
+        .read(productFormUiProvider.notifier)
+        .setUnitId(widget.product!.baseUnitId);
 
     // 获取单位信息并设置控制器文本
-    final unit = await ref.read(unitControllerProvider.notifier).getUnitById(widget.product!.baseUnitId);
+    final unit = await ref
+        .read(unitControllerProvider.notifier)
+        .getUnitById(widget.product!.baseUnitId);
     if (unit != null && mounted) {
       setState(() {
         _c.unitController.text = unit.name.replaceAll(' ', '');
       });
     }
-  
+
     // 设置类别ID和名称
     if (widget.product!.categoryId != null && mounted) {
-      ref.read(productFormUiProvider.notifier).setCategoryId(widget.product!.categoryId);
+      ref
+          .read(productFormUiProvider.notifier)
+          .setCategoryId(widget.product!.categoryId);
 
       // 确保类别列表是最新的
       await ref.read(categoryListProvider.notifier).loadCategories();
-      
+
       // 从类别列表中获取类别名称
       final categories = ref.read(categoryListProvider).categories;
-      final category = categories.where((c) => c.id == widget.product!.categoryId).firstOrNull;
+      final category = categories
+          .where((c) => c.id == widget.product!.categoryId)
+          .firstOrNull;
 
       if (category != null && mounted) {
         setState(() {

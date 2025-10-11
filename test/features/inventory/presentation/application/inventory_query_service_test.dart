@@ -143,5 +143,428 @@ void main() {
       await service.adjustStock(productId: 2, shopId: 1, newQuantity: 3);
       verify(() => inventoryRepo.addInventory(any())).called(1);
     });
+
+    group('getAggregatedInventory', () {
+      test('应该正确聚合相同货品的库存', () async {
+        // Arrange - 创建同一货品在不同店铺的库存
+        final now = DateTime.now();
+        when(() => inventoryRepo.getAllInventory()).thenAnswer((_) async => [
+              StockModel(id: 1, productId: 100, quantity: 50, shopId: 1, updatedAt: now),
+              StockModel(id: 2, productId: 100, quantity: 30, shopId: 2, updatedAt: now),
+              StockModel(id: 3, productId: 200, quantity: 20, shopId: 1, updatedAt: now),
+            ]);
+
+        when(() => productRepo.getAllProducts()).thenAnswer((_) async => [
+              ProductModel(id: 100, name: '可乐', baseUnitId: 1, categoryId: 10),
+              ProductModel(id: 200, name: '雪碧', baseUnitId: 1, categoryId: 10),
+            ]);
+
+        when(() => unitRepo.getAllUnits()).thenAnswer((_) async => [
+              const Unit(id: 1, name: '瓶'),
+            ]);
+
+        when(() => productUnitRepo.getBaseUnitForProduct(any()))
+            .thenAnswer((_) async => null);
+        
+        when(() => purchaseDao.getLatestPurchasePrice(any()))
+            .thenAnswer((_) async => null);
+
+        // Mock shop with id 2
+        container = ProviderContainer(overrides: [
+          allShopsProvider.overrideWith((ref) => Stream.value([
+                const Shop(id: 1, name: '总仓', manager: 'A'),
+                const Shop(id: 2, name: '分店A', manager: 'B'),
+              ])),
+          allCategoriesStreamProvider.overrideWith((ref) => Stream.value([
+                const CategoryModel(id: 10, name: '饮料', parentId: null),
+              ])),
+          batchDaoProvider.overrideWithValue(batchDao),
+          purchaseDaoProvider.overrideWithValue(purchaseDao),
+          inventoryRepositoryProvider.overrideWithValue(inventoryRepo),
+          productRepositoryProvider.overrideWithValue(productRepo),
+          productUnitRepositoryProvider.overrideWithValue(productUnitRepo),
+          unitRepositoryProvider.overrideWithValue(unitRepo),
+        ]);
+
+        final service = container.read(inventoryQueryServiceProvider);
+
+        // Act
+        final result = await service.getAggregatedInventory();
+
+        // Assert
+        expect(result.length, 2); // 2个不同的货品
+        
+        // 验证可乐的聚合数据
+        final colaItem = result.firstWhere((item) => item.productId == 100);
+        expect(colaItem.productName, '可乐');
+        expect(colaItem.totalQuantity, 80); // 50 + 30
+        expect(colaItem.details.length, 2); // 2个店铺
+        
+        // 验证雪碧的聚合数据
+        final spriteItem = result.firstWhere((item) => item.productId == 200);
+        expect(spriteItem.productName, '雪碧');
+        expect(spriteItem.totalQuantity, 20);
+        expect(spriteItem.details.length, 1); // 1个店铺
+      });
+
+      test('应该正确处理无批次信息的库存', () async {
+        // Arrange - 创建没有批次信息的库存
+        final now = DateTime.now();
+        when(() => inventoryRepo.getAllInventory()).thenAnswer((_) async => [
+              StockModel(id: 1, productId: 100, quantity: 50, shopId: 1, batchId: null, updatedAt: now),
+            ]);
+
+        when(() => productRepo.getAllProducts()).thenAnswer((_) async => [
+              ProductModel(id: 100, name: '可乐', baseUnitId: 1, categoryId: 10),
+            ]);
+
+        when(() => unitRepo.getAllUnits()).thenAnswer((_) async => [
+              const Unit(id: 1, name: '瓶'),
+            ]);
+
+        when(() => productUnitRepo.getBaseUnitForProduct(any()))
+            .thenAnswer((_) async => null);
+        
+        when(() => purchaseDao.getLatestPurchasePrice(any()))
+            .thenAnswer((_) async => null);
+
+        final service = container.read(inventoryQueryServiceProvider);
+
+        // Act
+        final result = await service.getAggregatedInventory();
+
+        // Assert
+        expect(result.length, 1);
+        final item = result.first;
+        expect(item.totalQuantity, 50);
+        expect(item.details.first.batchId, isNull);
+        expect(item.details.first.batchNumber, isNull);
+      });
+
+      test('应该正确应用分类筛选', () async {
+        // Arrange - 创建不同分类的库存
+        final now = DateTime.now();
+        when(() => inventoryRepo.getAllInventory()).thenAnswer((_) async => [
+              StockModel(id: 1, productId: 100, quantity: 50, shopId: 1, updatedAt: now),
+              StockModel(id: 2, productId: 200, quantity: 30, shopId: 1, updatedAt: now),
+            ]);
+
+        when(() => productRepo.getAllProducts()).thenAnswer((_) async => [
+              ProductModel(id: 100, name: '可乐', baseUnitId: 1, categoryId: 10),
+              ProductModel(id: 200, name: '薯片', baseUnitId: 1, categoryId: 20),
+            ]);
+
+        when(() => unitRepo.getAllUnits()).thenAnswer((_) async => [
+              const Unit(id: 1, name: '瓶'),
+            ]);
+
+        when(() => productUnitRepo.getBaseUnitForProduct(any()))
+            .thenAnswer((_) async => null);
+        
+        when(() => purchaseDao.getLatestPurchasePrice(any()))
+            .thenAnswer((_) async => null);
+
+        // Mock categories
+        container = ProviderContainer(overrides: [
+          allShopsProvider.overrideWith((ref) => Stream.value([
+                const Shop(id: 1, name: '总仓', manager: 'A'),
+              ])),
+          allCategoriesStreamProvider.overrideWith((ref) => Stream.value([
+                const CategoryModel(id: 10, name: '饮料', parentId: null),
+                const CategoryModel(id: 20, name: '零食', parentId: null),
+              ])),
+          batchDaoProvider.overrideWithValue(batchDao),
+          purchaseDaoProvider.overrideWithValue(purchaseDao),
+          inventoryRepositoryProvider.overrideWithValue(inventoryRepo),
+          productRepositoryProvider.overrideWithValue(productRepo),
+          productUnitRepositoryProvider.overrideWithValue(productUnitRepo),
+          unitRepositoryProvider.overrideWithValue(unitRepo),
+        ]);
+
+        final service = container.read(inventoryQueryServiceProvider);
+
+        // Act - 筛选饮料分类
+        final result = await service.getAggregatedInventory(categoryFilter: '饮料');
+
+        // Assert
+        expect(result.length, 1);
+        expect(result.first.productName, '可乐');
+        expect(result.first.categoryName, '饮料');
+      });
+
+      test('应该返回空列表当没有库存时', () async {
+        // Arrange
+        when(() => inventoryRepo.getAllInventory()).thenAnswer((_) async => []);
+
+        final service = container.read(inventoryQueryServiceProvider);
+
+        // Act
+        final result = await service.getAggregatedInventory();
+
+        // Assert
+        expect(result, isEmpty);
+      });
+
+      test('应该正确应用库存状态筛选', () async {
+        // Arrange - 创建不同库存状态的数据
+        final now = DateTime.now();
+        when(() => inventoryRepo.getAllInventory()).thenAnswer((_) async => [
+              StockModel(id: 1, productId: 100, quantity: 50, shopId: 1, updatedAt: now), // 正常
+              StockModel(id: 2, productId: 200, quantity: 5, shopId: 1, updatedAt: now),  // 低库存
+              StockModel(id: 3, productId: 300, quantity: 0, shopId: 1, updatedAt: now),  // 缺货
+            ]);
+
+        when(() => productRepo.getAllProducts()).thenAnswer((_) async => [
+              ProductModel(id: 100, name: '可乐', baseUnitId: 1, categoryId: 10),
+              ProductModel(id: 200, name: '雪碧', baseUnitId: 1, categoryId: 10),
+              ProductModel(id: 300, name: '芬达', baseUnitId: 1, categoryId: 10),
+            ]);
+
+        when(() => unitRepo.getAllUnits()).thenAnswer((_) async => [
+              const Unit(id: 1, name: '瓶'),
+            ]);
+
+        when(() => productUnitRepo.getBaseUnitForProduct(any()))
+            .thenAnswer((_) async => null);
+        
+        when(() => purchaseDao.getLatestPurchasePrice(any()))
+            .thenAnswer((_) async => null);
+
+        final service = container.read(inventoryQueryServiceProvider);
+
+        // Act - 筛选低库存
+        final lowStockResult = await service.getAggregatedInventory(statusFilter: '低库存');
+
+        // Assert
+        expect(lowStockResult.length, 1);
+        expect(lowStockResult.first.productName, '雪碧');
+        expect(lowStockResult.first.totalQuantity, 5);
+
+        // Act - 筛选缺货
+        final outOfStockResult = await service.getAggregatedInventory(statusFilter: '缺货');
+
+        // Assert
+        expect(outOfStockResult.length, 1);
+        expect(outOfStockResult.first.productName, '芬达');
+        expect(outOfStockResult.first.totalQuantity, 0);
+      });
+
+      test('应该正确构建详细记录列表的所有字段', () async {
+        // Arrange - 创建包含完整信息的库存
+        final now = DateTime.now();
+        when(() => inventoryRepo.getAllInventory()).thenAnswer((_) async => [
+              StockModel(
+                id: 1, 
+                productId: 100, 
+                quantity: 50, 
+                shopId: 1, 
+                batchId: 1001,
+                updatedAt: now,
+              ),
+            ]);
+
+        when(() => productRepo.getAllProducts()).thenAnswer((_) async => [
+              ProductModel(
+                id: 100, 
+                name: '可乐', 
+                baseUnitId: 1, 
+                categoryId: 10,
+                shelfLife: 365,
+                shelfLifeUnit: ShelfLifeUnit.days,
+              ),
+            ]);
+
+        when(() => unitRepo.getAllUnits()).thenAnswer((_) async => [
+              const Unit(id: 1, name: '瓶'),
+            ]);
+
+        when(() => productUnitRepo.getBaseUnitForProduct(any()))
+            .thenAnswer((_) async => null);
+        
+        when(() => purchaseDao.getLatestPurchasePrice(any()))
+            .thenAnswer((_) async => null);
+
+        // Mock batch data - ProductBatchData is generated by Drift, so we can't construct it directly
+        // Instead, we'll mock it to return null to test the no-batch scenario
+        when(() => batchDao.getBatchByNumber(1001)).thenAnswer((_) async => null);
+
+        final service = container.read(inventoryQueryServiceProvider);
+
+        // Act
+        final result = await service.getAggregatedInventory();
+
+        // Assert
+        expect(result.length, 1);
+        final item = result.first;
+        expect(item.details.length, 1);
+        
+        final detail = item.details.first;
+        expect(detail.stockId, 1);
+        expect(detail.shopId, 1);
+        expect(detail.shopName, '总仓');
+        expect(detail.quantity, 50);
+        // Since batch lookup returns null, these fields should be null
+        expect(detail.batchId, isNull);
+        expect(detail.batchNumber, isNull);
+        expect(detail.productionDate, isNull);
+        expect(detail.shelfLifeDays, isNull);
+        expect(detail.shelfLifeUnit, isNull);
+        expect(detail.remainingDays, isNull);
+      });
+
+      test('应该正确处理同一货品在同一店铺的多个批次', () async {
+        // Arrange - 创建同一货品同一店铺的多个批次
+        final now = DateTime.now();
+        when(() => inventoryRepo.getAllInventory()).thenAnswer((_) async => [
+              StockModel(
+                id: 1, 
+                productId: 100, 
+                quantity: 30, 
+                shopId: 1, 
+                batchId: 1001,
+                updatedAt: now,
+              ),
+              StockModel(
+                id: 2, 
+                productId: 100, 
+                quantity: 20, 
+                shopId: 1, 
+                batchId: 1002,
+                updatedAt: now,
+              ),
+            ]);
+
+        when(() => productRepo.getAllProducts()).thenAnswer((_) async => [
+              ProductModel(
+                id: 100, 
+                name: '可乐', 
+                baseUnitId: 1, 
+                categoryId: 10,
+                shelfLife: 365,
+                shelfLifeUnit: ShelfLifeUnit.days,
+              ),
+            ]);
+
+        when(() => unitRepo.getAllUnits()).thenAnswer((_) async => [
+              const Unit(id: 1, name: '瓶'),
+            ]);
+
+        when(() => productUnitRepo.getBaseUnitForProduct(any()))
+            .thenAnswer((_) async => null);
+        
+        when(() => purchaseDao.getLatestPurchasePrice(any()))
+            .thenAnswer((_) async => null);
+
+        // Mock batch data for both batches - return null to simplify test
+        when(() => batchDao.getBatchByNumber(1001)).thenAnswer((_) async => null);
+        when(() => batchDao.getBatchByNumber(1002)).thenAnswer((_) async => null);
+
+        final service = container.read(inventoryQueryServiceProvider);
+
+        // Act
+        final result = await service.getAggregatedInventory();
+
+        // Assert
+        expect(result.length, 1); // 只有一个货品
+        final item = result.first;
+        expect(item.productName, '可乐');
+        expect(item.totalQuantity, 50); // 30 + 20
+        expect(item.details.length, 2); // 2个批次
+        
+        // 验证两个批次的数量
+        final quantities = item.details.map((d) => d.quantity).toList();
+        expect(quantities, containsAll([30, 20]));
+      });
+
+      test('应该正确计算总库存数量（多店铺多批次）', () async {
+        // Arrange - 创建复杂的多店铺多批次场景
+        final now = DateTime.now();
+        when(() => inventoryRepo.getAllInventory()).thenAnswer((_) async => [
+              StockModel(id: 1, productId: 100, quantity: 50, shopId: 1, batchId: 1001, updatedAt: now),
+              StockModel(id: 2, productId: 100, quantity: 30, shopId: 1, batchId: 1002, updatedAt: now),
+              StockModel(id: 3, productId: 100, quantity: 20, shopId: 2, batchId: 1001, updatedAt: now),
+              StockModel(id: 4, productId: 100, quantity: 15, shopId: 2, batchId: 1003, updatedAt: now),
+            ]);
+
+        when(() => productRepo.getAllProducts()).thenAnswer((_) async => [
+              ProductModel(id: 100, name: '可乐', baseUnitId: 1, categoryId: 10),
+            ]);
+
+        when(() => unitRepo.getAllUnits()).thenAnswer((_) async => [
+              const Unit(id: 1, name: '瓶'),
+            ]);
+
+        when(() => productUnitRepo.getBaseUnitForProduct(any()))
+            .thenAnswer((_) async => null);
+        
+        when(() => purchaseDao.getLatestPurchasePrice(any()))
+            .thenAnswer((_) async => null);
+
+        // Mock multiple shops
+        container = ProviderContainer(overrides: [
+          allShopsProvider.overrideWith((ref) => Stream.value([
+                const Shop(id: 1, name: '总仓', manager: 'A'),
+                const Shop(id: 2, name: '分店A', manager: 'B'),
+              ])),
+          allCategoriesStreamProvider.overrideWith((ref) => Stream.value([
+                const CategoryModel(id: 10, name: '饮料', parentId: null),
+              ])),
+          batchDaoProvider.overrideWithValue(batchDao),
+          purchaseDaoProvider.overrideWithValue(purchaseDao),
+          inventoryRepositoryProvider.overrideWithValue(inventoryRepo),
+          productRepositoryProvider.overrideWithValue(productRepo),
+          productUnitRepositoryProvider.overrideWithValue(productUnitRepo),
+          unitRepositoryProvider.overrideWithValue(unitRepo),
+        ]);
+
+        final service = container.read(inventoryQueryServiceProvider);
+
+        // Act
+        final result = await service.getAggregatedInventory();
+
+        // Assert
+        expect(result.length, 1);
+        final item = result.first;
+        expect(item.totalQuantity, 115); // 50 + 30 + 20 + 15
+        expect(item.details.length, 4); // 4条详细记录
+        
+        // 验证每个店铺的记录都存在
+        final shopIds = item.details.map((d) => d.shopId).toSet();
+        expect(shopIds, containsAll([1, 2]));
+      });
+
+      test('应该正确处理缺少店铺信息的库存', () async {
+        // Arrange - 创建店铺ID不存在的库存
+        final now = DateTime.now();
+        when(() => inventoryRepo.getAllInventory()).thenAnswer((_) async => [
+              StockModel(id: 1, productId: 100, quantity: 50, shopId: 999, updatedAt: now), // 不存在的店铺
+            ]);
+
+        when(() => productRepo.getAllProducts()).thenAnswer((_) async => [
+              ProductModel(id: 100, name: '可乐', baseUnitId: 1, categoryId: 10),
+            ]);
+
+        when(() => unitRepo.getAllUnits()).thenAnswer((_) async => [
+              const Unit(id: 1, name: '瓶'),
+            ]);
+
+        when(() => productUnitRepo.getBaseUnitForProduct(any()))
+            .thenAnswer((_) async => null);
+        
+        when(() => purchaseDao.getLatestPurchasePrice(any()))
+            .thenAnswer((_) async => null);
+
+        final service = container.read(inventoryQueryServiceProvider);
+
+        // Act
+        final result = await service.getAggregatedInventory();
+
+        // Assert
+        expect(result.length, 1);
+        final item = result.first;
+        expect(item.totalQuantity, 50);
+        expect(item.details.first.shopName, '未知店铺'); // 应该显示默认值
+      });
+    });
   });
 }

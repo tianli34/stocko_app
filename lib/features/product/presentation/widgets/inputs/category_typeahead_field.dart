@@ -57,67 +57,89 @@ class _CategoryTypeAheadFieldState extends State<CategoryTypeAheadField> {
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Expanded(
-          child: TypeAheadField<CategoryModel>(
-            controller: widget.controller,
-            suggestionsCallback: (pattern) {
-              if (pattern.isEmpty) {
-                return Future.value([
-                  const CategoryModel(name: '未分类'),
-                  ...widget.categories,
-                ]);
-              }
-              final filtered = widget.categories
-                  .where(
-                    (c) => c.name
-                        .replaceAll(' ', '')
-                        .toLowerCase()
-                        .contains(pattern.toLowerCase()),
-                  )
-                  .toList();
-              if (filtered.isEmpty || pattern == '未分类') {
-                filtered.insert(0, const CategoryModel(name: '未分类'));
-              }
-              return Future.value(filtered);
-            },
-            itemBuilder: (context, CategoryModel suggestion) => ListTile(
-              title: Text(
-                suggestion.name,
-                style: Theme.of(context).textTheme.bodyLarge,
-              ),
-              dense: true,
-            ),
-            onSelected: widget.onSelected,
-            builder: (context, c, fNode) {
-              return TextField(
-                controller: c,
-                focusNode: widget.focusNode, // 使用外部传入的 focusNode
-                onSubmitted: (_) => widget.onSubmitted?.call(),
-                inputFormatters: [
-                  FilteringTextInputFormatter.deny(RegExp(r'\s')),
-                ],
-                decoration: InputDecoration(
-                  hintText: _isFocused ? '' : widget.hintText,
-                  isDense: true,
-                  contentPadding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+    return Container(
+      decoration: BoxDecoration(
+        border: Border.all(color: Colors.grey.shade300),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          // 标签显示在左边
+          SizedBox(
+            width: 100,
+            child: Padding(
+              padding: const EdgeInsets.only(right: 12),
+              child: Text(
+                '类别',
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w500,
                 ),
-              );
-            },
-            emptyBuilder: (context) => const Padding(
-              padding: EdgeInsets.all(0.0),
-              child: Text('未找到匹配的类别'),
+              ),
             ),
           ),
-        ),
-        const SizedBox(width: 32),
-        IconButton(
-          onPressed: widget.onTapChooseCategory,
-          icon: const Icon(Icons.arrow_forward_ios),
-          tooltip: '选择类别',
-        ),
-      ],
+          Expanded(
+            child: TypeAheadField<CategoryModel>(
+              controller: widget.controller,
+              suggestionsCallback: (pattern) {
+                if (pattern.isEmpty) {
+                  return Future.value([
+                    const CategoryModel(name: '未分类'),
+                    ...widget.categories,
+                  ]);
+                }
+                final filtered = widget.categories
+                    .where(
+                      (c) => c.name
+                          .replaceAll(' ', '')
+                          .toLowerCase()
+                          .contains(pattern.toLowerCase()),
+                    )
+                    .toList();
+                if (filtered.isEmpty || pattern == '未分类') {
+                  filtered.insert(0, const CategoryModel(name: '未分类'));
+                }
+                return Future.value(filtered);
+              },
+              itemBuilder: (context, CategoryModel suggestion) => ListTile(
+                title: Text(
+                  suggestion.name,
+                  style: Theme.of(context).textTheme.bodyLarge,
+                ),
+                dense: true,
+              ),
+              onSelected: widget.onSelected,
+              builder: (context, c, fNode) {
+                return TextField(
+                  controller: c,
+                  focusNode: widget.focusNode, // 使用外部传入的 focusNode
+                  onSubmitted: (_) => widget.onSubmitted?.call(),
+                  inputFormatters: [
+                    FilteringTextInputFormatter.deny(RegExp(r'\s')),
+                  ],
+                  decoration: InputDecoration(
+                    hintText: _isFocused ? '' : '',
+                    isDense: true,
+                    contentPadding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+                  ),
+                );
+              },
+              emptyBuilder: (context) => const Padding(
+                padding: EdgeInsets.all(0.0),
+                child: Text('未找到匹配的类别'),
+              ),
+            ),
+          ),
+          const SizedBox(width: 8),
+          IconButton(
+            onPressed: widget.onTapChooseCategory,
+            icon: const Icon(Icons.arrow_forward_ios),
+            tooltip: '选择类别',
+          ),
+        ],
+      ),
     );
   }
 }

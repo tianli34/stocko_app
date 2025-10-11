@@ -61,7 +61,9 @@ class _CreateInboundScreenState extends ConsumerState<CreateInboundScreen> {
       final p = widget.payload;
       if (p != null) {
         try {
-          ref.read(inboundListProvider.notifier).addOrUpdateItem(
+          ref
+              .read(inboundListProvider.notifier)
+              .addOrUpdateItem(
                 product: p.product,
                 unitId: p.unitId,
                 unitName: p.unitName,
@@ -161,16 +163,20 @@ class _CreateInboundScreenState extends ConsumerState<CreateInboundScreen> {
           int unitId,
           String unitName,
           int conversionRate,
-          int? wholesalePriceInCents
+          int? sellingPriceInCents,
+          int? wholesalePriceInCents,
         })
-      > productsWithUnit = await ref.read(allProductsWithUnitProvider.future);
+      >
+      productsWithUnit = await ref.read(allProductsWithUnitProvider.future);
 
       final selectedProducts = productsWithUnit
           .where((p) => result.contains(p.product.id))
           .toList();
 
       for (final p in selectedProducts) {
-        ref.read(inboundListProvider.notifier).addOrUpdateItem(
+        ref
+            .read(inboundListProvider.notifier)
+            .addOrUpdateItem(
               product: p.product,
               unitId: p.unitId,
               unitName: p.unitName,
@@ -181,8 +187,11 @@ class _CreateInboundScreenState extends ConsumerState<CreateInboundScreen> {
     } catch (e) {
       // 捕获并处理可能的异常
       if (!mounted) return;
-      showAppSnackBar(context,
-          message: '添加货品失败: ${e.toString()}', isError: true);
+      showAppSnackBar(
+        context,
+        message: '添加货品失败: ${e.toString()}',
+        isError: true,
+      );
     }
   }
 
@@ -225,7 +234,6 @@ class _CreateInboundScreenState extends ConsumerState<CreateInboundScreen> {
     );
   }
 
-
   /// 对入库项目进行预处理，合并相同货品的不同单位
   Future<List<InboundItemState>> _getMergedInboundItems() async {
     final originalItems = ref.read(inboundListProvider);
@@ -234,7 +242,9 @@ class _CreateInboundScreenState extends ConsumerState<CreateInboundScreen> {
 
     for (final item in originalItems) {
       // 异步获取完整的货品信息
-      final product = await ref.read(productByIdProvider(item.productId).future);
+      final product = await ref.read(
+        productByIdProvider(item.productId).future,
+      );
       if (product == null) continue; // 如果找不到货品，则跳过
 
       // 计算当前项目以基本单位（如“包”）计的总数量
@@ -248,11 +258,12 @@ class _CreateInboundScreenState extends ConsumerState<CreateInboundScreen> {
         // 累加基本单位数量
         final newTotalBaseQuantity =
             (existingItem.quantity * existingItem.conversionRate) +
-                baseUnitQuantity;
+            baseUnitQuantity;
 
         // 计算加权平均单价（以分为单位）
         // (旧总价 + 新总价) / 新总数量
-        final totalCost = (existingItem.quantity *
+        final totalCost =
+            (existingItem.quantity *
                 existingItem.conversionRate *
                 existingItem.unitPriceInCents) +
             (baseUnitQuantity * item.unitPriceInCents);
@@ -262,11 +273,11 @@ class _CreateInboundScreenState extends ConsumerState<CreateInboundScreen> {
         // 更新 Map 中的项目
         // 查找基本单位的名称
         final baseUnitName = originalItems
-                .firstWhere(
-                  (i) => i.productId == item.productId && i.conversionRate == 1,
-                  orElse: () => item, // 如果找不到，则使用当前单位名作为后备
-                )
-                .unitName;
+            .firstWhere(
+              (i) => i.productId == item.productId && i.conversionRate == 1,
+              orElse: () => item, // 如果找不到，则使用当前单位名作为后备
+            )
+            .unitName;
 
         // 注意：合并后的项目将统一使用基本单位，因此 conversionRate 设为 1
         mergedItemsMap[item.productId] = existingItem.copyWith(
@@ -287,8 +298,8 @@ class _CreateInboundScreenState extends ConsumerState<CreateInboundScreen> {
               .unitName;
           mergedItemsMap[item.productId] = item.copyWith(
             quantity: baseUnitQuantity,
-            unitPriceInCents:
-                (item.unitPriceInCents / item.conversionRate).round(),
+            unitPriceInCents: (item.unitPriceInCents / item.conversionRate)
+                .round(),
             conversionRate: 1,
             unitName: baseUnitName,
           );
@@ -384,8 +395,11 @@ class _CreateInboundScreenState extends ConsumerState<CreateInboundScreen> {
       // 打印详细堆栈以定位真正的抛错位置
       debugPrint('❌ 一键入库失败: $e');
       debugPrintStack(stackTrace: st);
-      showAppSnackBar(context,
-          message: '❌ 一键入库失败: ${e.toString()}', isError: true);
+      showAppSnackBar(
+        context,
+        message: '❌ 一键入库失败: ${e.toString()}',
+        isError: true,
+      );
     } finally {
       if (mounted) {
         setState(() => _isProcessing = false);
@@ -408,7 +422,9 @@ class _CreateInboundScreenState extends ConsumerState<CreateInboundScreen> {
       Navigator.of(context).pop();
 
       if (result != null) {
-        ref.read(inboundListProvider.notifier).addOrUpdateItem(
+        ref
+            .read(inboundListProvider.notifier)
+            .addOrUpdateItem(
               product: result.product,
               unitId: result.unitId,
               unitName: result.unitName,
@@ -451,7 +467,9 @@ class _CreateInboundScreenState extends ConsumerState<CreateInboundScreen> {
       if (!mounted) return;
 
       if (result != null) {
-        ref.read(inboundListProvider.notifier).addOrUpdateItem(
+        ref
+            .read(inboundListProvider.notifier)
+            .addOrUpdateItem(
               product: result.product,
               unitId: result.unitId,
               unitName: result.unitName,
@@ -467,8 +485,11 @@ class _CreateInboundScreenState extends ConsumerState<CreateInboundScreen> {
       } else {
         _lastScannedBarcode = null; // 如果未找到，则允许立即重扫
         // 未找到货品时给予一个失败提示
-        showAppSnackBar(context,
-            message: '❌ 未找到条码对应的货品: $barcode', isError: true);
+        showAppSnackBar(
+          context,
+          message: '❌ 未找到条码对应的货品: $barcode',
+          isError: true,
+        );
       }
     } catch (e) {
       if (!mounted) return;
@@ -519,25 +540,33 @@ class _CreateInboundScreenState extends ConsumerState<CreateInboundScreen> {
     }
     for (final item in inboundItems) {
       if (item.quantity <= 0) {
-        showAppSnackBar(context,
-            message: '货品"${item.productName}"的数量必须大于0', isError: true);
+        showAppSnackBar(
+          context,
+          message: '货品"${item.productName}"的数量必须大于0',
+          isError: true,
+        );
         return false;
       }
       if (_currentMode == InboundMode.purchase && item.unitPriceInCents < 0) {
-        showAppSnackBar(context,
-            message: '货品"${item.productName}"的单价不能为负数', isError: true);
+        showAppSnackBar(
+          context,
+          message: '货品"${item.productName}"的单价不能为负数',
+          isError: true,
+        );
         return false;
       }
       // 采购模式下，单价不能为0
       if (_currentMode == InboundMode.purchase && item.unitPriceInCents == 0) {
-        showAppSnackBar(context,
-            message: '货品"${item.productName}"的单价不能为0', isError: true);
+        showAppSnackBar(
+          context,
+          message: '货品"${item.productName}"的单价不能为0',
+          isError: true,
+        );
         return false;
       }
     }
     return true;
   }
-
 
   @override
   Widget build(BuildContext context) {
@@ -567,77 +596,79 @@ class _CreateInboundScreenState extends ConsumerState<CreateInboundScreen> {
         behavior: HitTestBehavior.opaque,
         child: Scaffold(
           appBar: AppBar(
-          leading: !canPop
-              ? IconButton(
-                  icon: const Icon(Icons.arrow_back),
-                  onPressed: () => context.go('/'),
-                  tooltip: '返回',
-                )
-              : null,
-          title: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(_currentMode == InboundMode.purchase ? '采购入库' : '非采购入库'),
-              IconButton(
-                icon: const Icon(Icons.swap_horiz_outlined),
-                tooltip: '切换模式',
-                onPressed: () {
-                  setState(() {
-                    _currentMode = _currentMode == InboundMode.purchase
-                        ? InboundMode.nonPurchase
-                        : InboundMode.purchase;
-                  });
-                },
-              ),
-            ],
+            leading: !canPop
+                ? IconButton(
+                    icon: const Icon(Icons.arrow_back),
+                    onPressed: () => context.go('/'),
+                    tooltip: '返回',
+                  )
+                : null,
+            title: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(_currentMode == InboundMode.purchase ? '采购入库' : '非采购入库'),
+                IconButton(
+                  icon: const Icon(Icons.swap_horiz_outlined),
+                  tooltip: '切换模式',
+                  onPressed: () {
+                    setState(() {
+                      _currentMode = _currentMode == InboundMode.purchase
+                          ? InboundMode.nonPurchase
+                          : InboundMode.purchase;
+                    });
+                  },
+                ),
+              ],
+            ),
+            actions: [const SizedBox(width: 8)],
           ),
-          actions: [const SizedBox(width: 8)],
-        ),
-        body: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 5),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              _buildHeaderSection(theme, textTheme),
-              const SizedBox(height: 0),
-              if (inboundItemIds.isEmpty)
-                _buildEmptyState(theme, textTheme)
-              else
-                ...inboundItemIds.asMap().entries.map((entry) {
-                  final index = entry.key;
-                  final itemId = entry.value;
-                  return Padding(
-                    padding: const EdgeInsets.only(bottom: 0),
-                    child: InboundItemCard(
-                      key: ValueKey(itemId),
-                      itemId: itemId,
-                      showPriceInfo: _currentMode == InboundMode.purchase, // 新增
-                      quantityFocusNode: _quantityFocusNodes.length > index
-                          ? _quantityFocusNodes[index]
-                          : null,
-                      amountFocusNode: _amountFocusNodes.length > index
-                          ? _amountFocusNodes[index]
-                          : null,
-                      onAmountSubmitted: () => _handleNextStep(index),
-                    ),
-                  );
-                }),
-              const SizedBox(height: 0),
-              _buildActionButtons(theme, textTheme),
-              const SizedBox(height: 4),
-              _buildTotalsBar(
-                theme,
-                textTheme,
-                totalVarieties,
-                totalQuantity,
-                totalAmount,
-              ),
-              const SizedBox(height: 4),
-              _buildBottomAppBar(theme, textTheme),
-            ],
+          body: SingleChildScrollView(
+            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 5),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                _buildHeaderSection(theme, textTheme),
+                const SizedBox(height: 0),
+                if (inboundItemIds.isEmpty)
+                  _buildEmptyState(theme, textTheme)
+                else
+                  ...inboundItemIds.asMap().entries.map((entry) {
+                    final index = entry.key;
+                    final itemId = entry.value;
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 0),
+                      child: InboundItemCard(
+                        key: ValueKey(itemId),
+                        itemId: itemId,
+                        showPriceInfo:
+                            _currentMode == InboundMode.purchase, // 新增
+                        quantityFocusNode: _quantityFocusNodes.length > index
+                            ? _quantityFocusNodes[index]
+                            : null,
+                        amountFocusNode: _amountFocusNodes.length > index
+                            ? _amountFocusNodes[index]
+                            : null,
+                        onAmountSubmitted: () => _handleNextStep(index),
+                      ),
+                    );
+                  }),
+                const SizedBox(height: 0),
+                _buildActionButtons(theme, textTheme),
+                const SizedBox(height: 4),
+                _buildTotalsBar(
+                  theme,
+                  textTheme,
+                  totalVarieties,
+                  totalQuantity,
+                  totalAmount,
+                ),
+                const SizedBox(height: 4),
+                _buildBottomAppBar(theme, textTheme),
+              ],
+            ),
           ),
         ),
-      )),
+      ),
     );
   }
 
@@ -818,8 +849,9 @@ class _CreateInboundScreenState extends ConsumerState<CreateInboundScreen> {
               child: allShopsAsync.when(
                 data: (shops) {
                   if (_selectedShop == null) {
-                    final defaultShop = shops
-                        .firstWhereOrNull((shop) => shop.name == '长山的店');
+                    final defaultShop = shops.firstWhereOrNull(
+                      (shop) => shop.name == '长山的店',
+                    );
                     if (defaultShop != null) {
                       WidgetsBinding.instance.addPostFrameCallback((_) {
                         if (mounted) {
@@ -839,8 +871,12 @@ class _CreateInboundScreenState extends ConsumerState<CreateInboundScreen> {
                       contentPadding: EdgeInsets.symmetric(vertical: 0),
                     ),
                     items: shops
-                        .map((shop) =>
-                            DropdownMenuItem(value: shop, child: Text(shop.name)))
+                        .map(
+                          (shop) => DropdownMenuItem(
+                            value: shop,
+                            child: Text(shop.name),
+                          ),
+                        )
                         .toList(),
                     onChanged: (value) {
                       setState(() {
@@ -870,13 +906,15 @@ class _CreateInboundScreenState extends ConsumerState<CreateInboundScreen> {
                             focusNode: _supplierFocusNode,
                             suggestionsCallback: (pattern) async {
                               return await ref.read(
-                                  searchSuppliersProvider(pattern).future);
+                                searchSuppliersProvider(pattern).future,
+                              );
                             },
                             itemBuilder: (context, suggestion) {
                               return ListTile(
                                 title: Text(suggestion.name),
                                 contentPadding: const EdgeInsets.symmetric(
-                                    horizontal: 16.0),
+                                  horizontal: 16.0,
+                                ),
                               );
                             },
                             onSelected: (suggestion) {
@@ -884,7 +922,8 @@ class _CreateInboundScreenState extends ConsumerState<CreateInboundScreen> {
                                 _selectedSupplier = suggestion;
                                 _supplierController.text = suggestion.name;
                               });
-                              _shopFocusNode.requestFocus();
+                              // 移除焦点转移，让用户自然操作
+                              _supplierFocusNode.unfocus();
                             },
                             builder: (context, controller, focusNode) {
                               return TextField(
@@ -893,8 +932,9 @@ class _CreateInboundScreenState extends ConsumerState<CreateInboundScreen> {
                                 decoration: const InputDecoration(
                                   hintText: '搜索或选择',
                                   isDense: true,
-                                  contentPadding:
-                                      EdgeInsets.symmetric(vertical: 0),
+                                  contentPadding: EdgeInsets.symmetric(
+                                    vertical: 0,
+                                  ),
                                 ),
                               );
                             },

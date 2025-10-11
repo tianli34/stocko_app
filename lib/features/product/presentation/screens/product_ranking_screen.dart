@@ -178,6 +178,12 @@ String _getTimeFilterText(RankingRange range) {
     range.endOpen.day,
   ).subtract(const Duration(days: 1));
 
+  // 检查是否是无限制（全部时间）
+  if (start.year <= 2000 &&
+      end.isAfter(today.subtract(const Duration(days: 2)))) {
+    return '全部';
+  }
+
   // 检查是否是今天
   if (start == today && end == today) {
     return '今天';

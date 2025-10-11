@@ -20,8 +20,6 @@ class _PricingSectionState extends State<PricingSection> {
   late FocusNode _suggestedRetailPriceFocusNode;
   bool _isPromotionalPriceFocused = false;
   bool _isSuggestedRetailPriceFocused = false;
-  final String _promotionalPriceHintText = '促销价';
-  final String _suggestedRetailPriceHintText = '建议零售价';
 
   @override
   void initState() {
@@ -56,29 +54,81 @@ class _PricingSectionState extends State<PricingSection> {
 
   @override
   Widget build(BuildContext context) {
-    return Row(
+    return Column(
       children: [
-        Expanded(
-          child: TextFormField(
-            controller: widget.promotionalPriceController,
-            focusNode: _promotionalPriceFocusNode,
-            keyboardType: TextInputType.number,
-            decoration: InputDecoration(
-              hintText: _isPromotionalPriceFocused ? '' : _promotionalPriceHintText,
-              prefixText: '¥ ',
-            ),
+        Container(
+          decoration: BoxDecoration(
+            border: Border.all(color: Colors.grey.shade300),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              // 标签显示在左边
+              SizedBox(
+                width: 100,
+                child: Padding(
+                  padding: const EdgeInsets.only(right: 12),
+                  child: Text(
+                    '促销价',
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+              ),
+              Expanded(
+                child: TextFormField(
+                  controller: widget.promotionalPriceController,
+                  focusNode: _promotionalPriceFocusNode,
+                  keyboardType: TextInputType.number,
+                  decoration: InputDecoration(
+                    hintText: _isPromotionalPriceFocused ? '' : '',
+                    prefixText: '¥ ',
+                  ),
+                ),
+              ),
+            ],
           ),
         ),
-        const SizedBox(width: 32),
-        Expanded(
-          child: TextFormField(
-            controller: widget.suggestedRetailPriceController,
-            focusNode: _suggestedRetailPriceFocusNode,
-            keyboardType: TextInputType.number,
-            decoration: InputDecoration(
-              hintText: _isSuggestedRetailPriceFocused ? '' : _suggestedRetailPriceHintText,
-              prefixText: '¥ ',
-            ),
+        const SizedBox(height: 16),
+        Container(
+          decoration: BoxDecoration(
+            border: Border.all(color: Colors.grey.shade300),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              // 标签显示在左边
+              SizedBox(
+                width: 100,
+                child: Padding(
+                  padding: const EdgeInsets.only(right: 12),
+                  child: Text(
+                    '建议零售价',
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+              ),
+              Expanded(
+                child: TextFormField(
+                  controller: widget.suggestedRetailPriceController,
+                  focusNode: _suggestedRetailPriceFocusNode,
+                  keyboardType: TextInputType.number,
+                  decoration: InputDecoration(
+                    hintText: _isSuggestedRetailPriceFocused ? '' : '',
+                    prefixText: '¥ ',
+                  ),
+                ),
+              ),
+            ],
           ),
         ),
       ],

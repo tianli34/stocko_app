@@ -59,25 +59,53 @@ class _AppTextFieldState extends State<AppTextField> {
 
   @override
   Widget build(BuildContext context) {
-    return TextFormField(
-      controller: widget.controller,
-      focusNode: _focusNode,
-      keyboardType: widget.keyboardType,
-      maxLines: widget.maxLines,
-      onFieldSubmitted: widget.onFieldSubmitted,
-      decoration: InputDecoration(
-        hintText: _isFocused ? '' : (widget.isRequired ? '${widget.label} *' : widget.label),
-        prefixIcon: widget.icon != null ? Icon(widget.icon) : null,
-        prefixText: widget.prefixText,
+    return Container(
+      decoration: BoxDecoration(
+        border: Border.all(color: Colors.grey.shade300),
+        borderRadius: BorderRadius.circular(8),
       ),
-      validator: widget.isRequired
-          ? (value) {
-              if (value == null || value.trim().isEmpty) {
-                return '${widget.label}不能为空';
-              }
-              return null;
-            }
-          : null,
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          // 标签显示在左边
+          SizedBox(
+            width: 100,
+            child: Padding(
+              padding: const EdgeInsets.only(right: 12),
+              child: Text(
+                widget.isRequired ? '${widget.label} *' : widget.label,
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ),
+          ),
+          // 输入框
+          Expanded(
+            child: TextFormField(
+              controller: widget.controller,
+              focusNode: _focusNode,
+              keyboardType: widget.keyboardType,
+              maxLines: widget.maxLines,
+              onFieldSubmitted: widget.onFieldSubmitted,
+              decoration: InputDecoration(
+                prefixIcon: widget.icon != null ? Icon(widget.icon) : null,
+                prefixText: widget.prefixText,
+              ),
+              validator: widget.isRequired
+                  ? (value) {
+                      if (value == null || value.trim().isEmpty) {
+                        return '${widget.label}不能为空';
+                      }
+                      return null;
+                    }
+                  : null,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

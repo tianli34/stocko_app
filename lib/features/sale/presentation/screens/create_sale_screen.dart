@@ -63,16 +63,22 @@ class _CreateSaleScreenState extends ConsumerState<CreateSaleScreen> {
         _paymentController.clear();
       }
     });
-    _paymentController.text = '100';
+    _paymentController.text = '0';
     _paymentController.addListener(() => setState(() {}));
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref.read(saleListProvider.notifier).clear();
       // 接收来自首页或其他页面的扫码货品，自动添加到销售清单
       final p = widget.payload;
       if (p != null) {
-        final priceCents = p.product.effectivePrice?.cents ?? 0;
+        // 如果是基本单位（conversionRate = 1），使用 Product 表的 effectivePrice
+        // 否则使用 UnitProduct 表的 sellingPriceInCents
+        final priceCents = p.conversionRate == 1
+            ? (p.product.effectivePrice?.cents ?? 0)
+            : (p.sellingPriceInCents ?? 0);
         try {
-          ref.read(saleListProvider.notifier).addOrUpdateItem(
+          ref
+              .read(saleListProvider.notifier)
+              .addOrUpdateItem(
                 product: p.product,
                 unitId: p.unitId,
                 unitName: p.unitName,
@@ -148,21 +154,18 @@ class _CreateSaleScreenState extends ConsumerState<CreateSaleScreen> {
           int unitId,
           String unitName,
           int conversionRate,
-          int? wholesalePriceInCents
+          int? sellingPriceInCents,
+          int? wholesalePriceInCents,
         })
       >
       productsWithUnit;
-      
+
       try {
         productsWithUnit = await ref.read(allProductsWithUnitProvider.future);
       } catch (e) {
         print('获取产品单位数据失败: $e');
         if (!mounted) return;
-        showAppSnackBar(
-          context,
-          message: '获取产品数据失败，请稍后重试',
-          isError: true,
-        );
+        showAppSnackBar(context, message: '获取产品数据失败，请稍后重试', isError: true);
         return;
       }
 
@@ -172,14 +175,18 @@ class _CreateSaleScreenState extends ConsumerState<CreateSaleScreen> {
 
       for (final p in selectedProducts) {
         try {
-          final price = p.product.effectivePrice;
+          // 如果是基本单位（conversionRate = 1），使用 Product 表的 effectivePrice
+          // 否则使用 UnitProduct 表的 sellingPriceInCents
+          final sellingPrice = p.conversionRate == 1
+              ? (p.product.effectivePrice?.cents ?? 0)
+              : (p.sellingPriceInCents ?? 0);
           ref
               .read(saleListProvider.notifier)
               .addOrUpdateItem(
                 product: p.product,
                 unitId: p.unitId,
                 unitName: p.unitName,
-                sellingPriceInCents: price != null ? price.cents : 0,
+                sellingPriceInCents: sellingPrice,
                 conversionRate: p.conversionRate,
               );
         } catch (e) {
@@ -321,8 +328,8 @@ class _CreateSaleScreenState extends ConsumerState<CreateSaleScreen> {
 
       // 核心修复：使入库记录和库存查询的Provider失效，以便在导航后刷新数据
       ref.invalidate(inboundRecordsProvider);
-  // 同步刷新：使出库记录 Provider 失效，库存记录页的“出库记录”可自动更新
-  ref.invalidate(outboundReceiptsProvider);
+      // 同步刷新：使出库记录 Provider 失效，库存记录页的“出库记录”可自动更新
+      ref.invalidate(outboundReceiptsProvider);
       ref.invalidate(inventoryQueryProvider);
 
       Future.delayed(const Duration(seconds: 1), () {
@@ -429,8 +436,8 @@ class _CreateSaleScreenState extends ConsumerState<CreateSaleScreen> {
 
       // 核心修复：使入库记录和库存查询的Provider失效，以便在导航后刷新数据
       ref.invalidate(inboundRecordsProvider);
-  // 同步刷新：使出库记录 Provider 失效，库存记录页的“出库记录”可自动更新
-  ref.invalidate(outboundReceiptsProvider);
+      // 同步刷新：使出库记录 Provider 失效，库存记录页的“出库记录”可自动更新
+      ref.invalidate(outboundReceiptsProvider);
       ref.invalidate(inventoryQueryProvider);
 
       Future.delayed(const Duration(seconds: 1), () {
@@ -468,12 +475,18 @@ class _CreateSaleScreenState extends ConsumerState<CreateSaleScreen> {
       Navigator.of(context).pop();
 
       if (result != null) {
-        final price = result.product.effectivePrice;
-        ref.read(saleListProvider.notifier).addOrUpdateItem(
+        // 如果是基本单位（conversionRate = 1），使用 Product 表的 effectivePrice
+        // 否则使用 UnitProduct 表的 sellingPriceInCents
+        final sellingPrice = result.conversionRate == 1
+            ? (result.product.effectivePrice?.cents ?? 0)
+            : (result.sellingPriceInCents ?? 0);
+        ref
+            .read(saleListProvider.notifier)
+            .addOrUpdateItem(
               product: result.product,
               unitId: result.unitId,
               unitName: result.unitName,
-              sellingPriceInCents: price != null ? price.cents : 0,
+              sellingPriceInCents: sellingPrice,
               conversionRate: result.conversionRate,
             );
         // 成功添加商品后播放音效
@@ -511,12 +524,18 @@ class _CreateSaleScreenState extends ConsumerState<CreateSaleScreen> {
       if (!mounted) return;
 
       if (result != null) {
-        final price = result.product.effectivePrice;
-        ref.read(saleListProvider.notifier).addOrUpdateItem(
+        // 如果是基本单位（conversionRate = 1），使用 Product 表的 effectivePrice
+        // 否则使用 UnitProduct 表的 sellingPriceInCents
+        final sellingPrice = result.conversionRate == 1
+            ? (result.product.effectivePrice?.cents ?? 0)
+            : (result.sellingPriceInCents ?? 0);
+        ref
+            .read(saleListProvider.notifier)
+            .addOrUpdateItem(
               product: result.product,
               unitId: result.unitId,
               unitName: result.unitName,
-              sellingPriceInCents: price != null ? price.cents : 0,
+              sellingPriceInCents: sellingPrice,
               conversionRate: result.conversionRate,
             );
         _lastScannedBarcode = barcode; // 仅在成功时更新上一个条码
@@ -678,6 +697,17 @@ class _CreateSaleScreenState extends ConsumerState<CreateSaleScreen> {
     final totalVarieties = totals['varieties']?.toInt() ?? 0;
     final totalQuantity = totals['quantity']?.toInt() ?? 0;
     final totalAmount = totals['amount'] ?? 0.0;
+
+    // 根据总金额自动更新收款金额：收款 = 100 * ⌈总金额/100⌉
+    if (!_paymentFocusNode.hasFocus) {
+      final calculatedPayment = totalAmount > 0
+          ? (totalAmount / 100).ceil() * 100.0
+          : 0.0;
+      if (_paymentController.text != calculatedPayment.toStringAsFixed(0)) {
+        _paymentController.text = calculatedPayment.toStringAsFixed(0);
+      }
+    }
+
     final paymentAmount = double.tryParse(_paymentController.text) ?? 0.0;
     final change = paymentAmount - totalAmount;
 
@@ -713,7 +743,7 @@ class _CreateSaleScreenState extends ConsumerState<CreateSaleScreen> {
               children: [
                 _buildHeaderSection(theme, textTheme),
                 const SizedBox(height: 0),
-        if (saleItemIds.isEmpty)
+                if (saleItemIds.isEmpty)
                   _buildEmptyState(theme, textTheme)
                 else
                   ...saleItemIds.asMap().entries.map((entry) {
@@ -726,14 +756,15 @@ class _CreateSaleScreenState extends ConsumerState<CreateSaleScreen> {
                         itemId: itemId,
                         shopId: _selectedShop?.id,
                         showPriceInfo: _currentMode == SaleMode.sale, // 新增
-            // 价格与数量 FocusNode 注入，构建焦点链路
-            sellingPriceFocusNode:
-              _priceFocusNodes.length > index ? _priceFocusNodes[index] : null,
+                        // 价格与数量 FocusNode 注入，构建焦点链路
+                        sellingPriceFocusNode: _priceFocusNodes.length > index
+                            ? _priceFocusNodes[index]
+                            : null,
                         quantityFocusNode: _quantityFocusNodes.length > index
                             ? _quantityFocusNodes[index]
                             : null,
-            // 当数量提交时，跳到下一项的售价或收款
-            onSubmitted: () => _handleNextStep(index),
+                        // 当数量提交时，跳到下一项的售价或收款
+                        onSubmitted: () => _handleNextStep(index),
                       ),
                     );
                   }),
@@ -1059,14 +1090,8 @@ class _CreateSaleScreenState extends ConsumerState<CreateSaleScreen> {
                                 _selectedCustomer = suggestion;
                                 _customerController.text = suggestion.name;
                               });
-                              // 选中客户后跳到首个售价（延迟到下一帧，避免焦点被重建抢占落到店铺）
-                              WidgetsBinding.instance.addPostFrameCallback((_) {
-                                if (_priceFocusNodes.isNotEmpty) {
-                                  _priceFocusNodes.first.requestFocus();
-                                } else {
-                                  _paymentFocusNode.requestFocus();
-                                }
-                              });
+                              // 选中客户后失去焦点
+                              _customerFocusNode.unfocus();
                             },
                             builder: (context, controller, focusNode) {
                               return TextField(
@@ -1082,7 +1107,9 @@ class _CreateSaleScreenState extends ConsumerState<CreateSaleScreen> {
                                 textInputAction: TextInputAction.next,
                                 onSubmitted: (_) {
                                   // 顾客后跳到首个售价；如果没有条目则跳到收款
-                                  WidgetsBinding.instance.addPostFrameCallback((_) {
+                                  WidgetsBinding.instance.addPostFrameCallback((
+                                    _,
+                                  ) {
                                     if (_priceFocusNodes.isNotEmpty) {
                                       _priceFocusNodes.first.requestFocus();
                                     } else {

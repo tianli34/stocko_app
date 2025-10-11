@@ -11,13 +11,86 @@ import '../../domain/models/backup_metadata.dart';
 class BackupFileManager {
   /// 获取备份目录
   static Future<Directory> getBackupDirectory() async {
-    final appDir = await getApplicationDocumentsDirectory();
-    final backupDir = Directory(path.join(appDir.path, 'backups'));
+    // 方案1: 尝试使用公共下载目录（与 UnifiedBackupService 保持一致）
+    try {
+      final publicDownloadDir = Directory('/storage/emulated/0/Download/StockoBackups');
+      
+      if (!await publicDownloadDir.exists()) {
+        await publicDownloadDir.create(recursive: true);
+      }
+      
+      // 测试是否可写
+      final testFile = File(path.join(publicDownloadDir.path, '.test'));
+      await testFile.writeAsString('test');
+      await testFile.delete();
+      
+      return publicDownloadDir;
+    } catch (e) {
+      // 如果公共目录不可用，继续尝试其他位置
+    }
     
+    // 方案2: 尝试使用外部存储目录
+    try {
+      final externalDir = await getExternalStorageDirectory();
+      if (externalDir != null) {
+        final publicPath = '/storage/emulated/0/Download/StockoBackups';
+        final backupDir = Directory(publicPath);
+        
+        if (!await backupDir.exists()) {
+          await backupDir.create(recursive: true);
+        }
+        
+        // 测试是否可写
+        final testFile = File(path.join(backupDir.path, '.test'));
+        await testFile.writeAsString('test');
+        await testFile.delete();
+        
+        return backupDir;
+      }
+    } catch (e) {
+      // 继续尝试其他方案
+    }
+
+    // 方案3: 回退到应用私有的 Downloads 目录
+    try {
+      final downloadsDir = await getDownloadsDirectory();
+      if (downloadsDir != null) {
+        final backupDir = Directory(
+          path.join(downloadsDir.path, 'StockoBackups'),
+        );
+
+        if (!await backupDir.exists()) {
+          await backupDir.create(recursive: true);
+        }
+
+        return backupDir;
+      }
+    } catch (e) {
+      // 继续尝试其他方案
+    }
+
+    // 方案4: 回退到应用文档目录（原来的逻辑）
+    try {
+      final appDir = await getApplicationDocumentsDirectory();
+      final backupDir = Directory(path.join(appDir.path, 'backups'));
+
+      if (!await backupDir.exists()) {
+        await backupDir.create(recursive: true);
+      }
+
+      return backupDir;
+    } catch (e) {
+      // 最后的备用方案
+    }
+    
+    // 方案5: 最后回退到临时目录
+    final tempDir = Directory.systemTemp;
+    final backupDir = Directory(path.join(tempDir.path, 'unified_backups'));
+
     if (!await backupDir.exists()) {
       await backupDir.create(recursive: true);
     }
-    
+
     return backupDir;
   }
 

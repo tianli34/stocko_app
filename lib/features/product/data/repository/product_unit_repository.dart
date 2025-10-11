@@ -182,23 +182,87 @@ class ProductUnitRepository implements IProductUnitRepository {
     List<UnitProduct> productUnits,
   ) async {
     try {
-      print('🗃️ 仓储层：替换产品单位配置，产品ID: $productId，新单位数量: ${productUnits.length}');
+      print('🗃️ 仓储层：差异更新产品单位配置，产品ID: $productId，新单位数量: ${productUnits.length}');
 
       // 开启事务
       await _productUnitDao.db.transaction(() async {
-        // 1. 删除现有的产品单位配置
-        await _productUnitDao.deleteProductUnitsByProductId(productId);
+        // 1. 获取现有的产品单位配置
+        final existingUnits = await _productUnitDao.getProductUnitsByProductId(productId);
+        print('🗃️ 仓储层：现有单位数量: ${existingUnits.length}');
 
-        // 2. 添加新的产品单位配置
-        if (productUnits.isNotEmpty) {
-          final companions = productUnits.map(_productUnitToCompanion).toList();
-          await _productUnitDao.insertMultipleProductUnits(companions);
+        // 2. 构建现有单位的映射表（使用 unitId 作为唯一标识，符合数据库唯一键约束）
+        final existingMap = <int, UnitProductData>{};
+        for (final unit in existingUnits) {
+          existingMap[unit.unitId] = unit;
+        }
+
+        // 3. 构建新单位的映射表
+        final newMap = <int, UnitProduct>{};
+        for (final unit in productUnits) {
+          newMap[unit.unitId] = unit;
+        }
+
+        // 4. 找出需要删除的单位（存在于旧列表但不在新列表中）
+        final toDelete = <int>[];
+        for (final entry in existingMap.entries) {
+          if (!newMap.containsKey(entry.key)) {
+            toDelete.add(entry.value.id);
+            print('🗃️ 仓储层：标记删除 - ID: ${entry.value.id}, unitId: ${entry.value.unitId}');
+          }
+        }
+
+        // 5. 找出需要新增和更新的单位
+        final toInsert = <UnitProductCompanion>[];
+        final toUpdate = <UnitProductCompanion>[];
+        
+        for (final entry in newMap.entries) {
+          if (existingMap.containsKey(entry.key)) {
+            // 存在于旧列表中，需要更新
+            final existingUnit = existingMap[entry.key]!;
+            final newUnit = entry.value;
+            
+            // 检查是否真的需要更新（换算率、价格或其他字段是否变化）
+            if (existingUnit.conversionRate != newUnit.conversionRate ||
+                existingUnit.sellingPriceInCents != newUnit.sellingPriceInCents ||
+                existingUnit.wholesalePriceInCents != newUnit.wholesalePriceInCents) {
+              toUpdate.add(_productUnitToCompanion(newUnit.copyWith(id: existingUnit.id)));
+              print('🗃️ 仓储层：标记更新 - ID: ${existingUnit.id}, unitId: ${newUnit.unitId}');
+            } else {
+              print('🗃️ 仓储层：无需更新 - ID: ${existingUnit.id}, unitId: ${newUnit.unitId}');
+            }
+          } else {
+            // 不存在于旧列表中，需要新增
+            toInsert.add(_productUnitToCompanion(entry.value));
+            print('🗃️ 仓储层：标记新增 - unitId: ${entry.value.unitId}');
+          }
+        }
+
+        // 6. 执行删除操作
+        if (toDelete.isNotEmpty) {
+          print('🗃️ 仓储层：执行删除操作，数量: ${toDelete.length}');
+          for (final id in toDelete) {
+            await _productUnitDao.deleteProductUnit(id);
+          }
+        }
+
+        // 7. 执行更新操作
+        if (toUpdate.isNotEmpty) {
+          print('🗃️ 仓储层：执行更新操作，数量: ${toUpdate.length}');
+          for (final companion in toUpdate) {
+            await _productUnitDao.updateProductUnit(companion);
+          }
+        }
+
+        // 8. 执行新增操作
+        if (toInsert.isNotEmpty) {
+          print('🗃️ 仓储层：执行新增操作，数量: ${toInsert.length}');
+          await _productUnitDao.insertMultipleProductUnits(toInsert);
         }
       });
 
-      print('🗃️ 仓储层：产品单位配置替换完成');
+      print('🗃️ 仓储层：差异更新产品单位配置完成');
     } catch (e) {
-      print('🗃️ 仓储层：替换产品单位配置失败: $e');
+      print('🗃️ 仓储层：差异更新产品单位配置失败: $e');
       rethrow;
     }
   }

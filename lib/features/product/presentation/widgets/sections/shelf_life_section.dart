@@ -29,7 +29,6 @@ class ShelfLifeSection extends StatefulWidget {
 class _ShelfLifeSectionState extends State<ShelfLifeSection> {
   late FocusNode _focusNode;
   bool _isFocused = false;
-  final String _hintText = '保质期';
 
   @override
   void initState() {
@@ -57,30 +56,52 @@ class _ShelfLifeSectionState extends State<ShelfLifeSection> {
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Expanded(
-          flex: 2,
-          child: TextFormField(
-            controller: widget.shelfLifeController,
-            focusNode: _focusNode,
-            keyboardType: TextInputType.number,
-            onFieldSubmitted: (_) => widget.onSubmitted?.call(),
-            decoration: InputDecoration(
-              hintText: _isFocused ? '' : _hintText,
+    return Container(
+      decoration: BoxDecoration(
+        border: Border.all(color: Colors.grey.shade300),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          // 标签显示在左边
+          SizedBox(
+            width: 100,
+            child: Padding(
+              padding: const EdgeInsets.only(right: 8),
+              child: Text(
+                '保质期',
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
             ),
           ),
-        ),
-        const SizedBox(width: 32),
-        Expanded(
-          flex: 1,
-          child: ShelfLifeUnitDropdown(
-            value: widget.shelfLifeUnit,
-            options: widget.shelfLifeUnitOptions,
-            onChanged: widget.onShelfLifeUnitChanged,
+          Expanded(
+            flex: 3,
+            child: TextFormField(
+              controller: widget.shelfLifeController,
+              focusNode: _focusNode,
+              keyboardType: TextInputType.number,
+              onFieldSubmitted: (_) => widget.onSubmitted?.call(),
+              decoration: InputDecoration(
+                hintText: _isFocused ? '' : '',
+              ),
+            ),
           ),
-        ),
-      ],
+          const SizedBox(width: 2),
+          Flexible(
+            flex: 2,
+            child: ShelfLifeUnitDropdown(
+              value: widget.shelfLifeUnit,
+              options: widget.shelfLifeUnitOptions,
+              onChanged: widget.onShelfLifeUnitChanged,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

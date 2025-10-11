@@ -4,6 +4,7 @@ import 'package:drift/drift.dart';
 import '../../../core/database/database.dart';
 
 import 'package:stocko_app/features/product/domain/model/product.dart';
+
 /// 一个服务类，用于处理从外部数据源批量导入商品。
 class ProductImportService {
   final AppDatabase db;
@@ -13,8 +14,7 @@ class ProductImportService {
   /// 根据名称和可选的父ID查找或创建一个分类，并返回其ID。
   Future<int> _getOrCreateCategory(String name, {int? parentId}) async {
     // 1. 尝试查找已存在的分类
-    final query = db.select(db.category)
-      ..where((tbl) => tbl.name.equals(name));
+    final query = db.select(db.category)..where((tbl) => tbl.name.equals(name));
 
     if (parentId == null) {
       query.where((tbl) => tbl.parentId.isNull());
@@ -115,8 +115,10 @@ class ProductImportService {
     final categoryIdMap = <String, int>{};
     for (final name in categoryNames) {
       // 将品牌作为二级分类，父级是"烟"
-      categoryIdMap[name] =
-          await _getOrCreateCategory(name, parentId: rootCategoryId);
+      categoryIdMap[name] = await _getOrCreateCategory(
+        name,
+        parentId: rootCategoryId,
+      );
     }
 
     final unitIdMap = <String, int>{};
@@ -127,16 +129,37 @@ class ProductImportService {
     final packUnitId = unitIdMap['包']!;
     final cartonUnitId = unitIdMap['条']!;
 
+    // --- 处理已存在的条码：删除旧产品数据以便覆盖 ---
     if (allBarcodes.isNotEmpty) {
       final existingBarcodes = await (db.select(
         db.barcode,
       )..where((t) => t.barcodeValue.isIn(allBarcodes))).get();
 
       if (existingBarcodes.isNotEmpty) {
-        final existingBarcodeValues = existingBarcodes
-            .map((b) => b.barcodeValue)
-            .join(', ');
-        return '导入失败：以下条码已存在于数据库中: $existingBarcodeValues。请修正数据后重试。';
+        // 收集需要删除的产品ID
+        final unitProductIds = existingBarcodes
+            .map((b) => b.unitProductId)
+            .toSet();
+
+        // 查找这些unitProduct对应的产品ID
+        final unitProducts = await (db.select(
+          db.unitProduct,
+        )..where((t) => t.id.isIn(unitProductIds))).get();
+
+        final productIds = unitProducts.map((up) => up.productId).toSet();
+
+        // 删除旧的条码记录
+        await (db.delete(
+          db.barcode,
+        )..where((t) => t.barcodeValue.isIn(allBarcodes))).go();
+
+        // 删除旧的单位产品记录
+        await (db.delete(
+          db.unitProduct,
+        )..where((t) => t.productId.isIn(productIds))).go();
+
+        // 删除旧的产品记录
+        await (db.delete(db.product)..where((t) => t.id.isIn(productIds))).go();
       }
     }
     // --- 预检查结束 ---
@@ -171,14 +194,17 @@ class ProductImportService {
           // 插入商品主记录
           batch.insert(
             db.product,
-             ProductCompanion.insert(
+            ProductCompanion.insert(
               id: Value(productId), // 使用新ID
               name: productName,
               brand: Value(brand),
               categoryId: Value(categoryId),
               baseUnitId: packUnitId, // 基础单位ID是"包"
-              suggestedRetailPrice:
-                  Value(Money((cartonSuggestedRetailPrice * 100).toInt())),
+              suggestedRetailPrice: Value(
+                Money(
+                  (cartonSuggestedRetailPrice * 100 / conversionRate).toInt(),
+                ),
+              ),
             ),
           );
 
@@ -189,11 +215,13 @@ class ProductImportService {
               id: Value(productPackUnitId), // 使用新ID
               productId: productId,
               unitId: packUnitId,
-              conversionRate: 1,
-              sellingPriceInCents:
-                  Value((cartonSuggestedRetailPrice * 100 / conversionRate).toInt()),
-              wholesalePriceInCents:
-                  Value((cartonWholesalePrice * 100 / conversionRate).toInt()),
+              conversionRate: 1, // 基本单位换算率为1
+              sellingPriceInCents: Value(
+                (cartonSuggestedRetailPrice * 100 / conversionRate).toInt(),
+              ),
+              wholesalePriceInCents: Value(
+                (cartonWholesalePrice * 100 / conversionRate).toInt(),
+              ),
             ),
           );
           final packBarcode = productData['包条码'] as String?;
@@ -216,10 +244,12 @@ class ProductImportService {
               productId: productId,
               unitId: cartonUnitId,
               conversionRate: conversionRate,
-              sellingPriceInCents:
-                  Value((cartonSuggestedRetailPrice * 100).toInt()),
-              wholesalePriceInCents:
-                  Value((cartonWholesalePrice * 100).toInt()),
+              sellingPriceInCents: Value(
+                (cartonSuggestedRetailPrice * 100).toInt(),
+              ),
+              wholesalePriceInCents: Value(
+                (cartonWholesalePrice * 100).toInt(),
+              ),
             ),
           );
           final cartonBarcode = productData['条条码'] as String?;
@@ -241,9 +271,13 @@ class ProductImportService {
     } catch (e, s) {
       // 在预检查后，此处的 UNIQUE constraint 错误理论上不应再发生
       // 但保留以防万一
-      print('>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>处理商品数据时发生意外错误: $e\n$s<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<'); // 保留开发者日志
-      print('>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>日志结束<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<'); // 保留开发者日志
-      
+      print(
+        '>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>处理商品数据时发生意外错误: $e\n$s<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<',
+      ); // 保留开发者日志
+      print(
+        '>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>日志结束<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<',
+      ); // 保留开发者日志
+
       return '导入过程中发生未知错误，请检查日志。';
     }
   }

@@ -1,17 +1,25 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../services/scan_product_service.dart';
 
 /// 一个带底部导航栏的通用 Scaffold，用于配合 GoRouter 的 StatefulShellRoute 使用。
-class ScaffoldWithNavBar extends StatelessWidget {
+class ScaffoldWithNavBar extends ConsumerWidget {
   const ScaffoldWithNavBar({super.key, required this.navigationShell});
 
   final StatefulNavigationShell navigationShell;
 
-  void _onDestinationSelected(int index) {
+  void _onDestinationSelected(BuildContext context, int index) {
+    // 跳过中间的占位符（index 2）
+    if (index == 2) return;
+
+    // 调整索引：index 3, 4 对应实际的分支 2, 3
+    final branchIndex = index > 2 ? index - 1 : index;
+
     // 切换分支；如果点击当前分支，则返回该分支的初始路由
     navigationShell.goBranch(
-      index,
-      initialLocation: index == navigationShell.currentIndex,
+      branchIndex,
+      initialLocation: branchIndex == navigationShell.currentIndex,
     );
   }
 
@@ -28,81 +36,120 @@ class ScaffoldWithNavBar extends StatelessWidget {
   static const _inventoryGradient = LinearGradient(
     colors: [Color(0xFF8E2DE2), Color(0xFF4A00E0)],
   );
-  static const _settingsGradient = LinearGradient(
-    colors: [Color(0xFF11998E), Color(0xFF38EF7D)],
+  static const _fabGradient = LinearGradient(
+    colors: [Color(0xFF667EEA), Color(0xFF764BA2)],
   );
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return Scaffold(
       body: navigationShell,
-      bottomNavigationBar: NavigationBarTheme(
-        data: const NavigationBarThemeData(
-          indicatorColor: Colors.transparent, // 让选中态的渐变胶囊更清晰
-          height: 64,
-        ),
-        child: NavigationBar(
-          selectedIndex: navigationShell.currentIndex,
-          onDestinationSelected: _onDestinationSelected,
-          labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
-          destinations: const [
-            NavigationDestination(
-              icon: _GradientIcon(
-                icon: Icons.dashboard_outlined,
-                gradient: _homeGradient,
-              ),
-              selectedIcon: _GradientPillIcon(
-                icon: Icons.dashboard_rounded,
-                gradient: _homeGradient,
-              ),
-              label: '首页',
+
+      bottomNavigationBar: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          NavigationBarTheme(
+            data: const NavigationBarThemeData(
+              indicatorColor: Colors.transparent,
+              height: 64,
             ),
-            NavigationDestination(
-              icon: _GradientIcon(
-                icon: Icons.inventory_2_outlined,
-                gradient: _productsGradient,
-              ),
-              selectedIcon: _GradientPillIcon(
-                icon: Icons.inventory_2_rounded,
-                gradient: _productsGradient,
-              ),
-              label: '货品',
+            child: NavigationBar(
+              // 调整选中索引：分支 2, 3 对应显示索引 3, 4
+              selectedIndex: navigationShell.currentIndex >= 2
+                  ? navigationShell.currentIndex + 1
+                  : navigationShell.currentIndex,
+              onDestinationSelected: (index) =>
+                  _onDestinationSelected(context, index),
+              labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
+              destinations: const [
+                NavigationDestination(
+                  icon: _GradientIcon(
+                    icon: Icons.dashboard_outlined,
+                    gradient: _homeGradient,
+                  ),
+                  selectedIcon: _GradientPillIcon(
+                    icon: Icons.dashboard_rounded,
+                    gradient: _homeGradient,
+                  ),
+                  label: '首页',
+                ),
+                NavigationDestination(
+                  icon: _GradientIcon(
+                    icon: Icons.inventory_2_outlined,
+                    gradient: _productsGradient,
+                  ),
+                  selectedIcon: _GradientPillIcon(
+                    icon: Icons.inventory_2_rounded,
+                    gradient: _productsGradient,
+                  ),
+                  label: '货品',
+                ),
+                // 占位符，为 FAB 留出空间
+                NavigationDestination(icon: SizedBox(width: 64), label: ''),
+                NavigationDestination(
+                  icon: _GradientIcon(
+                    icon: Icons.shopping_bag_outlined,
+                    gradient: _salesGradient,
+                  ),
+                  selectedIcon: _GradientPillIcon(
+                    icon: Icons.shopping_bag_rounded,
+                    gradient: _salesGradient,
+                  ),
+                  label: '销售',
+                ),
+                NavigationDestination(
+                  icon: _GradientIcon(
+                    icon: Icons.warehouse_outlined,
+                    gradient: _inventoryGradient,
+                  ),
+                  selectedIcon: _GradientPillIcon(
+                    icon: Icons.warehouse_rounded,
+                    gradient: _inventoryGradient,
+                  ),
+                  label: '库存',
+                ),
+              ],
             ),
-            NavigationDestination(
-              icon: _GradientIcon(
-                icon: Icons.shopping_bag_outlined,
-                gradient: _salesGradient,
+          ),
+          // 将 FAB 精确定位到导航栏，底部对齐
+          Positioned(
+            left: 0,
+            right: 0,
+            bottom: 16, // 底部对齐，与导航图标底部在同一水平线
+            child: Center(
+              child: Container(
+                width: 56,
+                height: 56,
+                decoration: BoxDecoration(
+                  gradient: _fabGradient,
+                  shape: BoxShape.circle,
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.2),
+                      blurRadius: 8,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: Material(
+                  color: Colors.transparent,
+                  child: InkWell(
+                    borderRadius: BorderRadius.circular(28),
+                    onTap: () => ScanProductService.scanAndShowProductDialog(
+                      context,
+                      ref,
+                    ),
+                    child: const Icon(
+                      Icons.qr_code_scanner_rounded,
+                      color: Colors.white,
+                      size: 28,
+                    ),
+                  ),
+                ),
               ),
-              selectedIcon: _GradientPillIcon(
-                icon: Icons.shopping_bag_rounded,
-                gradient: _salesGradient,
-              ),
-              label: '销售',
             ),
-            NavigationDestination(
-              icon: _GradientIcon(
-                icon: Icons.warehouse_outlined,
-                gradient: _inventoryGradient,
-              ),
-              selectedIcon: _GradientPillIcon(
-                icon: Icons.warehouse_rounded,
-                gradient: _inventoryGradient,
-              ),
-              label: '库存',
-            ),
-            NavigationDestination(
-              icon: _GradientIcon(
-                icon: Icons.tune_outlined,
-                gradient: _settingsGradient,
-              ),
-              selectedIcon: _GradientPillIcon(
-                icon: Icons.tune_rounded,
-                gradient: _settingsGradient,
-              ),
-              label: '设置',
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }

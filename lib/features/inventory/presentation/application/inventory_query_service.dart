@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/database/database.dart';
 import '../../domain/model/inventory.dart';
+import '../../domain/model/aggregated_inventory.dart';
 import '../../domain/repository/i_inventory_repository.dart';
 import '../../data/repository/inventory_repository.dart';
 import '../../../product/domain/repository/i_product_repository.dart';
@@ -219,6 +220,61 @@ class InventoryQueryService {
       return result;
     } catch (e) {
       print('📦 库存查询服务：获取库存详细信息失败: $e');
+      print('📦 错误堆栈: ${e.toString()}');
+      rethrow;
+    }
+  }
+
+  /// 获取聚合后的库存数据（未筛选店铺时使用）
+  /// 将相同货品的多条库存记录聚合为一条，包含总库存和详细记录列表
+  Future<List<AggregatedInventoryItem>> getAggregatedInventory({
+    String? categoryFilter,
+    String? statusFilter,
+  }) async {
+    try {
+      print('📦 库存聚合服务：开始获取聚合库存数据');
+
+      // 1. 获取所有库存详细信息（不传入店铺筛选）
+      final allInventory = await getInventoryWithDetails(
+        categoryFilter: categoryFilter,
+        statusFilter: statusFilter,
+      );
+
+      print('📦 库存聚合服务：获取到 ${allInventory.length} 条原始库存记录');
+
+      if (allInventory.isEmpty) {
+        return [];
+      }
+
+      // 2. 按productId分组聚合
+      final Map<int, List<Map<String, dynamic>>> groupedByProduct = {};
+      for (var item in allInventory) {
+        final productId = item['productId'] as int;
+        groupedByProduct.putIfAbsent(productId, () => []).add(item);
+      }
+
+      print('📦 库存聚合服务：按货品分组后得到 ${groupedByProduct.length} 个货品');
+
+      // 3. 构建聚合数据列表
+      final result = <AggregatedInventoryItem>[];
+      for (var entry in groupedByProduct.entries) {
+        final items = entry.value;
+        
+        try {
+          // 使用工厂方法创建聚合项
+          final aggregatedItem = AggregatedInventoryItem.fromInventoryList(items);
+          result.add(aggregatedItem);
+        } catch (e) {
+          print('📦 库存聚合服务：聚合货品 ${entry.key} 失败: $e');
+          // 继续处理其他货品，不中断整个流程
+          continue;
+        }
+      }
+
+      print('📦 库存聚合服务：成功聚合 ${result.length} 个货品');
+      return result;
+    } catch (e) {
+      print('📦 库存聚合服务：获取聚合库存数据失败: $e');
       print('📦 错误堆栈: ${e.toString()}');
       rethrow;
     }

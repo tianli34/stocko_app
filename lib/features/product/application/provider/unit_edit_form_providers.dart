@@ -115,7 +115,16 @@ class UnitEditFormNotifier extends Notifier<UnitEditFormState> {
   }
 
   /// 更新辅单位的建议零售价
-  void updateAuxiliaryUnitRetailPrice(int id, String retailPriceInCents) {
+  void updateAuxiliaryUnitRetailPrice(int id, String retailPriceInYuan) {
+    // 将元转换为分存储
+    String retailPriceInCents = '';
+    if (retailPriceInYuan.trim().isNotEmpty) {
+      final priceInYuan = double.tryParse(retailPriceInYuan.trim());
+      if (priceInYuan != null) {
+        retailPriceInCents = (priceInYuan * 100).round().toString();
+      }
+    }
+    
     final updatedUnits = state.auxiliaryUnits.map((unit) {
       if (unit.id == id) {
         return unit.copyWith(retailPriceInCents: retailPriceInCents);
@@ -126,7 +135,16 @@ class UnitEditFormNotifier extends Notifier<UnitEditFormState> {
   }
 
   /// 更新辅单位的批发价
-  void updateAuxiliaryUnitWholesalePrice(int id, String wholesalePriceInCents) {
+  void updateAuxiliaryUnitWholesalePrice(int id, String wholesalePriceInYuan) {
+    // 将元转换为分存储
+    String wholesalePriceInCents = '';
+    if (wholesalePriceInYuan.trim().isNotEmpty) {
+      final priceInYuan = double.tryParse(wholesalePriceInYuan.trim());
+      if (priceInYuan != null) {
+        wholesalePriceInCents = (priceInYuan * 100).round().toString();
+      }
+    }
+    
     final updatedUnits = state.auxiliaryUnits.map((unit) {
       if (unit.id == id) {
         return unit.copyWith(wholesalePriceInCents: wholesalePriceInCents);
@@ -165,6 +183,26 @@ class UnitEditFormNotifier extends Notifier<UnitEditFormState> {
       } else {
         // 从现有的_AuxiliaryUnit对象初始化
         final auxUnit = unit as dynamic;
+        
+        // 将元转换为分
+        String retailPriceInCents = '';
+        final retailPriceText = auxUnit.retailPriceController?.text as String? ?? '';
+        if (retailPriceText.trim().isNotEmpty) {
+          final priceInYuan = double.tryParse(retailPriceText.trim());
+          if (priceInYuan != null) {
+            retailPriceInCents = (priceInYuan * 100).round().toString();
+          }
+        }
+        
+        String wholesalePriceInCents = '';
+        final wholesalePriceText = auxUnit.wholesalePriceController?.text as String? ?? '';
+        if (wholesalePriceText.trim().isNotEmpty) {
+          final priceInYuan = double.tryParse(wholesalePriceText.trim());
+          if (priceInYuan != null) {
+            wholesalePriceInCents = (priceInYuan * 100).round().toString();
+          }
+        }
+        
         auxiliaryUnits.add(
           AuxiliaryUnitData(
             id: auxUnit.id as int,
@@ -172,9 +210,8 @@ class UnitEditFormNotifier extends Notifier<UnitEditFormState> {
             unitName: auxUnit.unitController?.text as String? ?? '',
             conversionRate: auxUnit.conversionRate ?? 0,
             barcode: auxUnit.barcodeController?.text as String? ?? '',
-            retailPriceInCents: auxUnit.retailPriceController?.text as String? ?? '',
-            wholesalePriceInCents:
-                auxUnit.wholesalePriceController?.text as String? ?? '',
+            retailPriceInCents: retailPriceInCents,
+            wholesalePriceInCents: wholesalePriceInCents,
           ),
         );
       }

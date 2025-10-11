@@ -107,7 +107,8 @@ final saleListProvider =
 /// 派生自 [saleListProvider]，用于高效计算总计信息。
 final saleTotalsProvider = Provider<Map<String, double>>((ref) {
   final items = ref.watch(saleListProvider);
-  final totalQuantity = items.fold(0.0, (sum, item) => sum + item.quantity * item.conversionRate);
+  // final totalQuantity = items.fold(0.0, (sum, item) => sum + item.quantity * item.conversionRate);
+  final totalQuantity = items.fold(0.0, (sum, item) => sum + item.quantity);
   final totalAmount = items.fold(0.0, (sum, item) => sum + item.amount);
   return {
     'varieties': items.length.toDouble(),

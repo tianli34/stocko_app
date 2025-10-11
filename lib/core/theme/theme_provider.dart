@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 class AppTheme {
   // 主色调
@@ -8,6 +9,25 @@ class AppTheme {
 
   // 字体
   static const String fontFamily = 'Roboto';
+
+  // 更新系统UI样式（用于移除底部黑色遮罩）
+  static void updateSystemUIOverlay(Brightness brightness) {
+    SystemChrome.setSystemUIOverlayStyle(
+      SystemUiOverlayStyle(
+        systemNavigationBarColor: brightness == Brightness.light 
+            ? Colors.white 
+            : const Color(0xFF121212),
+        systemNavigationBarIconBrightness: brightness == Brightness.light 
+            ? Brightness.dark 
+            : Brightness.light,
+        systemNavigationBarDividerColor: Colors.transparent,
+        statusBarColor: Colors.transparent,
+        statusBarIconBrightness: brightness == Brightness.light 
+            ? Brightness.dark 
+            : Brightness.light,
+      ),
+    );
+  }
 
   // 亮色主题
   static ThemeData lightTheme = ThemeData(

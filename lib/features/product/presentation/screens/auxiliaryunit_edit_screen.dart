@@ -135,8 +135,8 @@ class _AuxiliaryUnitEditScreenState
           id: _auxiliaryCounter,
           unit: unit,
           conversionRate: unitProduct.conversionRate,
-          initialSellingPrice: (unitProduct.sellingPriceInCents ?? 0)/100,
-          initialWholesalePrice: (unitProduct.wholesalePriceInCents ?? 0)/100,
+          initialSellingPrice: (unitProduct.sellingPriceInCents ?? 0) / 100,
+          initialWholesalePrice: (unitProduct.wholesalePriceInCents ?? 0) / 100,
         );
         print('🔍 控制器初始化后售价: ${auxiliaryUnit.retailPriceController.text}');
         print('🔍 控制器初始化后批发价: ${auxiliaryUnit.wholesalePriceController.text}');
@@ -285,171 +285,233 @@ class _AuxiliaryUnitEditScreenState
               ],
             ),
             const SizedBox(height: 12),
-            Row(
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Expanded(
-                  child: TextFormField(
-                    decoration: const InputDecoration(
-                      labelText: '辅单位名称',
-                      border: OutlineInputBorder(),
-                    ),
-                    controller: auxiliaryUnit.unitController,
-                    focusNode: auxiliaryUnit.unitFocusNode,
-                    onFieldSubmitted: (_) =>
-                        auxiliaryUnit.conversionRateFocusNode.requestFocus(),
-                    validator: (value) {
-                      if (value == null || value.trim().isEmpty) {
-                        return '请输入单位名称';
-                      }
-                      return null;
-                    },
-                    onChanged: (value) {
-                      _onAuxiliaryUnitNameChanged(index, value);
-                    },
-                  ),
+                const Text(
+                  '辅单位名称',
+                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
                 ),
-                const SizedBox(width: 8),
-                IconButton(
-                  onPressed: () => _selectAuxiliaryUnit(index),
-                  icon: const Icon(Icons.list),
-                  style: IconButton.styleFrom(
-                    backgroundColor: Theme.of(
-                      context,
-                    ).primaryColor.withValues(alpha: 0.1),
-                    foregroundColor: Theme.of(context).primaryColor,
-                  ),
-                  tooltip: '选择单位',
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    Expanded(
+                      child: TextFormField(
+                        decoration: const InputDecoration(
+                          hintText: '请输入或选择单位名称',
+                          border: OutlineInputBorder(),
+                        ),
+                        controller: auxiliaryUnit.unitController,
+                        focusNode: auxiliaryUnit.unitFocusNode,
+                        onFieldSubmitted: (_) => auxiliaryUnit
+                            .conversionRateFocusNode
+                            .requestFocus(),
+                        validator: (value) {
+                          if (value == null || value.trim().isEmpty) {
+                            return '请输入单位名称';
+                          }
+                          return null;
+                        },
+                        onChanged: (value) {
+                          _onAuxiliaryUnitNameChanged(index, value);
+                        },
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    IconButton(
+                      onPressed: () => _selectAuxiliaryUnit(index),
+                      icon: const Icon(Icons.list),
+                      style: IconButton.styleFrom(
+                        backgroundColor: Theme.of(
+                          context,
+                        ).primaryColor.withValues(alpha: 0.1),
+                        foregroundColor: Theme.of(context).primaryColor,
+                      ),
+                      tooltip: '选择单位',
+                    ),
+                  ],
                 ),
               ],
             ),
             const SizedBox(height: 12),
-            TextFormField(
-              decoration: InputDecoration(
-                labelText: '换算率',
-                border: const OutlineInputBorder(),
-                suffixText: '(相对于${widget.baseUnitName ?? '基本单位'})',
-              ),
-              keyboardType: TextInputType.number,
-              focusNode: auxiliaryUnit.conversionRateFocusNode,
-              onFieldSubmitted: (_) =>
-                  auxiliaryUnit.retailPriceFocusNode.requestFocus(),
-              initialValue: auxiliaryUnit.conversionRate > 0
-                  ? auxiliaryUnit.conversionRate.toString()
-                  : '',
-              validator: (value) {
-                if (value == null || value.trim().isEmpty) {
-                  return '请输入换算率';
-                }
-                final rate = double.tryParse(value.trim());
-                if (rate == null || rate <= 0) {
-                  return '请输入有效的换算率';
-                }
-                if (rate == 1.0) {
-                  return '辅单位换算率不能为1';
-                }
-                return null;
-              },
-              onChanged: (value) {
-                final rate = int.tryParse(value.trim());
-                if (rate != null) {
-                  auxiliaryUnit.conversionRate = rate;
-                  ref
-                      .read(unitEditFormProvider.notifier)
-                      .updateAuxiliaryUnitConversionRate(
-                        auxiliaryUnit.id,
-                        rate,
-                      );
-                }
-              },
-            ),
-            const SizedBox(height: 12),
-            Row(
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Expanded(
-                  child: TextFormField(
-                    controller: auxiliaryUnit.barcodeController,
-                    decoration: const InputDecoration(
-                      labelText: '条码',
-                      border: OutlineInputBorder(),
-                    ),
-                    keyboardType: TextInputType.text,
-                    onChanged: (value) {
+                Text(
+                  '换算率 (相对于${widget.baseUnitName ?? '基本单位'})',
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                TextFormField(
+                  decoration: const InputDecoration(
+                    hintText: '请输入换算率',
+                    border: OutlineInputBorder(),
+                  ),
+                  keyboardType: TextInputType.number,
+                  focusNode: auxiliaryUnit.conversionRateFocusNode,
+                  onFieldSubmitted: (_) =>
+                      auxiliaryUnit.retailPriceFocusNode.requestFocus(),
+                  initialValue: auxiliaryUnit.conversionRate > 0
+                      ? auxiliaryUnit.conversionRate.toString()
+                      : '',
+                  validator: (value) {
+                    if (value == null || value.trim().isEmpty) {
+                      return '请输入换算率';
+                    }
+                    final rate = double.tryParse(value.trim());
+                    if (rate == null || rate <= 0) {
+                      return '请输入有效的换算率';
+                    }
+                    if (rate == 1.0) {
+                      return '辅单位换算率不能为1';
+                    }
+                    return null;
+                  },
+                  onChanged: (value) {
+                    final rate = int.tryParse(value.trim());
+                    if (rate != null) {
+                      auxiliaryUnit.conversionRate = rate;
                       ref
                           .read(unitEditFormProvider.notifier)
-                          .updateAuxiliaryUnitBarcode(auxiliaryUnit.id, value);
-                    },
-                  ),
-                ),
-                const SizedBox(width: 8),
-                IconButton(
-                  onPressed: () => _scanBarcode(index),
-                  icon: const Icon(Icons.qr_code_scanner),
-                  style: IconButton.styleFrom(
-                    backgroundColor: Theme.of(
-                      context,
-                    ).primaryColor.withOpacity(0.1),
-                    foregroundColor: Theme.of(context).primaryColor,
-                  ),
-                  tooltip: '扫描条码',
+                          .updateAuxiliaryUnitConversionRate(
+                            auxiliaryUnit.id,
+                            rate,
+                          );
+                    }
+                  },
                 ),
               ],
             ),
             const SizedBox(height: 12),
-            TextFormField(
-              controller: auxiliaryUnit.retailPriceController,
-              focusNode: auxiliaryUnit.retailPriceFocusNode,
-              decoration: const InputDecoration(
-                labelText: '建议零售价',
-                border: OutlineInputBorder(),
-                prefixText: '¥ ',
-              ),
-              keyboardType: const TextInputType.numberWithOptions(
-                decimal: true,
-              ),
-              validator: (value) {
-                if (value != null && value.trim().isNotEmpty) {
-                  final price = double.tryParse(value.trim());
-                  if (price == null || price < 0) {
-                    return '请输入有效的价格';
-                  }
-                }
-                return null;
-              },
-              onChanged: (value) {
-                ref
-                    .read(unitEditFormProvider.notifier)
-                    .updateAuxiliaryUnitRetailPrice(auxiliaryUnit.id, value);
-              },
-              onFieldSubmitted: (_) =>
-                  auxiliaryUnit.wholesalePriceFocusNode.requestFocus(),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  '条码',
+                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+                ),
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    Expanded(
+                      child: TextFormField(
+                        controller: auxiliaryUnit.barcodeController,
+                        decoration: const InputDecoration(
+                          hintText: '请输入或扫描条码',
+                          border: OutlineInputBorder(),
+                        ),
+                        keyboardType: TextInputType.text,
+                        onChanged: (value) {
+                          ref
+                              .read(unitEditFormProvider.notifier)
+                              .updateAuxiliaryUnitBarcode(
+                                auxiliaryUnit.id,
+                                value,
+                              );
+                        },
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    IconButton(
+                      onPressed: () => _scanBarcode(index),
+                      icon: const Icon(Icons.qr_code_scanner),
+                      style: IconButton.styleFrom(
+                        backgroundColor: Theme.of(
+                          context,
+                        ).primaryColor.withOpacity(0.1),
+                        foregroundColor: Theme.of(context).primaryColor,
+                      ),
+                      tooltip: '扫描条码',
+                    ),
+                  ],
+                ),
+              ],
             ),
             const SizedBox(height: 12),
-            TextFormField(
-              controller: auxiliaryUnit.wholesalePriceController,
-              focusNode: auxiliaryUnit.wholesalePriceFocusNode,
-              decoration: const InputDecoration(
-                labelText: '批发价',
-                border: OutlineInputBorder(),
-                prefixText: '¥ ',
-              ),
-              keyboardType: const TextInputType.numberWithOptions(
-                decimal: true,
-              ),
-              validator: (value) {
-                if (value != null && value.trim().isNotEmpty) {
-                  final price = double.tryParse(value.trim());
-                  if (price == null || price < 0) {
-                    return '请输入有效的价格';
-                  }
-                }
-                return null;
-              },
-              onChanged: (value) {
-                ref
-                    .read(unitEditFormProvider.notifier)
-                    .updateAuxiliaryUnitWholesalePrice(auxiliaryUnit.id, value);
-              },
-              onFieldSubmitted: (_) => _handleReturn(),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  '建议零售价',
+                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+                ),
+                const SizedBox(height: 8),
+                TextFormField(
+                  controller: auxiliaryUnit.retailPriceController,
+                  focusNode: auxiliaryUnit.retailPriceFocusNode,
+                  decoration: const InputDecoration(
+                    hintText: '请输入零售价',
+                    border: OutlineInputBorder(),
+                    prefixText: '¥ ',
+                  ),
+                  keyboardType: const TextInputType.numberWithOptions(
+                    decimal: true,
+                  ),
+                  validator: (value) {
+                    if (value != null && value.trim().isNotEmpty) {
+                      final price = double.tryParse(value.trim());
+                      if (price == null || price < 0) {
+                        return '请输入有效的价格';
+                      }
+                    }
+                    return null;
+                  },
+                  onChanged: (value) {
+                    ref
+                        .read(unitEditFormProvider.notifier)
+                        .updateAuxiliaryUnitRetailPrice(
+                          auxiliaryUnit.id,
+                          value,
+                        );
+                  },
+                  onFieldSubmitted: (_) =>
+                      auxiliaryUnit.wholesalePriceFocusNode.requestFocus(),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  '批发价',
+                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+                ),
+                const SizedBox(height: 8),
+                TextFormField(
+                  controller: auxiliaryUnit.wholesalePriceController,
+                  focusNode: auxiliaryUnit.wholesalePriceFocusNode,
+                  decoration: const InputDecoration(
+                    hintText: '请输入批发价',
+                    border: OutlineInputBorder(),
+                    prefixText: '¥ ',
+                  ),
+                  keyboardType: const TextInputType.numberWithOptions(
+                    decimal: true,
+                  ),
+                  validator: (value) {
+                    if (value != null && value.trim().isNotEmpty) {
+                      final price = double.tryParse(value.trim());
+                      if (price == null || price < 0) {
+                        return '请输入有效的价格';
+                      }
+                    }
+                    return null;
+                  },
+                  onChanged: (value) {
+                    ref
+                        .read(unitEditFormProvider.notifier)
+                        .updateAuxiliaryUnitWholesalePrice(
+                          auxiliaryUnit.id,
+                          value,
+                        );
+                  },
+                  onFieldSubmitted: (_) => _handleReturn(),
+                ),
+              ],
             ),
           ],
         ),
@@ -483,9 +545,7 @@ class _AuxiliaryUnitEditScreenState
 
       if (existingUnit.isNew) {
         print('🔍 单位不存在，创建新单位对象: "$trimmedName"');
-        existingUnit = Unit(
-          name: trimmedName,
-        );
+        existingUnit = Unit(name: trimmedName);
         print('🔍 新单位对象已创建: ID=${existingUnit.id}, 名称="${existingUnit.name}"');
       } else {
         print('🔍 找到现有单位: ID=${existingUnit.id}, 名称="${existingUnit.name}"');
@@ -557,9 +617,8 @@ class _AuxiliaryUnitEditScreenState
     try {
       final Unit? selectedUnit = await Navigator.of(context).push<Unit>(
         MaterialPageRoute(
-          builder: (context) => UnitSelectionScreen(
-            initialUnit: _auxiliaryUnits[index].unit,
-          ),
+          builder: (context) =>
+              UnitSelectionScreen(initialUnit: _auxiliaryUnits[index].unit),
         ),
       );
 
@@ -655,7 +714,7 @@ class _AuxiliaryUnitEditScreenState
     );
     productUnits.add(baseUnit);
     print('🔍 [DEBUG] ✅ 添加基本单位: ${baseUnit.id}');
-  
+
     // 处理辅单位
     for (int i = 0; i < _auxiliaryUnits.length; i++) {
       final aux = _auxiliaryUnits[i];
@@ -677,12 +736,20 @@ class _AuxiliaryUnitEditScreenState
         print(
           'wholesalePriceController.text: "${aux.wholesalePriceController.text}"',
         );
-        final sellingPriceInCents = aux.retailPriceController.text.trim().isNotEmpty
-            ? int.tryParse(aux.retailPriceController.text.trim())
+        final sellingPriceInCents =
+            aux.retailPriceController.text.trim().isNotEmpty
+            ? (double.tryParse(aux.retailPriceController.text.trim()) != null
+                  ? (double.parse(aux.retailPriceController.text.trim()) * 100)
+                        .round()
+                  : null)
             : null;
         final wholesalePriceInCents =
             aux.wholesalePriceController.text.trim().isNotEmpty
-            ? int.tryParse(aux.wholesalePriceController.text.trim())
+            ? (double.tryParse(aux.wholesalePriceController.text.trim()) != null
+                  ? (double.parse(aux.wholesalePriceController.text.trim()) *
+                            100)
+                        .round()
+                  : null)
             : null;
         print('解析后的sellingPrice: $sellingPriceInCents');
         print('解析后的wholesalePrice: $wholesalePriceInCents');
@@ -715,9 +782,7 @@ class _AuxiliaryUnitEditScreenState
     print('🔍 [DEBUG] 总计产品单位数量: ${productUnits.length}');
     for (int i = 0; i < productUnits.length; i++) {
       final pu = productUnits[i];
-      print(
-        '🔍 [DEBUG] 产品单位 ${i + 1}: ${pu.id} (换算率: ${pu.conversionRate})',
-      );
+      print('🔍 [DEBUG] 产品单位 ${i + 1}: ${pu.id} (换算率: ${pu.conversionRate})');
     }
     print('🔍 [DEBUG] ==================== 构建完成 ====================');
 
@@ -801,10 +866,7 @@ class _AuxiliaryUnitEditScreenState
           );
 
           if (unit.isNew) {
-            unit = Unit(
-              id: auxData.unitId,
-              name: auxData.unitName.trim(),
-            );
+            unit = Unit(id: auxData.unitId, name: auxData.unitName.trim());
           }
         }
 
@@ -812,8 +874,12 @@ class _AuxiliaryUnitEditScreenState
           id: auxData.id,
           unit: unit,
           conversionRate: auxData.conversionRate,
-          initialSellingPrice: double.tryParse(auxData.retailPriceInCents),
-          initialWholesalePrice: double.tryParse(auxData.wholesalePriceInCents),
+          initialSellingPrice: auxData.retailPriceInCents.isNotEmpty
+              ? (double.tryParse(auxData.retailPriceInCents) ?? 0) / 100
+              : null,
+          initialWholesalePrice: auxData.wholesalePriceInCents.isNotEmpty
+              ? (double.tryParse(auxData.wholesalePriceInCents) ?? 0) / 100
+              : null,
         );
 
         auxiliaryUnit.unitController.text = auxData.unitName;

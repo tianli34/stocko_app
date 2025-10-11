@@ -3,6 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../providers/inventory_query_providers.dart';
 import '../widgets/inventory_filter_bar.dart';
+import '../widgets/aggregated_inventory_card.dart';
+import '../widgets/simple_inventory_card.dart';
+import '../../domain/model/aggregated_inventory.dart';
 import '../../../../core/widgets/cached_image_widget.dart';
 
 /// 库存查询页面
@@ -12,6 +15,8 @@ class InventoryQueryScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final inventoryAsyncValue = ref.watch(inventoryQueryProvider);
+    final filterState = ref.watch(inventoryFilterProvider);
+    final isAggregatedMode = filterState.selectedShop == '所有仓库';
 
     return Scaffold(
       appBar: AppBar(
@@ -32,19 +37,19 @@ class InventoryQueryScreen extends ConsumerWidget {
             },
             itemBuilder: (BuildContext context) =>
                 <PopupMenuEntry<InventorySortType>>[
-              const PopupMenuItem<InventorySortType>(
-                value: InventorySortType.byQuantity,
-                child: Text('按库存数量排序'),
-              ),
-              const PopupMenuItem<InventorySortType>(
-                value: InventorySortType.byShelfLife,
-                child: Text('按剩余保质期排序'),
-              ),
-              const PopupMenuItem<InventorySortType>(
-                value: InventorySortType.none,
-                child: Text('默认排序'),
-              ),
-            ],
+                  const PopupMenuItem<InventorySortType>(
+                    value: InventorySortType.byQuantity,
+                    child: Text('按库存数量排序'),
+                  ),
+                  const PopupMenuItem<InventorySortType>(
+                    value: InventorySortType.byShelfLife,
+                    child: Text('按剩余保质期排序'),
+                  ),
+                  const PopupMenuItem<InventorySortType>(
+                    value: InventorySortType.none,
+                    child: Text('默认排序'),
+                  ),
+                ],
             icon: const Icon(Icons.sort),
             tooltip: '排序方式',
           ),
@@ -52,88 +57,24 @@ class InventoryQueryScreen extends ConsumerWidget {
       ),
       bottomNavigationBar: null,
       body: inventoryAsyncValue.when(
-        data: (inventoryListRaw) {
-          // 直接使用返回的Map数据，不需要转换为StockModel
-          final inventoryList = inventoryListRaw;
-
-          // 计算总数量
-          final totalQuantity = inventoryList.fold<int>(
-            0,
-            (previousValue, element) => previousValue + (element['quantity'] as num).toInt(),
-          );
-
-          // 计算总价值 - 注意：需要从产品数据中获取价格信息
-          // 由于当前数据结构中没有包含价格信息，暂时设为0
-          // 如果需要显示总价值，需要在InventoryQueryService中添加价格信息
-          final totalValue = inventoryList.fold<double>(
-            0,
-            (previousValue, element) => previousValue + (element['quantity'] as num) * (element['purchasePrice'] as num? ?? 0) / 100,
-          );
-
-          return Column(
-            children: [
-              // 筛选栏
-              const InventoryFilterBar(),
-
-              // Summary section
-              if (inventoryList.isNotEmpty)
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceAround,
-                    children: [
-                      _buildSummaryItem('品种', '${inventoryList.length}'),
-                      _buildSummaryItem('总数', '$totalQuantity'),
-                      _buildSummaryItem('总价值', '¥${totalValue.toStringAsFixed(2)}'),
-                    ],
-                  ),
-                ),
-
-              // 商品列表
-              Expanded(
-                child: inventoryList.isEmpty
-                    ? const Center(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(
-                              Icons.inventory_2_outlined,
-                              size: 64,
-                              color: Colors.grey,
-                            ),
-                            SizedBox(height: 16),
-                            Text(
-                              '暂无库存数据',
-                              style: TextStyle(fontSize: 16, color: Colors.grey),
-                            ),
-                          ],
-                        ),
-                      )
-                    : ListView.builder(
-                        padding: const EdgeInsets.all(16),
-                        itemCount: inventoryList.length,
-                        itemBuilder: (context, index) {
-                          final inventoryData = inventoryList[index];
-                          return Padding(
-                            padding: const EdgeInsets.only(bottom: 12),
-                            child: _buildInventoryCard(inventoryData),
-                          );
-                        },
-                      ),
-              ),
-            ],
-          );
+        data: (inventoryData) {
+          if (isAggregatedMode) {
+            // 聚合模式：使用AggregatedInventoryCard
+            final aggregatedList =
+                inventoryData as List<AggregatedInventoryItem>;
+            return _buildAggregatedView(aggregatedList);
+          } else {
+            // 原始模式：使用原有的卡片
+            final inventoryList = inventoryData as List<Map<String, dynamic>>;
+            return _buildOriginalView(inventoryList);
+          }
         },
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (error, stackTrace) => Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Icon(
-                Icons.error_outline,
-                size: 64,
-                color: Colors.red,
-              ),
+              const Icon(Icons.error_outline, size: 64, color: Colors.red),
               const SizedBox(height: 16),
               Text(
                 '加载库存数据失败',
@@ -159,24 +100,160 @@ class InventoryQueryScreen extends ConsumerWidget {
     );
   }
 
+  /// 构建聚合模式的视图
+  Widget _buildAggregatedView(List<AggregatedInventoryItem> aggregatedList) {
+    // 计算总数量
+    final totalQuantity = aggregatedList.fold<int>(
+      0,
+      (sum, item) => sum + item.totalQuantity,
+    );
+
+    // 计算总价值
+    final totalValue = aggregatedList.fold<double>(
+      0,
+      (sum, item) => sum + item.totalValue,
+    );
+
+    return Column(
+      children: [
+        // 筛选栏
+        const InventoryFilterBar(),
+
+        // Summary section
+        if (aggregatedList.isNotEmpty)
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              children: [
+                _buildSummaryItem('品种', '${aggregatedList.length}'),
+                _buildSummaryItem('总数', '$totalQuantity'),
+                _buildSummaryItem('总价值', '¥${totalValue.toStringAsFixed(2)}'),
+              ],
+            ),
+          ),
+
+        // 聚合商品列表
+        Expanded(
+          child: aggregatedList.isEmpty
+              ? const Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        Icons.inventory_2_outlined,
+                        size: 64,
+                        color: Colors.grey,
+                      ),
+                      SizedBox(height: 16),
+                      Text(
+                        '暂无库存数据',
+                        style: TextStyle(fontSize: 16, color: Colors.grey),
+                      ),
+                    ],
+                  ),
+                )
+              : ListView.builder(
+                  padding: const EdgeInsets.all(16),
+                  itemCount: aggregatedList.length,
+                  itemBuilder: (context, index) {
+                    final aggregatedItem = aggregatedList[index];
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 12),
+                      child: aggregatedItem.isExpandable
+                          ? AggregatedInventoryCard(item: aggregatedItem)
+                          : SimpleInventoryCard(item: aggregatedItem),
+                    );
+                  },
+                ),
+        ),
+      ],
+    );
+  }
+
+  /// 构建原始模式的视图
+  Widget _buildOriginalView(List<Map<String, dynamic>> inventoryList) {
+    // 计算总数量
+    final totalQuantity = inventoryList.fold<int>(
+      0,
+      (previousValue, element) =>
+          previousValue + (element['quantity'] as num).toInt(),
+    );
+
+    // 计算总价值
+    final totalValue = inventoryList.fold<double>(
+      0,
+      (previousValue, element) =>
+          previousValue +
+          (element['quantity'] as num) *
+              (element['purchasePrice'] as num? ?? 0) /
+              100,
+    );
+
+    return Column(
+      children: [
+        // 筛选栏
+        const InventoryFilterBar(),
+
+        // Summary section
+        if (inventoryList.isNotEmpty)
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              children: [
+                _buildSummaryItem('品种', '${inventoryList.length}'),
+                _buildSummaryItem('总数', '$totalQuantity'),
+                _buildSummaryItem('总价值', '¥${totalValue.toStringAsFixed(2)}'),
+              ],
+            ),
+          ),
+
+        // 商品列表
+        Expanded(
+          child: inventoryList.isEmpty
+              ? const Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        Icons.inventory_2_outlined,
+                        size: 64,
+                        color: Colors.grey,
+                      ),
+                      SizedBox(height: 16),
+                      Text(
+                        '暂无库存数据',
+                        style: TextStyle(fontSize: 16, color: Colors.grey),
+                      ),
+                    ],
+                  ),
+                )
+              : ListView.builder(
+                  padding: const EdgeInsets.all(16),
+                  itemCount: inventoryList.length,
+                  itemBuilder: (context, index) {
+                    final inventoryData = inventoryList[index];
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 12),
+                      child: _buildInventoryCard(inventoryData),
+                    );
+                  },
+                ),
+        ),
+      ],
+    );
+  }
+
   Widget _buildSummaryItem(String title, String value) {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Text(
-          title,
-          style: const TextStyle(
-            fontSize: 14,
-            color: Colors.grey,
-          ),
-        ),
+        Text(title, style: const TextStyle(fontSize: 14, color: Colors.grey)),
         const SizedBox(width: 4),
         Text(
           value,
-          style: const TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.bold,
-          ),
+          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
         ),
       ],
     );
@@ -196,14 +273,16 @@ class InventoryQueryScreen extends ConsumerWidget {
 
     // 计算保质期（如果有批次信息）
     String? shelfLifeText;
-    if (inventoryData['productionDate'] != null && 
+    if (inventoryData['productionDate'] != null &&
         inventoryData['shelfLifeDays'] != null &&
         inventoryData['shelfLifeUnit'] != null) {
       try {
-        final productionDate = DateTime.parse(inventoryData['productionDate'] as String);
+        final productionDate = DateTime.parse(
+          inventoryData['productionDate'] as String,
+        );
         final shelfLifeDays = inventoryData['shelfLifeDays'] as int;
         final shelfLifeUnit = inventoryData['shelfLifeUnit'] as String;
-        
+
         int shelfLifeInDays;
         switch (shelfLifeUnit) {
           case 'days':
@@ -218,7 +297,7 @@ class InventoryQueryScreen extends ConsumerWidget {
           default:
             shelfLifeInDays = shelfLifeDays;
         }
-        
+
         final expiryDate = productionDate.add(Duration(days: shelfLifeInDays));
         final remainingDays = expiryDate.difference(DateTime.now()).inDays;
 
@@ -275,16 +354,13 @@ class InventoryQueryScreen extends ConsumerWidget {
                     overflow: TextOverflow.ellipsis,
                   ),
                   const SizedBox(height: 4),
-                  
+
                   // 分类和店铺信息
                   Text(
                     '$categoryName · $shopName',
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: Colors.grey[600],
-                    ),
+                    style: TextStyle(fontSize: 12, color: Colors.grey[600]),
                   ),
-                  
+
                   if (shelfLifeText != null) ...[
                     const SizedBox(height: 4),
                     Text(
@@ -377,8 +453,4 @@ class InventoryQueryScreen extends ConsumerWidget {
 }
 
 /// 库存状态枚举
-enum _StockStatus {
-  normal,
-  lowStock,
-  outOfStock,
-}
+enum _StockStatus { normal, lowStock, outOfStock }

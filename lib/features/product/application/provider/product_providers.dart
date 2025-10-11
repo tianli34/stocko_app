@@ -115,7 +115,9 @@ class ProductOperationsNotifier extends AsyncNotifier<void> {
       int unitId,
       String unitName,
       int conversionRate,
-      int? wholesalePriceInCents
+      int? sellingPriceInCents,
+      int? wholesalePriceInCents,
+      int? averageUnitPriceInCents
     })?
   >
   getProductWithUnitByBarcode(String barcode) async {
@@ -128,7 +130,9 @@ class ProductOperationsNotifier extends AsyncNotifier<void> {
         unitId: result.unitId,
         unitName: result.unitName,
         conversionRate: result.conversionRate,
+        sellingPriceInCents: result.sellingPriceInCents,
         wholesalePriceInCents: result.wholesalePriceInCents,
+        averageUnitPriceInCents: result.averageUnitPriceInCents,
       );
     } catch (e, st) {
       state = AsyncValue.error(Exception('根据条码查询产品及单位失败: ${e.toString()}'), st);
@@ -296,6 +300,7 @@ final allProductsWithUnitProvider =
           int unitId,
           String unitName,
           int conversionRate,
+          int? sellingPriceInCents,
           int? wholesalePriceInCents
         })
       >
@@ -306,6 +311,7 @@ final allProductsWithUnitProvider =
         unitId: e.unitId,
         unitName: e.unitName,
         conversionRate: e.conversionRate,
+        sellingPriceInCents: e.sellingPriceInCents,
         wholesalePriceInCents: e.wholesalePriceInCents,
       )).toList());
     });

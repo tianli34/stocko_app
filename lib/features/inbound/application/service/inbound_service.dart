@@ -346,16 +346,7 @@ class InboundService {
   batchId = batchIdOnly;
       }
 
-      // 更新移动加权平均价格
-      await _weightedAveragePriceService.updateWeightedAveragePrice(
-        productId: item.model.productId,
-        shopId: shopId,
-        batchId: batchId,
-        inboundQuantity: item.model.quantity,
-        inboundUnitPriceInCents: item.unitPriceInCents,
-      );
-
-      // 记录库存流水
+      // 先更新库存数量和记录流水
       final success = await _inventoryService.inbound(
         productId: item.model.productId,
         shopId: shopId,
@@ -367,6 +358,16 @@ class InboundService {
       if (!success) {
         throw Exception('商品 ${item.productName} 库存更新失败');
       }
+
+      // 再更新移动加权平均价格（此时库存记录已存在）
+      await _weightedAveragePriceService.updateWeightedAveragePrice(
+        productId: item.model.productId,
+        shopId: shopId,
+        batchId: batchId,
+        inboundQuantity: item.model.quantity,
+        inboundUnitPriceInCents: item.unitPriceInCents,
+      );
+
       print('✅ 商品 ${item.productName} 库存和移动加权平均价格更新完成');
     }
   }

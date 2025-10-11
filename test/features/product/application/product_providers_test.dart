@@ -75,7 +75,7 @@ class _FakeRepo implements IProductRepository {
   Future<ProductModel?> getProductByBarcode(String barcode) async => null;
 
   @override
-  Future<({ProductModel product, int unitId, String unitName, int conversionRate, int? wholesalePriceInCents})?>
+  Future<({ProductModel product, int unitId, String unitName, int conversionRate, int? sellingPriceInCents, int? wholesalePriceInCents, int? averageUnitPriceInCents})?>
       getProductWithUnitByBarcode(String barcode) async => null;
 
   @override

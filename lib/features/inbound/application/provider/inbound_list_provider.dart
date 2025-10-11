@@ -34,7 +34,8 @@ class InboundItemState {
   int get amountInCents => quantity * unitPriceInCents;
 
   /// The total quantity in the base unit.
-  int get totalBaseQuantity => quantity * conversionRate;
+  // int get totalBaseQuantity => quantity * conversionRate;
+  int get totalBaseQuantity => quantity;
 
   InboundItemState copyWith({
     String? id,

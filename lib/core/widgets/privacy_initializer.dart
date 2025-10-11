@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../features/settings/presentation/widgets/privacy_policy_dialog.dart';
-import '../../features/settings/presentation/widgets/terms_of_service_dialog.dart';
 
 class PrivacyInitializer extends ConsumerStatefulWidget {
   const PrivacyInitializer({super.key, required this.child});
@@ -34,23 +34,10 @@ class _PrivacyInitializerState extends ConsumerState<PrivacyInitializer> {
       final prefs = await SharedPreferences.getInstance();
       
       bool isPrivacyPolicyAgreed = await _handlePrivacyPolicy(prefs);
-      bool isTermsOfServiceAgreed = await _handleTermsOfService(prefs);
 
       if (!isPrivacyPolicyAgreed && mounted) {
         _isDialogShown = true;
-        await _showPrivacyPolicyDialog(prefs, (context) async {
-          if (!isTermsOfServiceAgreed && mounted) {
-            await _showTermsOfServiceDialog(prefs, (context) {
-              Navigator.of(context).pop();
-            });
-          } else {
-            Navigator.of(context).pop();
-          }
-        });
-        _isDialogShown = false;
-      } else if (!isTermsOfServiceAgreed && mounted) {
-        _isDialogShown = true;
-        await _showTermsOfServiceDialog(prefs, (context) {
+        await _showPrivacyPolicyDialog(prefs, (context) {
           Navigator.of(context).pop();
         });
         _isDialogShown = false;
@@ -73,12 +60,8 @@ class _PrivacyInitializerState extends ConsumerState<PrivacyInitializer> {
     return isAgreed;
   }
 
-  Future<bool> _handleTermsOfService(SharedPreferences prefs) async {
-    return prefs.getBool('isTermsOfServiceAgreed') ?? false;
-  }
-
   Future<void> _showPrivacyPolicyDialog(SharedPreferences prefs, Function(BuildContext) onAgreed) async {
-    await showDialog(
+    final result = await showDialog<bool>(
       context: context,
       barrierDismissible: false,
       builder: (BuildContext context) {
@@ -90,21 +73,11 @@ class _PrivacyInitializerState extends ConsumerState<PrivacyInitializer> {
         );
       },
     );
-  }
-
-  Future<void> _showTermsOfServiceDialog(SharedPreferences prefs, Function(BuildContext) onAgreed) async {
-    await showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (BuildContext context) {
-        return TermsOfServiceDialog(
-          onAgreed: () async {
-            await prefs.setBool('isTermsOfServiceAgreed', true);
-            if (mounted) onAgreed(context);
-          },
-        );
-      },
-    );
+    
+    // 如果用户点击"不同意"，退出应用
+    if (result == false) {
+      SystemNavigator.pop();
+    }
   }
 
   @override

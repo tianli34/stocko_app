@@ -532,6 +532,68 @@ class UnifiedBackupService implements IBackupService {
 
   /// 获取备份目录
   Future<Directory> _getBackupDirectory() async {
+    // 方案1: 尝试使用公共下载目录（用户可通过文件管理器访问）
+    try {
+      // Android: /storage/emulated/0/Download/StockoBackups
+      // 注意：是 Download 不是 Downloads
+      final publicDownloadDir = Directory('/storage/emulated/0/Download/StockoBackups');
+      
+      if (!await publicDownloadDir.exists()) {
+        await publicDownloadDir.create(recursive: true);
+      }
+      
+      // 测试是否可写
+      final testFile = File(path.join(publicDownloadDir.path, '.test'));
+      await testFile.writeAsString('test');
+      await testFile.delete();
+      
+      return publicDownloadDir;
+    } catch (e) {
+      // 如果公共目录不可用，继续尝试其他位置
+    }
+    
+    // 方案2: 尝试使用外部存储目录
+    try {
+      final externalDir = await getExternalStorageDirectory();
+      if (externalDir != null) {
+        // 尝试导航到公共 Download 目录
+        final publicPath = '/storage/emulated/0/Download/StockoBackups';
+        final backupDir = Directory(publicPath);
+        
+        if (!await backupDir.exists()) {
+          await backupDir.create(recursive: true);
+        }
+        
+        // 测试是否可写
+        final testFile = File(path.join(backupDir.path, '.test'));
+        await testFile.writeAsString('test');
+        await testFile.delete();
+        
+        return backupDir;
+      }
+    } catch (e) {
+      // 继续尝试其他方案
+    }
+
+    // 方案3: 回退到应用私有的 Downloads 目录
+    try {
+      final downloadsDir = await getDownloadsDirectory();
+      if (downloadsDir != null) {
+        final backupDir = Directory(
+          path.join(downloadsDir.path, 'StockoBackups'),
+        );
+
+        if (!await backupDir.exists()) {
+          await backupDir.create(recursive: true);
+        }
+
+        return backupDir;
+      }
+    } catch (e) {
+      // 继续尝试其他方案
+    }
+
+    // 方案4: 回退到应用文档目录
     try {
       final appDir = await getApplicationDocumentsDirectory();
       final backupDir = Directory(path.join(appDir.path, 'backups'));
@@ -542,16 +604,18 @@ class UnifiedBackupService implements IBackupService {
 
       return backupDir;
     } catch (e) {
-      // 回退到临时目录
-      final tempDir = Directory.systemTemp;
-      final backupDir = Directory(path.join(tempDir.path, 'unified_backups'));
-
-      if (!await backupDir.exists()) {
-        await backupDir.create(recursive: true);
-      }
-
-      return backupDir;
+      // 最后的备用方案
     }
+    
+    // 方案5: 最后回退到临时目录
+    final tempDir = Directory.systemTemp;
+    final backupDir = Directory(path.join(tempDir.path, 'unified_backups'));
+
+    if (!await backupDir.exists()) {
+      await backupDir.create(recursive: true);
+    }
+
+    return backupDir;
   }
 
   /// 创建备份元数据

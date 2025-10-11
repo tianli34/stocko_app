@@ -37,27 +37,76 @@ class _CategorySelectionScreenState
     _loadProductCounts();
   }
 
-  /// 加载所有类别的产品数量
+  /// 加载所有类别的产品数量（包含子类别）
   Future<void> _loadProductCounts() async {
     final categoryState = ref.read(categoryListProvider);
     final productRepository = ref.read(productRepositoryProvider);
-    
-    for (final category in categoryState.categories) {
+    final allCategories = categoryState.categories;
+
+    for (final category in allCategories) {
       if (category.id != null) {
         try {
+          // 获取当前类别的产品数量
           final products = await productRepository.getProductsByCondition(
             categoryId: category.id,
           );
-          _categoryProductCounts[category.id!] = products.length;
+          int totalCount = products.length;
+
+          // 递归计算所有子类别的产品数量
+          totalCount += await _getSubCategoriesProductCount(
+            category.id!,
+            allCategories,
+            productRepository,
+          );
+
+          _categoryProductCounts[category.id!] = totalCount;
         } catch (e) {
           _categoryProductCounts[category.id!] = 0;
         }
       }
     }
-    
+
     if (mounted) {
       setState(() {});
     }
+  }
+
+  /// 递归计算子类别的产品总数
+  Future<int> _getSubCategoriesProductCount(
+    int parentId,
+    List<CategoryModel> allCategories,
+    dynamic productRepository,
+  ) async {
+    int count = 0;
+
+    // 获取直接子类别
+    final subCategories = allCategories
+        .where((cat) => cat.parentId == parentId)
+        .toList();
+
+    for (final subCategory in subCategories) {
+      if (subCategory.id != null) {
+        try {
+          // 获取子类别的产品数量
+          final products = await productRepository.getProductsByCondition(
+            categoryId: subCategory.id,
+          );
+          count += products.length as int;
+
+          // 递归计算子类别的子类别
+          final subCount = await _getSubCategoriesProductCount(
+            subCategory.id!,
+            allCategories,
+            productRepository,
+          );
+          count += subCount;
+        } catch (e) {
+          // 忽略错误，继续计算其他子类别
+        }
+      }
+    }
+
+    return count;
   }
 
   Future<void> _showSearchDialog(BuildContext context) async {
@@ -79,9 +128,7 @@ class _CategorySelectionScreenState
             decoration: InputDecoration(
               filled: true,
               fillColor: Theme.of(context).scaffoldBackgroundColor,
-              border: const OutlineInputBorder(
-                borderSide: BorderSide.none,
-              ),
+              border: const OutlineInputBorder(borderSide: BorderSide.none),
               contentPadding: const EdgeInsets.symmetric(
                 vertical: 15.0,
                 horizontal: 10.0,
@@ -111,10 +158,12 @@ class _CategorySelectionScreenState
     if (_searchQuery.isEmpty) {
       return categories;
     }
-    
+
     final lowerCaseQuery = _searchQuery.toLowerCase();
     return categories
-        .where((category) => category.name.toLowerCase().contains(lowerCaseQuery))
+        .where(
+          (category) => category.name.toLowerCase().contains(lowerCaseQuery),
+        )
         .toList();
   }
 
@@ -123,7 +172,7 @@ class _CategorySelectionScreenState
     final categoryState = ref.watch(categoryListProvider);
     final allCategories = categoryState.categories;
     final filteredCategories = _getFilteredCategories(allCategories);
-    
+
     // 当类别列表发生变化时，重新加载产品数量
     ref.listen(categoryListProvider, (previous, next) {
       if (previous?.categories != next.categories) {
@@ -139,10 +188,7 @@ class _CategorySelectionScreenState
                   const Icon(Icons.search, size: 20),
                   const SizedBox(width: 8),
                   Expanded(
-                    child: Text(
-                      _searchQuery,
-                      overflow: TextOverflow.ellipsis,
-                    ),
+                    child: Text(_searchQuery, overflow: TextOverflow.ellipsis),
                   ),
                   Text('(${filteredCategories.length})'),
                 ],
@@ -200,10 +246,17 @@ class _CategorySelectionScreenState
                 if (_searchQuery.isNotEmpty) {
                   // 搜索模式：显示扁平列表
                   final category = filteredCategories[index];
-                  return _buildCategoryTile(context, category, 0, allCategories);
+                  return _buildCategoryTile(
+                    context,
+                    category,
+                    0,
+                    allCategories,
+                  );
                 } else {
                   // 正常模式：显示层级结构
-                  final item = _buildHierarchicalList(filteredCategories)[index];
+                  final item = _buildHierarchicalList(
+                    filteredCategories,
+                  )[index];
                   return item;
                 }
               },
@@ -239,8 +292,7 @@ class _CategorySelectionScreenState
       final subCategories = allCategories
           .where((subCat) => subCat.parentId == category.id)
           .toList(); // 只有在展开状态下才递归添加子类别
-      final isExpanded = _expandedCategories[category.id!] ??
-          (level == 0); // 顶级类别默认展开，子类别默认收起
+      final isExpanded = _expandedCategories[category.id!] ?? false; // 所有类别默认收起
       if (isExpanded && subCategories.isNotEmpty) {
         for (final subCategory in subCategories) {
           _buildCategoryWithChildren(
@@ -267,8 +319,7 @@ class _CategorySelectionScreenState
     // 检查是否有子类别
     final hasSubCategories =
         allCategories?.any((cat) => cat.parentId == category.id) ?? false;
-    final isExpanded = _expandedCategories[category.id!] ??
-        (level == 0); // 顶级类别默认展开，子类别默认收起
+    final isExpanded = _expandedCategories[category.id!] ?? false; // 所有类别默认收起
 
     // 计算左侧边距
     final leftMargin = level * 24.0;
@@ -318,7 +369,10 @@ class _CategorySelectionScreenState
                     ),
                     const SizedBox(width: 8),
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 6,
+                        vertical: 2,
+                      ),
                       decoration: BoxDecoration(
                         color: Colors.blue.shade100,
                         borderRadius: BorderRadius.circular(10),
@@ -338,11 +392,11 @@ class _CategorySelectionScreenState
             ],
           ),
           subtitle: hasSubCategories
-          ? Text(
-              '${allCategories?.where((cat) => cat.parentId == category.id).length ?? 0} 个子类别',
-              style: const TextStyle(fontSize: 12, color: Colors.grey),
-            )
-          : null,
+              ? Text(
+                  '${allCategories?.where((cat) => cat.parentId == category.id).length ?? 0} 个子类别',
+                  style: const TextStyle(fontSize: 12, color: Colors.grey),
+                )
+              : null,
           trailing: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -551,8 +605,9 @@ class _CategorySelectionScreenState
                   await ref
                       .read(categoryListProvider.notifier)
                       .loadCategories();
-                  final updatedCategories =
-                      ref.read(categoryListProvider).categories;
+                  final updatedCategories = ref
+                      .read(categoryListProvider)
+                      .categories;
                   final newParent = updatedCategories.firstWhere(
                     (cat) => cat.name == nameController.text.trim(),
                   );
@@ -567,8 +622,10 @@ class _CategorySelectionScreenState
                       );
 
                   Navigator.of(context).pop();
-                  showAppSnackBar(context,
-                      message: '父类"${nameController.text.trim()}"创建成功');
+                  showAppSnackBar(
+                    context,
+                    message: '父类"${nameController.text.trim()}"创建成功',
+                  );
                   _loadProductCounts(); // 重新加载产品数量
                 } catch (e) {
                   showAppSnackBar(context, message: '添加失败: $e', isError: true);

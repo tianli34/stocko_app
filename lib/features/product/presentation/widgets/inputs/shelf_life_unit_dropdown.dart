@@ -16,21 +16,17 @@ class ShelfLifeUnitDropdown extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        return DropdownButtonFormField2<String>(
+    return Align(
+      alignment: Alignment.centerLeft,
+      child: IntrinsicWidth(
+        child: DropdownButtonFormField2<String>(
           value: value,
           decoration: InputDecoration(
-            hintText: '保质期单位',
-            contentPadding: const EdgeInsets.symmetric(
-              horizontal: 16,
-              vertical: 0,
-            ),
-            filled: true,
-            fillColor: Theme.of(context).inputDecorationTheme.fillColor,
-            border: Theme.of(context).inputDecorationTheme.border,
-            enabledBorder: Theme.of(context).inputDecorationTheme.enabledBorder,
-            focusedBorder: Theme.of(context).inputDecorationTheme.focusedBorder,
+            contentPadding: EdgeInsets.zero,
+            filled: false,
+            border: InputBorder.none,
+            enabledBorder: InputBorder.none,
+            focusedBorder: InputBorder.none,
             hintStyle: Theme.of(context).inputDecorationTheme.hintStyle,
           ),
           items: options.map((unit) {
@@ -45,12 +41,19 @@ class ShelfLifeUnitDropdown extends StatelessWidget {
           onChanged: (val) {
             if (val != null) onChanged(val);
           },
+          buttonStyleData: ButtonStyleData(
+            padding: const EdgeInsets.only(right: 4),
+          ),
+          iconStyleData: IconStyleData(
+            icon: const Icon(Icons.arrow_drop_down),
+            iconSize: 24,
+          ),
           dropdownStyleData: DropdownStyleData(
-            width: constraints.maxWidth * 0.75,
+            maxHeight: 200,
             decoration: BoxDecoration(borderRadius: BorderRadius.circular(12)),
           ),
-        );
-      },
+        ),
+      ),
     );
   }
 

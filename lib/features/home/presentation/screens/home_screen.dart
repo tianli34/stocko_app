@@ -42,7 +42,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         unitId: result.unitId,
         unitName: result.unitName,
         conversionRate: result.conversionRate,
+        sellingPriceInCents: result.sellingPriceInCents,
         wholesalePriceInCents: result.wholesalePriceInCents,
+        averageUnitPriceInCents: result.averageUnitPriceInCents,
       );
 
       final action = await showProductInfoDialog(context, payload: payload);
@@ -100,14 +102,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 mainAxisSpacing: 16,
                 childAspectRatio: 2.8,
                 children: [
-                  ElevatedButton(
-                    onPressed: _scanAndShowProductDialog,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.blue,
-                      foregroundColor: Colors.white,
-                    ),
-                    child: const Text('扫码'),
-                  ),
                   ElevatedButton(
                     onPressed: () => context.push(AppRoutes.products),
                     child: const Text('产品管理'),

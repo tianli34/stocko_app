@@ -37,7 +37,7 @@ class BasicInfoSection extends StatelessWidget {
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const SizedBox(height: 32),
+                const SizedBox(height: 16),
                 Padding(
                   padding: const EdgeInsets.only(left: 16.0),
                   child: ProductImagePicker(
@@ -49,10 +49,10 @@ class BasicInfoSection extends StatelessWidget {
                 ),
               ],
             ),
-            const SizedBox(width: 32),
+            const SizedBox(width: 16),
           ],
         ),
-        const SizedBox(height: 32),
+        const SizedBox(height: 16),
         AppTextField(
           controller: nameController,
           label: '名称',
@@ -60,7 +60,7 @@ class BasicInfoSection extends StatelessWidget {
           focusNode: nameFocusNode,
           onFieldSubmitted: (_) => onNameSubmitted(),
         ),
-        const SizedBox(height: 32),
+        const SizedBox(height: 16),
         BarcodeSection(
           controller: barcodeController,
           onScan: onScan,

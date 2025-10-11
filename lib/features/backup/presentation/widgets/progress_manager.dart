@@ -1,5 +1,7 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:share_plus/share_plus.dart';
 
 import '../controllers/backup_controller.dart';
 import '../controllers/restore_controller.dart';
@@ -206,19 +208,27 @@ class ProgressManager extends ConsumerWidget {
     // 保留此方法以避免编译错误，但不执行任何操作
   }
 
-  void _shareBackupFile(BuildContext context, String filePath) {
-    // TODO: 实现文件分享功能
-    // 可以使用 share_plus 包来实现文件分享
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('备份文件路径: $filePath'),
-        action: SnackBarAction(
-          label: '复制',
-          onPressed: () {
-            // TODO: 复制到剪贴板
-          },
-        ),
-      ),
-    );
+  void _shareBackupFile(BuildContext context, String filePath) async {
+    try {
+      final file = File(filePath);
+      
+      if (!await file.exists()) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('备份文件不存在')),
+        );
+        return;
+      }
+      
+      // 使用 share_plus 分享文件
+      await Share.shareXFiles(
+        [XFile(filePath)],
+        text: '库存数据备份文件',
+        subject: '库存数据备份',
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('分享失败: ${e.toString()}')),
+      );
+    }
   }
 }

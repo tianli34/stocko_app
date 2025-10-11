@@ -4,13 +4,14 @@ import '../../../../core/database/products_table.dart';
 import '../../../../core/database/barcodes_table.dart';
 import '../../../../core/database/product_units_table.dart';
 import '../../../../core/database/units_table.dart';
+import '../../../../core/database/inventory_table.dart';
 
 part 'product_dao.g.dart';
 
 /// 产品数据访问对象 (DAO)
 /// 专门负责产品相关的数据库操作
 @DriftAccessor(
-  tables: [Product, Barcode, UnitProduct, Unit],
+  tables: [Product, Barcode, UnitProduct, Unit, Stock],
 )
 class ProductDao extends DatabaseAccessor<AppDatabase> with _$ProductDaoMixin {
   ProductDao(super.db);
@@ -45,6 +46,7 @@ class ProductDao extends DatabaseAccessor<AppDatabase> with _$ProductDaoMixin {
         int unitId,
         String unitName,
         int conversionRate,
+        int? sellingPriceInCents,
         int? wholesalePriceInCents
       })
     >
@@ -87,6 +89,7 @@ class ProductDao extends DatabaseAccessor<AppDatabase> with _$ProductDaoMixin {
             unitId: unitId,
             unitName: unitName,
             conversionRate: unitProduct?.conversionRate ?? 1,
+            sellingPriceInCents: unitProduct?.sellingPriceInCents,
             wholesalePriceInCents: unitProduct?.wholesalePriceInCents,
           );
         } catch (e) {
@@ -98,6 +101,7 @@ class ProductDao extends DatabaseAccessor<AppDatabase> with _$ProductDaoMixin {
             unitId: product.baseUnitId,
             unitName: '未知单位',
             conversionRate: 1,
+            sellingPriceInCents: null,
             wholesalePriceInCents: null,
           );
         }
@@ -109,6 +113,7 @@ class ProductDao extends DatabaseAccessor<AppDatabase> with _$ProductDaoMixin {
         int unitId,
         String unitName,
         int conversionRate,
+        int? sellingPriceInCents,
         int? wholesalePriceInCents
       })>[];
     });
@@ -252,7 +257,9 @@ class ProductDao extends DatabaseAccessor<AppDatabase> with _$ProductDaoMixin {
       int unitId,
       String unitName,
       int conversionRate,
-      int? wholesalePriceInCents
+      int? sellingPriceInCents,
+      int? wholesalePriceInCents,
+      int? averageUnitPriceInCents
     })?
   >
   getProductWithUnitByBarcode(String barcode) async {
@@ -291,12 +298,30 @@ class ProductDao extends DatabaseAccessor<AppDatabase> with _$ProductDaoMixin {
     final unit = result.readTable(db.unit);
     final unitProduct = result.readTable(db.unitProduct);
 
+    // 查询库存获取采购价（移动加权平均价）
+    // 这里获取所有店铺的库存，取第一个有库存的店铺的采购价
+    final stockQuery = select(db.stock)
+      ..where((tbl) => tbl.productId.equals(product.id))
+      ..orderBy([(tbl) => OrderingTerm.desc(tbl.quantity)])
+      ..limit(1);
+    
+    final stock = await stockQuery.getSingleOrNull();
+    final averageUnitPriceInCents = stock?.averageUnitPriceInCents;
+
+    // 如果 UnitProduct 表中的售价为 null，则回退使用 Product 表中的价格
+    // 优先级：UnitProduct.sellingPriceInCents > Product.retailPrice > Product.suggestedRetailPrice
+    final int? effectiveSellingPrice = unitProduct.sellingPriceInCents 
+        ?? product.retailPrice?.cents 
+        ?? product.suggestedRetailPrice?.cents;
+
     return (
       product: product,
       unitId: unit.id,
       unitName: unit.name,
       conversionRate: unitProduct.conversionRate,
+      sellingPriceInCents: effectiveSellingPrice,
       wholesalePriceInCents: unitProduct.wholesalePriceInCents,
+      averageUnitPriceInCents: averageUnitPriceInCents,
     );
   }
 

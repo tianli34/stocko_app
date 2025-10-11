@@ -1,12 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import '../database/database_providers.dart';
+import '../services/user_agreement_provider.dart';
 import '../../features/settings/presentation/widgets/privacy_policy_dialog.dart';
 
 /// 应用启动初始化Widget
-/// 1. 进行数据库初始化
-/// 2. 检查并显示隐私政策弹窗
+/// 负责数据库初始化和用户协议检查
 class AppInitializer extends ConsumerStatefulWidget {
   final Widget child;
 
@@ -17,79 +16,59 @@ class AppInitializer extends ConsumerStatefulWidget {
 }
 
 class _AppInitializerState extends ConsumerState<AppInitializer> {
-  final bool _isPrivacyDialogShown = false;
+  bool _agreementDialogShown = false;
 
   @override
   Widget build(BuildContext context) {
-    // 仍然依赖数据库初始化
     final initializationState = ref.watch(databaseInitializationProvider);
+    final agreementStatus = ref.watch(userAgreementStatusProvider);
 
     return initializationState.when(
-      data: (_) => _PrivacyWrapper(child: widget.child), // 初始化完成，显示主应用
-      loading: () => const _LoadingScreen(), // 显示加载界面
+      data: (_) {
+        // 数据库初始化完成后，检查用户协议
+        return agreementStatus.when(
+          data: (hasAccepted) {
+            if (!hasAccepted && !_agreementDialogShown) {
+              // 用户未同意协议，显示协议对话框
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                if (mounted && !_agreementDialogShown) {
+                  _agreementDialogShown = true;
+                  _showAgreementDialog();
+                }
+              });
+            }
+            return widget.child;
+          },
+          loading: () => const _LoadingScreen(),
+          error: (error, stackTrace) => _ErrorScreen(
+            error: error,
+            onRetry: () => ref.invalidate(userAgreementStatusProvider),
+          ),
+        );
+      },
+      loading: () => const _LoadingScreen(),
       error: (error, stackTrace) => _ErrorScreen(
         error: error,
         onRetry: () => ref.invalidate(databaseInitializationProvider),
       ),
     );
   }
-}
 
-/// 隐私政策包装器
-class _PrivacyWrapper extends StatefulWidget {
-  final Widget child;
-
-  const _PrivacyWrapper({required this.child});
-
-  @override
-  State<_PrivacyWrapper> createState() => _PrivacyWrapperState();
-}
-
-class _PrivacyWrapperState extends State<_PrivacyWrapper> {
-  bool _isDialogShown = false;
-
-  @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _showPrivacyDialogIfNeeded();
-    });
-  }
-
-  Future<void> _showPrivacyDialogIfNeeded() async {
-    if (_isDialogShown || !mounted) return;
-    
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      final isAgreed = prefs.getBool('isPrivacyPolicyAgreed') ?? false;
-
-      if (!isAgreed && mounted) {
-        _isDialogShown = true;
-        
-        await showDialog(
-          context: context,
-          barrierDismissible: false,
-          builder: (BuildContext context) {
-            return PrivacyPolicyDialog(
-              onAgreed: () async {
-                await prefs.setBool('isPrivacyPolicyAgreed', true);
-                if (mounted) {
-                  Navigator.of(context).pop();
-                }
-              },
-            );
-          },
-        );
-        _isDialogShown = false;
-      }
-    } catch (e) {
-      print('❗ 隐私政策检查失败: $e');
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return widget.child;
+  void _showAgreementDialog() {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => PrivacyPolicyDialog(
+        onAgreed: () async {
+          final service = ref.read(userAgreementServiceProvider);
+          await service.acceptAgreement();
+          ref.invalidate(userAgreementStatusProvider);
+          if (mounted) {
+            Navigator.of(context).pop();
+          }
+        },
+      ),
+    );
   }
 }
 

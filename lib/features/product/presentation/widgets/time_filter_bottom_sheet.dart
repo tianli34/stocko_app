@@ -619,42 +619,65 @@ class _MonthlySelector extends ConsumerWidget {
 class _ActionButtons extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    // 移除了未使用的 colorScheme 变量
-
     return Padding(
       padding: const EdgeInsets.all(16),
-      child: Row(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
         children: [
-          // 重置按钮
-          Expanded(
-            child: OutlinedButton(
+          // 全部按钮
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton.icon(
               onPressed: () {
-                // 重置到默认状态
-                ref.read(timeFilterModeProvider.notifier).state = TimeFilterMode.daily;
-                ref.read(selectedDateProvider.notifier).state = DateTime.now();
-                ref.read(selectedMonthProvider.notifier).state = DateTime.now();
+                // 设置为全部时间
+                final now = DateTime.now();
+                final endOpen = DateTime(now.year, now.month, now.day).add(const Duration(days: 1));
+                final start = DateTime(2000, 1, 1);
+                ref.read(rankingRangeProvider.notifier).state = RankingRange(start, endOpen);
+                Navigator.of(context).pop();
               },
+              icon: const Icon(Icons.all_inclusive),
+              label: const Text('全部'),
               style: OutlinedButton.styleFrom(
                 padding: const EdgeInsets.symmetric(vertical: 12),
               ),
-              child: const Text('重置'),
             ),
           ),
-
-          const SizedBox(width: 16),
-
-          // 确定按钮
-          Expanded(
-            child: FilledButton(
-              onPressed: () {
-                _applyTimeFilter(ref);
-                Navigator.of(context).pop();
-              },
-              style: FilledButton.styleFrom(
-                padding: const EdgeInsets.symmetric(vertical: 12),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              // 重置按钮
+              Expanded(
+                child: OutlinedButton(
+                  onPressed: () {
+                    // 重置到默认状态
+                    ref.read(timeFilterModeProvider.notifier).state = TimeFilterMode.daily;
+                    ref.read(selectedDateProvider.notifier).state = DateTime.now();
+                    ref.read(selectedMonthProvider.notifier).state = DateTime.now();
+                  },
+                  style: OutlinedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                  ),
+                  child: const Text('重置'),
+                ),
               ),
-              child: const Text('确定'),
-            ),
+
+              const SizedBox(width: 16),
+
+              // 确定按钮
+              Expanded(
+                child: FilledButton(
+                  onPressed: () {
+                    _applyTimeFilter(ref);
+                    Navigator.of(context).pop();
+                  },
+                  style: FilledButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                  ),
+                  child: const Text('确定'),
+                ),
+              ),
+            ],
           ),
         ],
       ),
