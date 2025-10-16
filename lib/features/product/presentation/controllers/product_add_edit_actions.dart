@@ -74,6 +74,9 @@ class ProductAddEditActions {
     required int? currentUnitId,
     required String currentUnitName,
   }) async {
+    // ✅ 标记用户已进入辅单位编辑页面
+    ref.read(productFormUiProvider.notifier).setHasEnteredAuxUnitPage(true);
+    
     final dynamic result = await ProductFormCoordinator.editAuxiliaryUnits(
       context,
       ref,

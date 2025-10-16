@@ -63,13 +63,7 @@ class _UnitTypeAheadFieldState extends State<UnitTypeAheadField> {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        border: Border.all(color: Colors.grey.shade300),
-        borderRadius: BorderRadius.circular(8),
-      ),
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      child: Row(
+    return Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           // 标签显示在左边
@@ -87,51 +81,52 @@ class _UnitTypeAheadFieldState extends State<UnitTypeAheadField> {
             ),
           ),
           Expanded(
-            child: TypeAheadField<Unit>(
-              controller: widget.controller,
-              suggestionsCallback: (pattern) {
-                if (pattern.isEmpty) return Future.value(widget.units);
-                final filtered = widget.units
-                    .where((u) => u.name
-                        .replaceAll(' ', '')
-                        .toLowerCase()
-                        .contains(pattern.toLowerCase()))
-                    .toList();
-                return Future.value(filtered);
-              },
-              itemBuilder: (context, Unit suggestion) => ListTile(
-                title: Text(
-                  suggestion.name,
-                  style: Theme.of(context).textTheme.bodyLarge,
-                ),
-                dense: true,
-              ),
-              onSelected: widget.onSelected,
-              builder: (context, c, fNode) {
-                return TextField(
-                  controller: c,
-                  focusNode: widget.focusNode, // 使用外部传入的 focusNode 以便页面控制焦点
-                  onSubmitted: (_) => widget.onSubmitted?.call(),
-                  inputFormatters: [
-                    FilteringTextInputFormatter.deny(RegExp(r'\s')),
-                  ],
-                  decoration: InputDecoration(
-                    hintText: _isFocused ? '' : '',
-                    isDense: true,
-                    contentPadding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
-                    errorText: widget.errorTextBuilder?.call(),
-                    helperText: widget.helperText,
-                    helperStyle: TextStyle(
-                      color: Colors.green.shade600,
-                      fontSize: 12,
-                    ),
-                    
+            child: SizedBox(
+              height: 48,
+              child: TypeAheadField<Unit>(
+                controller: widget.controller,
+                suggestionsCallback: (pattern) {
+                  if (pattern.isEmpty) return Future.value(widget.units);
+                  final filtered = widget.units
+                      .where((u) => u.name
+                          .replaceAll(' ', '')
+                          .toLowerCase()
+                          .contains(pattern.toLowerCase()))
+                      .toList();
+                  return Future.value(filtered);
+                },
+                itemBuilder: (context, Unit suggestion) => ListTile(
+                  title: Text(
+                    suggestion.name,
+                    style: Theme.of(context).textTheme.bodyLarge,
                   ),
-                );
-              },
-              emptyBuilder: (context) => const Padding(
-                padding: EdgeInsets.all(0.0),
-                child: Text('未找到匹配的单位'),
+                  dense: true,
+                ),
+                onSelected: widget.onSelected,
+                builder: (context, c, fNode) {
+                  return TextField(
+                    controller: c,
+                    focusNode: widget.focusNode, // 使用外部传入的 focusNode 以便页面控制焦点
+                    onSubmitted: (_) => widget.onSubmitted?.call(),
+                    inputFormatters: [
+                      FilteringTextInputFormatter.deny(RegExp(r'\s')),
+                    ],
+                    decoration: InputDecoration(
+                      hintText: _isFocused ? '' : '',
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                      errorText: widget.errorTextBuilder?.call(),
+                      helperText: widget.helperText,
+                      helperStyle: TextStyle(
+                        color: Colors.green.shade600,
+                        fontSize: 12,
+                      ),
+                    ),
+                  );
+                },
+                emptyBuilder: (context) => const Padding(
+                  padding: EdgeInsets.all(0.0),
+                  child: Text('未找到匹配的单位'),
+                ),
               ),
             ),
           ),
@@ -147,7 +142,6 @@ class _UnitTypeAheadFieldState extends State<UnitTypeAheadField> {
             tooltip: '选择单位',
           ),
         ],
-      ),
     );
   }
 }

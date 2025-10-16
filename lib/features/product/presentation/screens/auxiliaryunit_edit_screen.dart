@@ -814,6 +814,9 @@ class _AuxiliaryUnitEditScreenState
       if (productUnits.isNotEmpty) {
         print('🔍 数据有效，返回产品单位数据');
 
+        // ✅ 先保存到 unitEditFormProvider，确保下次进入时能恢复数据
+        _saveCurrentDataToFormProvider();
+
         // 返回包含产品单位和条码信息的数据
         Navigator.of(context).pop({
           'productUnits': productUnits,
@@ -827,6 +830,54 @@ class _AuxiliaryUnitEditScreenState
       print('❌ 返回处理异常: $e\n$s');
       // 发生异常时，简单返回
       Navigator.of(context).pop();
+    }
+  }
+
+  /// 将当前编辑的辅单位数据保存到 FormProvider，确保数据持久化
+  void _saveCurrentDataToFormProvider() {
+    print('🔍 保存当前数据到 unitEditFormProvider');
+    try {
+      final auxiliaryUnitsData = _auxiliaryUnits.map((aux) {
+        // 将元转换为分存储
+        String retailPriceInCents = '';
+        if (aux.retailPriceController.text.trim().isNotEmpty) {
+          final priceInYuan = double.tryParse(
+            aux.retailPriceController.text.trim(),
+          );
+          if (priceInYuan != null) {
+            retailPriceInCents = (priceInYuan * 100).round().toString();
+          }
+        }
+
+        String wholesalePriceInCents = '';
+        if (aux.wholesalePriceController.text.trim().isNotEmpty) {
+          final priceInYuan = double.tryParse(
+            aux.wholesalePriceController.text.trim(),
+          );
+          if (priceInYuan != null) {
+            wholesalePriceInCents = (priceInYuan * 100).round().toString();
+          }
+        }
+
+        return AuxiliaryUnitData(
+          id: aux.id,
+          unitId: aux.unit?.id,
+          unitName: aux.unitController.text.trim(),
+          conversionRate: aux.conversionRate,
+          barcode: aux.barcodeController.text.trim(),
+          retailPriceInCents: retailPriceInCents,
+          wholesalePriceInCents: wholesalePriceInCents,
+        );
+      }).toList();
+
+      ref
+          .read(unitEditFormProvider.notifier)
+          .setAuxiliaryUnits(auxiliaryUnitsData, counter: _auxiliaryCounter);
+      print(
+        '✅ 数据已保存到 unitEditFormProvider，共 ${auxiliaryUnitsData.length} 个辅单位',
+      );
+    } catch (e, s) {
+      print('❌ 保存数据到 FormProvider 失败: $e\n$s');
     }
   }
 

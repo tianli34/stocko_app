@@ -31,15 +31,12 @@ class AppTextField extends StatefulWidget {
 
 class _AppTextFieldState extends State<AppTextField> {
   late FocusNode _focusNode;
-  bool _isFocused = false;
 
   @override
   void initState() {
     super.initState();
     // 使用传入的 focusNode 或创建一个新的
     _focusNode = widget.focusNode ?? FocusNode();
-    // 添加监听器
-    _focusNode.addListener(_onFocusChange);
   }
 
   @override
@@ -51,21 +48,9 @@ class _AppTextFieldState extends State<AppTextField> {
     super.dispose();
   }
 
-  void _onFocusChange() {
-    setState(() {
-      _isFocused = _focusNode.hasFocus;
-    });
-  }
-
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        border: Border.all(color: Colors.grey.shade300),
-        borderRadius: BorderRadius.circular(8),
-      ),
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      child: Row(
+    return Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           // 标签显示在左边
@@ -84,28 +69,31 @@ class _AppTextFieldState extends State<AppTextField> {
           ),
           // 输入框
           Expanded(
-            child: TextFormField(
-              controller: widget.controller,
-              focusNode: _focusNode,
-              keyboardType: widget.keyboardType,
-              maxLines: widget.maxLines,
-              onFieldSubmitted: widget.onFieldSubmitted,
-              decoration: InputDecoration(
-                prefixIcon: widget.icon != null ? Icon(widget.icon) : null,
-                prefixText: widget.prefixText,
-              ),
-              validator: widget.isRequired
-                  ? (value) {
-                      if (value == null || value.trim().isEmpty) {
-                        return '${widget.label}不能为空';
+            child: SizedBox(
+              height: 48,
+              child: TextFormField(
+                controller: widget.controller,
+                focusNode: _focusNode,
+                keyboardType: widget.keyboardType,
+                maxLines: widget.maxLines,
+                onFieldSubmitted: widget.onFieldSubmitted,
+                decoration: InputDecoration(
+                  prefixIcon: widget.icon != null ? Icon(widget.icon) : null,
+                  prefixText: widget.prefixText,
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                ),
+                validator: widget.isRequired
+                    ? (value) {
+                        if (value == null || value.trim().isEmpty) {
+                          return '${widget.label}不能为空';
+                        }
+                        return null;
                       }
-                      return null;
-                    }
-                  : null,
+                    : null,
+              ),
             ),
           ),
         ],
-      ),
     );
   }
 }

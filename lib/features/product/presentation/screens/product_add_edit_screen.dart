@@ -65,7 +65,7 @@ class _ProductAddEditScreenState extends ConsumerState<ProductAddEditScreen> {
     });
     // 初始化表单控制器
     _c = ProductFormControllers()..init(widget.product);
-    
+
     // 如果有初始条码，填充到条码输入框并让名称输入框获得焦点
     if (widget.initialBarcode != null && widget.initialBarcode!.isNotEmpty) {
       _c.barcodeController.text = widget.initialBarcode!;
@@ -136,7 +136,7 @@ class _ProductAddEditScreenState extends ConsumerState<ProductAddEditScreen> {
               // 显示加载状态
               if (operationsState.isLoading) const LinearProgressIndicator(),
 
-               // 表单内容
+              // 表单内容
               Expanded(
                 child: SingleChildScrollView(
                   padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -289,21 +289,15 @@ class _ProductAddEditScreenState extends ConsumerState<ProductAddEditScreen> {
                         ),
                       ),
                       const SizedBox(height: 16),
-                      AppTextField(
-                        controller: _c.retailPriceController,
-                        label: '零售价',
-                        keyboardType: TextInputType.number,
-                        prefixText: '¥ ',
-                        focusNode: _c.retailPriceFocusNode,
-                        onFieldSubmitted: (_) =>
-                            _c.shelfLifeFocusNode.requestFocus(),
-                      ),
-                      const SizedBox(height: 16),
                       PricingSection(
+                        retailPriceController: _c.retailPriceController,
                         promotionalPriceController:
                             _c.promotionalPriceController,
                         suggestedRetailPriceController:
                             _c.suggestedRetailPriceController,
+                        retailPriceFocusNode: _c.retailPriceFocusNode,
+                        onRetailPriceSubmitted: () =>
+                            _c.shelfLifeFocusNode.requestFocus(),
                       ),
                       const SizedBox(height: 16),
                       AppTextField(

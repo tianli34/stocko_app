@@ -11,6 +11,7 @@ class ProductFormUiState {
   final List<Map<String, String>>? auxiliaryUnitBarcodes;
   final String shelfLifeUnit; // days | months | years
   final bool enableBatchManagement;
+  final bool hasEnteredAuxUnitPage; // 是否进入过辅单位编辑页面
 
   const ProductFormUiState({
     this.selectedCategoryId,
@@ -20,6 +21,7 @@ class ProductFormUiState {
     this.auxiliaryUnitBarcodes,
     this.shelfLifeUnit = 'months',
     this.enableBatchManagement = false,
+    this.hasEnteredAuxUnitPage = false,
   });
 
   ProductFormUiState copyWith({
@@ -35,24 +37,29 @@ class ProductFormUiState {
     bool auxiliaryUnitBarcodesToNull = false,
     String? shelfLifeUnit,
     bool? enableBatchManagement,
+    bool? hasEnteredAuxUnitPage,
   }) {
     return ProductFormUiState(
       selectedCategoryId: selectedCategoryIdToNull
           ? null
           : (selectedCategoryId ?? this.selectedCategoryId),
-      selectedUnitId:
-          selectedUnitIdToNull ? null : (selectedUnitId ?? this.selectedUnitId),
+      selectedUnitId: selectedUnitIdToNull
+          ? null
+          : (selectedUnitId ?? this.selectedUnitId),
       selectedImagePath: selectedImagePathToNull
           ? null
           : (selectedImagePath ?? this.selectedImagePath),
-      productUnits:
-          productUnitsToNull ? null : (productUnits ?? this.productUnits),
+      productUnits: productUnitsToNull
+          ? null
+          : (productUnits ?? this.productUnits),
       auxiliaryUnitBarcodes: auxiliaryUnitBarcodesToNull
           ? null
           : (auxiliaryUnitBarcodes ?? this.auxiliaryUnitBarcodes),
       shelfLifeUnit: shelfLifeUnit ?? this.shelfLifeUnit,
       enableBatchManagement:
           enableBatchManagement ?? this.enableBatchManagement,
+      hasEnteredAuxUnitPage:
+          hasEnteredAuxUnitPage ?? this.hasEnteredAuxUnitPage,
     );
   }
 }
@@ -101,12 +108,17 @@ class ProductFormUiNotifier extends StateNotifier<ProductFormUiState> {
     state = state.copyWith(enableBatchManagement: enable);
   }
 
+  void setHasEnteredAuxUnitPage(bool hasEntered) {
+    state = state.copyWith(hasEnteredAuxUnitPage: hasEntered);
+  }
+
   void reset() {
     state = const ProductFormUiState();
   }
 }
 
 final productFormUiProvider =
-    StateNotifierProvider.autoDispose<ProductFormUiNotifier, ProductFormUiState>(
-  (ref) => ProductFormUiNotifier(),
-);
+    StateNotifierProvider.autoDispose<
+      ProductFormUiNotifier,
+      ProductFormUiState
+    >((ref) => ProductFormUiNotifier());

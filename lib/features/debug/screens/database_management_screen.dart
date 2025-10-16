@@ -27,8 +27,7 @@ class DatabaseManagementScreen extends ConsumerWidget {
         padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [            
-
+          children: [
             const SizedBox(height: 16),
 
             // 初始化操作
@@ -216,8 +215,8 @@ class DatabaseManagementScreen extends ConsumerWidget {
             const SizedBox(width: 8),
             Expanded(
               child: OutlinedButton(
-                onPressed: () {}, // 保留位置以便后续添加其他功能
-                child: const Text('待添加'),
+                onPressed: () => _showProductUnitsData(context, ref),
+                child: const Text('查看产品单位'),
               ),
             ),
           ],
@@ -226,11 +225,16 @@ class DatabaseManagementScreen extends ConsumerWidget {
     );
   }
 
-  Future<void> _showOutboundReceiptsData(BuildContext context, WidgetRef ref) async {
+  Future<void> _showOutboundReceiptsData(
+    BuildContext context,
+    WidgetRef ref,
+  ) async {
     try {
       final database = ref.read(appDatabaseProvider);
-      final outboundReceipts = await database.select(database.outboundReceipt).get();
-      
+      final outboundReceipts = await database
+          .select(database.outboundReceipt)
+          .get();
+
       if (context.mounted) {
         showDialog(
           context: context,
@@ -254,7 +258,9 @@ class DatabaseManagementScreen extends ConsumerWidget {
                           Text('店铺ID: ${outboundReceipt.shopId}'),
                           Text('原因: ${outboundReceipt.reason}'),
                           if (outboundReceipt.salesTransactionId != null)
-                            Text('销售单ID: ${outboundReceipt.salesTransactionId}'),
+                            Text(
+                              '销售单ID: ${outboundReceipt.salesTransactionId}',
+                            ),
                           Text(
                             '创建时间: ${outboundReceipt.createdAt.toString().substring(0, 16)}',
                           ),
@@ -624,7 +630,9 @@ class DatabaseManagementScreen extends ConsumerWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text('产品ID: ${batch.productId}'),
-                        Text('totalInboundQuantity: ${batch.totalInboundQuantity}'),
+                        Text(
+                          'totalInboundQuantity: ${batch.totalInboundQuantity}',
+                        ),
                         Text(
                           '生产日期: ${batch.productionDate.toString().substring(0, 10)}',
                         ),
@@ -647,9 +655,14 @@ class DatabaseManagementScreen extends ConsumerWidget {
     }
   }
 
-  Future<void> _showSalesTransactionsData(BuildContext context, WidgetRef ref) async {
+  Future<void> _showSalesTransactionsData(
+    BuildContext context,
+    WidgetRef ref,
+  ) async {
     final database = ref.read(appDatabaseProvider);
-    final salesTransactions = await database.select(database.salesTransaction).get();
+    final salesTransactions = await database
+        .select(database.salesTransaction)
+        .get();
 
     if (context.mounted) {
       showDialog(
@@ -673,10 +686,15 @@ class DatabaseManagementScreen extends ConsumerWidget {
                       children: [
                         Text('客户ID: ${salesTransaction.customerId}'),
                         Text('店铺ID: ${salesTransaction.shopId}'),
-                        Text('总金额: ¥${salesTransaction.totalAmount.toStringAsFixed(2)}'),
-                        Text('实际金额: ¥${salesTransaction.actualAmount.toStringAsFixed(2)}'),
+                        Text(
+                          '总金额: ¥${salesTransaction.totalAmount.toStringAsFixed(2)}',
+                        ),
+                        Text(
+                          '实际金额: ¥${salesTransaction.actualAmount.toStringAsFixed(2)}',
+                        ),
                         Text('状态: ${salesTransaction.status}'),
-                        if (salesTransaction.remarks != null && salesTransaction.remarks!.isNotEmpty)
+                        if (salesTransaction.remarks != null &&
+                            salesTransaction.remarks!.isNotEmpty)
                           Text('备注: ${salesTransaction.remarks}'),
                         Text(
                           '创建时间: ${salesTransaction.createdAt.toString().substring(0, 16)}',
@@ -748,11 +766,16 @@ class DatabaseManagementScreen extends ConsumerWidget {
     }
   }
 
-  Future<void> _showSalesTransactionItemsData(BuildContext context, WidgetRef ref) async {
+  Future<void> _showSalesTransactionItemsData(
+    BuildContext context,
+    WidgetRef ref,
+  ) async {
     try {
       final database = ref.read(appDatabaseProvider);
-      final salesTransactionItems = await database.select(database.salesTransactionItem).get();
-      
+      final salesTransactionItems = await database
+          .select(database.salesTransactionItem)
+          .get();
+
       // 添加调试日志
       print('销售交易项数据查询结果: ${salesTransactionItems.length} 条记录');
 
@@ -772,7 +795,9 @@ class DatabaseManagementScreen extends ConsumerWidget {
                   return Card(
                     margin: const EdgeInsets.symmetric(vertical: 4),
                     child: ListTile(
-                      title: Text('销售交易ID: ${salesTransactionItem.salesTransactionId}'),
+                      title: Text(
+                        '销售交易ID: ${salesTransactionItem.salesTransactionId}',
+                      ),
                       subtitle: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -809,7 +834,7 @@ class DatabaseManagementScreen extends ConsumerWidget {
     try {
       final database = ref.read(appDatabaseProvider);
       final stockItems = await database.select(database.stock).get();
-      
+
       if (context.mounted) {
         showDialog(
           context: context,
@@ -852,6 +877,73 @@ class DatabaseManagementScreen extends ConsumerWidget {
       }
     } catch (e) {
       print('查询库存数据时出错: $e');
+      if (context.mounted) {
+        showAppSnackBar(context, message: '❌ 查询失败: $e', isError: true);
+      }
+    }
+  }
+
+  Future<void> _showProductUnitsData(
+    BuildContext context,
+    WidgetRef ref,
+  ) async {
+    try {
+      final database = ref.read(appDatabaseProvider);
+      final productUnits = await database.select(database.unitProduct).get();
+
+      if (context.mounted) {
+        showDialog(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: Text('产品单位数据 (${productUnits.length} 条)'),
+            content: SizedBox(
+              width: double.maxFinite,
+              height: 500,
+              child: ListView.builder(
+                shrinkWrap: true,
+                itemCount: productUnits.length,
+                itemBuilder: (context, index) {
+                  final productUnit = productUnits[index];
+                  return Card(
+                    margin: const EdgeInsets.symmetric(vertical: 4),
+                    child: ListTile(
+                      title: Text('ID: ${productUnit.id}'),
+                      subtitle: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text('产品ID: ${productUnit.productId}'),
+                          Text('单位ID: ${productUnit.unitId}'),
+                          Text('换算率: ${productUnit.conversionRate}'),
+                          if (productUnit.sellingPriceInCents != null)
+                            Text(
+                              '售价: ¥${(productUnit.sellingPriceInCents! / 100).toStringAsFixed(2)}',
+                            ),
+                          if (productUnit.wholesalePriceInCents != null)
+                            Text(
+                              '批发价: ¥${(productUnit.wholesalePriceInCents! / 100).toStringAsFixed(2)}',
+                            ),
+                          Text(
+                            '更新时间: ${productUnit.lastUpdated.toString().substring(0, 16)}',
+                          ),
+                        ],
+                      ),
+                      isThreeLine: true,
+                    ),
+                  );
+                },
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(),
+                child: const Text('关闭'),
+              ),
+            ],
+          ),
+        );
+      }
+    } catch (e) {
+      print('查询产品单位数据时出错: $e');
       if (context.mounted) {
         showAppSnackBar(context, message: '❌ 查询失败: $e', isError: true);
       }

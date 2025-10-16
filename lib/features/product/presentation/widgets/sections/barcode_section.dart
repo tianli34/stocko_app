@@ -43,13 +43,7 @@ class _BarcodeSectionState extends State<BarcodeSection> {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        border: Border.all(color: Colors.grey.shade300),
-        borderRadius: BorderRadius.circular(8),
-      ),
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      child: Row(
+    return Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           // 标签显示在左边
@@ -64,10 +58,16 @@ class _BarcodeSectionState extends State<BarcodeSection> {
             ),
           ),
           Expanded(
-            child: TextFormField(
-              controller: widget.controller,
-              focusNode: _focusNode,
-              decoration: InputDecoration(hintText: _isFocused ? '' : '建议优先扫码'),
+            child: SizedBox(
+              height: 48,
+              child: TextFormField(
+                controller: widget.controller,
+                focusNode: _focusNode,
+                decoration: InputDecoration(
+                  hintText: _isFocused ? '' : '建议优先扫码',
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                ),
+              ),
             ),
           ),
           const SizedBox(width: 8),
@@ -86,7 +86,6 @@ class _BarcodeSectionState extends State<BarcodeSection> {
             ),
           ),
         ],
-      ),
     );
   }
 }

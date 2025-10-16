@@ -56,20 +56,14 @@ class _ShelfLifeSectionState extends State<ShelfLifeSection> {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        border: Border.all(color: Colors.grey.shade300),
-        borderRadius: BorderRadius.circular(8),
-      ),
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      child: Row(
+    return Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           // 标签显示在左边
           SizedBox(
             width: 100,
             child: Padding(
-              padding: const EdgeInsets.only(right: 8),
+              padding: const EdgeInsets.only(right: 12),
               child: Text(
                 '保质期',
                 style: const TextStyle(
@@ -80,28 +74,27 @@ class _ShelfLifeSectionState extends State<ShelfLifeSection> {
             ),
           ),
           Expanded(
-            flex: 3,
-            child: TextFormField(
-              controller: widget.shelfLifeController,
-              focusNode: _focusNode,
-              keyboardType: TextInputType.number,
-              onFieldSubmitted: (_) => widget.onSubmitted?.call(),
-              decoration: InputDecoration(
-                hintText: _isFocused ? '' : '',
+            child: SizedBox(
+              height: 48,
+              child: TextFormField(
+                controller: widget.shelfLifeController,
+                focusNode: _focusNode,
+                keyboardType: TextInputType.number,
+                onFieldSubmitted: (_) => widget.onSubmitted?.call(),
+                decoration: InputDecoration(
+                  hintText: _isFocused ? '' : '',
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                ),
               ),
             ),
           ),
-          const SizedBox(width: 2),
-          Flexible(
-            flex: 2,
-            child: ShelfLifeUnitDropdown(
-              value: widget.shelfLifeUnit,
-              options: widget.shelfLifeUnitOptions,
-              onChanged: widget.onShelfLifeUnitChanged,
-            ),
+          const SizedBox(width: 8),
+          ShelfLifeUnitDropdown(
+            value: widget.shelfLifeUnit,
+            options: widget.shelfLifeUnitOptions,
+            onChanged: widget.onShelfLifeUnitChanged,
           ),
         ],
-      ),
     );
   }
 }
