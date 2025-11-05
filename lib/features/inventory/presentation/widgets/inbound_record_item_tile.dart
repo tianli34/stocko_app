@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/database/database.dart';
 import '../../../product/application/provider/product_providers.dart';
-import '../../application/provider/batch_providers.dart';
 
 class InboundRecordItemTile extends ConsumerWidget {
   final InboundItemData item;
@@ -12,7 +11,8 @@ class InboundRecordItemTile extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final productAsync = ref.watch(productByIdProvider(item.productId));
-    final batchAsync = ref.watch(batchByNumberProvider(item.id));
+    // 预留批次信息查询，未来可能使用
+    // final batchAsync = ref.watch(batchByNumberProvider(item.id));
 
     return ListTile(
       contentPadding: const EdgeInsets.only(

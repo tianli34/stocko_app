@@ -284,7 +284,7 @@ class BackupFileManager {
   static Future<int> getAvailableStorageSpace() async {
     try {
       final backupDir = await getBackupDirectory();
-      final stat = await backupDir.stat();
+      await backupDir.stat();
       
       // 在不同平台上获取可用空间的方法可能不同
       // 这里提供一个基本实现，实际应用中可能需要使用平台特定的API

@@ -34,8 +34,8 @@ class CompressionService implements ICompressionService {
       
       final stats = CompressionStats(
         originalSize: data.length,
-        compressedSize: compressedData?.length ?? 0,
-        compressionRatio: compressedData != null && data.length > 0
+        compressedSize: compressedData.length,
+        compressionRatio: data.length > 0
             ? (data.length - compressedData.length) / data.length
             : 0.0,
         compressionTime: compressionTime,
@@ -43,14 +43,14 @@ class CompressionService implements ICompressionService {
       );
 
       developer.log(
-        'Data compression completed: ${data.length} -> ${compressedData?.length ?? 0} bytes '
+        'Data compression completed: ${data.length} -> ${compressedData.length} bytes '
         '(${(stats.compressionRatio * 100).toStringAsFixed(1)}% reduction) '
         'in ${compressionTime.inMilliseconds}ms',
         name: 'CompressionService',
       );
 
       return CompressionResult(
-        compressedData: compressedData ?? [],
+        compressedData: compressedData,
         stats: stats,
       );
 
@@ -119,13 +119,6 @@ class CompressionService implements ICompressionService {
       
       // 压缩数据（archive包不支持level参数，使用默认压缩）
       final compressedData = GZipEncoder().encode(inputData);
-      
-      if (compressedData == null) {
-        throw BackupException(
-          type: BackupErrorType.compressionError,
-          message: '压缩数据失败',
-        );
-      }
 
       // 写入压缩文件
       final outputFile = File(outputPath);
@@ -321,13 +314,6 @@ class CompressionService implements ICompressionService {
       // 创建ZIP编码器并压缩
       final zipEncoder = ZipEncoder();
       final compressedData = zipEncoder.encode(archive);
-      
-      if (compressedData == null) {
-        throw BackupException(
-          type: BackupErrorType.compressionError,
-          message: 'ZIP压缩失败',
-        );
-      }
 
       // 写入压缩文件
       final outputFile = File(outputPath);

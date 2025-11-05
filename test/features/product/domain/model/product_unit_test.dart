@@ -105,7 +105,7 @@ void main() {
 
       test('原始对象未被修改', () {
         final originalTimestamp = productUnit.lastUpdated;
-        final updatedUnit = productUnit.updateTimestamp();
+        productUnit.updateTimestamp();
 
         // 原始对象的 lastUpdated 仍为null或旧值
         expect(productUnit.lastUpdated, equals(originalTimestamp));

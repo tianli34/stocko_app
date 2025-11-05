@@ -4,9 +4,10 @@ import 'package:fluttertoast/fluttertoast.dart';
 /// 备份通知服务
 /// 目前使用Toast显示通知，未来可以集成flutter_local_notifications
 class BackupNotificationService {
-  static const String _channelId = 'backup_notifications';
-  static const String _channelName = '备份通知';
-  static const String _channelDescription = '自动备份相关的通知';
+  // 预留的通知渠道配置，未来集成flutter_local_notifications时使用
+  // static const String _channelId = 'backup_notifications';
+  // static const String _channelName = '备份通知';
+  // static const String _channelDescription = '自动备份相关的通知';
 
   /// 初始化通知服务
   static Future<void> initialize() async {

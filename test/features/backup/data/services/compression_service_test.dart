@@ -1,5 +1,4 @@
 import 'dart:io';
-import 'dart:typed_data';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:stocko_app/features/backup/data/services/compression_service.dart';
 
@@ -72,7 +71,7 @@ void main() {
       await normalFile.writeAsString('Normal file content');
       
       // 创建压缩文件
-      final stats = await compressionService.compressFile(
+      await compressionService.compressFile(
         normalFile.path,
         compressedFile.path,
       );

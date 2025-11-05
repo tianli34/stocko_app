@@ -1,5 +1,4 @@
 import 'package:drift/drift.dart';
-import 'dart:developer' as developer;
 import '../../../../core/database/database.dart';
 import '../../domain/models/backup_exception.dart';
 import '../../domain/models/backup_error_type.dart';

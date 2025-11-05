@@ -1,0 +1,342 @@
+[33mcommit f25a83944301c125e26094d4b7c4f050141a8334[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m, [m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m)[m
+Author: LiSama <lisama@example.com>
+Date:   Thu Oct 16 22:46:25 2025 +0800
+
+    1016 24 57 1K
+
+[33mcommit cad14c003e09a4ef294475c4afc25e3f6fea0899[m
+Author: LiSama <lisama@example.com>
+Date:   Sat Oct 11 21:48:31 2025 +0800
+
+    1011 24 58 995
+
+[33mcommit 45e00ecf844d8d084da0ecd606b9a66e97076d92[m
+Author: LiSama <lisama@example.com>
+Date:   Fri Oct 3 08:50:24 2025 +0800
+
+    103 45 854 备份恢复修复
+
+[33mcommit a2254612929c13101cb097d01e0a0684379ddc33[m
+Author: LiSama <lisama@example.com>
+Date:   Sun Sep 28 23:06:02 2025 +0800
+
+    928 39 762 备份恢复
+
+[33mcommit 97da75586bba265f9f827c508b4e85428bc09ae1[m
+Author: LiSama <lisama@example.com>
+Date:   Thu Sep 11 22:40:00 2025 +0800
+
+    911 6 633 小修改
+
+[33mcommit 4b1612cb722e613c75c862111de7828ea39ceba8[m
+Merge: 453033e b90d440
+Author: LiSama <lisama@example.com>
+Date:   Thu Sep 11 16:14:05 2025 +0800
+
+    Merge feature-sale-v2: keep generated files ignored
+
+[33mcommit 453033e9eaa5c151c0aa494a138d14e7ddc1ef2e[m
+Author: LiSama <lisama@example.com>
+Date:   Thu Sep 11 16:04:30 2025 +0800
+
+    chore: ignore generated plugin registrants
+
+[33mcommit b6a6870c065b2bb7d5476f664d8c496ce0fe9477[m
+Author: LiSama <lisama@example.com>
+Date:   Thu Sep 11 15:55:02 2025 +0800
+
+    chore: remove generated plugin files from vcs
+
+[33mcommit b90d440912d4d5fe92f55c855d0804f221e48444[m[33m ([m[1;31morigin/feature-sale-v2[m[33m, [m[1;32mfeature-sale-v2[m[33m)[m
+Author: LiSama <lisama@example.com>
+Date:   Thu Sep 11 10:23:06 2025 +0800
+
+    911 4 636 采购入库不同单位货品合并
+
+[33mcommit e0c52303282b1664269ce786ebe7e330d7e1c7e7[m
+Author: LiSama <lisama@example.com>
+Date:   Wed Sep 10 22:46:37 2025 +0800
+
+    910 4 636 采购入库单位换算修复
+
+[33mcommit ad837ba884ce1e8ae287de747eed6a594ea742ff[m
+Author: LiSama <lisama@example.com>
+Date:   Sun Aug 31 22:21:12 2025 +0800
+
+    831 7 696 集成测试
+
+[33mcommit 6be8060b1a12d465cd7ac68aa26b6d21e0fd50b0[m
+Author: LiSama <lisama@example.com>
+Date:   Sat Aug 30 22:35:04 2025 +0800
+
+    830 11 643 单元测试
+
+[33mcommit d4afa2c7fe2ca37946bd254f00f230f5c42eb3c7[m
+Author: LiSama <lisama@example.com>
+Date:   Fri Aug 29 21:43:14 2025 +0800
+
+    829 6 597 更新
+
+[33mcommit af77e8a98de26ea4e295879389514542098f8f2a[m
+Author: LiSama <lisama@example.com>
+Date:   Wed Aug 27 21:47:44 2025 +0800
+
+    827 596 更新
+
+[33mcommit 2409619e3494d2d59542061f732740f425923051[m
+Author: LiSama <lisama@example.com>
+Date:   Wed Aug 27 21:47:10 2025 +0800
+
+    Add .gitattributes to suppress LF/CRLF warnings for generated files
+
+[33mcommit 413cc1e81b21b40c2cc290a44519917c74ae0281[m
+Author: LiSama <lisama@example.com>
+Date:   Wed Aug 27 21:34:55 2025 +0800
+
+    827 596 更新
+
+[33mcommit 2130854f46612b2d6d0a036ba0d5fe5afadb471d[m
+Author: LiSama <lisama@example.com>
+Date:   Fri Aug 22 21:44:09 2025 +0800
+
+    822 614 更新
+
+[33mcommit 0c9d0f29bfdc7db024b25b15aa4654aca1526554[m
+Author: LiSama <lisama@example.com>
+Date:   Thu Aug 21 22:12:36 2025 +0800
+
+    821 1 616 更新
+
+[33mcommit e60bb0455884d1294bd71b7f35a289652d33e64c[m
+Author: LiSama <lisama@example.com>
+Date:   Tue Aug 19 22:31:40 2025 +0800
+
+    819 613 更新
+
+[33mcommit b4b9faba4e0d53fb1473bfc5dad0168781dc8475[m
+Author: LiSama <lisama@example.com>
+Date:   Mon Aug 18 23:09:36 2025 +0800
+
+    0818 586 更新
+
+[33mcommit 5b565092171259bfe317709e3caa73cdc0fdd269[m
+Author: LiSama <lisama@example.com>
+Date:   Sun Aug 17 22:53:30 2025 +0800
+
+    0817 2 582 更新
+
+[33mcommit e275b1f6908fde9e360214b4f9abafac33daf7f9[m
+Author: LiSama <lisama@example.com>
+Date:   Thu Aug 14 23:14:25 2025 +0800
+
+    0814 596 Stock、InventoryTransaction 表更新
+
+[33mcommit c39d40c3d054c36e79b4a25a54006dbaa0db070a[m
+Author: LiSama <lisama@example.com>
+Date:   Wed Aug 13 22:08:09 2025 +0800
+
+    0813 595 ProductBatch 表更新
+
+[33mcommit 8dc94b3def031f80dcd4d33b80c0ff0bf25e1ef4[m
+Author: LiSama <lisama@example.com>
+Date:   Tue Aug 12 22:51:52 2025 +0800
+
+    0812 596 Product 表更新
+
+[33mcommit 7c6666400592535792a3ed5f825e97dd899ab43e[m
+Author: LiSama <lisama@example.com>
+Date:   Mon Aug 11 15:37:07 2025 +0800
+
+    0811 598 Category 表更新
+
+[33mcommit 0fb0a0ff960e0eaf2ce333f57dd47b91c5cb4502[m
+Author: LiSama <lisama@example.com>
+Date:   Mon Aug 11 12:05:11 2025 +0800
+
+    0811 616 Barcode 表更新
+
+[33mcommit 77980994086d6aa3f57fa29195169461242205b5[m
+Author: LiSama <lisama@example.com>
+Date:   Sun Aug 10 22:29:41 2025 +0800
+
+    0810 616 ProductUnit表更新
+
+[33mcommit a3535eb6838ebf22d093675a7aa7377b7c65b33c[m
+Author: LiSama <lisama@example.com>
+Date:   Sat Aug 9 21:18:26 2025 +0800
+
+    0809 3 621 unitid to int
+
+[33mcommit 34f99c54dc3bf74b9ed9dc991d1123bf8288881d[m
+Author: LiSama <lisama@example.com>
+Date:   Fri Aug 8 22:49:02 2025 +0800
+
+    0808 16 622 导航栏
+
+[33mcommit aa757d236e16a9c84d32ad788e344afab0828516[m
+Author: LiSama <lisama@example.com>
+Date:   Thu Aug 7 12:41:19 2025 +0800
+
+    0807 18 652 销售、调整库存
+
+[33mcommit 15575796528235cbb5daebd19fb0f34642a68da0[m
+Author: LiSama <lisama@example.com>
+Date:   Sun Aug 3 14:50:35 2025 +0800
+
+    0803 2 612采购UI
+
+[33mcommit 3f9cb70548b494cab294323b0020a5a86f0562be[m[33m ([m[1;31morigin/feature-sale[m[33m)[m
+Author: LiSama <lisama@example.com>
+Date:   Sat Aug 2 20:56:09 2025 +0800
+
+    0802 2 613
+
+[33mcommit 9082f2696b5bba4df5dc26dde3090c720bab56b7[m
+Author: tianli <409854721@qq.com>
+Date:   Wed Jul 23 07:29:19 2025 +0800
+
+    0723 3 626 销售分支前
+
+[33mcommit 4a88a617c251b37beefef90d9eda0e8220cdd32e[m
+Author: tianli <409854721@qq.com>
+Date:   Mon Jul 21 11:07:10 2025 +0800
+
+    0721 3 626 非采购模式
+
+[33mcommit 45ce773df2b35663e0b2097168e90a6c997d5abc[m
+Author: tianli <409854721@qq.com>
+Date:   Sun Jul 20 06:59:50 2025 +0800
+
+    0720 1 635 采购拆分前
+
+[33mcommit ef595c602266b5a92409d580d3bc0f44fc80bb55[m
+Author: tianli <409854721@qq.com>
+Date:   Sat Jul 19 08:42:04 2025 +0800
+
+    0719 1 635 分类筛选、搜索
+
+[33mcommit bad7910d7c98a64c372777386e6b2203b026a554[m
+Author: tianli <409854721@qq.com>
+Date:   Fri Jul 18 20:04:11 2025 +0800
+
+    0718 1 604 从文件导入货品
+
+[33mcommit f181fd60d2e8c7f7955f987426c2966aec202c98[m
+Author: tianli <409854721@qq.com>
+Date:   Tue Jul 15 20:40:31 2025 +0800
+
+    0715 1 592
+
+[33mcommit c31df24be0554176ad5cae4b1343d56e2ad58571[m
+Author: tianli <409854721@qq.com>
+Date:   Mon Jul 14 07:57:56 2025 +0800
+
+    0714 1 595图片测试前
+
+[33mcommit c8e7f4ebbc6efef6501b6ca24f72711f15b8e49d[m
+Author: tianli <409854721@qq.com>
+Date:   Sat Jul 12 06:17:17 2025 +0800
+
+    0712 2 595
+
+[33mcommit 7b21b0d14db8c200fb269d7fe9687106dc60719d[m
+Author: tianli <409854721@qq.com>
+Date:   Fri Jul 11 08:23:30 2025 +0800
+
+    0711 0 2 594
+
+[33mcommit dcbf54152d3fecdf7edb3bdd0aa0027872150f3c[m
+Author: tianli <409854721@qq.com>
+Date:   Sat Jul 5 15:15:02 2025 +0800
+
+    0705 0 4 588
+
+[33mcommit 50bcdc1401e84f35de32ab9d027aa008da627d75[m
+Author: tianli <409854721@qq.com>
+Date:   Tue Jul 1 17:38:05 2025 +0800
+
+    采购修改 0 1 618
+
+[33mcommit 674214bd417f5a5d6f66c0be2442335db5e82556[m
+Author: tianli <409854721@qq.com>
+Date:   Tue Jul 1 14:48:55 2025 +0800
+
+    单位表、产品单位关联表、条码表写入正常
+
+[33mcommit 1aa194741aeba273b884840c70e06b7cfa9a5f30[m
+Author: tianli <409854721@qq.com>
+Date:   Sat Jun 28 16:10:46 2025 +0800
+
+    删除编辑单位页基本单位前 0 1 456
+
+[33mcommit 620aea6865fdf4e77242dd2dac4653529376b270[m
+Author: tianli <409854721@qq.com>
+Date:   Mon Jun 23 16:24:26 2025 +0800
+
+    重构product_add_edit_screen.dart前 10 3 512
+
+[33mcommit 713296de1b4670671c2d94c775cfd2e9e9941486[m
+Author: tianli <409854721@qq.com>
+Date:   Sun Jun 22 06:33:38 2025 +0800
+
+    ProductController 重构前
+
+[33mcommit b7e4c57ed49d712c225736d45ad7448c92ebfdd6[m
+Author: tianli <409854721@qq.com>
+Date:   Thu Jun 19 22:33:37 2025 +0800
+
+    部分采购
+
+[33mcommit 8805b6448e6cfbe5adaa32fcfd360f3bf55346e6[m
+Author: tianli <409854721@qq.com>
+Date:   Wed Jun 18 20:48:07 2025 +0800
+
+    部分库存
+
+[33mcommit 39db138a6228fc5c207a35034d7f3aa6a3238b5f[m
+Author: tianli <409854721@qq.com>
+Date:   Fri Jun 13 22:08:27 2025 +0800
+
+    产品管理毛坯
+
+[33mcommit e7a0763b6911ab6ad91871c06af97eb1652b0c3f[m
+Author: tianli <409854721@qq.com>
+Date:   Thu Jun 12 20:22:26 2025 +0800
+
+    多单位已基本完成———已人工测试
+
+[33mcommit b8410fd652478ea801bdbeaf4c094753dc6601bb[m
+Author: tianli <409854721@qq.com>
+Date:   Wed Jun 11 16:41:45 2025 +0800
+
+    类别管理已基本完成———已人工测试
+
+[33mcommit b8ca9dd7f7e7c6bfcab3f31fa77e72fb91e277f8[m
+Author: tianli <409854721@qq.com>
+Date:   Wed Jun 11 15:56:53 2025 +0800
+
+    新增父类——未人工测试
+
+[33mcommit c4c2c7277b3273d75b5f14f60394286de787070d[m
+Author: tianli <409854721@qq.com>
+Date:   Wed Jun 11 15:38:32 2025 +0800
+
+    类别管理
+
+[33mcommit a6c0b0cb9a31931407c1bc035244389a7edfe742[m
+Author: tianli <409854721@qq.com>
+Date:   Tue Jun 10 17:42:30 2025 +0800
+
+    提交说明
+
+[33mcommit 0524df69dd90e699e932659bad5b5fab69767eb5[m
+Author: tianli <409854721@qq.com>
+Date:   Sun Jun 8 15:21:48 2025 +0800
+
+    Stage 1: Construction of the Core Foundation Layer (core/)
+
+[33mcommit feade807c2fb79dd9e07eec8676fb67e91bc29a7[m
+Author: tianli <409854721@qq.com>
+Date:   Fri Jun 6 21:05:56 2025 +0800
+
+    Initial commit: setup Flutter project structure and .gitignore

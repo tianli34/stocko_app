@@ -2,7 +2,7 @@
 
 cd E:\stocko_app\
 git add .
-git commit -m "1011 24 58 995"
+git commit -m "115 10 1K"
 git push
 
 

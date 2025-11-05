@@ -314,7 +314,6 @@ class _CategorySelectionScreenState
   ]) {
     final isSelected = widget.selectedCategoryId == category.id;
     final isSubCategory = level > 0;
-    final isThirdLevel = level > 1;
 
     // 检查是否有子类别
     final hasSubCategories =

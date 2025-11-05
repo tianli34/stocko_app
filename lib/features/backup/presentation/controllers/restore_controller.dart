@@ -1,11 +1,6 @@
-import 'dart:io';
-import 'dart:typed_data';
-
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:file_picker/file_picker.dart';
-import 'package:path_provider/path_provider.dart';
-import 'package:path/path.dart' as path;
 
 import '../../domain/models/backup_metadata.dart';
 import '../../domain/models/restore_preview.dart';
@@ -97,18 +92,16 @@ class RestoreController extends StateNotifier<RestoreState> {
           }
         }
         
-        if (filePath != null) {
-          state = state.copyWith(
-            selectedFilePath: filePath,
-            backupMetadata: null,
-            restorePreview: null,
-            requiresPassword: false,
-            password: null,
-          );
+        state = state.copyWith(
+          selectedFilePath: filePath,
+          backupMetadata: null,
+          restorePreview: null,
+          requiresPassword: false,
+          password: null,
+        );
           
-          // 尝试验证文件
-          await _validateBackupFile(filePath);
-        }
+        // 尝试验证文件
+        await _validateBackupFile(filePath);
       }
     } catch (e) {
       state = state.copyWith(

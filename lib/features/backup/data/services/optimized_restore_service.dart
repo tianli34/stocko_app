@@ -1,6 +1,5 @@
 import 'dart:convert';
 import 'dart:io';
-import 'dart:developer' as developer;
 
 import '../../../../core/database/database.dart';
 import '../../domain/models/backup_data.dart';

@@ -204,7 +204,7 @@ void main() {
 
     group('Freezed-specific features', () {
       test('对象是不可变的', () {
-        final unit = Unit(id: 1, name: '瓶');
+        Unit(id: 1, name: '瓶');
 
         // Freezed 生成的对象应该是不可变的
         expect(() {

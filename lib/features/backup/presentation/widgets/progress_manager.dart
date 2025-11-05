@@ -76,9 +76,10 @@ class ProgressManager extends ConsumerWidget {
         !current.progressInfo!.isCancelled) {
       // 检查是否已经显示了对话框
       bool isDialogAlreadyShown = false;
-      if (previous?.progressInfo != null && 
-          !previous!.progressInfo!.isCompleted && 
-          !previous!.progressInfo!.isCancelled) {
+      final prevProgress = previous?.progressInfo;
+      if (prevProgress != null && 
+          !prevProgress.isCompleted && 
+          !prevProgress.isCancelled) {
         isDialogAlreadyShown = true;
       }
       

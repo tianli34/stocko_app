@@ -292,8 +292,6 @@ class BackupLogger {
         'backup_logs_export_${DateTime.now().millisecondsSinceEpoch}.json'
       ));
       
-      final allLogs = <LogEntry>[];
-      
       // 收集文件日志
       final logFiles = await logsDir
           .list()
@@ -303,8 +301,8 @@ class BackupLogger {
       
       for (final file in logFiles) {
         try {
-          final content = await file.readAsString();
           // 这里可以解析日志文件内容，但为了简化，我们主要使用内存日志
+          await file.readAsString();
         } catch (e) {
           // 忽略无法读取的日志文件
         }

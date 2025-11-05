@@ -1,6 +1,5 @@
 import 'dart:io';
 import 'dart:convert';
-import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -120,7 +119,8 @@ void main() {
 
       // 示例：查找并点击恢复相关的按钮
       final restoreButton = find.text('恢复数据');
-      if (await tester.binding.defaultBinaryMessenger.checkMockMessageHandler('flutter/platform', null) == null) {
+      // 检查是否在真实环境中
+      if (restoreButton.evaluate().isNotEmpty) {
         // 只在真实环境中执行UI测试
         if (restoreButton.evaluate().isNotEmpty) {
           await tester.tap(restoreButton);

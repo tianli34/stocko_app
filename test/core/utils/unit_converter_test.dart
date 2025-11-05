@@ -8,13 +8,11 @@ void main() {
     // 测试用例数据
     late Unit baseUnit;
     late Unit packUnit;
-    late Unit bottleUnit;
     late List<UnitProduct> allUnits;
 
     setUp(() {
       baseUnit = Unit(id: 1, name: '瓶');
       packUnit = Unit(id: 2, name: '箱');
-      bottleUnit = Unit(id: 3, name: '瓶');
 
       allUnits = [
         UnitProduct(productId: 1, unitId: 1, conversionRate: 1), // 瓶 (基础)

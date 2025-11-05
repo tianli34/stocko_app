@@ -1,6 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:stocko_app/features/backup/data/services/performance_service.dart';
-import 'package:stocko_app/features/backup/domain/models/performance_metrics.dart';
 
 void main() {
   group('PerformanceService', () {
