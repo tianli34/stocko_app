@@ -30,7 +30,7 @@ void main() {
     await tester.pumpAndSettle();
 
     // Assert the home app bar/title exists
-    expect(find.text('Stocko - 首页'), findsOneWidget);
-    expect(find.text('欢迎使用 Stocko 库存管理系统'), findsOneWidget);
+    expect(find.text('铺得清 - 首页'), findsOneWidget);
+    expect(find.text('欢迎使用 铺得清 库存管理系统'), findsOneWidget);
   });
 }

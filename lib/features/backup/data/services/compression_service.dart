@@ -35,7 +35,7 @@ class CompressionService implements ICompressionService {
       final stats = CompressionStats(
         originalSize: data.length,
         compressedSize: compressedData.length,
-        compressionRatio: data.length > 0
+        compressionRatio: data.isNotEmpty
             ? (data.length - compressedData.length) / data.length
             : 0.0,
         compressionTime: compressionTime,

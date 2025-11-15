@@ -26,6 +26,7 @@ void main() {
     BarcodeScannerService.scannerBuilder = ({
       required BarcodeScannerConfig config,
       required OnBarcodeScanned onBarcodeScanned,
+      GetProductName? getProductName,
       Widget? loadingWidget,
       bool isLoading = false,
     }) => _FakeScanner(onBarcodeScanned: (code) {

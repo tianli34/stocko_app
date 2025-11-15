@@ -264,7 +264,7 @@ class _OperationMetrics {
     this.processedRecords = 0,
     DateTime? lastUpdateTime,
     MemoryUsage? peakMemory,
-    this.processingRate = 0.0,
   }) : lastUpdateTime = lastUpdateTime ?? startTime,
-       peakMemory = peakMemory ?? initialMemory;
+       peakMemory = peakMemory ?? initialMemory,
+       processingRate = 0.0;
 }

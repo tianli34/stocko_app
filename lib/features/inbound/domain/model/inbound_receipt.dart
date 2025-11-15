@@ -36,12 +36,25 @@ abstract class InboundReceiptModel with _$InboundReceiptModel {
     required DateTime updatedAt,
 
     /// 明细列表（仅领域层维护，不对应表字段）
-    @JsonKey(toJson: _itemsToJson, fromJson: _itemsFromJson)
     @Default(<InboundItemModel>[]) List<InboundItemModel> items,
   }) = _InboundReceiptModel;
 
-  factory InboundReceiptModel.fromJson(Map<String, dynamic> json) =>
-      _$InboundReceiptModelFromJson(json);
+  factory InboundReceiptModel.fromJson(Map<String, dynamic> json) {
+    final model = _$InboundReceiptModelFromJson(json);
+    // Handle items if present in JSON
+    if (json.containsKey('items') && json['items'] is List) {
+      final items = _itemsFromJson(json['items'] as List);
+      return model.copyWith(items: items);
+    }
+    return model;
+  }
+  
+  @override
+  Map<String, dynamic> toJson() {
+    final json = _$InboundReceiptModelToJson(this as _InboundReceiptModel);
+    json['items'] = _itemsToJson(items);
+    return json;
+  }
 
   /// 状态辅助
   bool get isPreset => status == InboundReceiptStatus.preset;

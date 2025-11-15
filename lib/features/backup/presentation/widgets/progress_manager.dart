@@ -200,14 +200,7 @@ class ProgressManager extends ConsumerWidget {
     }
   }
 
-  void _showRestoreResultDialog(
-    BuildContext context,
-    WidgetRef ref,
-    RestoreState state,
-  ) {
-    // 已由 RestoreProgressDialog 自动处理，无需额外弹窗
-    // 保留此方法以避免编译错误，但不执行任何操作
-  }
+  // Removed unused method _showRestoreResultDialog - functionality is handled by RestoreProgressDialog
 
   void _shareBackupFile(BuildContext context, String filePath) async {
     try {

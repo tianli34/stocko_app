@@ -99,7 +99,7 @@ class _LoadingScreen extends StatelessWidget {
 
               // App Title
               Text(
-                'Stocko App',
+                '铺得清 App',
                 style: TextStyle(
                   fontSize: 28,
                   fontWeight: FontWeight.bold,

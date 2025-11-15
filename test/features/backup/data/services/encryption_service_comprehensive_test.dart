@@ -334,7 +334,7 @@ void main() {
         final encryptedData = await encryptionService.encryptData(originalData, password);
         
         // Corrupt the encrypted data by changing a character
-        final corruptedData = encryptedData.substring(0, encryptedData.length - 5) + 'XXXXX';
+        final corruptedData = '${encryptedData.substring(0, encryptedData.length - 5)}XXXXX';
 
         // Act & Assert
         expect(

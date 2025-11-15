@@ -236,21 +236,7 @@ class DataImportRepository {
     }
   }
 
-  /// 导入指定表的数据（原版本，保持向后兼容）
-  Future<int> _importTable(
-    String tableName,
-    List<Map<String, dynamic>> records,
-    RestoreMode mode, {
-    int batchSize = 100,
-  }) async {
-    final result = await _importTableWithProgress(
-      tableName,
-      records,
-      mode,
-      batchSize: batchSize,
-    );
-    return result.successCount;
-  }
+  // Removed unused method _importTable - functionality is covered by _importTableWithProgress
 
   /// 分批导入表数据（增强版本，支持冲突检测）
   /// [tableName] 表名
@@ -318,15 +304,7 @@ class DataImportRepository {
     }
   }
 
-  /// 分批导入表数据（原版本，保持向后兼容）
-  Future<int> _importTableBatch(
-    String tableName,
-    List<Map<String, dynamic>> records,
-    RestoreMode mode,
-  ) async {
-    final result = await _importTableBatchEnhanced(tableName, records, mode);
-    return result.successCount;
-  }
+  // Removed unused method _importTableBatch - functionality is covered by _importTableBatchEnhanced
 
   /// 导入单条记录（增强版本，支持冲突检测）
   /// [tableName] 表名
@@ -380,21 +358,7 @@ class DataImportRepository {
     }
   }
 
-  /// 导入单条记录（原版本，保持向后兼容）
-  Future<bool> _importRecord(
-    String tableName,
-    Map<String, dynamic> record,
-    RestoreMode mode,
-  ) async {
-    final primaryKey = await _getPrimaryKeyColumn(tableName);
-    final result = await _importRecordWithConflictDetection(
-      tableName,
-      record,
-      mode,
-      primaryKey,
-    );
-    return result['success'] == true;
-  }
+  // Removed unused method _importRecord - functionality is covered by _importRecordWithConflictDetection
 
   /// 插入记录
   Future<void> _insertRecord(
@@ -526,34 +490,6 @@ class DataImportRepository {
     }
   }
 
-  /// 更新或插入记录（UPSERT）原版本，保持向后兼容
-  Future<bool> _upsertRecord(
-    String tableName,
-    Map<String, dynamic> record,
-  ) async {
-    final primaryKey = await _getPrimaryKeyColumn(tableName);
-    final result = await _upsertRecordWithConflictDetection(
-      tableName,
-      record,
-      primaryKey,
-    );
-    return result['success'] == true;
-  }
-
-  /// 仅在记录不存在时插入（原版本，保持向后兼容）
-  Future<bool> _insertIfNotExists(
-    String tableName,
-    Map<String, dynamic> record,
-  ) async {
-    final primaryKey = await _getPrimaryKeyColumn(tableName);
-    final result = await _insertIfNotExistsWithConflictDetection(
-      tableName,
-      record,
-      primaryKey,
-    );
-    return result['success'] == true;
-  }
-
   /// 更新记录
   Future<void> _updateRecord(
     String tableName,
@@ -568,7 +504,7 @@ class DataImportRepository {
 
     // 获取表的实际列信息，过滤掉不存在的列
     final validColumns = await _getValidColumnsForTable(tableName, record);
-    
+
     final updateColumns = validColumns.keys
         .where((key) => key != primaryKey)
         .map((key) => '$key = ?')

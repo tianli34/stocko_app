@@ -1,0 +1,3010 @@
+////////////////////////////////////////////////////////////////////////////////
+前 30 页 (第 1 - 1500 行)
+////////////////////////////////////////////////////////////////////////////////
+
+// ============================================================
+// 文件: main.dart
+// ============================================================
+// lib/main.dart
+
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:stocko_app/app.dart';
+import 'core/services/image_cache_service.dart';
+import 'config/flavor_config.dart';
+// AppInitializer is now injected inside StockoApp via MaterialApp.builder
+
+Future<void> runStockoApp(FlavorConfig config) async {
+  // 1. 确保 Flutter 引擎的绑定已经初始化。
+  WidgetsFlutterBinding.ensureInitialized();
+
+  // 2. 设置系统UI样式，移除底部导航栏的半透明遮罩
+  SystemChrome.setSystemUIOverlayStyle(
+    const SystemUiOverlayStyle(
+      systemNavigationBarColor: Colors.white, // 设置为白色或透明
+      systemNavigationBarIconBrightness: Brightness.dark, // 图标颜色
+      systemNavigationBarDividerColor: Colors.transparent, // 分隔线透明
+    ),
+  );
+
+  // 启用边到边显示（可选，让应用内容延伸到系统栏下方）
+  SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
+
+  // 3. 初始化图片缓存服务
+  final imageCacheService = ImageCacheService();
+  await imageCacheService.initialize();
+
+  // 4. 运行应用
+  runApp(
+    ProviderScope(
+      overrides: [flavorConfigProvider.overrideWithValue(config)],
+      child: const StockoApp(),
+    ),
+  );
+}
+
+void main() {
+  // 默认运行 personalized 配置
+  runStockoApp(
+    FlavorConfig(
+      flavor: AppFlavor.personalized,
+      appTitle: "定制版库存管理",
+      featureFlags: {Feature.showDatabaseTools: true},
+    ),
+  );
+}
+
+
+// ============================================================
+// 文件: app.dart
+// ============================================================
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
+import 'core/router/router_provider.dart';
+import 'core/theme/theme_provider.dart';
+import 'core/initialization/app_initializer.dart';
+
+class StockoApp extends ConsumerWidget {
+  const StockoApp({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    print('🏠 StockoApp build called');
+    final router = ref.watch(routerProvider);
+    
+    // 根据系统主题更新UI样式
+    final brightness = MediaQuery.platformBrightnessOf(context);
+    AppTheme.updateSystemUIOverlay(brightness);
+    
+    return AppInitializer(
+      child: MaterialApp.router(
+        title: '铺得清 库存管理系统',
+        theme: AppTheme.lightTheme,
+        darkTheme: AppTheme.darkTheme,
+        themeMode: ThemeMode.system,
+        routerConfig: router,
+        debugShowCheckedModeBanner: false,
+        localizationsDelegates: const [
+          GlobalMaterialLocalizations.delegate,
+          GlobalWidgetsLocalizations.delegate,
+          GlobalCupertinoLocalizations.delegate,
+        ],
+        supportedLocales: const [Locale('zh', 'CN'), Locale('en', 'US')],
+      ),
+    );
+  }
+}
+
+
+// ============================================================
+// 文件: main_generic.dart
+// ============================================================
+// Entry point for the generic flavor
+import 'package:stocko_app/config/flavor_config.dart';
+import 'package:stocko_app/main.dart' as app;
+
+void main() {
+  // 定义通用版配置
+  final genericConfig = FlavorConfig(
+    flavor: AppFlavor.generic,
+    appTitle: "通用库存管理",
+    featureFlags: {
+      Feature.showDatabaseTools: false, // 通用版关闭数据库工具
+    },
+  );
+
+  // 使用通用配置运行应用
+  app.runStockoApp(genericConfig);
+}
+
+// ============================================================
+// 文件: main_personalized.dart
+// ============================================================
+// Entry point for the personalized flavor
+import 'package:stocko_app/config/flavor_config.dart';
+import 'package:stocko_app/main.dart' as app;
+
+void main() {
+  // 定义定制版配置
+  final personalizedConfig = FlavorConfig(
+    flavor: AppFlavor.personalized,
+    appTitle: "定制版库存管理",
+    featureFlags: {
+      Feature.showDatabaseTools: true, // 定制版保留数据库工具
+    },
+  );
+
+  // 使用定制配置运行应用
+  app.runStockoApp(personalizedConfig);
+}
+
+// ============================================================
+// 文件: core\database\database_initializer.dart
+// ============================================================
+import 'package:drift/drift.dart';
+import 'database.dart';
+
+/// 数据库初始化服务
+/// 负责初始化各种默认数据
+class DatabaseInitializer {
+  final AppDatabase _database;
+
+  DatabaseInitializer(this._database);
+
+  /// 初始化所有默认数据
+  Future<void> initializeAllDefaults() async {
+    await initializeDefaultShops();
+    await initializeDefaultCategories();
+    await initializeDefaultUnits();
+    await initializeDefaultProducts();
+    await initializeDefaultProductUnits();
+    await initializeDefaultBarcodes();
+    await initializeDefaultCustomers();
+    // 可以继续添加其他初始化方法
+  }
+
+  /// 初始化默认店铺
+  Future<void> initializeDefaultShops() async {
+    try {
+      // 检查是否已有数据
+      final count = await (_database.select(
+        _database.shop,
+      )..limit(1)).get();
+
+      if (count.isNotEmpty) {
+        print('🏪 店铺数据已存在，跳过初始化');
+        return;
+      }
+
+      final defaultShops = [
+        ShopCompanion.insert(
+          id: Value(1),
+          name: '长山的店',
+          manager: 'changshan',
+          
+          updatedAt: Value(DateTime.now()),
+        ),
+        ShopCompanion.insert(
+          id: Value(2),
+          name: '田立的店',
+          manager: 'tianli',
+          
+          updatedAt: Value(DateTime.now()),
+        ),
+      ];
+
+      // 使用事务批量插入
+      await _database.transaction(() async {
+        for (final shop in defaultShops) {
+          await _database.into(_database.shop).insert(shop);
+        }
+      });
+
+      print('✅ 成功初始化 ${defaultShops.length} 个默认店铺');
+    } catch (e) {
+      print('❌ 初始化默认店铺失败: $e');
+      rethrow;
+    }
+  }
+
+  /// 初始化默认类别
+  Future<void> initializeDefaultCategories() async {
+    try {
+      final count = await (_database.select(
+        _database.category,
+      )..limit(1)).get();
+
+      if (count.isNotEmpty) {
+        print('📂 类别数据已存在，跳过初始化');
+        return;
+      }
+
+      final defaultCategories = [
+        CategoryCompanion.insert(
+          id: const Value(1),
+          name: '食品',
+        ),
+        CategoryCompanion.insert(
+          id: const Value(2),
+          name: '饮料',
+        ),
+        CategoryCompanion.insert(
+          id: const Value(3),
+          name: '日用品',
+        ),
+      ];
+
+      await _database.transaction(() async {
+        for (final category in defaultCategories) {
+          await _database.into(_database.category).insert(category);
+        }
+      });
+
+      print('✅ 成功初始化 ${defaultCategories.length} 个默认类别');
+    } catch (e) {
+      print('❌ 初始化默认类别失败: $e');
+      rethrow;
+    }
+  }
+
+  /// 初始化默认单位
+  Future<void> initializeDefaultUnits() async {
+    try {
+      final count = await (_database.select(
+        _database.unit,
+      )..limit(1)).get();
+
+      if (count.isNotEmpty) {
+        print('📏 单位数据已存在，跳过初始化');
+        return;
+      }
+      final defaultUnits = [
+        UnitCompanion.insert(
+          id: Value(1),
+          name: '个',
+          
+          
+        ),
+        UnitCompanion.insert(
+          id: Value(2),
+          name: '千克',
+        ),
+        UnitCompanion.insert(
+          id: Value(3),
+          name: '箱',
+          
+          
+        ),
+        UnitCompanion.insert(
+          id: Value(4),
+          name: '瓶',
+          
+          
+        ),
+        UnitCompanion.insert(
+          id: Value(5),
+          name: '包',
+          
+        ),
+      ];
+
+      await _database.transaction(() async {
+        for (final unit in defaultUnits) {
+          await _database.into(_database.unit).insert(unit);
+        }
+      });
+
+      print('✅ 成功初始化 ${defaultUnits.length} 个默认单位');
+    } catch (e) {
+      print('❌ 初始化默认单位失败: $e');
+      rethrow;
+    }
+  }
+
+  /// 初始化默认商品
+  Future<void> initializeDefaultProducts() async {
+    try {
+      final count = await (_database.select(
+        _database.product,
+      )..limit(1)).get();
+
+      if (count.isNotEmpty) {
+        print('📦 商品数据已存在，跳过初始化');
+        return;
+      }
+
+      final defaultProducts = [
+        ProductCompanion.insert(
+          id: const Value(1),
+          name: '可口可乐',
+          categoryId: const Value(2),
+          baseUnitId: 4, // 瓶
+        ),
+        ProductCompanion.insert(
+          id: const Value(2),
+          name: '康师傅冰红茶',
+          categoryId: const Value(2),
+          baseUnitId: 4, // 瓶
+        ),
+        ProductCompanion.insert(
+          id: const Value(3),
+          name: '农夫山泉',
+          categoryId: const Value(2),
+          baseUnitId: 4, // 瓶
+        ),
+        ProductCompanion.insert(
+          id: const Value(4),
+          name: '奥利奥',
+          categoryId: const Value(1),
+          baseUnitId: 5, // 包
+        ),
+        ProductCompanion.insert(
+          id: const Value(5),
+          name: '乐事薯片',
+          categoryId: const Value(1),
+          baseUnitId: 5, // 包
+        ),
+        ProductCompanion.insert(
+          id: const Value(6),
+          name: '统一老坛酸菜牛肉面',
+          categoryId: const Value(1),
+          baseUnitId: 5, // 包
+        ),
+        ProductCompanion.insert(
+          id: const Value(7),
+          name: '清风抽纸',
+          categoryId: const Value(3),
+          baseUnitId: 5, // 包
+        ),
+        ProductCompanion.insert(
+          id: const Value(8),
+          name: '高露洁牙膏',
+          categoryId: const Value(3),
+          baseUnitId: 1, // 个
+        ),
+        ProductCompanion.insert(
+          id: const Value(9),
+          name: '娃哈哈AD钙奶',
+          categoryId: const Value(2),
+          baseUnitId: 4, // 瓶
+        ),
+        ProductCompanion.insert(
+          id: const Value(10),
+          name: '达利园蛋黄派',
+          categoryId: const Value(1),
+          baseUnitId: 5, // 包
+        ),
+      ];
+
+      await _database.transaction(() async {
+        for (final product in defaultProducts) {
+          await _database.into(_database.product).insert(product);
+        }
+      });
+
+      print('✅ 成功初始化 ${defaultProducts.length} 个默认商品');
+    } catch (e) {
+      print('❌ 初始化默认商品失败: $e');
+      rethrow;
+    }
+  }
+
+  /// 初始化默认商品单位关联
+  Future<void> initializeDefaultProductUnits() async {
+    try {
+      final count = await (_database.select(
+        _database.unitProduct,
+      )..limit(1)).get();
+
+      if (count.isNotEmpty) {
+        print('📦 产品单位数据已存在，跳过初始化');
+        return;
+      }
+
+      final defaultProductUnits = [
+        // 可口可乐, 瓶
+        UnitProductCompanion.insert(
+          id: const Value(1),
+          productId: 1,
+          unitId: 4,
+          conversionRate: 1,
+          lastUpdated: Value(DateTime.now()),
+        ),
+        // 康师傅冰红茶, 瓶
+        UnitProductCompanion.insert(
+          id: const Value(2),
+          productId: 2,
+          unitId: 4,
+          conversionRate: 1,
+          lastUpdated: Value(DateTime.now()),
+        ),
+        // 农夫山泉, 瓶
+        UnitProductCompanion.insert(
+          id: const Value(3),
+          productId: 3,
+          unitId: 4,
+          conversionRate: 1,
+          lastUpdated: Value(DateTime.now()),
+        ),
+        // 奥利奥, 包
+        UnitProductCompanion.insert(
+          id: const Value(4),
+          productId: 4,
+          unitId: 5,
+          conversionRate: 1,
+          lastUpdated: Value(DateTime.now()),
+        ),
+        // 乐事薯片, 包
+        UnitProductCompanion.insert(
+          id: const Value(5),
+          productId: 5,
+          unitId: 5,
+          conversionRate: 1,
+          lastUpdated: Value(DateTime.now()),
+        ),
+        // 统一老坛酸菜牛肉面, 包
+        UnitProductCompanion.insert(
+          id: const Value(6),
+          productId: 6,
+          unitId: 5,
+          conversionRate: 1,
+          lastUpdated: Value(DateTime.now()),
+        ),
+        // 清风抽纸, 包
+        UnitProductCompanion.insert(
+          id: const Value(7),
+          productId: 7,
+          unitId: 5,
+          conversionRate: 1,
+          lastUpdated: Value(DateTime.now()),
+        ),
+        // 高露洁牙膏, 个
+        UnitProductCompanion.insert(
+          id: const Value(8),
+          productId: 8,
+          unitId: 1,
+          conversionRate: 1,
+          lastUpdated: Value(DateTime.now()),
+        ),
+        // 娃哈哈AD钙奶, 瓶
+        UnitProductCompanion.insert(
+          id: const Value(9),
+          productId: 9,
+          unitId: 4,
+          conversionRate: 1,
+          lastUpdated: Value(DateTime.now()),
+        ),
+        // 达利园蛋黄派, 包
+        UnitProductCompanion.insert(
+          id: const Value(10),
+          productId: 10,
+          unitId: 5,
+          conversionRate: 1,
+          lastUpdated: Value(DateTime.now()),
+        ),
+      ];
+
+      await _database.transaction(() async {
+        for (final unitProduct in defaultProductUnits) {
+          await _database.into(_database.unitProduct).insert(unitProduct);
+        }
+      });
+
+      print('✅ 成功初始化 ${defaultProductUnits.length} 个默认产品单位');
+    } catch (e) {
+      print('❌ 初始化默认产品单位失败: $e');
+      rethrow;
+    }
+  }
+
+  /// 初始化默认条码
+  Future<void> initializeDefaultBarcodes() async {
+    try {
+      final count = await (_database.select(
+        _database.barcode,
+      )..limit(1)).get();
+
+      if (count.isNotEmpty) {
+        print('🏷️ 条码数据已存在，跳过初始化');
+        return;
+      }
+
+      final defaultBarcodes = [
+        BarcodeCompanion.insert(unitProductId: 1, barcodeValue: '6901234567890'), // 可口可乐
+        BarcodeCompanion.insert(unitProductId: 2, barcodeValue: '6901234567891'), // 康师傅冰红茶
+        BarcodeCompanion.insert(unitProductId: 3, barcodeValue: '6901234567892'), // 农夫山泉
+        BarcodeCompanion.insert(unitProductId: 4, barcodeValue: '6901234567893'), // 奥利奥
+        BarcodeCompanion.insert(unitProductId: 5, barcodeValue: '6901234567894'), // 乐事薯片
+        BarcodeCompanion.insert(unitProductId: 6, barcodeValue: '6901234567895'), // 统一老坛酸菜牛肉面
+        BarcodeCompanion.insert(unitProductId: 7, barcodeValue: '6901234567896'), // 清风抽纸
+        BarcodeCompanion.insert(unitProductId: 8, barcodeValue: '6901234567897'), // 高露洁牙膏
+        BarcodeCompanion.insert(unitProductId: 9, barcodeValue: '6901234567898'), // 娃哈哈AD钙奶
+        BarcodeCompanion.insert(unitProductId: 10, barcodeValue: '6901234567899'), // 达利园蛋黄派
+      ];
+
+      await _database.transaction(() async {
+        for (final barcode in defaultBarcodes) {
+          await _database.into(_database.barcode).insert(barcode);
+        }
+      });
+
+      print('✅ 成功初始化 ${defaultBarcodes.length} 个默认条码');
+    } catch (e) {
+      print('❌ 初始化默认条码失败: $e');
+      rethrow;
+    }
+  }
+
+  /// 初始化默认客户
+  Future<void> initializeDefaultCustomers() async {
+    try {
+      final count = await (_database.select(
+        _database.customers,
+      )..limit(1)).get();
+
+      if (count.isNotEmpty) {
+        print('👥 客户数据已存在，跳过初始化');
+        return;
+      }
+
+      final defaultCustomers = [
+        CustomersCompanion.insert(
+          id: const Value(0),
+          name: '匿名散客',
+        ),
+      ];
+
+      await _database.transaction(() async {
+        for (final customer in defaultCustomers) {
+          await _database.into(_database.customers).insert(customer);
+        }
+      });
+
+      print('✅ 成功初始化 ${defaultCustomers.length} 个默认客户');
+    } catch (e) {
+      print('❌ 初始化默认客户失败: $e');
+      rethrow;
+    }
+  }
+
+  /// 重置所有数据（仅用于开发/测试）
+  Future<void> resetAllData() async {
+    await _database.transaction(() async {
+      // 删除销售相关的表数据
+      await _database.delete(_database.salesTransactionItem).go();
+      await _database.delete(_database.salesTransaction).go();
+      await _database.delete(_database.customers).go();
+
+      // 删除业务数据表
+      await _database.delete(_database.inboundItem).go();
+      await _database.delete(_database.inboundReceipt).go();
+      await _database.delete(_database.purchaseOrderItem).go();
+      await _database.delete(_database.purchaseOrder).go();
+      await _database.delete(_database.inventoryTransaction).go();
+      await _database.delete(_database.stock).go();
+      await _database.delete(_database.productBatch).go();
+      await _database.delete(_database.supplier).go();
+
+      // 删除基础数据表
+      await _database.delete(_database.barcode).go();
+      await _database.delete(_database.unitProduct).go();
+      await _database.delete(_database.product).go();
+      await _database.delete(_database.shop).go();
+      await _database.delete(_database.category).go();
+      await _database.delete(_database.unit).go();
+    });
+
+    await initializeAllDefaults();
+    print('🔄 数据库已重置并重新初始化');
+  }
+}
+
+
+// ============================================================
+// 文件: core\services\image_cache_service.dart
+// ============================================================
+import 'dart:io';
+import 'dart:ui' as ui;
+import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
+import 'package:path/path.dart' as path;
+import 'package:path_provider/path_provider.dart';
+
+/// 图片缓存服务
+/// 提供本地图片缓存、内存缓存和图片优化功能
+class ImageCacheService {
+  static final ImageCacheService _instance = ImageCacheService._internal();
+  factory ImageCacheService() => _instance;
+  ImageCacheService._internal();
+
+  // 内存缓存
+  final Map<String, ui.Image> _memoryCache = {};
+  final Map<String, Uint8List> _byteCache = {};
+
+  // 缓存大小限制
+  static const int maxMemoryCacheSize = 50; // 最大内存缓存图片数量
+  static const int maxByteCacheSize = 20; // 最大字节缓存数量
+
+  // 缩略图缓存目录
+  String? _thumbnailCacheDir;
+
+  /// 初始化缓存服务
+  Future<void> initialize() async {
+    try {
+      final Directory appDir = await getApplicationDocumentsDirectory();
+      _thumbnailCacheDir = path.join(appDir.path, 'image_cache', 'thumbnails');
+
+      // 创建缓存目录
+      final Directory cacheDir = Directory(_thumbnailCacheDir!);
+      if (!await cacheDir.exists()) {
+        await cacheDir.create(recursive: true);
+      }
+
+      debugPrint('图片缓存服务初始化完成: $_thumbnailCacheDir');
+    } catch (e) {
+      debugPrint('图片缓存服务初始化失败: $e');
+    }
+  }
+
+  /// 获取优化后的图片
+  /// [imagePath] 原始图片路径
+  /// [width] 目标宽度
+  /// [height] 目标高度
+  /// [quality] 压缩质量 (0-100)
+  Future<Uint8List?> getOptimizedImage(
+    String imagePath, {
+    int? width,
+    int? height,
+    int quality = 100,
+    DateTime? fileModifiedTime,
+  }) async {
+    try {
+      // 生成缓存键
+      final cacheKey =
+          _generateCacheKey(imagePath, width, height, quality, fileModifiedTime);
+
+      // 检查字节缓存
+      if (_byteCache.containsKey(cacheKey)) {
+        debugPrint('从字节缓存加载图片: $cacheKey');
+        return _byteCache[cacheKey];
+      }
+
+      // 检查磁盘缓存
+      final cachedBytes = await _getCachedThumbnail(cacheKey);
+      if (cachedBytes != null) {
+        debugPrint('从磁盘缓存加载图片: $cacheKey');
+        _addToByteCache(cacheKey, cachedBytes);
+        return cachedBytes;
+      }
+
+      // 生成优化后的图片
+      final optimizedBytes = await _generateOptimizedImage(
+        imagePath,
+        width: width,
+        height: height,
+        quality: quality,
+      );
+
+      if (optimizedBytes != null) {
+        // 保存到缓存
+        await _saveThumbnailCache(cacheKey, optimizedBytes);
+        _addToByteCache(cacheKey, optimizedBytes);
+        debugPrint('生成并缓存优化图片: $cacheKey');
+      }
+
+      return optimizedBytes;
+    } catch (e) {
+      debugPrint('获取优化图片失败: $e');
+      return null;
+    }
+  }
+
+  /// 获取内存中的UI图片对象
+  Future<ui.Image?> getUIImage(String imagePath) async {
+    try {
+      // 检查内存缓存
+      if (_memoryCache.containsKey(imagePath)) {
+        debugPrint('从内存缓存加载UI图片: $imagePath');
+        return _memoryCache[imagePath];
+      }
+
+      // 从文件加载
+      final file = File(imagePath);
+      if (!await file.exists()) {
+        return null;
+      }
+
+      final bytes = await file.readAsBytes();
+      final codec = await ui.instantiateImageCodec(bytes);
+      final frame = await codec.getNextFrame();
+      final image = frame.image;
+
+      // 添加到内存缓存
+      _addToMemoryCache(imagePath, image);
+      debugPrint('加载并缓存UI图片: $imagePath');
+
+      return image;
+    } catch (e) {
+      debugPrint('获取UI图片失败: $e');
+      return null;
+    }
+  }
+
+  /// 预加载图片到缓存
+  Future<void> preloadImage(String imagePath) async {
+    try {
+      // 获取文件修改时间，确保预加载的缓存键与实际使用时一致
+      DateTime? fileModifiedTime;
+      try {
+        final file = File(imagePath);
+        if (await file.exists()) {
+          final stat = await file.stat();
+          fileModifiedTime = stat.modified;
+          debugPrint('预加载时获取文件修改时间: $fileModifiedTime');
+        }
+      } catch (e) {
+        debugPrint('预加载时获取文件修改时间失败: $e');
+      }
+      
+      // 预加载常用尺寸的缩略图
+      await Future.wait([
+        getOptimizedImage(imagePath, width: 60, height: 80, fileModifiedTime: fileModifiedTime), // 列表缩略图
+        getOptimizedImage(imagePath, width: 120, height: 120, fileModifiedTime: fileModifiedTime), // 对话框图片
+        getOptimizedImage(imagePath, width: 200, height: 200, fileModifiedTime: fileModifiedTime), // 详情页图片
+      ]);
+      debugPrint('预加载图片完成: $imagePath');
+    } catch (e) {
+      debugPrint('预加载图片失败: $e');
+    }
+  }
+
+  /// 清理单个图片的缓存
+  Future<void> clearImageCache(String imagePath) async {
+    try {
+      // 从内存缓存移除
+      _memoryCache.remove(imagePath);
+
+      // 从字节缓存移除相关项
+      final keysToRemove = _byteCache.keys
+          .where((key) => key.contains(imagePath.hashCode.toString()))
+          .toList();
+
+      for (final key in keysToRemove) {
+        _byteCache.remove(key);
+      }
+
+      // 从磁盘缓存移除相关文件
+      if (_thumbnailCacheDir != null) {
+        final cacheDir = Directory(_thumbnailCacheDir!);
+        if (await cacheDir.exists()) {
+          final files = await cacheDir.list().toList();
+          for (final file in files) {
+            if (file.path.contains(imagePath.hashCode.toString())) {
+              await file.delete();
+            }
+          }
+        }
+      }
+
+      debugPrint('清理图片缓存: $imagePath');
+    } catch (e) {
+      debugPrint('清理图片缓存失败: $e');
+    }
+  }
+
+  /// 清理所有缓存
+  Future<void> clearAllCache() async {
+    try {
+      // 清理内存缓存
+      _memoryCache.clear();
+      _byteCache.clear();
+
+      // 清理磁盘缓存
+      if (_thumbnailCacheDir != null) {
+        final cacheDir = Directory(_thumbnailCacheDir!);
+        if (await cacheDir.exists()) {
+          await cacheDir.delete(recursive: true);
+          await cacheDir.create(recursive: true);
+        }
+      }
+
+      debugPrint('清理所有图片缓存');
+    } catch (e) {
+      debugPrint('清理所有缓存失败: $e');
+    }
+  }
+
+  /// 获取缓存状态信息
+  Map<String, dynamic> getCacheStatus() {
+    return {
+      'memoryCount': _memoryCache.length,
+      'byteCount': _byteCache.length,
+      'maxMemorySize': maxMemoryCacheSize,
+      'maxByteSize': maxByteCacheSize,
+      'thumbnailCacheDir': _thumbnailCacheDir,
+    };
+  }
+
+  // 私有方法
+
+  /// 生成缓存键
+  String _generateCacheKey(
+    String imagePath,
+    int? width,
+    int? height,
+    int quality,
+    DateTime? fileModifiedTime,
+  ) {
+    final timeStamp = fileModifiedTime?.millisecondsSinceEpoch ?? 'null';
+    return '${imagePath.hashCode}_${width ?? 'null'}_${height ?? 'null'}_${quality}_$timeStamp';
+  }
+
+  /// 生成优化后的图片
+  Future<Uint8List?> _generateOptimizedImage(
+    String imagePath, {
+    int? width,
+    int? height,
+    int quality = 100,
+  }) async {
+    try {
+      final file = File(imagePath);
+      if (!await file.exists()) {
+        return null;
+      }
+
+      final originalBytes = await file.readAsBytes();
+
+      // 如果不需要调整大小，直接返回原始数据
+      if (width == null && height == null) {
+        return originalBytes;
+      }
+
+      // 解码图片
+      final codec = await ui.instantiateImageCodec(originalBytes);
+      final frame = await codec.getNextFrame();
+      final originalImage = frame.image;
+
+      // 计算目标尺寸
+      final targetWidth = width ?? originalImage.width;
+      final targetHeight = height ?? originalImage.height;
+
+      // 如果尺寸相同，返回原始数据
+      if (targetWidth == originalImage.width &&
+          targetHeight == originalImage.height) {
+        return originalBytes;
+      }
+
+      // 创建画布并绘制缩放后的图片
+      final recorder = ui.PictureRecorder();
+      final canvas = Canvas(recorder);
+
+      final paint = Paint()
+        ..isAntiAlias = true
+        ..filterQuality = FilterQuality.high;
+
+      canvas.drawImageRect(
+        originalImage,
+        Rect.fromLTWH(
+          0,
+          0,
+          originalImage.width.toDouble(),
+          originalImage.height.toDouble(),
+        ),
+        Rect.fromLTWH(0, 0, targetWidth.toDouble(), targetHeight.toDouble()),
+        paint,
+      );
+
+      final picture = recorder.endRecording();
+      final resizedImage = await picture.toImage(targetWidth, targetHeight);
+
+      // 转换为字节数据
+      final byteData = await resizedImage.toByteData(
+        format: ui.ImageByteFormat.png,
+      );
+
+      originalImage.dispose();
+      resizedImage.dispose();
+      picture.dispose();
+
+      return byteData?.buffer.asUint8List();
+    } catch (e) {
+      debugPrint('生成优化图片失败: $e');
+      return null;
+    }
+  }
+
+  /// 从磁盘缓存获取缩略图
+  Future<Uint8List?> _getCachedThumbnail(String cacheKey) async {
+    try {
+      if (_thumbnailCacheDir == null) return null;
+
+      final cacheFile = File(path.join(_thumbnailCacheDir!, '$cacheKey.png'));
+      if (await cacheFile.exists()) {
+        return await cacheFile.readAsBytes();
+      }
+      return null;
+    } catch (e) {
+      debugPrint('读取磁盘缓存失败: $e');
+      return null;
+    }
+  }
+
+  /// 保存缩略图到磁盘缓存
+  Future<void> _saveThumbnailCache(String cacheKey, Uint8List bytes) async {
+    try {
+      if (_thumbnailCacheDir == null) return;
+
+      final cacheFile = File(path.join(_thumbnailCacheDir!, '$cacheKey.png'));
+      await cacheFile.writeAsBytes(bytes);
+    } catch (e) {
+      debugPrint('保存磁盘缓存失败: $e');
+    }
+  }
+
+  /// 添加到内存缓存
+  void _addToMemoryCache(String key, ui.Image image) {
+    // 如果缓存已满，移除最旧的项
+    if (_memoryCache.length >= maxMemoryCacheSize) {
+      final firstKey = _memoryCache.keys.first;
+      _memoryCache[firstKey]?.dispose();
+      _memoryCache.remove(firstKey);
+    }
+
+    _memoryCache[key] = image;
+  }
+
+  /// 添加到字节缓存
+  void _addToByteCache(String key, Uint8List bytes) {
+    // 如果缓存已满，移除最旧的项
+    if (_byteCache.length >= maxByteCacheSize) {
+      final firstKey = _byteCache.keys.first;
+      _byteCache.remove(firstKey);
+    }
+
+    _byteCache[key] = bytes;
+  }
+
+  /// 释放资源
+  void dispose() {
+    // 释放内存中的UI图片
+    for (final image in _memoryCache.values) {
+      image.dispose();
+    }
+    _memoryCache.clear();
+    _byteCache.clear();
+  }
+}
+
+
+// ============================================================
+// 文件: core\database\database.dart
+// ============================================================
+import 'package:drift/drift.dart';
+import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:drift/native.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:path/path.dart' as p;
+import 'dart:io';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'products_table.dart';
+import 'categories_table.dart';
+import 'units_table.dart';
+import 'product_units_table.dart';
+import 'shops_table.dart';
+import 'suppliers_table.dart';
+import 'batches_table.dart';
+import 'inventory_table.dart';
+import 'inventory_transactions_table.dart';
+import 'locations_table.dart';
+import 'inbound_receipts_table.dart';
+import 'inbound_receipt_items_table.dart';
+import 'purchase_orders_table.dart';
+import 'purchase_order_items_table.dart';
+import 'barcodes_table.dart'; // 新增条码表
+import 'customers_table.dart';
+import 'sales_transactions_table.dart';
+import 'sales_transaction_items_table.dart';
+import 'outbound_receipts_table.dart';
+import 'outbound_receipt_items_table.dart';
+import '../../features/product/data/dao/product_dao.dart';
+import '../../features/product/data/dao/category_dao.dart';
+import '../../features/product/data/dao/unit_dao.dart';
+import '../../features/product/data/dao/product_unit_dao.dart';
+import '../../features/purchase/data/dao/supplier_dao.dart';
+import '../../features/product/data/dao/batch_dao.dart';
+import '../../features/inventory/data/dao/shop_dao.dart';
+import '../../features/inventory/data/dao/inventory_dao.dart';
+import '../../features/inventory/data/dao/inventory_transaction_dao.dart';
+import '../../features/inbound/data/dao/location_dao.dart';
+import '../../features/inbound/data/dao/inbound_receipt_dao.dart';
+import '../../features/inbound/data/dao/inbound_item_dao.dart';
+import '../../features/purchase/data/dao/purchase_dao.dart';
+import '../../features/product/data/dao/barcode_dao.dart';
+import '../../features/sale/data/dao/customer_dao.dart';
+import '../../features/sale/data/dao/sales_transaction_dao.dart';
+import '../../features/sale/data/dao/sales_transaction_item_dao.dart';
+import '../../features/outbound/data/dao/outbound_receipt_dao.dart';
+import '../../features/outbound/data/dao/outbound_item_dao.dart';
+import '../../features/product/domain/model/product.dart';
+
+part 'database.g.dart';
+
+@DriftDatabase(
+  tables: [
+    Product,
+    Category,
+    Unit,
+    UnitProduct,
+    Shop,
+    Supplier,
+    ProductBatch,
+    Stock,
+    InventoryTransaction,
+    LocationsTable,
+    InboundReceipt,
+    InboundItem,
+    PurchaseOrder,
+    PurchaseOrderItem,
+    Barcode, // 新增条码表
+    Customers,
+    SalesTransaction,
+    SalesTransactionItem,
+    OutboundReceipt,
+    OutboundItem,
+  ],
+  daos: [
+    ProductDao,
+    CategoryDao,
+    UnitDao,
+    ProductUnitDao,
+    ShopDao,
+    SupplierDao,
+    BatchDao,
+    InventoryDao,
+    InventoryTransactionDao,
+    LocationDao,
+    InboundReceiptDao,
+    InboundItemDao,
+    PurchaseDao,
+    BarcodeDao, // 新增条码DAO
+    CustomerDao,
+    SalesTransactionDao,
+    SalesTransactionItemDao,
+    OutboundReceiptDao,
+    OutboundItemDao,
+  ],
+)
+class AppDatabase extends _$AppDatabase {
+  AppDatabase(super.e);
+  @override
+  int get schemaVersion => 22; 
+
+  @override
+  MigrationStrategy get migration => MigrationStrategy(
+    onCreate: (Migrator m) async {
+      await m.createAll();
+      // 创建条码表的条码值索引以提高查询性能
+      await customStatement(
+        'CREATE INDEX IF NOT EXISTS idx_barcode_barcode_value ON barcode(barcode_value);',
+      );
+      // 创建条码表的产品单位ID索引
+      await customStatement(
+        'CREATE INDEX IF NOT EXISTS idx_barcode_unit_product_id ON barcode(unit_product_id);',
+      );
+      // 采购单相关索引
+      await customStatement(
+        'CREATE INDEX IF NOT EXISTS idx_po_supplier ON purchase_order(supplier_id);',
+      );
+      await customStatement(
+        'CREATE INDEX IF NOT EXISTS idx_po_shop ON purchase_order(shop_id);',
+      );
+      await customStatement(
+        'CREATE INDEX IF NOT EXISTS idx_po_status ON purchase_order(status);',
+      );
+      await customStatement(
+        'CREATE INDEX IF NOT EXISTS idx_po_created ON purchase_order(created_at);',
+      );
+      await customStatement(
+        'CREATE INDEX IF NOT EXISTS idx_poi_po ON purchase_order_item(purchase_order_id);',
+      );
+      await customStatement(
+        'CREATE INDEX IF NOT EXISTS idx_poi_product ON purchase_order_item(product_id);',
+      );
+      await customStatement(
+        'CREATE UNIQUE INDEX IF NOT EXISTS poi_unique_with_date ON purchase_order_item(purchase_order_id, product_id, production_date) WHERE production_date IS NOT NULL;',
+      );
+      await customStatement(
+        'CREATE UNIQUE INDEX IF NOT EXISTS poi_unique_without_date ON purchase_order_item(purchase_order_id, product_id) WHERE production_date IS NULL;',
+      );
+      // 为库存表创建部分唯一索引
+      await customStatement(
+        'CREATE UNIQUE INDEX IF NOT EXISTS stock_unique_with_batch ON stock(product_id, shop_id, batch_id) WHERE batch_id IS NOT NULL;',
+      );
+      await customStatement(
+        'CREATE UNIQUE INDEX IF NOT EXISTS stock_unique_without_batch ON stock(product_id, shop_id) WHERE batch_id IS NULL;',
+      );
+      // 为入库单明细表创建部分唯一索引
+      await customStatement(
+        'CREATE UNIQUE INDEX IF NOT EXISTS inbound_item_unique_with_batch ON inbound_item(receipt_id, product_id, batch_id) WHERE batch_id IS NOT NULL;',
+      );
+      await customStatement(
+        'CREATE UNIQUE INDEX IF NOT EXISTS inbound_item_unique_without_batch ON inbound_item(receipt_id, product_id) WHERE batch_id IS NULL;',
+      );
+      // 为出库单明细表创建部分唯一索引
+      await customStatement(
+        'CREATE UNIQUE INDEX IF NOT EXISTS outbound_item_unique_with_batch ON outbound_item(receipt_id, product_id, batch_id) WHERE batch_id IS NOT NULL;',
+      );
+      await customStatement(
+        'CREATE UNIQUE INDEX IF NOT EXISTS outbound_item_unique_without_batch ON outbound_item(receipt_id, product_id) WHERE batch_id IS NULL;',
+      );
+    },
+    onUpgrade: (Migrator m, int from, int to) async {
+      
+      if (from < 22 && to >= 22) {
+        // 添加移动加权平均价格字段
+        await m.addColumn(stock, stock.averageUnitPriceInCents);
+        // 添加入库单明细表单价字段
+        // await m.addColumn(inboundItem, inboundItem.unitPriceInCents);
+      }
+      if (from < 21 && to >= 21) {
+        // 删除旧的唯一索引（如果存在）
+        await customStatement('DROP INDEX IF EXISTS poi_unique_line;');
+        // 创建新的条件唯一索引
+        await customStatement(
+          'CREATE UNIQUE INDEX IF NOT EXISTS poi_unique_with_date ON purchase_order_item(purchase_order_id, product_id, production_date) WHERE production_date IS NOT NULL;',
+        );
+        await customStatement(
+          'CREATE UNIQUE INDEX IF NOT EXISTS poi_unique_without_date ON purchase_order_item(purchase_order_id, product_id) WHERE production_date IS NULL;',
+        );
+
+        // 为库存表创建部分唯一索引（与 onCreate 保持一致，确保老版本升级后也具备约束）
+        await customStatement(
+          'CREATE UNIQUE INDEX IF NOT EXISTS stock_unique_with_batch ON stock(product_id, shop_id, batch_id) WHERE batch_id IS NOT NULL;',
+        );
+        await customStatement(
+          'CREATE UNIQUE INDEX IF NOT EXISTS stock_unique_without_batch ON stock(product_id, shop_id) WHERE batch_id IS NULL;',
+        );
+
+        // 为出库单明细表创建部分唯一索引
+        await customStatement(
+          'CREATE UNIQUE INDEX IF NOT EXISTS outbound_item_unique_with_batch ON outbound_item(receipt_id, product_id, batch_id) WHERE batch_id IS NOT NULL;',
+        );
+        await customStatement(
+          'CREATE UNIQUE INDEX IF NOT EXISTS outbound_item_unique_without_batch ON outbound_item(receipt_id, product_id) WHERE batch_id IS NULL;',
+        );
+      }
+      if (from < 20 && to >= 20) {
+        await m.createTable(outboundReceipt);
+        await m.createTable(outboundItem);
+      }
+      if (from < 17 && to >= 17) {
+        await m.createTable(salesTransaction);
+        await m.createTable(salesTransactionItem);
+      }
+      if (from < 19 && to >= 19) {
+        // 新增采购单/明细索引与唯一索引
+        await customStatement(
+          'CREATE INDEX IF NOT EXISTS idx_po_supplier ON purchase_order(supplier_id);',
+        );
+        await customStatement(
+          'CREATE INDEX IF NOT EXISTS idx_po_shop ON purchase_order(shop_id);',
+        );
+        await customStatement(
+          'CREATE INDEX IF NOT EXISTS idx_po_status ON purchase_order(status);',
+        );
+        await customStatement(
+          'CREATE INDEX IF NOT EXISTS idx_po_created ON purchase_order(created_at);',
+        );
+        await customStatement(
+          'CREATE INDEX IF NOT EXISTS idx_poi_po ON purchase_order_item(purchase_order_id);',
+        );
+        await customStatement(
+          'CREATE INDEX IF NOT EXISTS idx_poi_product ON purchase_order_item(product_id);',
+        );
+        // This is now handled by the migration to version 21
+      }
+      if (from < 18 && to >= 18) {
+        // 为 sales_transaction_items 表的 unit_id 列添加明确的列名
+        // 由于我们已经修改了表结构，需要重新创建表
+        await m.createTable(salesTransactionItem);
+      }
+      if (from < 16 && to >= 16) {
+        await m.createTable(customers);
+      }
+      if (from < 15 && to >= 15) {
+        await m.addColumn(inboundReceipt, inboundReceipt.source);
+      }
+      if (from < 14 && to >= 14) {
+        await m.deleteTable('purchases');
+        await m.createTable(purchaseOrder);
+        await m.createTable(purchaseOrderItem);
+      }
+      if (from < 13 && to >= 13) {
+        // 为 product_units 表添加 wholesale_price 列
+        await m.addColumn(unitProduct, unitProduct.wholesalePriceInCents);
+      }
+      if (from < 12 && to >= 12) {
+        // 重建采购表以使 production_date 列可为空
+        // This migration is now obsolete as purchasesTable is removed.
+        // The logic is replaced by migration to version 14.
+      }
+      if (from < 11 && to >= 11) {
+        // 添加条码表
+        await m.createTable(barcode);
+        // 创建条码表的索引
+        await customStatement(
+          'CREATE INDEX IF NOT EXISTS idx_barcode_barcode_value ON barcode(barcode_value);',
+        );
+        await customStatement(
+          'CREATE INDEX IF NOT EXISTS idx_barcode_unit_product_id ON barcode(unit_product_id);',
+        );
+      }
+      
+      if (from < 8 && to >= 8) {
+        // This migration is now obsolete as purchasesTable is removed.
+        // The logic is replaced by migration to version 14.
+      }
+      if (from == 1 && to == 2) {
+        // 从版本1升级到版本2：修改产品表的ID列为非空
+        // 由于SQLite不支持直接修改列的null约束，我们需要重建表
+        await m.recreateAllViews();
+      }
+      if (from == 2 && to == 3) {
+        // 从版本2升级到版本3：添加类别表
+        await m.createTable(category);
+      }
+      if (from == 3 && to == 4) {
+        // 从版本3升级到版本4：添加单位表
+        await m.createTable(unit);
+      }
+      if (from == 4 && to == 5) {
+        // 从版本4升级到版本5：添加产品单位表
+        await m.createTable(unitProduct);
+      }
+      if (from == 5 && to == 6) {
+        // 从版本5升级到版本6：添加店铺表
+        await m.createTable(shop);
+      }
+      if (from == 6 && to == 7) {
+        // 从版本6升级到版本7：添加所有缺失的表
+        await m.createTable(supplier);
+        await m.createTable(productBatch);
+        await m.createTable(stock);
+        await m.createTable(inventoryTransaction);
+        await m.createTable(locationsTable);
+        await m.createTable(inboundReceipt);
+        await m.createTable(inboundItem);
+      }
+      // 处理从旧版本直接升级到版本7的情况
+      if (from < 7 && to == 7) {
+        // 确保所有表都存在
+        if (from < 3) await m.createTable(category);
+        if (from < 4) await m.createTable(unit);
+        if (from < 5) await m.createTable(unitProduct);
+        if (from < 6) await m.createTable(shop);
+        await m.createTable(supplier);
+        await m.createTable(productBatch);
+        await m.createTable(stock);
+        await m.createTable(inventoryTransaction);
+        await m.createTable(locationsTable);
+        await m.createTable(inboundReceipt);
+        await m.createTable(inboundItem);
+      }
+      // 保留原有的迁移逻辑
+      if (from == 1 && to == 3) {
+        // 从版本1直接升级到版本3
+        await m.recreateAllViews();
+        await m.createTable(category);
+      }
+      if (from == 1 && to == 4) {
+        // 从版本1直接升级到版本4
+        await m.recreateAllViews();
+        await m.createTable(category);
+        await m.createTable(unit);
+      }
+      if (from == 1 && to == 5) {
+        // 从版本1直接升级到版本5
+        await m.recreateAllViews();
+        await m.createTable(category);
+        await m.createTable(unit);
+        await m.createTable(unitProduct);
+      }
+      if (from == 2 && to == 4) {
+        // 从版本2直接升级到版本4
+        await m.createTable(category);
+        await m.createTable(unit);
+      }
+      if (from == 2 && to == 5) {
+        // 从版本2升级到版本5
+        await m.createTable(category);
+        await m.createTable(unit);
+        await m.createTable(unitProduct);
+      }
+      if (from == 3 && to == 5) {
+        // 从版本3升级到版本5
+        await m.createTable(unit);
+        await m.createTable(unitProduct);
+      }
+      // 在任何版本升级后都确保条码表索引存在（移除了产品表条码索引，因为产品表已无条码字段）
+      // 注释掉：产品表已无条码字段
+      // await customStatement(
+      //   'CREATE INDEX IF NOT EXISTS idx_products_barcode ON products(barcode);',
+      // );
+    },
+  );
+}
+
+@riverpod
+AppDatabase appDatabase(Ref ref) {
+  return AppDatabase(_openConnection());
+}
+
+QueryExecutor _openConnection() {
+  // Use LazyDatabase with NativeDatabase for native platforms (mobile & desktop)
+  return LazyDatabase(() async {
+    final dbFolder = await getApplicationDocumentsDirectory();
+    final file = File(p.join(dbFolder.path, 'app_database.db'));
+    return NativeDatabase(file);
+  });
+}
+
+
+// ============================================================
+// 文件: core\router\router_provider.dart
+// ============================================================
+import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../constants/app_routes.dart';
+import '../widgets/scaffold_with_nav_bar.dart';
+import '../widgets/privacy_policy_checker.dart';
+import '../../features/product/presentation/screens/product_list_screen.dart';
+import '../../features/product/presentation/screens/product_add_edit_screen.dart';
+import '../../features/product/presentation/screens/product_detail_screen.dart';
+import '../../features/product/presentation/screens/product_ranking_screen.dart';
+import '../../features/product/presentation/screens/category_selection_screen.dart';
+import '../../features/product/application/provider/product_providers.dart';
+import '../../features/database/presentation/screens/database_viewer_screen.dart';
+import '../../features/debug/screens/database_management_screen.dart';
+import '../../features/inbound/presentation/screens/screens.dart';
+import '../../features/inventory/presentation/screens/screens.dart';
+import '../../features/sale/presentation/screens/create_sale_screen.dart';
+import '../../features/sale/presentation/screens/sales_records_screen.dart';
+import '../../features/purchase/presentation/screens/purchase_records_screen.dart';
+import '../../features/settings/presentation/screens/settings_screen.dart';
+import '../../features/settings/presentation/screens/terms_of_service_screen.dart';
+import '../../features/settings/presentation/screens/privacy_policy_screen.dart';
+import '../../features/sale/presentation/screens/customer_selection_screen.dart';
+import '../../features/home/presentation/screens/home_screen.dart';
+import '../../core/models/scanned_product_payload.dart';
+import '../../debug/product_restore_debug_page.dart';
+
+// GoRouter Provider
+final routerProvider = Provider<GoRouter>((ref) {
+  return GoRouter(
+    initialLocation: AppRoutes.home,
+    routes: [
+      // 底部导航栏承载的 4 个主分支
+      StatefulShellRoute.indexedStack(
+        builder: (context, state, navigationShell) => PrivacyPolicyChecker(
+          child: ScaffoldWithNavBar(navigationShell: navigationShell),
+        ),
+        branches: [
+          // 首页
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: AppRoutes.home,
+                name: 'home',
+                builder: (context, state) => const HomeScreen(),
+              ),
+            ],
+          ),
+          // 货品
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: AppRoutes.products,
+                name: 'products',
+                builder: (context, state) => const ProductListScreen(),
+                routes: [
+                  GoRoute(
+                    path: 'ranking',
+                    name: 'product-ranking',
+                    builder: (context, state) => const ProductRankingScreen(),
+                  ),
+                  GoRoute(
+                    path: ':id',
+                    name: 'product-detail',
+                    builder: (context, state) {
+                      final productId = int.parse(state.pathParameters['id']!);
+                      return ProductDetailScreen(productId: productId);
+                    },
+                  ),
+                ],
+              ),
+            ],
+          ),
+          // 销售
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: AppRoutes.sales,
+                name: 'sales',
+                builder: (context, state) => Scaffold(
+                  appBar: AppBar(title: const Text('销售管理')),
+                  body: Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Text(
+                          '销售管理功能',
+                          style: TextStyle(
+                            fontSize: 24,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(height: 40),
+                        SizedBox(
+                          width: 200,
+                          child: ElevatedButton(
+                            onPressed: () => context.push(AppRoutes.saleCreate),
+                            child: const Text('新建销售单'),
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        SizedBox(
+                          width: 200,
+                          child: ElevatedButton(
+                            onPressed: () =>
+                                context.push(AppRoutes.saleRecords),
+                            child: const Text('销售记录'),
+                          ),
+                        ),
+                        const SizedBox(height: 20),
+                        ElevatedButton(
+                          onPressed: () => context.go(AppRoutes.home),
+                          child: const Text('返回首页'),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                routes: [
+                  GoRoute(
+                    path: 'records',
+                    name: 'sale-records',
+                    builder: (context, state) => const SalesRecordsScreen(),
+                  ),
+                ],
+              ),
+            ],
+          ),
+          // 库存
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: AppRoutes.inventory,
+                name: 'inventory',
+                builder: (context, state) => Scaffold(
+                  appBar: AppBar(title: const Text('库存管理')),
+                  body: Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Text(
+                          '库存管理功能',
+                          style: TextStyle(
+                            fontSize: 24,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(height: 40),
+
+
+////////////////////////////////////////////////////////////////////////////////
+后 30 页 (第 56278 - 57777 行)
+////////////////////////////////////////////////////////////////////////////////
+
+          },
+        );
+      },
+    );
+    
+    // 如果用户点击"不同意"，退出应用
+    if (result == false) {
+      SystemNavigator.pop();
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return widget.child;
+  }
+}
+
+// ============================================================
+// 文件: features\product\presentation\controllers\product_form_controllers.dart
+// ============================================================
+import 'package:flutter/material.dart';
+
+import '../../domain/model/product.dart';
+
+/// 负责管理 Product 表单的 TextEditingController 与 FocusNode。
+/// 将初始化/回填与资源释放从页面中抽离，页面只做 UI 组装与事件转发。
+class ProductFormControllers {
+  // 文本控制器
+  final TextEditingController categoryController = TextEditingController();
+  final TextEditingController unitController = TextEditingController();
+  late final TextEditingController nameController;
+  late final TextEditingController barcodeController;
+  late final TextEditingController retailPriceController;
+  late final TextEditingController promotionalPriceController;
+  late final TextEditingController suggestedRetailPriceController;
+  late final TextEditingController stockWarningValueController;
+  late final TextEditingController shelfLifeController;
+  late final TextEditingController remarksController;
+
+  // 焦点节点
+  final FocusNode nameFocusNode = FocusNode();
+  final FocusNode unitFocusNode = FocusNode();
+  final FocusNode categoryFocusNode = FocusNode();
+  final FocusNode retailPriceFocusNode = FocusNode();
+  final FocusNode shelfLifeFocusNode = FocusNode();
+  final FocusNode stockWarningValueFocusNode = FocusNode();
+
+  /// 根据传入的 [product] 初始化各输入框，空值使用页面默认值保持一致。
+  void init(ProductModel? product) {
+    nameController = TextEditingController(text: product?.name ?? '');
+    barcodeController = TextEditingController(text: ''); // 条码异步加载
+
+    retailPriceController = TextEditingController(
+      text: product?.retailPrice != null
+          ? product!.retailPrice!.yuan.toStringAsFixed(2)
+          : '',
+    );
+
+    promotionalPriceController = TextEditingController(
+      text: product?.promotionalPrice != null
+          ? product!.promotionalPrice!.yuan.toStringAsFixed(2)
+          : '',
+    );
+
+    suggestedRetailPriceController = TextEditingController(
+      text: product?.suggestedRetailPrice != null
+          ? product!.suggestedRetailPrice!.yuan.toStringAsFixed(2)
+          : '',
+    );
+
+    stockWarningValueController = TextEditingController(
+      text: product?.stockWarningValue?.toString() ?? '',
+    );
+
+    shelfLifeController = TextEditingController(
+      text: product?.shelfLife?.toString() ?? '',
+    );
+
+    remarksController = TextEditingController(text: product?.remarks ?? '');
+
+    // categoryController 与 unitController 初始文本由页面选择逻辑/回填决定
+  }
+
+  void dispose() {
+    // 文本控制器
+    nameController.dispose();
+    barcodeController.dispose();
+    retailPriceController.dispose();
+    promotionalPriceController.dispose();
+    suggestedRetailPriceController.dispose();
+    stockWarningValueController.dispose();
+    shelfLifeController.dispose();
+    remarksController.dispose();
+    categoryController.dispose();
+    unitController.dispose();
+
+    // 焦点节点
+    nameFocusNode.dispose();
+    unitFocusNode.dispose();
+    categoryFocusNode.dispose();
+    retailPriceFocusNode.dispose();
+    shelfLifeFocusNode.dispose();
+    stockWarningValueFocusNode.dispose();
+  }
+}
+
+
+// ============================================================
+// 文件: features\product\presentation\widgets\sections\unit_category_section.dart
+// ============================================================
+import 'package:flutter/material.dart';
+import '../../../domain/model/unit.dart';
+import '../../../domain/model/category.dart';
+import '../inputs/unit_typeahead_field.dart';
+import '../inputs/category_typeahead_field.dart';
+
+/// 单位 + 类别组合区域
+class UnitCategorySection extends StatelessWidget {
+  final TextEditingController unitController;
+  final FocusNode unitFocusNode;
+  final List<Unit> units;
+  final int? selectedUnitId;
+  final ValueChanged<Unit> onUnitSelected;
+  final VoidCallback onTapAddAuxiliary;
+  final VoidCallback onTapChooseUnit;
+  final String? Function() errorTextBuilder;
+  final String? helperText;
+  final VoidCallback onUnitClear;
+  final VoidCallback onUnitSubmitted;
+
+  final TextEditingController categoryController;
+  final FocusNode categoryFocusNode;
+  final List<CategoryModel> categories;
+  final int? selectedCategoryId;
+  final ValueChanged<CategoryModel> onCategorySelected;
+  final VoidCallback onTapChooseCategory;
+  final VoidCallback onCategoryClear;
+  final VoidCallback onCategorySubmitted;
+
+  const UnitCategorySection({
+    super.key,
+    required this.unitController,
+    required this.unitFocusNode,
+    required this.units,
+    required this.selectedUnitId,
+    required this.onUnitSelected,
+    required this.onTapAddAuxiliary,
+    required this.onTapChooseUnit,
+    required this.errorTextBuilder,
+    required this.helperText,
+    required this.onUnitClear,
+    required this.onUnitSubmitted,
+    required this.categoryController,
+    required this.categoryFocusNode,
+    required this.categories,
+    required this.selectedCategoryId,
+    required this.onCategorySelected,
+    required this.onTapChooseCategory,
+    required this.onCategoryClear,
+    required this.onCategorySubmitted,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        UnitTypeAheadField(
+          controller: unitController,
+          focusNode: unitFocusNode,
+          units: units,
+          selectedUnitId: selectedUnitId,
+          onSelected: onUnitSelected,
+          onTapAddAuxiliary: onTapAddAuxiliary,
+          onTapChooseUnit: onTapChooseUnit,
+          errorTextBuilder: errorTextBuilder,
+          helperText: helperText,
+          onClear: onUnitClear,
+          onSubmitted: onUnitSubmitted,
+        ),
+        const SizedBox(height: 16),
+        CategoryTypeAheadField(
+          controller: categoryController,
+          focusNode: categoryFocusNode,
+          categories: categories,
+          selectedCategoryId: selectedCategoryId,
+          onSelected: onCategorySelected,
+          onTapChooseCategory: onTapChooseCategory,
+          onClear: onCategoryClear,
+          onSubmitted: onCategorySubmitted,
+        ),
+      ],
+    );
+  }
+}
+
+
+// ============================================================
+// 文件: features\product\presentation\widgets\debug\measured_container.dart
+// ============================================================
+import 'package:flutter/material.dart';
+
+/// 可测量高度的容器组件（用于调试）
+/// 在红色边框的右上角显示容器内容的高度
+class MeasuredContainer extends StatefulWidget {
+  final Widget child;
+  final EdgeInsetsGeometry? padding;
+  final String? label; // 可选标签，用于区分不同的容器
+
+  const MeasuredContainer({
+    super.key,
+    required this.child,
+    this.padding,
+    this.label,
+  });
+
+  @override
+  State<MeasuredContainer> createState() => _MeasuredContainerState();
+}
+
+class _MeasuredContainerState extends State<MeasuredContainer> {
+  final GlobalKey _containerKey = GlobalKey();
+  double? _height;
+
+  @override
+  void initState() {
+    super.initState();
+    // 在首帧渲染后测量高度
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _measureHeight();
+    });
+  }
+
+  void _measureHeight() {
+    final RenderBox? renderBox =
+        _containerKey.currentContext?.findRenderObject() as RenderBox?;
+    if (renderBox != null && mounted) {
+      setState(() {
+        _height = renderBox.size.height;
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Stack(
+      clipBehavior: Clip.none,
+      children: [
+        Container(
+          key: _containerKey,
+          padding:
+              widget.padding ??
+              const EdgeInsets.symmetric(horizontal: 0, vertical: 0),
+          child: widget.child,
+        ),
+        // 显示高度标签
+        if (_height != null)
+          Positioned(
+            top: -10,
+            right: 8,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 0),
+              decoration: BoxDecoration(
+                color: Colors.red,
+                borderRadius: BorderRadius.circular(4),
+              ),
+              child: Text(
+                widget.label != null
+                    ? '${widget.label}: ${_height!.toStringAsFixed(1)}px'
+                    : '${_height!.toStringAsFixed(1)}px',
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 10,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+          ),
+      ],
+    );
+  }
+}
+
+
+// ============================================================
+// 文件: features\backup\presentation\widgets\backup_frequency_selector.dart
+// ============================================================
+import 'package:flutter/material.dart';
+
+import '../../domain/models/auto_backup_settings.dart';
+
+/// 备份频率选择器
+class BackupFrequencySelector extends StatelessWidget {
+  final BackupFrequency currentFrequency;
+  final ValueChanged<BackupFrequency> onFrequencyChanged;
+
+  const BackupFrequencySelector({
+    super.key,
+    required this.currentFrequency,
+    required this.onFrequencyChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(
+                  Icons.schedule,
+                  color: Theme.of(context).colorScheme.primary,
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  '备份频率',
+                  style: Theme.of(context).textTheme.titleMedium,
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            Column(
+              children: BackupFrequency.values.map((frequency) {
+                return RadioListTile<BackupFrequency>(
+                  title: Text(_getFrequencyTitle(frequency)),
+                  subtitle: Text(_getFrequencyDescription(frequency)),
+                  value: frequency,
+                  groupValue: currentFrequency,
+                  onChanged: (value) {
+                    if (value != null) {
+                      onFrequencyChanged(value);
+                    }
+                  },
+                );
+              }).toList(),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  String _getFrequencyTitle(BackupFrequency frequency) {
+    switch (frequency) {
+      case BackupFrequency.daily:
+        return '每日备份';
+      case BackupFrequency.weekly:
+        return '每周备份';
+      case BackupFrequency.monthly:
+        return '每月备份';
+    }
+  }
+
+  String _getFrequencyDescription(BackupFrequency frequency) {
+    switch (frequency) {
+      case BackupFrequency.daily:
+        return '每天凌晨2点自动备份';
+      case BackupFrequency.weekly:
+        return '每周日凌晨2点自动备份';
+      case BackupFrequency.monthly:
+        return '每月1号凌晨2点自动备份';
+    }
+  }
+}
+
+// ============================================================
+// 文件: features\inventory\presentation\widgets\debug_inventory_detail.dart
+// ============================================================
+import 'package:flutter/material.dart';
+import '../../domain/model/aggregated_inventory.dart';
+
+/// 调试用：显示库存详细信息的原始数据
+class DebugInventoryDetail extends StatelessWidget {
+  final InventoryDetail detail;
+
+  const DebugInventoryDetail({super.key, required this.detail});
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      margin: const EdgeInsets.all(8),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              '调试信息',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: Colors.red,
+              ),
+            ),
+            const Divider(),
+            _buildRow('店铺名称', detail.shopName),
+            _buildRow('生产日期', detail.productionDate?.toString() ?? 'null'),
+            _buildRow('保质期数值', detail.shelfLifeDays?.toString() ?? 'null'),
+            _buildRow('保质期单位', detail.shelfLifeUnit ?? 'null'),
+            _buildRow('计算的剩余天数', detail.remainingDays?.toString() ?? 'null'),
+            _buildRow('显示文本', detail.remainingDaysDisplayText),
+            const Divider(),
+            Text(
+              '如果显示不对，请检查数据库中的实际值',
+              style: TextStyle(
+                fontSize: 12,
+                color: Colors.grey[600],
+                fontStyle: FontStyle.italic,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildRow(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            width: 120,
+            child: Text(
+              '$label:',
+              style: const TextStyle(
+                fontWeight: FontWeight.w600,
+                fontSize: 14,
+              ),
+            ),
+          ),
+          Expanded(
+            child: Text(
+              value,
+              style: const TextStyle(fontSize: 14),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+
+// ============================================================
+// 文件: features\product\presentation\widgets\inputs\shelf_life_unit_dropdown.dart
+// ============================================================
+import 'package:dropdown_button2/dropdown_button2.dart';
+import 'package:flutter/material.dart';
+
+/// 保质期单位下拉
+class ShelfLifeUnitDropdown extends StatelessWidget {
+  final String value;
+  final List<String> options;
+  final ValueChanged<String> onChanged;
+
+  const ShelfLifeUnitDropdown({
+    super.key,
+    required this.value,
+    required this.options,
+    required this.onChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Align(
+      alignment: Alignment.centerLeft,
+      child: SizedBox(
+        height: 48,
+        child: IntrinsicWidth(
+          child: DropdownButtonFormField2<String>(
+            value: value,
+            decoration: InputDecoration(
+              contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+              filled: false,
+              border: InputBorder.none,
+              enabledBorder: InputBorder.none,
+              focusedBorder: InputBorder.none,
+              hintStyle: Theme.of(context).inputDecorationTheme.hintStyle,
+            ),
+            items: options.map((unit) {
+              return DropdownMenuItem(
+                value: unit,
+                child: Text(
+                  _displayName(unit),
+                  style: Theme.of(context).textTheme.bodyLarge,
+                ),
+              );
+            }).toList(),
+            onChanged: (val) {
+              if (val != null) onChanged(val);
+            },
+            buttonStyleData: const ButtonStyleData(
+              padding: EdgeInsets.only(right: 4),
+            ),
+            iconStyleData: const IconStyleData(
+              icon: Icon(Icons.arrow_drop_down),
+              iconSize: 24,
+            ),
+            dropdownStyleData: DropdownStyleData(
+              maxHeight: 200,
+              decoration: BoxDecoration(borderRadius: BorderRadius.circular(12)),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  String _displayName(String unit) {
+    switch (unit) {
+      case 'days':
+        return '天';
+      case 'months':
+        return '个月';
+      case 'years':
+        return '年';
+      default:
+        return unit;
+    }
+  }
+}
+
+
+// ============================================================
+// 文件: core\shared_widgets\loading_widget.dart
+// ============================================================
+import 'package:flutter/material.dart';
+
+class LoadingWidget extends StatelessWidget {
+  final String? message;
+  final double size;
+  final Color? color;
+  final bool showMessage;
+
+  const LoadingWidget({
+    super.key,
+    this.message,
+    this.size = 40.0,
+    this.color,
+    this.showMessage = true,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          SizedBox(
+            width: size,
+            height: size,
+            child: CircularProgressIndicator(
+              color: color ?? Theme.of(context).primaryColor,
+              strokeWidth: 3.0,
+            ),
+          ),
+          if (showMessage && message != null) ...[
+            const SizedBox(height: 16),
+            Text(
+              message!,
+              style: Theme.of(
+                context,
+              ).textTheme.bodyMedium?.copyWith(color: Colors.grey[600]),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class LoadingOverlay extends StatelessWidget {
+  final Widget child;
+  final bool isLoading;
+  final String? loadingMessage;
+
+  const LoadingOverlay({
+    super.key,
+    required this.child,
+    required this.isLoading,
+    this.loadingMessage,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Stack(
+      children: [
+        child,
+        if (isLoading)
+          Container(
+            color: Colors.black.withOpacity(0.3),
+            child: LoadingWidget(message: loadingMessage ?? '加载中...'),
+          ),
+      ],
+    );
+  }
+}
+
+
+// ============================================================
+// 文件: features\product\presentation\widgets\sections\basic_info_section.dart
+// ============================================================
+import 'package:flutter/material.dart';
+import '../product_image_picker.dart';
+import '../inputs/app_text_field.dart';
+import 'barcode_section.dart';
+
+/// 基础信息区：图片、名称、条码
+class BasicInfoSection extends StatelessWidget {
+  final String? initialImagePath;
+  final ValueChanged<String?> onImageChanged;
+
+  final TextEditingController nameController;
+  final FocusNode nameFocusNode;
+  final VoidCallback onNameSubmitted;
+
+  final TextEditingController barcodeController;
+  final VoidCallback onScan;
+
+  const BasicInfoSection({
+    super.key,
+    required this.initialImagePath,
+    required this.onImageChanged,
+    required this.nameController,
+    required this.nameFocusNode,
+    required this.onNameSubmitted,
+    required this.barcodeController,
+    required this.onScan,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const SizedBox(height: 16),
+                Padding(
+                  padding: const EdgeInsets.only(left: 16.0),
+                  child: ProductImagePicker(
+                    initialImagePath: initialImagePath,
+                    onImageChanged: onImageChanged,
+                    size: 120,
+                    enabled: true,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(width: 16),
+          ],
+        ),
+        const SizedBox(height: 16),
+        AppTextField(
+          controller: nameController,
+          label: '名称',
+          isRequired: true,
+          focusNode: nameFocusNode,
+          onFieldSubmitted: (_) => onNameSubmitted(),
+        ),
+        const SizedBox(height: 16),
+        BarcodeSection(
+          controller: barcodeController,
+          onScan: onScan,
+        ),
+      ],
+    );
+  }
+}
+
+
+// ============================================================
+// 文件: features\inventory\presentation\widgets\outbound_record_item_tile.dart
+// ============================================================
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart';
+import '../../../../core/database/database.dart';
+import '../../../product/application/provider/product_providers.dart';
+import '../../application/provider/batch_providers.dart';
+
+class OutboundRecordItemTile extends ConsumerWidget {
+  final OutboundItemData item;
+
+  const OutboundRecordItemTile({super.key, required this.item});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final productAsync = ref.watch(productByIdProvider(item.productId));
+    final batchAsync = item.batchId != null
+        ? ref.watch(batchByNumberProvider(item.batchId!))
+        : null;
+
+    return ListTile(
+  contentPadding: const EdgeInsets.only(left: 3, right: 16, top: 0, bottom: 0),
+  minVerticalPadding: 0,
+  dense: true,
+  visualDensity: const VisualDensity(horizontal: 0, vertical: -4),
+  minLeadingWidth: 0,
+      title: Row(
+        children: [
+            Text(' ${item.id}  ', style: const TextStyle(fontSize: 14)),
+            const SizedBox(width: 6),
+            Expanded(
+              child: productAsync.when(
+                data: (product) => Text(product?.name ?? '货品ID: ${item.productId}', style: const TextStyle(fontSize: 16)),
+                loading: () => const Text('加载中...'),
+                error: (err, stack) => Text(
+                  '加载货品失败',
+                  style: TextStyle(color: Theme.of(context).colorScheme.error),
+                ),
+              ),
+            ),
+          ],
+      ),
+      trailing: Column(
+        mainAxisSize: MainAxisSize.min, // 避免 trailing 拉伸导致整体变高
+        mainAxisAlignment: MainAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.end,
+        children: [
+          Text('数量: ${item.quantity}') ,
+          if (batchAsync != null)
+            batchAsync.when(
+              data: (batch) {
+                if (batch?.productionDate == null) {
+                  return const SizedBox.shrink();
+                }
+                return Text(
+                  '生产日期: ${DateFormat('yyyy-MM-dd').format(batch!.productionDate)}',
+                  style: const TextStyle(fontSize: 12, color: Colors.grey),
+                );
+              },
+              loading: () => const SizedBox(
+                  width: 12,
+                  height: 12,
+                  child: CircularProgressIndicator(strokeWidth: 2)),
+              error: (e, s) => const SizedBox.shrink(),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+
+// ============================================================
+// 文件: core\widgets\privacy_debug_helper.dart
+// ============================================================
+import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
+class PrivacyDebugHelper {
+  /// 检查隐私政策同意状态
+  static Future<Map<String, dynamic>> checkPrivacyStatus() async {
+    final prefs = await SharedPreferences.getInstance();
+    
+    final oldKeyAgreed = prefs.getBool('privacy_policy_agreed');
+    final newKeyAgreed = prefs.getBool('isPrivacyPolicyAgreed');
+    
+    return {
+      'oldKey': oldKeyAgreed,
+      'newKey': newKeyAgreed,
+      'shouldShowDialog': !(newKeyAgreed == true || oldKeyAgreed == true),
+      'allKeys': prefs.getKeys().toList(),
+    };
+  }
+  
+  /// 重置隐私政策状态（用于测试）
+  static Future<void> resetPrivacyStatus() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove('privacy_policy_agreed');
+    await prefs.remove('isPrivacyPolicyAgreed');
+  }
+  
+  /// 显示调试信息
+  static void showDebugInfo(BuildContext context) async {
+    final status = await checkPrivacyStatus();
+    
+    if (context.mounted) {
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text('隐私政策调试信息'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('旧Key状态: ${status['oldKey']}'),
+              Text('新Key状态: ${status['newKey']}'),
+              Text('应显示弹窗: ${status['shouldShowDialog']}'),
+              const SizedBox(height: 16),
+              const Text('所有存储的Keys:'),
+              ...((status['allKeys'] as List).map((key) => Text('- $key'))),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('关闭'),
+            ),
+            TextButton(
+              onPressed: () async {
+                await resetPrivacyStatus();
+                Navigator.pop(context);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('隐私政策状态已重置')),
+                );
+              },
+              child: const Text('重置状态'),
+            ),
+          ],
+        ),
+      );
+    }
+  }
+}
+
+// ============================================================
+// 文件: features\backup\presentation\integration\settings_integration_example.dart
+// ============================================================
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import '../widgets/backup_button.dart';
+
+/// 示例：如何将备份功能集成到设置页面
+/// 
+/// 在现有的 _DataManagementSection 中添加以下代码：
+/// 
+/// ```dart
+/// // 在 _DataManagementSection 的 build 方法中添加：
+/// const QuickBackupButton(),
+/// const Divider(),
+/// ```
+/// 
+/// 或者创建一个专门的备份管理部分：
+class BackupManagementSection extends ConsumerWidget {
+  const BackupManagementSection({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Text(
+            '数据备份',
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ),
+        const QuickBackupButton(),
+        ListTile(
+          leading: const Icon(Icons.folder),
+          title: const Text('管理备份文件'),
+          subtitle: const Text('查看、删除或分享已创建的备份'),
+          trailing: const Icon(Icons.arrow_forward_ios),
+          onTap: () {
+            // TODO: 导航到备份管理页面
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('备份管理功能即将推出')),
+            );
+          },
+        ),
+      ],
+    );
+  }
+}
+
+/// 使用示例：
+/// 
+/// 在 SettingsScreen 中使用：
+/// ```dart
+/// ListView(
+///   children: [
+///     // ... 其他设置项
+///     const Divider(),
+///     const BackupManagementSection(),
+///     // ... 其他设置项
+///   ],
+/// )
+/// ```
+
+// ============================================================
+// 文件: features\inventory\presentation\widgets\inbound_record_item_tile.dart
+// ============================================================
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../../core/database/database.dart';
+import '../../../product/application/provider/product_providers.dart';
+
+class InboundRecordItemTile extends ConsumerWidget {
+  final InboundItemData item;
+
+  const InboundRecordItemTile({super.key, required this.item});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final productAsync = ref.watch(productByIdProvider(item.productId));
+    // 预留批次信息查询，未来可能使用
+    // final batchAsync = ref.watch(batchByNumberProvider(item.id));
+
+    return ListTile(
+      contentPadding: const EdgeInsets.only(
+        left: 3,
+        right: 16,
+        top: 0,
+        bottom: 0,
+      ),
+      minVerticalPadding: 0,
+      dense: true,
+      visualDensity: const VisualDensity(horizontal: 0, vertical: -4),
+      minLeadingWidth: 0,
+      title: Row(
+        children: [
+          Text(' ${item.id}  ', style: const TextStyle(fontSize: 14)),
+          const SizedBox(width: 6),
+          Expanded(
+            child: productAsync.when(
+              data: (product) => Text(
+                product?.name ?? '货品ID: ${item.productId}',
+                style: const TextStyle(fontSize: 16),
+              ),
+              loading: () => const Text('加载中...'),
+              error: (err, stack) => Text(
+                '加载货品失败',
+                style: TextStyle(color: Theme.of(context).colorScheme.error),
+              ),
+            ),
+          ),
+        ],
+      ),
+      trailing: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.end,
+        children: [
+          Text(
+            '数量: ${item.quantity.toStringAsFixed(item.quantity.truncateToDouble() == item.quantity ? 0 : 2)}',
+          ),
+          
+        ],
+      ),
+    );
+  }
+}
+
+
+// ============================================================
+// 文件: features\product\presentation\widgets\product_form_action_bar.dart
+// ============================================================
+import 'package:flutter/material.dart';
+
+/// 表单底部操作栏（提交按钮）
+class ProductFormActionBar extends StatelessWidget {
+  final bool isLoading;
+  final bool isEdit;
+  final VoidCallback onSubmit;
+
+  const ProductFormActionBar({
+    super.key,
+    required this.isLoading,
+    required this.isEdit,
+    required this.onSubmit,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Theme.of(context).scaffoldBackgroundColor,
+      ),
+      child: SafeArea(
+        child: SizedBox(
+          width: double.infinity,
+          height: 48,
+          child: ElevatedButton(
+            onPressed: isLoading ? null : onSubmit,
+            style: ElevatedButton.styleFrom(
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+            child: isLoading
+                ? const SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : Text(
+                    isEdit ? '更新货品' : '添加货品',
+                    style: const TextStyle(fontSize: 16),
+                  ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+
+// ============================================================
+// 文件: features\backup\presentation\widgets\auto_backup_settings_card.dart
+// ============================================================
+import 'package:flutter/material.dart';
+
+/// 自动备份设置卡片组件
+class AutoBackupSettingsCard extends StatelessWidget {
+  final String title;
+  final String? subtitle;
+  final Widget? trailing;
+  final VoidCallback? onTap;
+  final IconData? leadingIcon;
+
+  const AutoBackupSettingsCard({
+    super.key,
+    required this.title,
+    this.subtitle,
+    this.trailing,
+    this.onTap,
+    this.leadingIcon,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      child: ListTile(
+        leading: leadingIcon != null
+            ? Icon(
+                leadingIcon,
+                color: Theme.of(context).colorScheme.primary,
+              )
+            : null,
+        title: Text(
+          title,
+          style: Theme.of(context).textTheme.titleMedium,
+        ),
+        subtitle: subtitle != null
+            ? Text(
+                subtitle!,
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
+              )
+            : null,
+        trailing: trailing,
+        onTap: onTap,
+      ),
+    );
+  }
+}
+
+// ============================================================
+// 文件: features\inventory\presentation\providers\outbound_records_provider.dart
+// ============================================================
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../../core/database/database.dart';
+import '../../data/dao/inventory_transaction_dao.dart';
+import '../../domain/model/inventory_transaction.dart';
+
+final inventoryTransactionDaoProvider =
+    Provider<InventoryTransactionDao>((ref) {
+  final db = ref.watch(appDatabaseProvider);
+  return db.inventoryTransactionDao;
+});
+
+/// Provider to watch all outbound records, returning the full data objects.
+final outboundRecordsProvider =
+    FutureProvider<List<InventoryTransactionModel>>((ref) async {
+  final dao = ref.watch(inventoryTransactionDaoProvider);
+  final transactionsData = await dao.getAllTransactions();
+  
+  // Convert TableData to Domain Model
+  final transactions = transactionsData.map((data) {
+    return InventoryTransactionModel(
+      id: data.id,
+      productId: data.productId,
+  // DB stores short codes: 'in' | 'out' | 'adjust' | 'transfer' | 'return'
+  // Use converter to enum to avoid Bad state: No element
+  type: inventoryTransactionTypeFromDbCode(data.transactionType),
+      quantity: data.quantity,
+      shopId: data.shopId,
+      batchId: data.batchId,
+      createdAt: data.createdAt,
+    );
+  }).toList();
+
+  // Filter for outbound records
+  final outboundTransactions = transactions
+      .where((t) => t.isOutbound)
+      .toList();
+      
+  // Sort by creation date descending
+  outboundTransactions.sort((a, b) => b.createdAt!.compareTo(a.createdAt!));
+  
+  return outboundTransactions;
+});
+
+// ============================================================
+// 文件: core\constants\app_routes.dart
+// ============================================================
+// 路由路径常量
+class AppRoutes {
+  static const String home = '/';
+  static const String products = '/products';
+  static const String productDetail = '/products/:id';
+  static const String productEdit = '/product/:id/edit';
+  static const String productNew = '/product/new';
+  static const String productRanking = '/products/ranking';
+  static const String categories = '/categories';
+  static const String categoryTest = '/categories/test';
+  static const String inventory = '/inventory';
+  static const String inventoryQuery = '/inventory-query';
+  static const String inventoryInboundRecords = '/inventory/inbound-records';
+  static const String inbound = '/inbound';
+  static const String inboundCreate = '/inbound/create';
+  static const String purchase = '/purchase';
+  static const String purchaseCreate = '/inbound/create';
+  static const String purchaseRecords = '/purchase/records';
+  static const String purchaseDetail = '/purchase/detail/:purchaseNumber';
+  static const String sales = '/sales';
+  static const String saleCreate = '/sales/create';
+  static const String saleRecords = '/sales/records';
+  static const String test = '/test';
+  static const String databaseViewer = '/database-viewer';
+  static const String databaseManagement = '/database-management';
+  static const String settings = '/settings';
+  static const String customers = '/customers';
+  static const String productRestoreDebug = '/debug/product-restore';
+
+  // 辅助方法，用于生成带参数的路由
+  static String productDetailPath(String id) => '/products/$id';
+  static String productEditPath(String id) => '/product/$id/edit';
+  static String purchaseDetailPath(String purchaseNumber) =>
+      '/purchase/detail/$purchaseNumber';
+}
+
+
+// ============================================================
+// 文件: config\flavor_config.dart
+// ============================================================
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+// 定义所有支持的 Flavor
+enum AppFlavor {
+  generic,
+  personalized,
+}
+
+// 定义功能开关的枚举
+enum Feature {
+  showDatabaseTools,
+}
+
+// Flavor 配置类
+class FlavorConfig {
+  final AppFlavor flavor;
+  final String appTitle;
+  // 在这里添加更多需要根据 Flavor 变化的配置
+  // 例如：API 地址、主题颜色、功能开关等
+  final Map<Feature, bool> featureFlags;
+
+  FlavorConfig({
+    required this.flavor,
+    required this.appTitle,
+    required this.featureFlags,
+  });
+}
+
+// 创建一个 Provider 来访问 FlavorConfig
+final flavorConfigProvider = Provider<FlavorConfig>((ref) {
+  // 这个 provider 必须在 main 入口文件中被 override
+  throw UnimplementedError('flavorConfigProvider must be overridden in the main entry point.');
+});
+
+// ============================================================
+// 文件: features\settings\presentation\screens\privacy_policy_screen.dart
+// ============================================================
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:markdown_widget/markdown_widget.dart';
+
+class PrivacyPolicyScreen extends StatelessWidget {
+  const PrivacyPolicyScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('隐私政策'),
+      ),
+      body: FutureBuilder(
+        future: rootBundle.loadString('assets/text/privacy_policy.md'),
+        builder: (BuildContext context, AsyncSnapshot<String> snapshot) {
+          if (snapshot.connectionState == ConnectionState.done) {
+            if (snapshot.hasError) {
+              return Center(child: Text('加载失败: ${snapshot.error}'));
+            }
+            if (snapshot.hasData) {
+              return MarkdownWidget(
+                data: snapshot.data!,
+                padding: const EdgeInsets.all(16.0),
+              );
+            }
+          }
+          return const Center(child: CircularProgressIndicator());
+        },
+      ),
+    );
+  }
+}
+
+// ============================================================
+// 文件: features\settings\presentation\screens\terms_of_service_screen.dart
+// ============================================================
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:markdown_widget/markdown_widget.dart';
+
+class TermsOfServiceScreen extends StatelessWidget {
+  const TermsOfServiceScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('用户协议'),
+      ),
+      body: FutureBuilder(
+        future: rootBundle.loadString('assets/text/terms_of_service.md'),
+        builder: (BuildContext context, AsyncSnapshot<String> snapshot) {
+          if (snapshot.connectionState == ConnectionState.done) {
+            if (snapshot.hasError) {
+              return Center(child: Text('加载失败: ${snapshot.error}'));
+            }
+            if (snapshot.hasData) {
+              return MarkdownWidget(
+                data: snapshot.data!,
+                padding: const EdgeInsets.all(16.0),
+              );
+            }
+          }
+          return const Center(child: CircularProgressIndicator());
+        },
+      ),
+    );
+  }
+}
+
+// ============================================================
+// 文件: features\product\presentation\widgets\async_value_widget.dart
+// ============================================================
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+// 创建一个可复用的 Widget
+class AsyncValueWidget<T> extends StatelessWidget {
+  const AsyncValueWidget({
+    super.key,
+    required this.value,
+    required this.data,
+    this.loading,
+    this.error,
+  });
+
+  final AsyncValue<T> value;
+  final Widget Function(T data) data;
+  final Widget? loading;
+  final Widget Function(Object error, StackTrace stackTrace)? error;
+
+  @override
+  Widget build(BuildContext context) {
+    return value.when(
+      data: data,
+      loading: () =>
+          loading ?? const Center(child: CircularProgressIndicator()),
+      error: (e, s) => error?.call(e, s) ?? Center(child: Text('Error: $e')),
+    );
+  }
+}
+
+
+// ============================================================
+// 文件: core\utils\snackbar_helper.dart
+// ============================================================
+import 'package:flutter/material.dart';
+
+/// A helper function to show a SnackBar with a consistent style and duration.
+///
+/// [context]: The BuildContext from which to find the ScaffoldMessenger.
+/// [message]: The text content of the SnackBar.
+/// [isError]: Determines the background color of the SnackBar. Defaults to `false`.
+void showAppSnackBar(
+  BuildContext context, {
+  required String message,
+  bool isError = false,
+}) {
+  // Ensure the context is still valid before trying to show a SnackBar.
+  if (!context.mounted) return;
+
+  // Hide any currently displayed SnackBar to avoid queuing.
+  ScaffoldMessenger.of(context).hideCurrentSnackBar();
+
+  // Show the new SnackBar.
+  ScaffoldMessenger.of(context).showSnackBar(
+    SnackBar(
+      content: Text(message),
+      duration: const Duration(milliseconds: 500),
+      backgroundColor: isError ? Colors.redAccent : Colors.green,
+      behavior: SnackBarBehavior.floating,
+    ),
+  );
+}
+
+// ============================================================
+// 文件: features\inventory\presentation\providers\outbound_receipts_provider.dart
+// ============================================================
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../../core/database/database.dart';
+import '../../../outbound/data/dao/outbound_item_dao.dart';
+
+final outboundItemDaoProvider = Provider<OutboundItemDao>((ref) {
+  final db = ref.watch(appDatabaseProvider);
+  return db.outboundItemDao;
+});
+
+/// 实时监听所有出库记录，数据库有变化时自动推送到 UI
+final outboundReceiptsProvider =
+    StreamProvider<List<OutboundReceiptData>>((ref) {
+  final database = ref.watch(appDatabaseProvider);
+  return database.outboundReceiptDao
+      .watchAllOutboundReceipts()
+      .map((receipts) {
+    final sorted = List<OutboundReceiptData>.of(receipts)
+      ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
+    return sorted;
+  });
+});
+
+final outboundReceiptItemsProvider =
+    FutureProvider.family<List<OutboundItemData>, int>((ref, recordId) {
+  final dao = ref.watch(outboundItemDaoProvider);
+  return dao.getOutboundItemsByReceiptId(recordId);
+});
+
+
+// ============================================================
+// 文件: features\inventory\presentation\providers\inbound_records_provider.dart
+// ============================================================
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../../core/database/database.dart';
+import '../../../inbound/data/dao/inbound_item_dao.dart';
+
+final inboundItemDaoProvider = Provider<InboundItemDao>((ref) {
+  final db = ref.watch(appDatabaseProvider);
+  return db.inboundItemDao;
+});
+
+final inboundRecordsProvider =
+    FutureProvider<List<InboundReceiptData>>((ref) async {
+  final database = ref.read(appDatabaseProvider);
+  final receipts = await database.inboundReceiptDao.getAllInboundReceipts();
+  receipts.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+  return receipts;
+});
+
+final inboundRecordItemsProvider =
+    FutureProvider.family<List<InboundItemData>, int>((
+  ref,
+  recordId,
+) {
+  final dao = ref.watch(inboundItemDaoProvider);
+  return dao.getInboundItemsByReceiptId(recordId);
+});
+
+
+// ============================================================
+// 文件: core\utils\sound_helper.dart
+// ============================================================
+import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
+import 'package:audioplayers/audioplayers.dart';
+
+/// 音效播放工具类
+class SoundHelper {
+  static final AudioPlayer _audioPlayer = AudioPlayer();
+
+  /// 播放扫码成功音效
+  static Future<void> playSuccessSound() async {
+    try {
+      await _audioPlayer.stop();
+      await _audioPlayer.play(AssetSource('sounds/scan_success2.mp3'));
+    } catch (e) {
+      if (kDebugMode) {
+        print('播放音效失败，使用系统音效: $e');
+      }
+      SystemSound.play(SystemSoundType.click);
+    }
+  }
+}
+
+// ============================================================
+// 文件: features\product\presentation\screens\screens.dart
+// ============================================================
+// Product Screens Barrel File
+// 统一导出产品相关的页面组件
+
+export 'product_add_edit_screen.dart';
+export 'product_detail_screen.dart';
+export 'product_list_screen.dart';
+export 'product_selection_screen.dart';
+export 'category_selection_screen.dart';
+export 'unit_selection_screen.dart';
+export 'auxiliaryunit_edit_screen.dart';
+export 'product_ranking_screen.dart';
+
+
+// ============================================================
+// 文件: features\product\presentation\widgets\widgets.dart
+// ============================================================
+// Product Widgets Barrel File
+// 统一导出产品相关的 Widget 组件
+
+export 'product_image_picker.dart';
+export 'unit_list_tile.dart';
+
+// 导出页面组件
+export '../screens/screens.dart';
+
+
+// ============================================================
+// 文件: features\inbound\inbound.dart
+// ============================================================
+// Inbound Feature Barrel File
+export 'domain/model/models.dart';
+export 'presentation/screens/screens.dart';
+export 'presentation/widgets/widgets.dart';
+
+
+// ============================================================
+// 文件: core\shared_widgets\shared_widgets.dart
+// ============================================================
+export 'loading_widget.dart';
+export 'error_widget.dart';
+export '../services/toast_service.dart';
+
+
+// ============================================================
+// 文件: features\inventory\presentation\screens\screens.dart
+// ============================================================
+// 库存功能相关页面统一导出
+export 'inventory_query_screen.dart';
+export 'inventory_records_screen.dart';
+
+
+// ============================================================
+// 文件: core\utils\utils.dart
+// ============================================================
+export 'unit_converter.dart';
+export 'product_unit_extensions.dart';
+
+
+// ============================================================
+// 文件: features\inbound\presentation\screens\screens.dart
+// ============================================================
+// Inbound Screens Barrel File
+export 'create_inbound_screen.dart';
+
+
+// ============================================================
+// 文件: features\inbound\presentation\widgets\widgets.dart
+// ============================================================
+// Inbound Widgets Barrel File
+export 'inbound_item_card.dart';
+
+
+// ============================================================
+// 文件: features\purchase\presentation\screens\screens.dart
+// ============================================================
+// 采购相关屏幕导出
+export 'purchase_records_screen.dart';
+
+
+// ============================================================
+// 文件: core\widgets\product_list\index.dart
+// ============================================================
+export 'product_item.dart';
+export 'product_list.dart';

@@ -647,7 +647,7 @@ class UnifiedBackupService implements IBackupService {
   Future<Map<String, dynamic>?> _getAppSettings() async {
     return {
       'backupVersion': '3.0.0',
-      'createdBy': 'Unified Stocko App',
+      'createdBy': 'Unified 铺得清 App',
       'serviceType': 'UnifiedBackupService',
       'features': {
         'streamProcessing': true,

@@ -3,11 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../config/flavor_config.dart';
 import '../../../../core/constants/app_routes.dart';
-import '../../../../core/services/barcode_scanner_service.dart';
-import '../../../product/application/provider/product_providers.dart';
-import '../../../../core/utils/snackbar_helper.dart';
-import '../../../../core/models/scanned_product_payload.dart';
-import '../../../../core/widgets/product_info_dialog.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
@@ -17,54 +12,7 @@ class HomeScreen extends ConsumerStatefulWidget {
 }
 
 class _HomeScreenState extends ConsumerState<HomeScreen> {
-
-  Future<void> _scanAndShowProductDialog() async {
-    // 1) 调起扫码
-    final barcode = await BarcodeScannerService.quickScan(context, title: '扫描条码');
-    if (!mounted || barcode == null || barcode.isEmpty) return;
-
-    // 2) 查询货品主要信息
-    try {
-      final operations = ref.read(productOperationsProvider.notifier);
-      final result = await operations.getProductWithUnitByBarcode(barcode);
-
-      if (!mounted) return;
-
-      if (result == null) {
-        showAppSnackBar(context, message: '未找到条码对应的货品', isError: true);
-        return;
-      }
-
-      // 3) 构建 payload 并展示复用对话框
-      final payload = ScannedProductPayload(
-        product: result.product,
-        barcode: barcode,
-        unitId: result.unitId,
-        unitName: result.unitName,
-        conversionRate: result.conversionRate,
-        sellingPriceInCents: result.sellingPriceInCents,
-        wholesalePriceInCents: result.wholesalePriceInCents,
-        averageUnitPriceInCents: result.averageUnitPriceInCents,
-      );
-
-      final action = await showProductInfoDialog(context, payload: payload);
-      if (!mounted) return;
-      switch (action) {
-        case ProductInfoAction.sale:
-          context.push(AppRoutes.saleCreate, extra: payload);
-          break;
-        case ProductInfoAction.purchase:
-          context.push(AppRoutes.inboundCreate, extra: payload);
-          break;
-        case ProductInfoAction.cancel:
-        case null:
-          break;
-      }
-    } catch (e) {
-      if (!mounted) return;
-      showAppSnackBar(context, message: '查询货品失败：$e', isError: true);
-    }
-  }
+  // Removed unused method _scanAndShowProductDialog - functionality may be implemented elsewhere
 
   // 隐私弹窗已由 AppInitializer 统一处理，这里不再重复处理。
 
@@ -73,7 +21,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final ref = this.ref;
     final flavorConfig = ref.watch(flavorConfigProvider);
     return Scaffold(
-      appBar: AppBar(title: const Text('Stocko - 首页')),
+      appBar: AppBar(title: const Text('铺得清 - 首页')),
       body: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16.0),
         child: Column(
@@ -81,7 +29,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           children: [
             const SizedBox(height: 20),
             const Text(
-              '欢迎使用 Stocko 库存管理系统',
+              '欢迎使用 铺得清 库存管理系统',
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 24,

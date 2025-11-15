@@ -1,6 +1,5 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:stocko_app/core/utils/snackbar_helper.dart';
@@ -8,6 +7,20 @@ import 'package:stocko_app/core/utils/snackbar_helper.dart';
 /// 扫码结果回调类型定义
 typedef OnBarcodeScanned = void Function(String barcode);
 typedef OnScanError = void Function(String error);
+typedef GetProductName = Future<String?> Function(String barcode);
+
+/// 扫码历史记录项
+class ScanHistoryItem {
+  final String barcode;
+  final String? productName;
+  final DateTime timestamp;
+
+  ScanHistoryItem({
+    required this.barcode,
+    this.productName,
+    required this.timestamp,
+  });
+}
 
 /// 扫码配置类
 class BarcodeScannerConfig {
@@ -20,6 +33,8 @@ class BarcodeScannerConfig {
   final bool enableScanSound;
   final bool continuousMode; // 连续扫码模式
   final int? continuousDelay; // 连续扫码延迟（毫秒）
+  final bool showScanHistory; // 显示扫码历史
+  final int maxHistoryItems; // 最大历史记录数
   final List<Widget>? additionalActions;
   final Color? backgroundColor;
   final Color? foregroundColor;
@@ -34,6 +49,8 @@ class BarcodeScannerConfig {
     this.enableScanSound = true,
     this.continuousMode = false,
     this.continuousDelay = 1000, // 默认1秒延迟
+    this.showScanHistory = false, // 默认不显示历史
+    this.maxHistoryItems = 10, // 默认显示最近10条
     this.additionalActions,
     this.backgroundColor = Colors.black,
     this.foregroundColor = Colors.white,
@@ -45,6 +62,7 @@ class UniversalBarcodeScanner extends StatefulWidget {
   final BarcodeScannerConfig config;
   final OnBarcodeScanned onBarcodeScanned;
   final OnScanError? onScanError;
+  final GetProductName? getProductName; // 获取商品名称的回调
   final Widget? loadingWidget;
   final bool isLoading;
 
@@ -53,6 +71,7 @@ class UniversalBarcodeScanner extends StatefulWidget {
     required this.config,
     required this.onBarcodeScanned,
     this.onScanError,
+    this.getProductName,
     this.loadingWidget,
     this.isLoading = false,
   });
@@ -66,6 +85,9 @@ class _UniversalBarcodeScannerState extends State<UniversalBarcodeScanner> {
   late MobileScannerController _cameraController;
   late AudioPlayer _audioPlayer;
   bool _isScanning = true;
+  final List<ScanHistoryItem> _scanHistory = []; // 扫码历史记录
+  int _totalScans = 0; // 扫码总数量
+
   @override
   void initState() {
     super.initState();
@@ -111,7 +133,7 @@ class _UniversalBarcodeScannerState extends State<UniversalBarcodeScanner> {
         children: [
           // 扫描器区域
           Expanded(
-            flex: 4,
+            flex: widget.config.showScanHistory ? 3 : 4,
             child: Container(
               width: double.infinity,
               padding: const EdgeInsets.all(16.0),
@@ -121,6 +143,8 @@ class _UniversalBarcodeScannerState extends State<UniversalBarcodeScanner> {
               ),
             ),
           ),
+          // 扫码历史区域（如果启用）
+          if (widget.config.showScanHistory) _buildScanHistorySection(),
           // 底部操作区域
           Expanded(
             flex: 1,
@@ -198,7 +222,7 @@ class _UniversalBarcodeScannerState extends State<UniversalBarcodeScanner> {
             setState(() {
               _isScanning = false;
             });
-            widget.onBarcodeScanned(code);
+            _handleBarcodeScanned(code);
 
             // 连续扫码模式下，延迟后重新启用扫码
             if (widget.config.continuousMode) {
@@ -345,14 +369,12 @@ class _UniversalBarcodeScannerState extends State<UniversalBarcodeScanner> {
       final code = controller.text.trim();
       if (code.isNotEmpty) {
         Navigator.of(context).pop();
-        widget.onBarcodeScanned(code);
+        _handleBarcodeScanned(code);
 
         // 连续扫码模式下，延迟后重新启用扫码
         if (widget.config.continuousMode) {
           Future.delayed(
-            Duration(
-              milliseconds: widget.config.continuousDelay ?? 1000,
-            ),
+            Duration(milliseconds: widget.config.continuousDelay ?? 1000),
             () {
               if (mounted) {
                 setState(() {
@@ -411,72 +433,7 @@ class _UniversalBarcodeScannerState extends State<UniversalBarcodeScanner> {
     if (widget.onScanError != null) {
       widget.onScanError!(error);
     } else {
-      showAppSnackBar(context,
-          message: '该功能暂不可用，请使用相机扫描', isError: true);
-    }
-  }
-
-  /// 播放扫码成功提示音
-  void _playSuccessSound() {
-    if (!widget.config.enableScanSound) {
-      if (kDebugMode) {
-        print('扫码声音被禁用 (enableScanSound = false)');
-      }
-      return;
-    }
-
-    if (kDebugMode) {
-      print('开始播放扫码成功音效...');
-    }
-
-    // 首先尝试播放音频文件
-    _playAudioFile()
-        .catchError((e) {
-          if (kDebugMode) {
-            print('播放音频文件失败: $e');
-          }
-          // 如果音频文件播放失败，回退到系统声音
-          return _playSystemSound();
-        })
-        .catchError((systemError) {
-          if (kDebugMode) {
-            print('播放系统声音也失败: $systemError');
-          }
-        });
-  }
-
-  /// 播放音频文件
-  Future<void> _playAudioFile() async {
-    try {
-      // 停止之前的播放
-      await _audioPlayer.stop();
-
-      // 播放扫码成功音效
-      await _audioPlayer.play(AssetSource('sounds/scan_success2.mp3'));
-
-      if (kDebugMode) {
-        print('✓ 成功播放扫码音效: sounds/scan_success2.mp3');
-      }
-    } catch (e) {
-      if (kDebugMode) {
-        print('❌ 播放音频文件异常: $e');
-      }
-      rethrow;
-    }
-  }
-
-  /// 播放系统声音作为回退
-  Future<void> _playSystemSound() async {
-    try {
-      SystemSound.play(SystemSoundType.click);
-      if (kDebugMode) {
-        print('✓ 播放系统声音作为回退');
-      }
-    } catch (e) {
-      if (kDebugMode) {
-        print('❌ 播放系统声音失败: $e');
-      }
-      rethrow;
+      showAppSnackBar(context, message: '该功能暂不可用，请使用相机扫描', isError: true);
     }
   }
 
@@ -496,5 +453,179 @@ class _UniversalBarcodeScannerState extends State<UniversalBarcodeScanner> {
         _isScanning = enabled;
       });
     }
+  }
+
+  /// 处理扫码结果
+  Future<void> _handleBarcodeScanned(String barcode) async {
+    // 更新扫码总数
+    setState(() {
+      _totalScans++;
+    });
+
+    // 如果启用了历史记录，添加到历史
+    if (widget.config.showScanHistory) {
+      String? productName;
+      
+      // 尝试获取商品名称
+      if (widget.getProductName != null) {
+        try {
+          productName = await widget.getProductName!(barcode);
+        } catch (e) {
+          if (kDebugMode) {
+            print('获取商品名称失败: $e');
+          }
+        }
+      }
+
+      setState(() {
+        // 添加到历史记录开头
+        _scanHistory.insert(
+          0,
+          ScanHistoryItem(
+            barcode: barcode,
+            productName: productName,
+            timestamp: DateTime.now(),
+          ),
+        );
+
+        // 保持最大记录数限制
+        if (_scanHistory.length > widget.config.maxHistoryItems) {
+          _scanHistory.removeRange(
+            widget.config.maxHistoryItems,
+            _scanHistory.length,
+          );
+        }
+      });
+    }
+
+    // 调用原始回调
+    widget.onBarcodeScanned(barcode);
+  }
+
+  /// 构建扫码历史区域
+  Widget _buildScanHistorySection() {
+    return Container(
+      height: 180,
+      decoration: BoxDecoration(
+        color: widget.config.foregroundColor?.withValues(alpha: 0.1),
+        border: Border(
+          top: BorderSide(
+            color: widget.config.foregroundColor?.withValues(alpha: 0.2) ?? Colors.white24,
+            width: 1,
+          ),
+        ),
+      ),
+      child: Column(
+        children: [
+          // 标题栏
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  '扫码记录',
+                  style: TextStyle(
+                    color: widget.config.foregroundColor,
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                Text(
+                  '总计: $_totalScans',
+                  style: TextStyle(
+                    color: widget.config.foregroundColor,
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          // 历史记录列表
+          Expanded(
+            child: _scanHistory.isEmpty
+                ? Center(
+                    child: Text(
+                      '暂无扫码记录',
+                      style: TextStyle(
+                        color: widget.config.foregroundColor?.withValues(alpha: 0.5),
+                        fontSize: 12,
+                      ),
+                    ),
+                  )
+                : ListView.builder(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    itemCount: _scanHistory.length,
+                    itemBuilder: (context, index) {
+                      final item = _scanHistory[index];
+                      return Container(
+                        padding: const EdgeInsets.symmetric(vertical: 6),
+                        decoration: BoxDecoration(
+                          border: Border(
+                            bottom: BorderSide(
+                              color: widget.config.foregroundColor?.withValues(alpha: 0.1) ?? Colors.white12,
+                              width: 0.5,
+                            ),
+                          ),
+                        ),
+                        child: Row(
+                          children: [
+                            // 序号
+                            Container(
+                              width: 24,
+                              height: 24,
+                              alignment: Alignment.center,
+                              decoration: BoxDecoration(
+                                color: widget.config.foregroundColor?.withValues(alpha: 0.2),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: Text(
+                                '${index + 1}',
+                                style: TextStyle(
+                                  color: widget.config.foregroundColor,
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            // 商品信息
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    item.productName ?? '未知商品',
+                                    style: TextStyle(
+                                      color: widget.config.foregroundColor,
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                  const SizedBox(height: 2),
+                                  Text(
+                                    item.barcode,
+                                    style: TextStyle(
+                                      color: widget.config.foregroundColor?.withValues(alpha: 0.6),
+                                      fontSize: 11,
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
+                    },
+                  ),
+          ),
+        ],
+      ),
+    );
   }
 }

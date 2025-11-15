@@ -19,7 +19,7 @@ class StockoApp extends ConsumerWidget {
     
     return AppInitializer(
       child: MaterialApp.router(
-        title: 'Stocko 库存管理系统',
+        title: '铺得清 库存管理系统',
         theme: AppTheme.lightTheme,
         darkTheme: AppTheme.darkTheme,
         themeMode: ThemeMode.system,

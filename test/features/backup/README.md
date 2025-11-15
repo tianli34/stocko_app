@@ -1,6 +1,6 @@
 # Backup System Unit Tests
 
-This directory contains comprehensive unit tests for the backup and restore functionality of the Stocko app.
+This directory contains comprehensive unit tests for the backup and restore functionality of the 铺得清 app.
 
 ## Test Coverage
 

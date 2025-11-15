@@ -131,9 +131,7 @@ class FileAccessHelper {
         targetDir = await getApplicationDocumentsDirectory();
       }
 
-      if (targetDir == null) {
-        targetDir = await getApplicationDocumentsDirectory();
-      }
+      targetDir ??= await getApplicationDocumentsDirectory();
 
       final targetFile = File(path.join(targetDir.path, fileName));
       await sourceFile.copy(targetFile.path);

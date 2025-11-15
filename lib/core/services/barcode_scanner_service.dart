@@ -9,16 +9,19 @@ class BarcodeScannerService {
   static Widget Function({
     required BarcodeScannerConfig config,
     required OnBarcodeScanned onBarcodeScanned,
+    GetProductName? getProductName,
     Widget? loadingWidget,
     bool isLoading,
   }) scannerBuilder = ({
     required BarcodeScannerConfig config,
     required OnBarcodeScanned onBarcodeScanned,
+    GetProductName? getProductName,
     Widget? loadingWidget,
     bool isLoading = false,
   }) => UniversalBarcodeScanner(
         config: config,
         onBarcodeScanned: onBarcodeScanned,
+        getProductName: getProductName,
         loadingWidget: loadingWidget,
         isLoading: isLoading,
       );
@@ -28,6 +31,7 @@ class BarcodeScannerService {
   static Future<String?> scan(
     BuildContext context, {
     BarcodeScannerConfig? config,
+    GetProductName? getProductName,
     Widget? loadingWidget,
     bool isLoading = false,
   }) async {
@@ -40,6 +44,7 @@ class BarcodeScannerService {
           onBarcodeScanned: (barcode) {
             Navigator.of(context).pop(barcode);
           },
+          getProductName: getProductName,
           loadingWidget: loadingWidget,
           isLoading: isLoading,
         ),
@@ -62,6 +67,8 @@ class BarcodeScannerService {
   static Future<String?> scanForProduct(
     BuildContext context, {
     bool continuousMode = false,
+    bool showScanHistory = false,
+    GetProductName? getProductName,
   }) async {
     return await scan(
       context,
@@ -72,7 +79,10 @@ class BarcodeScannerService {
         enableGalleryPicker: true,
         continuousMode: continuousMode,
         continuousDelay: 1000,
+        showScanHistory: showScanHistory,
+        maxHistoryItems: 10,
       ),
+      getProductName: getProductName,
     );
   }
 
