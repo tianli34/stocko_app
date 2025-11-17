@@ -5,6 +5,7 @@ import '../../../core/database/database_providers.dart';
 import '../../../core/database/database.dart';
 import '../../../core/utils/snackbar_helper.dart';
 import '../../../core/constants/app_routes.dart';
+import '../../inventory/application/service/weighted_average_price_service.dart';
 
 /// 数据库管理开发工具
 /// 仅在开发模式下使用
@@ -52,6 +53,22 @@ class DatabaseManagementScreen extends ConsumerWidget {
               label: const Text('清空并重置数据库'),
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.red.shade600,
+                foregroundColor: Colors.white,
+              ),
+            ),
+
+            const SizedBox(height: 24),
+
+            // 数据修复
+            Text('数据修复', style: Theme.of(context).textTheme.titleMedium),
+            const SizedBox(height: 8),
+
+            ElevatedButton.icon(
+              onPressed: () => _recalculateAveragePrices(ref, context),
+              icon: const Icon(Icons.calculate),
+              label: const Text('重新计算库存均价'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.green.shade600,
                 foregroundColor: Colors.white,
               ),
             ),
@@ -331,6 +348,78 @@ class DatabaseManagementScreen extends ConsumerWidget {
       } catch (e) {
         if (context.mounted) {
           showAppSnackBar(context, message: '❌ 重置失败: $e', isError: true);
+        }
+      }
+    }
+  }
+
+  Future<void> _recalculateAveragePrices(
+    WidgetRef ref,
+    BuildContext context,
+  ) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('确认重新计算'),
+        content: const Text(
+          '此操作将基于历史采购记录重新计算所有库存的移动加权平均价格。\n\n'
+          '注意：仅支持通过采购入库的记录，其他入库方式（如调拨、盘点）无法修复。\n\n'
+          '确定继续吗？',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('取消'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            style: TextButton.styleFrom(foregroundColor: Colors.green),
+            child: const Text('确定'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true) {
+      try {
+        // 显示加载提示
+        if (context.mounted) {
+          showDialog(
+            context: context,
+            barrierDismissible: false,
+            builder: (context) => const Center(
+              child: Card(
+                child: Padding(
+                  padding: EdgeInsets.all(20),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      CircularProgressIndicator(),
+                      SizedBox(height: 16),
+                      Text('正在重新计算库存均价...'),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          );
+        }
+
+        final service = ref.read(weightedAveragePriceServiceProvider);
+        await service.recalculateAllWeightedAveragePrices();
+
+        if (context.mounted) {
+          Navigator.of(context).pop(); // 关闭加载对话框
+          showAppSnackBar(context, message: '✅ 库存均价重新计算完成');
+        }
+      } catch (e) {
+        if (context.mounted) {
+          Navigator.of(context).pop(); // 关闭加载对话框
+          showAppSnackBar(
+            context,
+            message: '❌ 计算失败: $e',
+            isError: true,
+          );
         }
       }
     }

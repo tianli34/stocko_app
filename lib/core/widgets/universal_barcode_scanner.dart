@@ -7,17 +7,23 @@ import 'package:stocko_app/core/utils/snackbar_helper.dart';
 /// 扫码结果回调类型定义
 typedef OnBarcodeScanned = void Function(String barcode);
 typedef OnScanError = void Function(String error);
-typedef GetProductName = Future<String?> Function(String barcode);
+typedef GetProductInfo = Future<({String? name, String? unitName, int? conversionRate})?> Function(String barcode);
 
 /// 扫码历史记录项
 class ScanHistoryItem {
+  final int sequenceNumber; // 扫描序号
   final String barcode;
   final String? productName;
+  final String? unitName; // 单位名称
+  final int? conversionRate; // 换算率，1表示基本单位
   final DateTime timestamp;
 
   ScanHistoryItem({
+    required this.sequenceNumber,
     required this.barcode,
     this.productName,
+    this.unitName,
+    this.conversionRate,
     required this.timestamp,
   });
 }
@@ -50,7 +56,7 @@ class BarcodeScannerConfig {
     this.continuousMode = false,
     this.continuousDelay = 1000, // 默认1秒延迟
     this.showScanHistory = false, // 默认不显示历史
-    this.maxHistoryItems = 10, // 默认显示最近10条
+    this.maxHistoryItems = 20, // 默认显示最近20条
     this.additionalActions,
     this.backgroundColor = Colors.black,
     this.foregroundColor = Colors.white,
@@ -62,7 +68,7 @@ class UniversalBarcodeScanner extends StatefulWidget {
   final BarcodeScannerConfig config;
   final OnBarcodeScanned onBarcodeScanned;
   final OnScanError? onScanError;
-  final GetProductName? getProductName; // 获取商品名称的回调
+  final GetProductInfo? getProductInfo; // 获取商品信息的回调（包括名称和单位）
   final Widget? loadingWidget;
   final bool isLoading;
 
@@ -71,7 +77,7 @@ class UniversalBarcodeScanner extends StatefulWidget {
     required this.config,
     required this.onBarcodeScanned,
     this.onScanError,
-    this.getProductName,
+    this.getProductInfo,
     this.loadingWidget,
     this.isLoading = false,
   });
@@ -133,7 +139,7 @@ class _UniversalBarcodeScannerState extends State<UniversalBarcodeScanner> {
         children: [
           // 扫描器区域
           Expanded(
-            flex: widget.config.showScanHistory ? 3 : 4,
+            flex: 4,
             child: Container(
               width: double.infinity,
               padding: const EdgeInsets.all(16.0),
@@ -143,8 +149,6 @@ class _UniversalBarcodeScannerState extends State<UniversalBarcodeScanner> {
               ),
             ),
           ),
-          // 扫码历史区域（如果启用）
-          if (widget.config.showScanHistory) _buildScanHistorySection(),
           // 底部操作区域
           Expanded(
             flex: 1,
@@ -211,34 +215,227 @@ class _UniversalBarcodeScannerState extends State<UniversalBarcodeScanner> {
         ),
       );
     }
-    return MobileScanner(
-      controller: _cameraController,
-      onDetect: (capture) {
-        if (!_isScanning) return;
-        final List<Barcode> barcodes = capture.barcodes;
-        if (barcodes.isNotEmpty) {
-          final String? code = barcodes.first.rawValue;
-          if (code != null && code.isNotEmpty) {
-            setState(() {
-              _isScanning = false;
-            });
-            _handleBarcodeScanned(code);
-
-            // 连续扫码模式下，延迟后重新启用扫码
-            if (widget.config.continuousMode) {
-              Future.delayed(
-                Duration(milliseconds: widget.config.continuousDelay ?? 1000),
-                () {
-                  if (mounted) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        return Stack(
+          children: [
+            // 相机扫描器
+            MobileScanner(
+              controller: _cameraController,
+              onDetect: (capture) {
+                if (!_isScanning) return;
+                final List<Barcode> barcodes = capture.barcodes;
+                if (barcodes.isNotEmpty) {
+                  final String? code = barcodes.first.rawValue;
+                  if (code != null && code.isNotEmpty) {
                     setState(() {
-                      _isScanning = true;
+                      _isScanning = false;
                     });
+                    _handleBarcodeScanned(code);
+
+                    // 连续扫码模式下，延迟后重新启用扫码
+                    if (widget.config.continuousMode) {
+                      Future.delayed(
+                        Duration(milliseconds: widget.config.continuousDelay ?? 1000),
+                        () {
+                          if (mounted) {
+                            setState(() {
+                              _isScanning = true;
+                            });
+                          }
+                        },
+                      );
+                    }
                   }
-                },
-              );
-            }
-          }
-        }
+                }
+              },
+            ),
+            // 扫码历史信息叠加层（右侧三分之一区域）
+            if (widget.config.showScanHistory)
+              Positioned(
+                top: 0,
+                right: 0,
+                bottom: 0,
+                width: constraints.maxWidth / 3,
+                child: Container(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.centerRight,
+                      end: Alignment.centerLeft,
+                      stops: const [0.0, 1.0],
+                      colors: [
+                        Colors.black.withValues(alpha: 0.7),
+                        Colors.black.withValues(alpha: 0.0),
+                      ],
+                    ),
+                  ),
+              child: Column(
+                children: [
+                  // 顶部统计信息（已扫与数量同行）
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(
+                          '已扫',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 14,
+                            fontWeight: FontWeight.bold,
+                            shadows: [
+                              Shadow(
+                                color: Colors.black,
+                                blurRadius: 4,
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          '$_totalScans',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 14,
+                            fontWeight: FontWeight.bold,
+                            shadows: [
+                              Shadow(
+                                color: Colors.black,
+                                blurRadius: 4,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  // 历史记录列表（精简版，从上至下按序号从小到大排列）
+                  Expanded(
+                    child: _scanHistory.isNotEmpty
+                        ? Container(
+                            margin: const EdgeInsets.symmetric(horizontal: 8),
+                            child: ListView.builder(
+                              padding: EdgeInsets.zero,
+                              itemCount: _scanHistory.length.clamp(0, 20),
+                              itemBuilder: (context, index) {
+                                // _scanHistory[0] 是最新的（序号最大）
+                                // 需要反向访问，使序号小的在上面
+                                final reversedIndex = _scanHistory.length - 1 - index;
+                                final item = _scanHistory[reversedIndex];
+                                return Container(
+                                  margin: const EdgeInsets.only(bottom: 3),
+                                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+                                  decoration: BoxDecoration(
+                                    color: Colors.black.withValues(alpha: 0.5),
+                                    borderRadius: BorderRadius.circular(3),
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      Text(
+                                        '${item.sequenceNumber}.',
+                                        style: TextStyle(
+                                          color: Colors.white.withValues(alpha: 0.7),
+                                          fontSize: 10,
+                                        ),
+                                      ),
+                                      const SizedBox(width: 4),
+                                      Expanded(
+                                        child: RichText(
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                          text: TextSpan(
+                                            children: [
+                                              TextSpan(
+                                                text: item.productName ?? '未知',
+                                                style: const TextStyle(
+                                                  color: Colors.white,
+                                                  fontSize: 10,
+                                                ),
+                                              ),
+                                              if (item.unitName != null) ...[
+                                                const TextSpan(
+                                                  text: ' ',
+                                                  style: TextStyle(
+                                                    color: Colors.white,
+                                                    fontSize: 10,
+                                                  ),
+                                                ),
+                                                TextSpan(
+                                                  text: item.unitName,
+                                                  style: TextStyle(
+                                                    color: (item.conversionRate != null && item.conversionRate! > 1)
+                                                        ? Colors.yellow // 非基本单位用黄色突出显示
+                                                        : Colors.white.withValues(alpha: 0.7),
+                                                    fontSize: 10,
+                                                    fontWeight: (item.conversionRate != null && item.conversionRate! > 1)
+                                                        ? FontWeight.bold
+                                                        : FontWeight.normal,
+                                                  ),
+                                                ),
+                                              ],
+                                            ],
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                );
+                              },
+                            ),
+                          )
+                        : const SizedBox.shrink(),
+                  ),
+                  // 完成按钮（底部）
+                  if (widget.config.continuousMode)
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      child: Material(
+                        color: Colors.transparent,
+                        child: InkWell(
+                          onTap: () => Navigator.of(context).pop(),
+                          borderRadius: BorderRadius.circular(16),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                            decoration: BoxDecoration(
+                              color: Colors.blue.withValues(alpha: 0.5),
+                              borderRadius: BorderRadius.circular(16),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withValues(alpha: 0.2),
+                                  blurRadius: 4,
+                                  offset: const Offset(0, 1),
+                                ),
+                              ],
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                const Icon(
+                                  Icons.check_circle,
+                                  color: Colors.white,
+                                  size: 14,
+                                ),
+                                const SizedBox(width: 4),
+                                Text(
+                                  '完成',
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      );
       },
     );
   }
@@ -333,7 +530,7 @@ class _UniversalBarcodeScannerState extends State<UniversalBarcodeScanner> {
                 width: 32,
                 height: 32,
                 decoration: BoxDecoration(
-                  color: widget.config.foregroundColor?.withOpacity(0.2),
+                  color: widget.config.foregroundColor?.withValues(alpha: 0.2),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Icon(
@@ -458,21 +655,29 @@ class _UniversalBarcodeScannerState extends State<UniversalBarcodeScanner> {
   /// 处理扫码结果
   Future<void> _handleBarcodeScanned(String barcode) async {
     // 更新扫码总数
+    final currentScanNumber = _totalScans + 1;
     setState(() {
-      _totalScans++;
+      _totalScans = currentScanNumber;
     });
 
     // 如果启用了历史记录，添加到历史
     if (widget.config.showScanHistory) {
       String? productName;
+      String? unitName;
+      int? conversionRate;
       
-      // 尝试获取商品名称
-      if (widget.getProductName != null) {
+      // 尝试获取商品信息（名称和单位）
+      if (widget.getProductInfo != null) {
         try {
-          productName = await widget.getProductName!(barcode);
+          final info = await widget.getProductInfo!(barcode);
+          if (info != null) {
+            productName = info.name;
+            unitName = info.unitName;
+            conversionRate = info.conversionRate;
+          }
         } catch (e) {
           if (kDebugMode) {
-            print('获取商品名称失败: $e');
+            print('获取商品信息失败: $e');
           }
         }
       }
@@ -482,8 +687,11 @@ class _UniversalBarcodeScannerState extends State<UniversalBarcodeScanner> {
         _scanHistory.insert(
           0,
           ScanHistoryItem(
+            sequenceNumber: currentScanNumber, // 使用绝对序号
             barcode: barcode,
             productName: productName,
+            unitName: unitName,
+            conversionRate: conversionRate,
             timestamp: DateTime.now(),
           ),
         );
@@ -502,130 +710,5 @@ class _UniversalBarcodeScannerState extends State<UniversalBarcodeScanner> {
     widget.onBarcodeScanned(barcode);
   }
 
-  /// 构建扫码历史区域
-  Widget _buildScanHistorySection() {
-    return Container(
-      height: 180,
-      decoration: BoxDecoration(
-        color: widget.config.foregroundColor?.withValues(alpha: 0.1),
-        border: Border(
-          top: BorderSide(
-            color: widget.config.foregroundColor?.withValues(alpha: 0.2) ?? Colors.white24,
-            width: 1,
-          ),
-        ),
-      ),
-      child: Column(
-        children: [
-          // 标题栏
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  '扫码记录',
-                  style: TextStyle(
-                    color: widget.config.foregroundColor,
-                    fontSize: 14,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                Text(
-                  '总计: $_totalScans',
-                  style: TextStyle(
-                    color: widget.config.foregroundColor,
-                    fontSize: 14,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          // 历史记录列表
-          Expanded(
-            child: _scanHistory.isEmpty
-                ? Center(
-                    child: Text(
-                      '暂无扫码记录',
-                      style: TextStyle(
-                        color: widget.config.foregroundColor?.withValues(alpha: 0.5),
-                        fontSize: 12,
-                      ),
-                    ),
-                  )
-                : ListView.builder(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    itemCount: _scanHistory.length,
-                    itemBuilder: (context, index) {
-                      final item = _scanHistory[index];
-                      return Container(
-                        padding: const EdgeInsets.symmetric(vertical: 6),
-                        decoration: BoxDecoration(
-                          border: Border(
-                            bottom: BorderSide(
-                              color: widget.config.foregroundColor?.withValues(alpha: 0.1) ?? Colors.white12,
-                              width: 0.5,
-                            ),
-                          ),
-                        ),
-                        child: Row(
-                          children: [
-                            // 序号
-                            Container(
-                              width: 24,
-                              height: 24,
-                              alignment: Alignment.center,
-                              decoration: BoxDecoration(
-                                color: widget.config.foregroundColor?.withValues(alpha: 0.2),
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              child: Text(
-                                '${index + 1}',
-                                style: TextStyle(
-                                  color: widget.config.foregroundColor,
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-                            // 商品信息
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    item.productName ?? '未知商品',
-                                    style: TextStyle(
-                                      color: widget.config.foregroundColor,
-                                      fontSize: 13,
-                                      fontWeight: FontWeight.w500,
-                                    ),
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                  const SizedBox(height: 2),
-                                  Text(
-                                    item.barcode,
-                                    style: TextStyle(
-                                      color: widget.config.foregroundColor?.withValues(alpha: 0.6),
-                                      fontSize: 11,
-                                    ),
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
-                      );
-                    },
-                  ),
-          ),
-        ],
-      ),
-    );
-  }
+
 }

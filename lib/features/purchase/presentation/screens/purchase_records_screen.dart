@@ -50,15 +50,21 @@ class PurchaseRecordsScreen extends ConsumerWidget {
       body: ordersAsync.when(
         data: (orders) {
           if (orders.isEmpty) {
-            return const Center(
+            return Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.receipt_long, size: 64, color: Colors.grey),
-                  SizedBox(height: 16),
-                  Text(
+                  const Icon(Icons.receipt_long, size: 64, color: Colors.grey),
+                  const SizedBox(height: 16),
+                  const Text(
                     '暂无采购订单',
                     style: TextStyle(fontSize: 18, color: Colors.grey),
+                  ),
+                  const SizedBox(height: 24),
+                  OutlinedButton.icon(
+                    onPressed: () => context.go(AppRoutes.inventoryInboundRecords),
+                    icon: const Icon(Icons.inventory_2),
+                    label: const Text('查看入库记录'),
                   ),
                 ],
               ),
@@ -75,6 +81,11 @@ class PurchaseRecordsScreen extends ConsumerWidget {
         },
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (error, stack) => Center(child: Text('加载失败: $error')),
+      ),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () => context.go(AppRoutes.inventoryInboundRecords),
+        icon: const Icon(Icons.inventory_2),
+        label: const Text('入库记录'),
       ),
     );
   }

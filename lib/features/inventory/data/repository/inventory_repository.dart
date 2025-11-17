@@ -371,6 +371,26 @@ class InventoryRepository implements IInventoryRepository {
     }
   }
 
+  @override
+  Future<bool> updateAverageUnitPrice(
+    int productId,
+    int shopId,
+    int? batchId,
+    int averageUnitPriceInCents,
+  ) async {
+    try {
+      return await _inventoryDao.updateAverageUnitPrice(
+        productId,
+        shopId,
+        batchId,
+        averageUnitPriceInCents,
+      );
+    } catch (e) {
+      print('📦 仓储层：更新库存均价失败: $e');
+      rethrow;
+    }
+  }
+
   /// 将Inventory模型转换为数据库Companion对象
   StockCompanion _inventoryToCompanion(StockModel inventory) {
     return StockCompanion(

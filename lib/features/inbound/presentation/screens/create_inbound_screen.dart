@@ -225,8 +225,27 @@ class _CreateInboundScreenState extends ConsumerState<CreateInboundScreen> {
                 subtitle: '将条码对准扫描框，自动连续添加',
                 continuousMode: true, // 启用连续扫码模式
                 continuousDelay: 1500, // 设置扫码间隔
+                showScanHistory: true, // 显示扫码历史
+                maxHistoryItems: 20, // 最多显示20条记录
               ),
               onBarcodeScanned: _handleContinuousProductScan,
+              getProductInfo: (barcode) async {
+                // 获取商品信息（名称和单位）
+                try {
+                  final productOperations = ref.read(productOperationsProvider.notifier);
+                  final result = await productOperations.getProductWithUnitByBarcode(barcode);
+                  if (result != null) {
+                    return (
+                      name: result.product.name,
+                      unitName: result.unitName,
+                      conversionRate: result.conversionRate,
+                    );
+                  }
+                  return null;
+                } catch (e) {
+                  return null;
+                }
+              },
             ),
           ),
         ),

@@ -108,4 +108,12 @@ abstract class IInventoryRepository {
 
   /// 检查库存是否存在
   Future<bool> inventoryExists(int productId, int shopId);
+
+  /// 更新库存的移动加权平均价格
+  Future<bool> updateAverageUnitPrice(
+    int productId,
+    int shopId,
+    int? batchId,
+    int averageUnitPriceInCents,
+  );
 }

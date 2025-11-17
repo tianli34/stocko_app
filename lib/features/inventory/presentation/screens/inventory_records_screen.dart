@@ -122,22 +122,28 @@ class _InventoryRecordsScreenState extends ConsumerState<InventoryRecordsScreen>
                   Expanded(
                     child: inboundRecordsAsync.when(
                       data: (records) => records.isEmpty
-                          ? const Center(
+                          ? Center(
                               child: Column(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
-                                  Icon(
+                                  const Icon(
                                     Icons.inventory_outlined,
                                     size: 64,
                                     color: Colors.grey,
                                   ),
-                                  SizedBox(height: 16),
-                                  Text(
+                                  const SizedBox(height: 16),
+                                  const Text(
                                     '暂无入库记录',
                                     style: TextStyle(
                                       fontSize: 16,
                                       color: Colors.grey,
                                     ),
+                                  ),
+                                  const SizedBox(height: 24),
+                                  OutlinedButton.icon(
+                                    onPressed: () => context.go(AppRoutes.purchaseRecords),
+                                    icon: const Icon(Icons.shopping_cart),
+                                    label: const Text('查看采购记录'),
                                   ),
                                 ],
                               ),
@@ -186,13 +192,24 @@ class _InventoryRecordsScreenState extends ConsumerState<InventoryRecordsScreen>
                   ),
                 ],
               ),
-        // 悬浮操作按钮 - 查询库存
-        floatingActionButton: FloatingActionButton.extended(
-          onPressed: () => context.push(AppRoutes.inventoryQuery),
-          icon: const Icon(Icons.search),
-          label: const Text('查询库存'),
-          backgroundColor: Theme.of(context).colorScheme.primary,
-          foregroundColor: Theme.of(context).colorScheme.onPrimary,
+        // 悬浮操作按钮
+        floatingActionButton: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            FloatingActionButton(
+              heroTag: 'purchase',
+              onPressed: () => context.go(AppRoutes.purchaseRecords),
+              tooltip: '采购记录',
+              child: const Icon(Icons.shopping_cart),
+            ),
+            const SizedBox(height: 12),
+            FloatingActionButton.extended(
+              heroTag: 'query',
+              onPressed: () => context.push(AppRoutes.inventoryQuery),
+              icon: const Icon(Icons.search),
+              label: const Text('查询库存'),
+            ),
+          ],
         ),
       ),
     );

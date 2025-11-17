@@ -261,6 +261,37 @@ class InventoryService {
       adjustQuantity: diff,
     );
   }
+
+  /// 更新库存的移动加权平均价格
+  Future<bool> updateAverageUnitPrice(
+    int productId,
+    int averageUnitPriceInCents,
+  ) async {
+    try {
+      // 获取该产品的所有库存记录并更新
+      final inventories = await _inventoryRepository.getInventoryByProduct(productId);
+      
+      if (inventories.isEmpty) {
+        print('📦 库存服务：产品 $productId 没有库存记录');
+        return false;
+      }
+
+      // 更新所有店铺和批次的库存均价
+      for (final inventory in inventories) {
+        await _inventoryRepository.updateAverageUnitPrice(
+          productId,
+          inventory.shopId,
+          inventory.batchId,
+          averageUnitPriceInCents,
+        );
+      }
+      
+      return true;
+    } catch (e) {
+      print('📦 库存服务：更新库存均价失败: $e');
+      return false;
+    }
+  }
 }
 
 /// 库存服务 Provider

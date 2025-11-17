@@ -31,15 +31,16 @@ class WeightedAveragePriceService {
         return;
       } else {
         // 计算新的移动加权平均价格
-        final currentQuantity = currentStock.quantity;
+        // 注意：currentStock.quantity 是入库后的数量，需要减去本次入库数量得到入库前的数量
+        final quantityBeforeInbound = currentStock.quantity - inboundQuantity;
         final currentAveragePrice = currentStock.averageUnitPriceInCents;
 
         // 移动加权平均价格公式：
-        // 新平均价格 = (现有库存数量 × 现有平均价格 + 入库数量 × 入库单价) ÷ (现有库存数量 + 入库数量)
+        // 新平均价格 = (入库前库存数量 × 现有平均价格 + 入库数量 × 入库单价) ÷ (入库前库存数量 + 入库数量)
         final totalValue =
-            (currentQuantity * currentAveragePrice) +
+            (quantityBeforeInbound * currentAveragePrice) +
             (inboundQuantity * inboundUnitPriceInCents);
-        final totalQuantity = currentQuantity + inboundQuantity;
+        final totalQuantity = quantityBeforeInbound + inboundQuantity;
 
         final newAveragePrice = totalQuantity > 0
             ? (totalValue / totalQuantity).round()
@@ -164,6 +165,7 @@ class WeightedAveragePriceService {
   }
 
   /// 获取指定库存的入库记录
+  /// 从采购单明细表获取单价信息（仅支持通过采购入库的记录）
   Future<List<Map<String, dynamic>>> _getInboundRecordsForStock({
     required int productId,
     required int shopId,
@@ -176,10 +178,15 @@ class WeightedAveragePriceService {
     final result = await _database
         .customSelect(
           '''
-      SELECT ii.quantity, ii.unit_price_in_cents, ir.created_at
+      SELECT 
+        ii.quantity, 
+        poi.unit_price_in_cents,
+        ir.created_at
       FROM inbound_item ii
       JOIN inbound_receipt ir ON ii.receipt_id = ir.id
+      LEFT JOIN purchase_order_item poi ON ir.purchase_order_id = poi.purchase_order_id AND poi.product_id = ii.product_id
       WHERE ii.product_id = ? AND ir.shop_id = ? $batchCondition
+        AND poi.unit_price_in_cents IS NOT NULL
       ORDER BY ir.created_at ASC
       ''',
           variables: [
