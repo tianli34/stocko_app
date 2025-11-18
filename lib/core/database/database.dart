@@ -96,7 +96,7 @@ part 'database.g.dart';
 class AppDatabase extends _$AppDatabase {
   AppDatabase(super.e);
   @override
-  int get schemaVersion => 22; 
+  int get schemaVersion => 23; 
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -159,6 +159,36 @@ class AppDatabase extends _$AppDatabase {
     },
     onUpgrade: (Migrator m, int from, int to) async {
       
+      if (from < 23 && to >= 23) {
+        // 添加 unit_id 列到 sales_transaction_item 表
+        // 先检查列是否已存在
+        final result = await customSelect(
+          "PRAGMA table_info(sales_transaction_item);",
+        ).get();
+        
+        final hasUnitId = result.any((row) => row.data['name'] == 'unit_id');
+        
+        if (!hasUnitId) {
+          // 先添加为可空列
+          await customStatement(
+            'ALTER TABLE sales_transaction_item ADD COLUMN unit_id INTEGER REFERENCES unit (id);',
+          );
+        }
+        
+        // 如果有现有数据，需要为它们设置一个默认的 unit_id
+        // 这里假设使用产品的基础单位（换算率为1的单位）
+        await customStatement('''
+          UPDATE sales_transaction_item 
+          SET unit_id = (
+            SELECT up.unit_id 
+            FROM unit_product up 
+            WHERE up.product_id = sales_transaction_item.product_id 
+            AND up.conversion_rate = 1 
+            LIMIT 1
+          )
+          WHERE unit_id IS NULL;
+        ''');
+      }
       if (from < 22 && to >= 22) {
         // 添加移动加权平均价格字段
         await m.addColumn(stock, stock.averageUnitPriceInCents);

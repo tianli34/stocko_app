@@ -6,7 +6,7 @@ import 'package:freezed_annotation/freezed_annotation.dart';
 import 'inbound_item.dart';
 
 part 'inbound_receipt.freezed.dart';
-part 'inbound_receipt.g.dart';
+// part 'inbound_receipt.g.dart';
 
 @freezed
 abstract class InboundReceiptModel with _$InboundReceiptModel {
@@ -39,22 +39,8 @@ abstract class InboundReceiptModel with _$InboundReceiptModel {
     @Default(<InboundItemModel>[]) List<InboundItemModel> items,
   }) = _InboundReceiptModel;
 
-  factory InboundReceiptModel.fromJson(Map<String, dynamic> json) {
-    final model = _$InboundReceiptModelFromJson(json);
-    // Handle items if present in JSON
-    if (json.containsKey('items') && json['items'] is List) {
-      final items = _itemsFromJson(json['items'] as List);
-      return model.copyWith(items: items);
-    }
-    return model;
-  }
-  
-  @override
-  Map<String, dynamic> toJson() {
-    final json = _$InboundReceiptModelToJson(this as _InboundReceiptModel);
-    json['items'] = _itemsToJson(items);
-    return json;
-  }
+  // JSON serialization is handled by freezed's .freezed.dart file
+  // Uncomment the .g.dart part directive above if you need custom JSON serialization
 
   /// 状态辅助
   bool get isPreset => status == InboundReceiptStatus.preset;
@@ -126,11 +112,4 @@ class InboundReceiptStatus {
   static const String completed = 'completed';
 }
 
-/// JSON serialization helpers for items list
-List<Map<String, dynamic>> _itemsToJson(List<InboundItemModel> items) {
-  return items.map((item) => item.toJson()).toList();
-}
 
-List<InboundItemModel> _itemsFromJson(List<dynamic> json) {
-  return json.map((item) => InboundItemModel.fromJson(item as Map<String, dynamic>)).toList();
-}

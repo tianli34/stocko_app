@@ -40,6 +40,7 @@ class SaleService {
         return SalesTransactionItem(
           salesTransactionId: 0,
           productId: item.productId,
+          unitId: item.unitId,
           batchId: item.batchId != null ? int.tryParse(item.batchId!) : null,
           quantity: item.quantity.toInt(),
           priceInCents: item.sellingPriceInCents,

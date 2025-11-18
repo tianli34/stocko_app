@@ -134,3 +134,9 @@ final unitRepositoryProvider = Provider<IUnitRepository>((ref) {
   final database = ref.watch(appDatabaseProvider);
   return UnitRepository(database);
 });
+
+/// Provider to get a single unit by its ID.
+final unitByIdProvider = FutureProvider.family<Unit?, int>((ref, id) async {
+  final repository = ref.watch(unitRepositoryProvider);
+  return repository.getUnitById(id);
+});

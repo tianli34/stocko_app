@@ -11,6 +11,7 @@ abstract class SalesTransactionItem with _$SalesTransactionItem {
     int? id,
     required int salesTransactionId,
     required int productId,
+    required int unitId,
     int? batchId,
     required int quantity,
     required int priceInCents,
@@ -20,6 +21,9 @@ abstract class SalesTransactionItem with _$SalesTransactionItem {
 
   /// 验证产品ID的有效性
   bool get isValidProductId => productId > 0;
+
+  /// 验证单位ID的有效性
+  bool get isValidUnitId => unitId > 0;
 
   /// 验证批次ID的有效性（如果提供了批次ID）
   bool get isValidBatchId => batchId == null;
@@ -34,6 +38,7 @@ abstract class SalesTransactionItem with _$SalesTransactionItem {
   bool get isValid =>
       isValidSalesTransactionId &&
       isValidProductId &&
+      isValidUnitId &&
       isValidBatchId &&
       isValidQuantity &&
       isValidPrice;
@@ -54,6 +59,10 @@ abstract class SalesTransactionItem with _$SalesTransactionItem {
 
     if (!isValidProductId) {
       errors.add('产品ID必须大于0');
+    }
+
+    if (!isValidUnitId) {
+      errors.add('单位ID必须大于0');
     }
 
     if (!isValidBatchId && batchId != null) {
@@ -78,6 +87,7 @@ abstract class SalesTransactionItem with _$SalesTransactionItem {
       '  - salesTransactionId: $transactionId (type: ${transactionId.runtimeType})',
     );
     print('  - productId: $productId (type: ${productId.runtimeType})');
+    print('  - unitId: $unitId (type: ${unitId.runtimeType})');
     print('  - batchId: ${batchId ?? "null"} (type: ${batchId?.runtimeType})');
     print('  - quantity: $quantity (type: ${quantity.runtimeType})');
     print(
@@ -98,6 +108,7 @@ abstract class SalesTransactionItem with _$SalesTransactionItem {
         id: id == null ? const Value.absent() : Value(id as int),
         salesTransactionId: Value(transactionId),
         productId: Value(productId),
+        unitId: unitId > 0 ? Value(unitId) : const Value.absent(),
         batchId: batchId != null ? Value(batchId!) : const Value.absent(),
         quantity: Value(quantity),
         priceInCents: Value(priceInCents),
@@ -116,9 +127,10 @@ abstract class SalesTransactionItem with _$SalesTransactionItem {
       id: data.id,
       salesTransactionId: data.salesTransactionId,
       productId: data.productId,
+      unitId: data.unitId ?? 0, // 如果为空则使用0作为默认值
       batchId: data.batchId,
       quantity: data.quantity,
-      priceInCents: data.priceInCents.toInt(),
+      priceInCents: data.priceInCents,
     );
   }
 
@@ -128,6 +140,7 @@ abstract class SalesTransactionItem with _$SalesTransactionItem {
     int? id,
     required int salesTransactionId,
     required int productId,
+    required int unitId,
     int? batchId,
     required int quantity,
     required int priceInCents,
@@ -136,6 +149,7 @@ abstract class SalesTransactionItem with _$SalesTransactionItem {
       id: id,
       salesTransactionId: salesTransactionId,
       productId: productId,
+      unitId: unitId,
       batchId: batchId,
       quantity: quantity,
       priceInCents: priceInCents,

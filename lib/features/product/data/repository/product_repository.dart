@@ -383,3 +383,14 @@ final productByIdProvider = FutureProvider.family<ProductModel?, int>((
   final repository = ref.watch(productRepositoryProvider);
   return repository.getProductById(id);
 });
+
+/// Provider to watch a single product by its ID (real-time updates).
+final watchProductByIdProvider = StreamProvider.family<ProductModel?, int>((
+  ref,
+  id,
+) {
+  final repository = ref.watch(productRepositoryProvider) as ProductRepository;
+  return repository._productDao.watchProductById(id).map((data) {
+    return data != null ? repository._dataToProduct(data) : null;
+  });
+});

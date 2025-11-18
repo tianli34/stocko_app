@@ -2,7 +2,7 @@
 
 cd E:\stocko_app\
 git add .
-git commit -m "1115 1K 连续扫码屏幕显示扫码信息"
+git commit -m "1117 1K 连续扫码屏幕显示扫码信息2"
 git push
 
 

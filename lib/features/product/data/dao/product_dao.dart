@@ -28,6 +28,13 @@ class ProductDao extends DatabaseAccessor<AppDatabase> with _$ProductDaoMixin {
     )..where((tbl) => tbl.id.equals(id))).getSingleOrNull();
   }
 
+  /// 监听单个产品的变化
+  Stream<ProductData?> watchProductById(int id) {
+    return (select(
+      db.product,
+    )..where((tbl) => tbl.id.equals(id))).watchSingleOrNull();
+  }
+
   /// 获取所有产品
   Future<List<ProductData>> getAllProducts() async {
     return await select(db.product).get();

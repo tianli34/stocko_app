@@ -7,7 +7,8 @@ import '../../application/provider/customer_providers.dart';
 import '../../data/dao/sales_transaction_dao.dart';
 import '../../data/dao/sales_transaction_item_dao.dart';
 import '../../../../core/database/database.dart';
-import '../../../product/data/repository/product_repository.dart';
+import '../../../product/data/repository/product_repository.dart'
+    show watchProductByIdProvider;
 
 // Provider for SalesTransactionDao
 final salesTransactionDaoProvider = Provider<SalesTransactionDao>((ref) {
@@ -43,6 +44,14 @@ final salesTransactionItemsProvider =
       final dao = ref.watch(salesTransactionItemDaoProvider);
       return dao.findSalesTransactionItemsByTransactionId(saleId);
     });
+
+// Provider to get unit name by unit ID
+final unitNameByIdProvider = FutureProvider.family<String?, int>((ref, unitId) async {
+  final database = ref.watch(appDatabaseProvider);
+  final unitDao = database.unitDao;
+  final unit = await unitDao.getUnitById(unitId);
+  return unit?.name;
+});
 
 class SalesRecordsScreen extends ConsumerWidget {
   const SalesRecordsScreen({super.key});
@@ -296,7 +305,11 @@ class SaleOrderItemTile extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final productAsync = ref.watch(productByIdProvider(item.productId));
+    final productAsync = ref.watch(watchProductByIdProvider(item.productId));
+    final unitNameAsync = item.unitId != null 
+        ? ref.watch(unitNameByIdProvider(item.unitId!))
+        : const AsyncValue.data('');
+
     return ListTile(
       contentPadding: const EdgeInsets.only(
         left: 3,
@@ -324,6 +337,15 @@ class SaleOrderItemTile extends ConsumerWidget {
                 style: TextStyle(color: Theme.of(context).colorScheme.error),
               ),
             ),
+          ),
+          const SizedBox(width: 8),
+          unitNameAsync.when(
+            data: (unitName) => Text(
+              unitName ?? '',
+              style: const TextStyle(fontSize: 14, color: Colors.grey),
+            ),
+            loading: () => const SizedBox.shrink(),
+            error: (_, _) => const SizedBox.shrink(),
           ),
         ],
       ),
