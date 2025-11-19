@@ -18,8 +18,8 @@ abstract class InboundItemModel with _$InboundItemModel {
     /// 所属入库单ID（新建时可能为空，保存后回填）
     int? receiptId,
 
-    /// 商品ID（必填）
-    required int productId,
+    /// 产品单位ID（必填）
+    required int unitProductId,
 
 
 
@@ -39,7 +39,7 @@ abstract class InboundItemModel with _$InboundItemModel {
   /// - 当 id 为空：唯一键 = (receiptId, productId, unitId, null)
   String uniqueKey({int? overrideReceiptId}) {
     final rid = overrideReceiptId ?? receiptId;
-    return '${rid ?? 'null'}#$productId#${id ?? 'null'}';
+    return '${rid ?? 'null'}#$unitProductId#${id ?? 'null'}';
   }
 
   /// 增加数量，返回新实例

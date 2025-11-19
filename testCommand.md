@@ -2,7 +2,7 @@
 
 cd E:\stocko_app\
 git add .
-git commit -m "1118 1K 销售记录添加单位"
+git commit -m "1119 1K 入库明细表 productId改unitProductId"
 git push
 
 

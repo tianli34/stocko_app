@@ -217,6 +217,14 @@ final unitProductByIdProvider =
   return database.productUnitDao.getProductUnitById(unitProductId);
 });
 
+// Provider to get unit name by unit ID
+final unitNameByIdProvider = FutureProvider.family<String?, int>((ref, unitId) async {
+  final database = ref.watch(appDatabaseProvider);
+  final unitDao = database.unitDao;
+  final unit = await unitDao.getUnitById(unitId);
+  return unit?.name;
+});
+
 class PurchaseOrderItemTile extends ConsumerWidget {
   final PurchaseOrderItemData item;
 
@@ -235,6 +243,7 @@ class PurchaseOrderItemTile extends ConsumerWidget {
         }
         
         final productAsync = ref.watch(productByIdProvider(unitProduct.productId));
+        final unitNameAsync = ref.watch(unitNameByIdProvider(unitProduct.unitId));
         
         return productAsync.when(
           data: (product) => ListTile(
@@ -257,6 +266,15 @@ class PurchaseOrderItemTile extends ConsumerWidget {
                     product?.name ?? '货品ID: ${unitProduct.productId}',
                     style: const TextStyle(fontSize: 16),
                   ),
+                ),
+                const SizedBox(width: 8),
+                unitNameAsync.when(
+                  data: (unitName) => Text(
+                    unitName ?? '',
+                    style: const TextStyle(fontSize: 14, color: Colors.grey),
+                  ),
+                  loading: () => const SizedBox.shrink(),
+                  error: (_, _) => const SizedBox.shrink(),
                 ),
               ],
             ),

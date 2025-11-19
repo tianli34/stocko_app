@@ -274,3 +274,12 @@ final baseUnitProvider = FutureProvider.family<UnitProduct?, int>((
   final repository = ref.watch(productUnitRepositoryProvider);
   return repository.getBaseUnitForProduct(productId);
 });
+
+/// 根据产品单位ID获取产品单位的FutureProvider
+final productUnitByIdProvider = FutureProvider.family<UnitProduct?, int>((
+  ref,
+  unitProductId,
+) {
+  final repository = ref.watch(productUnitRepositoryProvider);
+  return repository.getProductUnitById(unitProductId);
+});

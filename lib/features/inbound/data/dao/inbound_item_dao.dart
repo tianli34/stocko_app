@@ -66,11 +66,11 @@ class InboundItemDao extends DatabaseAccessor<AppDatabase>
     )..where((t) => t.receiptId.equals(receiptId))).go();
   }
 
-  /// 根据商品ID获取入库明细
-  Future<List<InboundItemData>> getInboundItemsByProductId(int productId) {
+  /// 根据产品单位ID获取入库明细
+  Future<List<InboundItemData>> getInboundItemsByUnitProductId(int unitProductId) {
     return (select(
       inboundItem,
-    )..where((t) => t.productId.equals(productId))).get();
+    )..where((t) => t.unitProductId.equals(unitProductId))).get();
   }
 
   /// 根据批次号获取入库明细

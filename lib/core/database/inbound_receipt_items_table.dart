@@ -1,5 +1,5 @@
 import 'package:drift/drift.dart';
-import 'products_table.dart';
+import 'product_units_table.dart';
 import 'inbound_receipts_table.dart';
 import 'batches_table.dart';
 
@@ -12,8 +12,8 @@ class InboundItem extends Table {
   /// 外键 - 入库单ID
   IntColumn get receiptId => integer().references(InboundReceipt, #id)();
 
-  /// 外键 - 商品ID
-  IntColumn get productId => integer().references(Product, #id)();
+  /// 外键 - 产品单位ID
+  IntColumn get unitProductId => integer().references(UnitProduct, #id)();
 
   /// 批次号
   IntColumn get batchId => integer().references(ProductBatch, #id).nullable()();

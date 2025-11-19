@@ -34,6 +34,23 @@ class ProductUnitDao extends DatabaseAccessor<AppDatabase>
         .getSingleOrNull();
   }
 
+  /// 根据产品单位ID获取产品单位（别名方法）
+  Future<UnitProductData?> getUnitProductById(
+    int id,
+  ) async {
+    return await getProductUnitById(id);
+  }
+
+  /// 根据产品ID和单位ID获取产品单位
+  Future<UnitProductData?> getUnitProductByProductAndUnit(
+    int productId,
+    int unitId,
+  ) async {
+    return await (select(db.unitProduct)
+          ..where((tbl) => tbl.productId.equals(productId) & tbl.unitId.equals(unitId)))
+        .getSingleOrNull();
+  }
+
   /// 根据产品ID获取所有产品单位
   Future<List<UnitProductData>> getProductUnitsByProductId(
     int productId,

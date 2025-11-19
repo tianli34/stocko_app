@@ -96,7 +96,7 @@ part 'database.g.dart';
 class AppDatabase extends _$AppDatabase {
   AppDatabase(super.e);
   @override
-  int get schemaVersion => 24; 
+  int get schemaVersion => 25; 
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -144,10 +144,10 @@ class AppDatabase extends _$AppDatabase {
       );
       // 为入库单明细表创建部分唯一索引
       await customStatement(
-        'CREATE UNIQUE INDEX IF NOT EXISTS inbound_item_unique_with_batch ON inbound_item(receipt_id, product_id, batch_id) WHERE batch_id IS NOT NULL;',
+        'CREATE UNIQUE INDEX IF NOT EXISTS inbound_item_unique_with_batch ON inbound_item(receipt_id, unit_product_id, batch_id) WHERE batch_id IS NOT NULL;',
       );
       await customStatement(
-        'CREATE UNIQUE INDEX IF NOT EXISTS inbound_item_unique_without_batch ON inbound_item(receipt_id, product_id) WHERE batch_id IS NULL;',
+        'CREATE UNIQUE INDEX IF NOT EXISTS inbound_item_unique_without_batch ON inbound_item(receipt_id, unit_product_id) WHERE batch_id IS NULL;',
       );
       // 为出库单明细表创建部分唯一索引
       await customStatement(
@@ -158,6 +158,55 @@ class AppDatabase extends _$AppDatabase {
       );
     },
     onUpgrade: (Migrator m, int from, int to) async {
+      
+      if (from < 25 && to >= 25) {
+        // 迁移 inbound_item 表：将 product_id 改为 unit_product_id
+        
+        // 1. 创建新表
+        await customStatement('''
+          CREATE TABLE IF NOT EXISTS inbound_item_new (
+            id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+            receipt_id INTEGER NOT NULL REFERENCES inbound_receipt (id) ON DELETE CASCADE,
+            unit_product_id INTEGER NOT NULL REFERENCES unit_product (id) ON DELETE RESTRICT,
+            batch_id INTEGER REFERENCES product_batch (id),
+            quantity INTEGER NOT NULL,
+            CHECK(quantity > 0)
+          );
+        ''');
+        
+        // 2. 迁移数据：将 product_id 映射到对应的 unit_product_id（使用基础单位）
+        await customStatement('''
+          INSERT INTO inbound_item_new (id, receipt_id, unit_product_id, batch_id, quantity)
+          SELECT 
+            ii.id,
+            ii.receipt_id,
+            COALESCE(
+              (SELECT up.id FROM unit_product up WHERE up.product_id = ii.product_id AND up.conversion_rate = 1 LIMIT 1),
+              (SELECT up.id FROM unit_product up WHERE up.product_id = ii.product_id LIMIT 1)
+            ) as unit_product_id,
+            ii.batch_id,
+            ii.quantity
+          FROM inbound_item ii
+          WHERE EXISTS (SELECT 1 FROM unit_product up WHERE up.product_id = ii.product_id);
+        ''');
+        
+        // 3. 删除旧表
+        await customStatement('DROP TABLE inbound_item;');
+        
+        // 4. 重命名新表
+        await customStatement('ALTER TABLE inbound_item_new RENAME TO inbound_item;');
+        
+        // 5. 重建索引
+        await customStatement('DROP INDEX IF EXISTS inbound_item_unique_with_batch;');
+        await customStatement('DROP INDEX IF EXISTS inbound_item_unique_without_batch;');
+        
+        await customStatement(
+          'CREATE UNIQUE INDEX IF NOT EXISTS inbound_item_unique_with_batch ON inbound_item(receipt_id, unit_product_id, batch_id) WHERE batch_id IS NOT NULL;',
+        );
+        await customStatement(
+          'CREATE UNIQUE INDEX IF NOT EXISTS inbound_item_unique_without_batch ON inbound_item(receipt_id, unit_product_id) WHERE batch_id IS NULL;',
+        );
+      }
       
       if (from < 24 && to >= 24) {
         // 迁移 purchase_order_item 表：将 product_id 改为 unit_product_id

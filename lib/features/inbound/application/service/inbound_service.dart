@@ -74,10 +74,18 @@ class InboundService {
 
       // 1. 将UI状态模型转换为内部处理用的元组列表
       final internalItems = await Future.wait(inboundItems.map((item) async {
+        // 根据productId和unitId查找unitProductId
+        final unitProduct = await _database.productUnitDao.getUnitProductByProductAndUnit(
+          item.productId,
+          item.unitId,
+        );
+        if (unitProduct == null) {
+          throw Exception('未找到产品${item.productName}的单位${item.unitName}配置');
+        }
+        
         final domainModel = InboundItemModel(
           // UI上的id是临时的，数据库中会自增，此处不传
-          productId: item.productId,
-          
+          unitProductId: unitProduct.id,
           quantity: item.quantity,
           // batchNumber和receiptId在后续流程中确定
         );
@@ -148,18 +156,20 @@ class InboundService {
       status: drift.Value(PurchaseOrderStatus.completed),
     );
 
-    // 准备订单明细列表
+    // 准备订单明细列表（不包含purchaseOrderId，将在createFullPurchaseOrder中填充）
     final itemCompanions = <PurchaseOrderItemCompanion>[];
     for (final item in purchaseItems) {
-      // TODO: 需要从 item.model 中获取 unitProductId
-      // 当前 InboundItemModel 只有 productId，需要扩展以支持 unitProductId
-      // 暂时跳过此项，需要重构 InboundItemModel
-      throw UnimplementedError(
-        '需要在 InboundItemModel 中添加 unitProductId 字段以支持多单位采购',
+      final itemCompanion = PurchaseOrderItemCompanion.insert(
+        purchaseOrderId: 0, // 临时值，将在createFullPurchaseOrder中被替换
+        unitProductId: item.model.unitProductId,
+        unitPriceInCents: item.unitPriceInCents,
+        quantity: item.model.quantity,
+        productionDate: drift.Value(item.productionDate),
       );
+      itemCompanions.add(itemCompanion);
     }
 
-    // 调用DAO中的事务方法创建完整订单
+    // 使用事务创建完整订单
     final orderId = await _purchaseDao.createFullPurchaseOrder(
       order: orderCompanion,
       items: itemCompanions,
@@ -174,18 +184,23 @@ class InboundService {
     required List<_PurchaseItem> inboundItems,
   }) async {
     for (final item in inboundItems) {
-      final product =
-          await _database.productDao.getProductById(item.model.productId);
+      // 从unitProductId获取productId
+      final unitProduct = await _database.productUnitDao.getUnitProductById(item.model.unitProductId);
+      if (unitProduct == null) {
+        throw Exception('未找到产品单位配置，ID: ${item.model.unitProductId}');
+      }
+      
+      final product = await _database.productDao.getProductById(unitProduct.productId);
 
       if (product?.enableBatchManagement == true && item.productionDate != null) {
         await _batchDao.upsertBatchIncrement(
-          productId: item.model.productId,
+          productId: unitProduct.productId,
           productionDate: item.productionDate!,
           shopId: shopId,
           increment: item.model.quantity,
         );
         print(
-          '📦 批次(商品:${item.model.productId}, 日期:${item.productionDate}, 店铺:$shopId) 数量累计 +${item.model.quantity}',
+          '📦 批次(商品:${unitProduct.productId}, 日期:${item.productionDate}, 店铺:$shopId) 数量累计 +${item.model.quantity}',
         );
       }
     }
@@ -288,14 +303,19 @@ class InboundService {
     final itemCompanions = <InboundItemCompanion>[];
 
     for (final item in inboundItems) {
-      final product =
-          await _database.productDao.getProductById(item.model.productId);
+      // 从unitProductId获取productId
+      final unitProduct = await _database.productUnitDao.getUnitProductById(item.model.unitProductId);
+      if (unitProduct == null) {
+        throw Exception('未找到产品单位配置，ID: ${item.model.unitProductId}');
+      }
+      
+      final product = await _database.productDao.getProductById(unitProduct.productId);
 
       int? resolvedBatchNumber;
       if (item.productionDate != null &&
           product?.enableBatchManagement == true) {
   final batchIdOnly = await _batchDao.getBatchIdByBusinessKey(
-          productId: item.model.productId,
+          productId: unitProduct.productId,
           productionDate: item.productionDate!,
           shopId: shopId,
         );
@@ -305,7 +325,7 @@ class InboundService {
       final itemCompanion = InboundItemCompanion(
         // id 在数据库中自增，此处不需要提供
         receiptId: drift.Value(receiptId),
-        productId: drift.Value(item.model.productId),
+        unitProductId: drift.Value(item.model.unitProductId),
         quantity: drift.Value(item.model.quantity),
         // 正确写入批次列到 batchId，而不是误写到主键 id
         batchId: resolvedBatchNumber != null
@@ -328,14 +348,19 @@ class InboundService {
     required List<_PurchaseItem> inboundItems,
   }) async {
     for (final item in inboundItems) {
-      final product =
-          await _database.productDao.getProductById(item.model.productId);
+      // 从unitProductId获取productId
+      final unitProduct = await _database.productUnitDao.getUnitProductById(item.model.unitProductId);
+      if (unitProduct == null) {
+        throw Exception('未找到产品单位配置，ID: ${item.model.unitProductId}');
+      }
+      
+      final product = await _database.productDao.getProductById(unitProduct.productId);
 
       int? batchId;
       if (product?.enableBatchManagement == true &&
           item.productionDate != null) {
   final batchIdOnly = await _batchDao.getBatchIdByBusinessKey(
-          productId: item.model.productId,
+          productId: unitProduct.productId,
           productionDate: item.productionDate!,
           shopId: shopId,
         );
@@ -344,7 +369,7 @@ class InboundService {
 
       // 先更新库存数量和记录流水
       final success = await _inventoryService.inbound(
-        productId: item.model.productId,
+        productId: unitProduct.productId,
         shopId: shopId,
         batchId: batchId,
         quantity: item.model.quantity,
@@ -357,7 +382,7 @@ class InboundService {
 
       // 再更新移动加权平均价格（此时库存记录已存在）
       await _weightedAveragePriceService.updateWeightedAveragePrice(
-        productId: item.model.productId,
+        productId: unitProduct.productId,
         shopId: shopId,
         batchId: batchId,
         inboundQuantity: item.model.quantity,

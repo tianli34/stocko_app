@@ -27,8 +27,8 @@ abstract class IInboundItemRepository {
   /// 删除入库单的所有明细
   Future<int> deleteInboundItemsByReceiptId(int receiptId);
 
-  /// 根据商品ID获取入库明细
-  Future<List<InboundItemModel>> getInboundItemsByProductId(int productId);
+  /// 根据产品单位ID获取入库明细
+  Future<List<InboundItemModel>> getInboundItemsByUnitProductId(int unitProductId);
 
   /// 根据批次号获取入库明细
   Future<List<InboundItemModel>> getInboundItemsByBatchNumber(int id);
