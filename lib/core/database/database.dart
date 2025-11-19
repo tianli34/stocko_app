@@ -96,7 +96,7 @@ part 'database.g.dart';
 class AppDatabase extends _$AppDatabase {
   AppDatabase(super.e);
   @override
-  int get schemaVersion => 23; 
+  int get schemaVersion => 24; 
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -127,13 +127,13 @@ class AppDatabase extends _$AppDatabase {
         'CREATE INDEX IF NOT EXISTS idx_poi_po ON purchase_order_item(purchase_order_id);',
       );
       await customStatement(
-        'CREATE INDEX IF NOT EXISTS idx_poi_product ON purchase_order_item(product_id);',
+        'CREATE INDEX IF NOT EXISTS idx_poi_unit_product ON purchase_order_item(unit_product_id);',
       );
       await customStatement(
-        'CREATE UNIQUE INDEX IF NOT EXISTS poi_unique_with_date ON purchase_order_item(purchase_order_id, product_id, production_date) WHERE production_date IS NOT NULL;',
+        'CREATE UNIQUE INDEX IF NOT EXISTS poi_unique_with_date ON purchase_order_item(purchase_order_id, unit_product_id, production_date) WHERE production_date IS NOT NULL;',
       );
       await customStatement(
-        'CREATE UNIQUE INDEX IF NOT EXISTS poi_unique_without_date ON purchase_order_item(purchase_order_id, product_id) WHERE production_date IS NULL;',
+        'CREATE UNIQUE INDEX IF NOT EXISTS poi_unique_without_date ON purchase_order_item(purchase_order_id, unit_product_id) WHERE production_date IS NULL;',
       );
       // 为库存表创建部分唯一索引
       await customStatement(
@@ -158,6 +158,65 @@ class AppDatabase extends _$AppDatabase {
       );
     },
     onUpgrade: (Migrator m, int from, int to) async {
+      
+      if (from < 24 && to >= 24) {
+        // 迁移 purchase_order_item 表：将 product_id 改为 unit_product_id
+        
+        // 1. 创建新表
+        await customStatement('''
+          CREATE TABLE IF NOT EXISTS purchase_order_item_new (
+            id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+            purchase_order_id INTEGER NOT NULL REFERENCES purchase_order (id) ON DELETE CASCADE,
+            unit_product_id INTEGER NOT NULL REFERENCES unit_product (id) ON DELETE RESTRICT,
+            production_date INTEGER,
+            unit_price_in_cents INTEGER NOT NULL,
+            quantity INTEGER NOT NULL,
+            CHECK(quantity >= 1),
+            CHECK(unit_price_in_cents >= 0)
+          );
+        ''');
+        
+        // 2. 迁移数据：将 product_id 映射到对应的 unit_product_id（使用基础单位）
+        await customStatement('''
+          INSERT INTO purchase_order_item_new (id, purchase_order_id, unit_product_id, production_date, unit_price_in_cents, quantity)
+          SELECT 
+            poi.id,
+            poi.purchase_order_id,
+            COALESCE(
+              (SELECT up.id FROM unit_product up WHERE up.product_id = poi.product_id AND up.conversion_rate = 1 LIMIT 1),
+              (SELECT up.id FROM unit_product up WHERE up.product_id = poi.product_id LIMIT 1)
+            ) as unit_product_id,
+            poi.production_date,
+            poi.unit_price_in_cents,
+            poi.quantity
+          FROM purchase_order_item poi
+          WHERE EXISTS (SELECT 1 FROM unit_product up WHERE up.product_id = poi.product_id);
+        ''');
+        
+        // 3. 删除旧表
+        await customStatement('DROP TABLE purchase_order_item;');
+        
+        // 4. 重命名新表
+        await customStatement('ALTER TABLE purchase_order_item_new RENAME TO purchase_order_item;');
+        
+        // 5. 重建索引
+        await customStatement('DROP INDEX IF EXISTS idx_poi_product;');
+        await customStatement('DROP INDEX IF EXISTS poi_unique_with_date;');
+        await customStatement('DROP INDEX IF EXISTS poi_unique_without_date;');
+        
+        await customStatement(
+          'CREATE INDEX IF NOT EXISTS idx_poi_po ON purchase_order_item(purchase_order_id);',
+        );
+        await customStatement(
+          'CREATE INDEX IF NOT EXISTS idx_poi_unit_product ON purchase_order_item(unit_product_id);',
+        );
+        await customStatement(
+          'CREATE UNIQUE INDEX IF NOT EXISTS poi_unique_with_date ON purchase_order_item(purchase_order_id, unit_product_id, production_date) WHERE production_date IS NOT NULL;',
+        );
+        await customStatement(
+          'CREATE UNIQUE INDEX IF NOT EXISTS poi_unique_without_date ON purchase_order_item(purchase_order_id, unit_product_id) WHERE production_date IS NULL;',
+        );
+      }
       
       if (from < 23 && to >= 23) {
         // 添加 unit_id 列到 sales_transaction_item 表
@@ -198,7 +257,7 @@ class AppDatabase extends _$AppDatabase {
       if (from < 21 && to >= 21) {
         // 删除旧的唯一索引（如果存在）
         await customStatement('DROP INDEX IF EXISTS poi_unique_line;');
-        // 创建新的条件唯一索引
+        // 创建新的条件唯一索引（注意：如果从21升级到24，这些索引会被24的迁移重建）
         await customStatement(
           'CREATE UNIQUE INDEX IF NOT EXISTS poi_unique_with_date ON purchase_order_item(purchase_order_id, product_id, production_date) WHERE production_date IS NOT NULL;',
         );

@@ -151,15 +151,11 @@ class InboundService {
     // 准备订单明细列表
     final itemCompanions = <PurchaseOrderItemCompanion>[];
     for (final item in purchaseItems) {
-      itemCompanions.add(
-        PurchaseOrderItemCompanion(
-          // purchaseOrderId is set by the DAO
-          productId: drift.Value(item.model.productId),
-          
-          quantity: drift.Value(item.model.quantity),
-          unitPriceInCents: drift.Value(item.unitPriceInCents),
-          productionDate: drift.Value(item.productionDate),
-        ),
+      // TODO: 需要从 item.model 中获取 unitProductId
+      // 当前 InboundItemModel 只有 productId，需要扩展以支持 unitProductId
+      // 暂时跳过此项，需要重构 InboundItemModel
+      throw UnimplementedError(
+        '需要在 InboundItemModel 中添加 unitProductId 字段以支持多单位采购',
       );
     }
 

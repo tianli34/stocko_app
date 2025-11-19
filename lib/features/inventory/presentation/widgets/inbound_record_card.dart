@@ -30,10 +30,16 @@ class InboundRecordCard extends ConsumerWidget {
     final formattedDate = dateFormatter.format(record.createdAt);
 
     return Card(
-      elevation: 2,
+      elevation: 0,
       margin: EdgeInsets.zero,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: BorderSide(color: Colors.grey.shade300, width: 1),
+      ),
       child: ExpansionTile(
+        tilePadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        childrenPadding: EdgeInsets.zero,
+        shape: const Border(),
         title: Text(
           '单号: ${record.id}',
           style: const TextStyle(fontWeight: FontWeight.bold),

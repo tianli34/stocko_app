@@ -210,6 +210,13 @@ class _PurchaseOrderCardState extends ConsumerState<PurchaseOrderCard> {
   }
 }
 
+// Provider to get unit product by ID
+final unitProductByIdProvider =
+    FutureProvider.family<UnitProductData?, int>((ref, unitProductId) async {
+  final database = ref.watch(appDatabaseProvider);
+  return database.productUnitDao.getProductUnitById(unitProductId);
+});
+
 class PurchaseOrderItemTile extends ConsumerWidget {
   final PurchaseOrderItemData item;
 
@@ -217,57 +224,80 @@ class PurchaseOrderItemTile extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final productAsync = ref.watch(productByIdProvider(item.productId));
-    return ListTile(
-      contentPadding: const EdgeInsets.only(
-        left: 3,
-        right: 16,
-        top: 0,
-        bottom: 0,
-      ),
-      minVerticalPadding: 0,
-      dense: true,
-      visualDensity: const VisualDensity(horizontal: 0, vertical: -3),
-      minLeadingWidth: 0,
-      title: Row(
-        children: [
-          Text(' ${item.id}  ', style: const TextStyle(fontSize: 14)),
-          const SizedBox(width: 6),
-          Expanded(
-            child: productAsync.when(
-              data: (product) => Text(
-                product?.name ?? '货品ID: ${item.productId}',
-                style: const TextStyle(fontSize: 16),
-              ),
-              loading: () => const Text('加载中...'),
-              error: (err, stack) => Text(
-                '加载货品失败',
-                style: TextStyle(color: Theme.of(context).colorScheme.error),
-              ),
+    final unitProductAsync = ref.watch(unitProductByIdProvider(item.unitProductId));
+    
+    return unitProductAsync.when(
+      data: (unitProduct) {
+        if (unitProduct == null) {
+          return ListTile(
+            title: Text('单位产品ID: ${item.unitProductId} 不存在'),
+          );
+        }
+        
+        final productAsync = ref.watch(productByIdProvider(unitProduct.productId));
+        
+        return productAsync.when(
+          data: (product) => ListTile(
+            contentPadding: const EdgeInsets.only(
+              left: 3,
+              right: 16,
+              top: 0,
+              bottom: 0,
+            ),
+            minVerticalPadding: 0,
+            dense: true,
+            visualDensity: const VisualDensity(horizontal: 0, vertical: -3),
+            minLeadingWidth: 0,
+            title: Row(
+              children: [
+                Text(' ${item.id}  ', style: const TextStyle(fontSize: 14)),
+                const SizedBox(width: 6),
+                Expanded(
+                  child: Text(
+                    product?.name ?? '货品ID: ${unitProduct.productId}',
+                    style: const TextStyle(fontSize: 16),
+                  ),
+                ),
+              ],
+            ),
+            subtitle: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                if (item.productionDate != null)
+                  Text('生产日期: ${item.productionDate!.toString().substring(0, 10)}'),
+              ],
+            ),
+            trailing: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Text(
+                  '￥${(item.unitPriceInCents / 100).toStringAsFixed(2)} × ${item.quantity.toInt()}',
+                ),
+                Text(
+                  '￥${((item.unitPriceInCents * item.quantity) / 100).toStringAsFixed(2)}',
+                  style: const TextStyle(fontWeight: FontWeight.bold),
+                ),
+              ],
             ),
           ),
-        ],
-      ),
-      subtitle: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          if (item.productionDate != null)
-            Text('生产日期: ${item.productionDate!.toString().substring(0, 10)}'),
-        ],
-      ),
-      trailing: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        crossAxisAlignment: CrossAxisAlignment.end,
-        children: [
-          Text(
-            '￥${(item.unitPriceInCents / 100).toStringAsFixed(2)} × ${item.quantity.toInt()}',
+          loading: () => const ListTile(title: Text('加载中...')),
+          error: (err, _) => ListTile(
+            title: Text(
+              '加载货品失败',
+              style: TextStyle(color: Theme.of(context).colorScheme.error),
+            ),
           ),
-          Text(
-            '￥${((item.unitPriceInCents * item.quantity) / 100).toStringAsFixed(2)}',
-            style: const TextStyle(fontWeight: FontWeight.bold),
-          ),
-        ],
+        );
+      },
+      loading: () => const ListTile(title: Text('加载中...')),
+      error: (err, _) => ListTile(
+        title: Text(
+          '加载单位产品失败',
+          style: TextStyle(color: Theme.of(context).colorScheme.error),
+        ),
       ),
     );
   }
 }
+

@@ -1,5 +1,5 @@
 import 'package:drift/drift.dart';
-import 'products_table.dart';
+import 'product_units_table.dart';
 import 'purchase_orders_table.dart';
 
 /// 采购订单明细表
@@ -12,9 +12,9 @@ class PurchaseOrderItem extends Table {
   IntColumn get purchaseOrderId =>
       integer().references(PurchaseOrder, #id, onDelete: KeyAction.cascade)();
 
-  /// 外键 - 货品ID
-  IntColumn get productId =>
-      integer().references(Product, #id, onDelete: KeyAction.restrict)();
+  /// 外键 - 单位货品ID（关联到产品单位表，包含产品、单位及换算率信息）
+  IntColumn get unitProductId =>
+      integer().references(UnitProduct, #id, onDelete: KeyAction.restrict)();
 
   /// 生产日期
   DateTimeColumn get productionDate => dateTime().nullable()();

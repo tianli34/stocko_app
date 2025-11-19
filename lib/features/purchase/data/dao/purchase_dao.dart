@@ -3,6 +3,7 @@ import '../../../../core/database/database.dart';
 import '../../../../core/database/purchase_orders_table.dart';
 import '../../../../core/database/purchase_order_items_table.dart';
 import '../../../../core/database/products_table.dart';
+import '../../../../core/database/product_units_table.dart';
 import 'package:rxdart/rxdart.dart';
 
 part 'purchase_dao.g.dart';
@@ -25,7 +26,7 @@ class PurchaseOrderItemWithDetails {
 
 /// 采购订单数据访问对象 (DAO)
 @DriftAccessor(
-  tables: [PurchaseOrder, PurchaseOrderItem, Product],
+  tables: [PurchaseOrder, PurchaseOrderItem, Product, UnitProduct],
 )
 class PurchaseDao extends DatabaseAccessor<AppDatabase>
     with _$PurchaseDaoMixin {
@@ -101,8 +102,12 @@ class PurchaseDao extends DatabaseAccessor<AppDatabase>
           db.purchaseOrderItem,
         )..where((tbl) => tbl.purchaseOrderId.equals(orderId))).join([
           innerJoin(
+            db.unitProduct,
+            db.unitProduct.id.equalsExp(db.purchaseOrderItem.unitProductId),
+          ),
+          innerJoin(
             db.product,
-            db.product.id.equalsExp(db.purchaseOrderItem.productId),
+            db.product.id.equalsExp(db.unitProduct.productId),
           ),
         ]).watch();
 
@@ -147,10 +152,10 @@ class PurchaseDao extends DatabaseAccessor<AppDatabase>
   // 工具方法
   // ===========================================================================
 
-  /// 根据产品ID获取最近一次的采购单价
-  Future<int?> getLatestPurchasePrice(int productId) async {
+  /// 根据单位产品ID获取最近一次的采购单价
+  Future<int?> getLatestPurchasePrice(int unitProductId) async {
     final query = select(db.purchaseOrderItem)
-      ..where((tbl) => tbl.productId.equals(productId))
+      ..where((tbl) => tbl.unitProductId.equals(unitProductId))
       ..orderBy([(t) => OrderingTerm.desc(t.id)])
       ..limit(1);
 

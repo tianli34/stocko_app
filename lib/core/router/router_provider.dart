@@ -171,6 +171,7 @@ final routerProvider = Provider<GoRouter>((ref) {
                             child: const Text('库存查询'),
                           ),
                         ),
+
                         const SizedBox(height: 20),
                         ElevatedButton(
                           onPressed: () => context.go(AppRoutes.home),
@@ -295,6 +296,7 @@ final routerProvider = Provider<GoRouter>((ref) {
           ),
         ),
       ),
+
       GoRoute(
         path: AppRoutes.purchaseRecords,
         name: 'purchase-records',

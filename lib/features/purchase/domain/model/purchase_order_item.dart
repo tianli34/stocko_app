@@ -10,7 +10,7 @@ abstract class PurchaseOrderItemModel with _$PurchaseOrderItemModel {
   const factory PurchaseOrderItemModel({
     int? id,
     required int purchaseOrderId,
-    required int productId,
+    required int unitProductId,
     required int unitPriceInCents,
     required int quantity,
     DateTime? productionDate,
@@ -20,20 +20,20 @@ abstract class PurchaseOrderItemModel with _$PurchaseOrderItemModel {
 
   // --- 简单校验 ---
   bool get isValidOrderId => purchaseOrderId > 0;
-  bool get isValidProductId => productId > 0;
+  bool get isValidUnitProductId => unitProductId > 0;
   bool get isValidQuantity => quantity > 0;
   bool get isValidUnitPrice => unitPriceInCents >= 0; // 单价允许0（赠品场景）
 
   bool get isValid =>
       isValidOrderId &&
-      isValidProductId &&
+      isValidUnitProductId &&
       isValidQuantity &&
       isValidUnitPrice;
 
   List<String> get validationErrors {
     final errors = <String>[];
     if (!isValidOrderId) errors.add('采购订单ID必须大于0');
-    if (!isValidProductId) errors.add('产品ID必须大于0');
+    if (!isValidUnitProductId) errors.add('单位产品ID必须大于0');
     if (!isValidQuantity) errors.add('数量必须大于0');
     if (!isValidUnitPrice) errors.add('单价不能为负数');
     return errors;
@@ -45,7 +45,7 @@ abstract class PurchaseOrderItemModel with _$PurchaseOrderItemModel {
     return PurchaseOrderItemCompanion(
       id: id == null ? const Value.absent() : Value(id!),
       purchaseOrderId: Value(orderId),
-      productId: Value(productId),
+      unitProductId: Value(unitProductId),
       unitPriceInCents: Value(unitPriceInCents),
       quantity: Value(quantity),
       productionDate:
@@ -62,7 +62,7 @@ abstract class PurchaseOrderItemModel with _$PurchaseOrderItemModel {
     return PurchaseOrderItemModel(
       id: data.id,
       purchaseOrderId: data.purchaseOrderId,
-      productId: data.productId,
+      unitProductId: data.unitProductId,
       unitPriceInCents: data.unitPriceInCents,
       quantity: data.quantity,
       productionDate: data.productionDate,
@@ -73,7 +73,7 @@ abstract class PurchaseOrderItemModel with _$PurchaseOrderItemModel {
   static PurchaseOrderItemModel createWithValidation({
     int? id,
     required int purchaseOrderId,
-    required int productId,
+    required int unitProductId,
     required int unitPriceInCents,
     required int quantity,
     DateTime? productionDate,
@@ -81,7 +81,7 @@ abstract class PurchaseOrderItemModel with _$PurchaseOrderItemModel {
     final item = PurchaseOrderItemModel(
       id: id,
       purchaseOrderId: purchaseOrderId,
-      productId: productId,
+      unitProductId: unitProductId,
       unitPriceInCents: unitPriceInCents,
       quantity: quantity,
       productionDate: productionDate,

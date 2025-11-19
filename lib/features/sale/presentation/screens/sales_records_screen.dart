@@ -122,8 +122,16 @@ class SaleOrderCard extends ConsumerWidget {
 
     Widget cardContent = Card(
       margin: EdgeInsets.zero,
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: BorderSide(color: Colors.grey.shade300, width: 1),
+      ),
       child: InkWell(
         child: ExpansionTile(
+          tilePadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          childrenPadding: EdgeInsets.zero,
+          shape: const Border(),
           title: Row(
             children: [
               Text(
