@@ -957,6 +957,14 @@ class DatabaseManagementScreen extends ConsumerWidget {
             ),
             actions: [
               TextButton(
+                onPressed: () async {
+                  Navigator.of(context).pop();
+                  await _clearStockData(context, ref);
+                },
+                style: TextButton.styleFrom(foregroundColor: Colors.red),
+                child: const Text('清空'),
+              ),
+              TextButton(
                 onPressed: () => Navigator.of(context).pop(),
                 child: const Text('关闭'),
               ),
@@ -968,6 +976,43 @@ class DatabaseManagementScreen extends ConsumerWidget {
       print('查询库存数据时出错: $e');
       if (context.mounted) {
         showAppSnackBar(context, message: '❌ 查询失败: $e', isError: true);
+      }
+    }
+  }
+
+  Future<void> _clearStockData(BuildContext context, WidgetRef ref) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('确认清空'),
+        content: const Text('此操作将清空所有库存数据，确定继续吗？'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('取消'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            child: const Text('确定'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true) {
+      try {
+        final database = ref.read(appDatabaseProvider);
+        await database.delete(database.stock).go();
+        
+        if (context.mounted) {
+          showAppSnackBar(context, message: '✅ 库存数据已清空');
+        }
+      } catch (e) {
+        print('清空库存数据时出错: $e');
+        if (context.mounted) {
+          showAppSnackBar(context, message: '❌ 清空失败: $e', isError: true);
+        }
       }
     }
   }

@@ -184,8 +184,9 @@ class WeightedAveragePriceService {
         ir.created_at
       FROM inbound_item ii
       JOIN inbound_receipt ir ON ii.receipt_id = ir.id
-      LEFT JOIN purchase_order_item poi ON ir.purchase_order_id = poi.purchase_order_id AND poi.product_id = ii.product_id
-      WHERE ii.product_id = ? AND ir.shop_id = ? $batchCondition
+      JOIN unit_product up ON ii.unit_product_id = up.id
+      LEFT JOIN purchase_order_item poi ON ir.purchase_order_id = poi.purchase_order_id AND poi.unit_product_id = up.id
+      WHERE up.product_id = ? AND ir.shop_id = ? $batchCondition
         AND poi.unit_price_in_cents IS NOT NULL
       ORDER BY ir.created_at ASC
       ''',

@@ -162,41 +162,50 @@ class AppDatabase extends _$AppDatabase {
       if (from < 25 && to >= 25) {
         // 迁移 inbound_item 表：将 product_id 改为 unit_product_id
         
-        // 1. 创建新表
-        await customStatement('''
-          CREATE TABLE IF NOT EXISTS inbound_item_new (
-            id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
-            receipt_id INTEGER NOT NULL REFERENCES inbound_receipt (id) ON DELETE CASCADE,
-            unit_product_id INTEGER NOT NULL REFERENCES unit_product (id) ON DELETE RESTRICT,
-            batch_id INTEGER REFERENCES product_batch (id),
-            quantity INTEGER NOT NULL,
-            CHECK(quantity > 0)
-          );
-        ''');
+        // 检查旧表是否存在 product_id 列
+        final result = await customSelect(
+          "SELECT COUNT(*) as count FROM pragma_table_info('inbound_item') WHERE name='product_id'",
+        ).getSingle();
         
-        // 2. 迁移数据：将 product_id 映射到对应的 unit_product_id（使用基础单位）
-        await customStatement('''
-          INSERT INTO inbound_item_new (id, receipt_id, unit_product_id, batch_id, quantity)
-          SELECT 
-            ii.id,
-            ii.receipt_id,
-            COALESCE(
-              (SELECT up.id FROM unit_product up WHERE up.product_id = ii.product_id AND up.conversion_rate = 1 LIMIT 1),
-              (SELECT up.id FROM unit_product up WHERE up.product_id = ii.product_id LIMIT 1)
-            ) as unit_product_id,
-            ii.batch_id,
-            ii.quantity
-          FROM inbound_item ii
-          WHERE EXISTS (SELECT 1 FROM unit_product up WHERE up.product_id = ii.product_id);
-        ''');
+        final hasProductIdColumn = result.read<int>('count') > 0;
         
-        // 3. 删除旧表
-        await customStatement('DROP TABLE inbound_item;');
+        if (hasProductIdColumn) {
+          // 1. 创建新表
+          await customStatement('''
+            CREATE TABLE IF NOT EXISTS inbound_item_new (
+              id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+              receipt_id INTEGER NOT NULL REFERENCES inbound_receipt (id) ON DELETE CASCADE,
+              unit_product_id INTEGER NOT NULL REFERENCES unit_product (id) ON DELETE RESTRICT,
+              batch_id INTEGER REFERENCES product_batch (id),
+              quantity INTEGER NOT NULL,
+              CHECK(quantity > 0)
+            );
+          ''');
+          
+          // 2. 迁移数据：将 product_id 映射到对应的 unit_product_id（使用基础单位）
+          await customStatement('''
+            INSERT INTO inbound_item_new (id, receipt_id, unit_product_id, batch_id, quantity)
+            SELECT 
+              ii.id,
+              ii.receipt_id,
+              COALESCE(
+                (SELECT up.id FROM unit_product up WHERE up.product_id = ii.product_id AND up.conversion_rate = 1 LIMIT 1),
+                (SELECT up.id FROM unit_product up WHERE up.product_id = ii.product_id LIMIT 1)
+              ) as unit_product_id,
+              ii.batch_id,
+              ii.quantity
+            FROM inbound_item ii
+            WHERE EXISTS (SELECT 1 FROM unit_product up WHERE up.product_id = ii.product_id);
+          ''');
+          
+          // 3. 删除旧表
+          await customStatement('DROP TABLE inbound_item;');
+          
+          // 4. 重命名新表
+          await customStatement('ALTER TABLE inbound_item_new RENAME TO inbound_item;');
+        }
         
-        // 4. 重命名新表
-        await customStatement('ALTER TABLE inbound_item_new RENAME TO inbound_item;');
-        
-        // 5. 重建索引
+        // 5. 重建索引（无论是否迁移都需要）
         await customStatement('DROP INDEX IF EXISTS inbound_item_unique_with_batch;');
         await customStatement('DROP INDEX IF EXISTS inbound_item_unique_without_batch;');
         
@@ -211,44 +220,53 @@ class AppDatabase extends _$AppDatabase {
       if (from < 24 && to >= 24) {
         // 迁移 purchase_order_item 表：将 product_id 改为 unit_product_id
         
-        // 1. 创建新表
-        await customStatement('''
-          CREATE TABLE IF NOT EXISTS purchase_order_item_new (
-            id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
-            purchase_order_id INTEGER NOT NULL REFERENCES purchase_order (id) ON DELETE CASCADE,
-            unit_product_id INTEGER NOT NULL REFERENCES unit_product (id) ON DELETE RESTRICT,
-            production_date INTEGER,
-            unit_price_in_cents INTEGER NOT NULL,
-            quantity INTEGER NOT NULL,
-            CHECK(quantity >= 1),
-            CHECK(unit_price_in_cents >= 0)
-          );
-        ''');
+        // 检查旧表是否存在 product_id 列
+        final poiResult = await customSelect(
+          "SELECT COUNT(*) as count FROM pragma_table_info('purchase_order_item') WHERE name='product_id'",
+        ).getSingle();
         
-        // 2. 迁移数据：将 product_id 映射到对应的 unit_product_id（使用基础单位）
-        await customStatement('''
-          INSERT INTO purchase_order_item_new (id, purchase_order_id, unit_product_id, production_date, unit_price_in_cents, quantity)
-          SELECT 
-            poi.id,
-            poi.purchase_order_id,
-            COALESCE(
-              (SELECT up.id FROM unit_product up WHERE up.product_id = poi.product_id AND up.conversion_rate = 1 LIMIT 1),
-              (SELECT up.id FROM unit_product up WHERE up.product_id = poi.product_id LIMIT 1)
-            ) as unit_product_id,
-            poi.production_date,
-            poi.unit_price_in_cents,
-            poi.quantity
-          FROM purchase_order_item poi
-          WHERE EXISTS (SELECT 1 FROM unit_product up WHERE up.product_id = poi.product_id);
-        ''');
+        final hasPoiProductIdColumn = poiResult.read<int>('count') > 0;
         
-        // 3. 删除旧表
-        await customStatement('DROP TABLE purchase_order_item;');
+        if (hasPoiProductIdColumn) {
+          // 1. 创建新表
+          await customStatement('''
+            CREATE TABLE IF NOT EXISTS purchase_order_item_new (
+              id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+              purchase_order_id INTEGER NOT NULL REFERENCES purchase_order (id) ON DELETE CASCADE,
+              unit_product_id INTEGER NOT NULL REFERENCES unit_product (id) ON DELETE RESTRICT,
+              production_date INTEGER,
+              unit_price_in_cents INTEGER NOT NULL,
+              quantity INTEGER NOT NULL,
+              CHECK(quantity >= 1),
+              CHECK(unit_price_in_cents >= 0)
+            );
+          ''');
+          
+          // 2. 迁移数据：将 product_id 映射到对应的 unit_product_id（使用基础单位）
+          await customStatement('''
+            INSERT INTO purchase_order_item_new (id, purchase_order_id, unit_product_id, production_date, unit_price_in_cents, quantity)
+            SELECT 
+              poi.id,
+              poi.purchase_order_id,
+              COALESCE(
+                (SELECT up.id FROM unit_product up WHERE up.product_id = poi.product_id AND up.conversion_rate = 1 LIMIT 1),
+                (SELECT up.id FROM unit_product up WHERE up.product_id = poi.product_id LIMIT 1)
+              ) as unit_product_id,
+              poi.production_date,
+              poi.unit_price_in_cents,
+              poi.quantity
+            FROM purchase_order_item poi
+            WHERE EXISTS (SELECT 1 FROM unit_product up WHERE up.product_id = poi.product_id);
+          ''');
+          
+          // 3. 删除旧表
+          await customStatement('DROP TABLE purchase_order_item;');
+          
+          // 4. 重命名新表
+          await customStatement('ALTER TABLE purchase_order_item_new RENAME TO purchase_order_item;');
+        }
         
-        // 4. 重命名新表
-        await customStatement('ALTER TABLE purchase_order_item_new RENAME TO purchase_order_item;');
-        
-        // 5. 重建索引
+        // 5. 重建索引（无论是否迁移都需要）
         await customStatement('DROP INDEX IF EXISTS idx_poi_product;');
         await customStatement('DROP INDEX IF EXISTS poi_unique_with_date;');
         await customStatement('DROP INDEX IF EXISTS poi_unique_without_date;');
