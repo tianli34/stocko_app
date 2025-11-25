@@ -20,12 +20,32 @@ class ValidationService implements IValidationService {
   final IEncryptionService _encryptionService;
   final OptimizedDataExportRepository _dataExportRepository;
 
-  // 支持的备份格式版本
-  static const List<String> _supportedBackupVersions = ['1.0.0', '2.0.0'];
+  // 当前应用支持的备份格式主版本号范围
+  // 主版本号变化表示不兼容的结构变更
+  static const int _minSupportedMajorVersion = 1;
+  static const int _maxSupportedMajorVersion = 99; // 设置足够大，向前兼容
   
   // 支持的数据库架构版本范围
   static const int _minSupportedSchemaVersion = 1;
   static const int _maxSupportedSchemaVersion = 50;
+
+  /// 解析语义化版本号，返回 [major, minor, patch]
+  static List<int> _parseVersion(String version) {
+    final parts = version.split('.');
+    return [
+      int.tryParse(parts.isNotEmpty ? parts[0] : '0') ?? 0,
+      int.tryParse(parts.length > 1 ? parts[1] : '0') ?? 0,
+      int.tryParse(parts.length > 2 ? parts[2] : '0') ?? 0,
+    ];
+  }
+
+  /// 检查备份格式版本是否兼容
+  static bool _isVersionCompatible(String backupVersion) {
+    final parsed = _parseVersion(backupVersion);
+    final majorVersion = parsed[0];
+    return majorVersion >= _minSupportedMajorVersion && 
+           majorVersion <= _maxSupportedMajorVersion;
+  }
 
   ValidationService(
     this._database,
@@ -267,15 +287,15 @@ class ValidationService implements IValidationService {
       const currentAppVersion = '1.0.0+1'; // 可以从package info获取
       const currentBackupFormatVersion = '1.0.0';
 
-      // 检查备份格式版本兼容性
-      bool backupFormatCompatible = _supportedBackupVersions.contains(metadata.version);
+      // 检查备份格式版本兼容性（基于主版本号范围）
+      bool backupFormatCompatible = _isVersionCompatible(metadata.version);
       if (!backupFormatCompatible) {
         issues.add(
           CompatibilityIssue(
             type: CompatibilityIssueType.backupFormatIncompatible,
             description: '备份格式版本 ${metadata.version} 不受支持',
             severity: CompatibilityIssueSeverity.critical,
-            suggestedSolution: '请使用支持的备份格式版本: ${_supportedBackupVersions.join(', ')}',
+            suggestedSolution: '支持的主版本号范围: $_minSupportedMajorVersion - $_maxSupportedMajorVersion',
           ),
         );
       }
@@ -376,7 +396,7 @@ class ValidationService implements IValidationService {
         backupFormatVersion: metadata.version,
         minSupportedSchemaVersion: _minSupportedSchemaVersion,
         maxSupportedSchemaVersion: _maxSupportedSchemaVersion,
-        supportedBackupFormatVersions: _supportedBackupVersions,
+        supportedBackupFormatVersions: ['$_minSupportedMajorVersion.x.x - $_maxSupportedMajorVersion.x.x'],
       );
 
       final isCompatible = backupFormatCompatible && 

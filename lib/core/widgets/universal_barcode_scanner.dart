@@ -93,6 +93,7 @@ class _UniversalBarcodeScannerState extends State<UniversalBarcodeScanner> {
   bool _isScanning = true;
   final List<ScanHistoryItem> _scanHistory = []; // 扫码历史记录
   int _totalScans = 0; // 扫码总数量
+  String? _lastScannedBarcode; // 上一次扫描的条码，用于去重
 
   @override
   void initState() {
@@ -654,6 +655,17 @@ class _UniversalBarcodeScannerState extends State<UniversalBarcodeScanner> {
 
   /// 处理扫码结果
   Future<void> _handleBarcodeScanned(String barcode) async {
+    // 连续扫码模式下的去重：如果条码与上一个相同，则忽略
+    if (widget.config.continuousMode && barcode == _lastScannedBarcode) {
+      if (kDebugMode) {
+        print('去重：忽略重复条码 $barcode');
+      }
+      return;
+    }
+
+    // 更新上一次扫描的条码
+    _lastScannedBarcode = barcode;
+
     // 更新扫码总数
     final currentScanNumber = _totalScans + 1;
     setState(() {

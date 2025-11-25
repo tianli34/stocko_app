@@ -398,8 +398,11 @@ class OptimizedRestoreService implements IRestoreService {
         }
       }
 
-      const supportedVersions = ['1.0.0', '2.0.0'];
-      if (!supportedVersions.contains(metadata.version)) {
+      // 基于主版本号检查兼容性，而不是维护版本白名单
+      final versionParts = metadata.version.split('.');
+      final majorVersion = int.tryParse(versionParts.isNotEmpty ? versionParts[0] : '0') ?? 0;
+      // 支持主版本号 1-99 的备份格式
+      if (majorVersion < 1 || majorVersion > 99) {
         return false;
       }
 

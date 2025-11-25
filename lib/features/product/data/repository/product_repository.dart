@@ -290,6 +290,8 @@ class ProductRepository implements IProductRepository {
       image: Value(product.image),
       categoryId: Value(product.categoryId),
       baseUnitId: Value(product.baseUnitId),
+      groupId: Value(product.groupId),
+      variantName: Value(product.variantName),
       specification: Value(product.specification),
       brand: Value(product.brand),
       // Money 字段，直接映射对应列名
@@ -316,6 +318,8 @@ class ProductRepository implements IProductRepository {
         image: data.image,
         categoryId: data.categoryId,
         baseUnitId: data.baseUnitId,
+        groupId: data.groupId,
+        variantName: data.variantName,
         specification: data.specification,
         brand: data.brand,
         suggestedRetailPrice: data.suggestedRetailPrice,

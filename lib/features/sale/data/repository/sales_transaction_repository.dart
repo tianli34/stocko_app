@@ -77,23 +77,35 @@ class SalesTransactionRepository implements ISalesTransactionRepository {
       ),
     );
 
-    // 合并明细
-    final Map<(int, int?), int> merged = {};
+    // 合并明细（将数量换算为基本单位）
+    final Map<(int, int, int?), int> merged = {};
     for (final item in saleItems) {
-      final key = (item.productId,
+      // 根据productId和unitId查找unitProductId
+      final unitProduct = await _db.productUnitDao.getUnitProductByProductAndUnit(
+        item.productId,
+        item.unitId,
+      );
+      if (unitProduct == null) {
+        throw Exception('未找到产品${item.productName}的单位配置');
+      }
+      
+      final key = (unitProduct.id,
+          item.productId,
           item.batchId != null ? int.tryParse(item.batchId!) : null);
-      merged.update(key, (q) => q + item.quantity.toInt(), ifAbsent: () => item.quantity.toInt());
+      // 将销售数量换算为基本单位数量
+      final baseUnitQuantity = (item.quantity * item.conversionRate).toInt();
+      merged.update(key, (q) => q + baseUnitQuantity, ifAbsent: () => baseUnitQuantity);
     }
 
     // 批量写入出库明细
     if (merged.isNotEmpty) {
       final companions = merged.entries.map((e) {
-        final pid = e.key.$1;
-        final bid = e.key.$2;
+        final upid = e.key.$1;
+        final bid = e.key.$3;
         final qty = e.value;
         return OutboundItemCompanion(
           receiptId: drift.Value(receiptId),
-          productId: drift.Value(pid),
+          unitProductId: drift.Value(upid),
           quantity: drift.Value(qty),
           batchId: bid != null
               ? drift.Value(bid)

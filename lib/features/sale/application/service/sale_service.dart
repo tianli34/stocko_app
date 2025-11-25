@@ -73,18 +73,21 @@ class SaleService {
         final existingInventory = await inventoryService.getInventory(item.productId, shopId);
         print('🔍 [DEBUG] Existing inventory: ${existingInventory?.quantity ?? "not found"}');
         
+        // 将销售数量换算为基本单位数量
+        final baseUnitQuantity = (item.quantity * item.conversionRate).toInt();
+        
         final ok = isSaleMode
             ? await inventoryService.outbound(
                 productId: item.productId,
                 shopId: shopId,
-                quantity: item.quantity.toInt(),
+                quantity: baseUnitQuantity,
                 batchId: item.batchId != null ? int.tryParse(item.batchId!) : null,
                 time: now,
               )
             : await inventoryService.inbound(
                 productId: item.productId,
                 shopId: shopId,
-                quantity: item.quantity.toInt(),
+                quantity: baseUnitQuantity,
                 batchId: item.batchId != null ? int.tryParse(item.batchId!) : null,
                 time: now,
               );

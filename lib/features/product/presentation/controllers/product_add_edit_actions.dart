@@ -131,6 +131,23 @@ class ProductAddEditActions {
   }) async {
     if (!formKey.currentState!.validate()) return;
 
+    final ui = ref.read(productFormUiProvider);
+
+    // 多变体模式验证
+    if (ui.isMultiVariantMode && productId == null) {
+      // 检查是否选择了商品组
+      if (ui.selectedGroupId == null) {
+        onError('❌ 多变体模式需要选择商品组');
+        return;
+      }
+      // 检查是否有有效的变体
+      final validVariants = ui.variants.where((v) => v.variantName.trim().isNotEmpty).toList();
+      if (validVariants.isEmpty) {
+        onError('❌ 请至少添加一个变体');
+        return;
+      }
+    }
+
     // 基本单位校验
     if (unitController.text.trim().isEmpty) {
       onError('❌ 基本单位不能为空');
@@ -153,11 +170,11 @@ class ProductAddEditActions {
     final enableBatch = shelfLife != null && shelfLife > 0;
     ref.read(productFormUiProvider.notifier).setEnableBatchManagement(enableBatch);
 
-    // 条码数据
-    final ui = ref.read(productFormUiProvider);
+    // 重新读取UI状态（因为上面可能有修改）
+    final uiState = ref.read(productFormUiProvider);
     List<AuxiliaryUnitBarcodeData>? auxiliaryBarcodeData;
-    if (ui.auxiliaryUnitBarcodes != null && ui.auxiliaryUnitBarcodes!.isNotEmpty) {
-      auxiliaryBarcodeData = ui.auxiliaryUnitBarcodes!
+    if (uiState.auxiliaryUnitBarcodes != null && uiState.auxiliaryUnitBarcodes!.isNotEmpty) {
+      auxiliaryBarcodeData = uiState.auxiliaryUnitBarcodes!
           .map((item) => AuxiliaryUnitBarcodeData(
                 // 某些临时ID可能包含下划线等非数字字符，例如 "1757666934778_8"，
                 // 为避免 int.parse 抛出异常，这里先移除非数字字符再尝试解析，失败则置为 0。
@@ -171,24 +188,37 @@ class ProductAddEditActions {
           .toList();
     }
 
+    // 转换多变体数据
+    final variantFormDataList = uiState.variants
+        .where((v) => v.variantName.trim().isNotEmpty)
+        .map((v) => VariantFormData(
+              variantName: v.variantName.trim(),
+              barcode: v.barcode.trim(),
+            ))
+        .toList();
+
     final formData = ProductFormData(
       productId: productId,
       name: nameController.text.trim(),
-      selectedCategoryId: ui.selectedCategoryId,
+      selectedCategoryId: uiState.selectedCategoryId,
       newCategoryName: categoryController.text.trim(),
-      selectedUnitId: ui.selectedUnitId,
+      selectedUnitId: uiState.selectedUnitId,
       newUnitName: unitController.text.trim(),
-      imagePath: ui.selectedImagePath,
+      imagePath: uiState.selectedImagePath,
       barcode: barcodeController.text.trim(),
       retailPriceInCents: double.tryParse(retailPriceController.text.trim()),
       promotionalPriceInCents: double.tryParse(promotionalPriceController.text.trim()),
       suggestedRetailPriceInCents: double.tryParse(suggestedRetailPriceController.text.trim()),
       stockWarningValue: int.tryParse(stockWarningValueController.text.trim()) ?? 5,
       shelfLife: int.tryParse(shelfLifeController.text.trim()),
-      shelfLifeUnit: ui.shelfLifeUnit,
-      enableBatchManagement: ui.enableBatchManagement,
-      productUnits: ui.productUnits,
+      shelfLifeUnit: uiState.shelfLifeUnit,
+      enableBatchManagement: uiState.enableBatchManagement,
+      productUnits: uiState.productUnits,
       auxiliaryUnitBarcodes: auxiliaryBarcodeData,
+      groupId: uiState.selectedGroupId,
+      variantName: uiState.variantName,
+      isMultiVariantMode: uiState.isMultiVariantMode,
+      variants: variantFormDataList,
     );
 
     try {

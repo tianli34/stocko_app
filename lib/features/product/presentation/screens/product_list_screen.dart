@@ -242,6 +242,11 @@ class ProductListScreen extends ConsumerWidget {
         title: titleWidget,
         actions: [
           IconButton(
+            icon: const Icon(Icons.folder_outlined),
+            tooltip: '商品组管理',
+            onPressed: () => context.push(AppRoutes.productGroups),
+          ),
+          IconButton(
             icon: const Icon(Icons.leaderboard),
             tooltip: '商品排行榜',
             onPressed: () => context.push(AppRoutes.productRanking),

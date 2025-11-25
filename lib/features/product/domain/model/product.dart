@@ -60,6 +60,10 @@ abstract class ProductModel with _$ProductModel {
     String? image,
     required int baseUnitId,
     @JsonKey(fromJson: _intFromJson) int? categoryId,
+    /// 商品组ID - 用于关联同系列商品，null 表示普通商品
+    @JsonKey(fromJson: _intFromJson) int? groupId,
+    /// 变体名称 - 如"黄瓜味"、"番茄味"
+    String? variantName,
     String? specification,
     String? brand,
     @JsonKey(fromJson: _moneyFromJson, toJson: _moneyToJson)

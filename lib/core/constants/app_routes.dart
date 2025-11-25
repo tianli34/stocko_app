@@ -6,6 +6,7 @@ class AppRoutes {
   static const String productEdit = '/product/:id/edit';
   static const String productNew = '/product/new';
   static const String productRanking = '/products/ranking';
+  static const String productGroups = '/product-groups';
   static const String categories = '/categories';
   static const String categoryTest = '/categories/test';
   static const String inventory = '/inventory';

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/shared_widgets/shared_widgets.dart';
+import '../../../../core/services/barcode_scanner_service.dart';
 import '../../domain/model/product.dart';
 import '../../domain/model/unit.dart';
 import '../../application/provider/product_providers.dart';
@@ -15,6 +16,8 @@ import '../widgets/inputs/app_text_field.dart';
 import '../widgets/sections/basic_info_section.dart';
 import '../widgets/sections/unit_category_section.dart';
 import '../widgets/product_form_action_bar.dart';
+import '../widgets/product_group_selector.dart';
+import '../widgets/multi_variant_input_section.dart';
 import '../controllers/product_form_controllers.dart';
 import '../state/product_form_ui_provider.dart';
 import '../controllers/product_add_edit_actions.dart';
@@ -125,7 +128,7 @@ class _ProductAddEditScreenState extends ConsumerState<ProductAddEditScreen> {
       behavior: HitTestBehavior.opaque,
       child: Scaffold(
         appBar: AppBar(
-          title: Text(isEdit ? '编辑货品' : '添加货品'),
+          title: Text(isEdit ? '编辑货品' : '添加2货品'),
           elevation: 0,
           actions: [],
         ),
@@ -321,6 +324,53 @@ class _ProductAddEditScreenState extends ConsumerState<ProductAddEditScreen> {
                         onSubmitted: _submitForm,
                       ),
                       const SizedBox(height: 16),
+                      // 商品组选择（可选）- 新增模式支持多变体录入
+                      if (!isEdit) ...[
+                        MultiVariantInputSection(
+                          selectedGroupId: ui.selectedGroupId,
+                          variants: ui.variants,
+                          onGroupChanged: (groupId) {
+                            ref
+                                .read(productFormUiProvider.notifier)
+                                .setGroupId(groupId);
+                            // 选择商品组时自动开启多变体模式
+                            ref
+                                .read(productFormUiProvider.notifier)
+                                .setMultiVariantMode(groupId != null);
+                          },
+                          onVariantsChanged: (variants) {
+                            ref
+                                .read(productFormUiProvider.notifier)
+                                .setVariants(variants);
+                          },
+                          onScanBarcode: () async {
+                            try {
+                              final barcode = await BarcodeScannerService.scanForProduct(context);
+                              return barcode;
+                            } catch (e) {
+                              ToastService.error('❌ 扫码失败: $e');
+                              return null;
+                            }
+                          },
+                        ),
+                      ] else ...[
+                        // 编辑模式使用原有的单变体选择器
+                        ProductGroupSelector(
+                          selectedGroupId: ui.selectedGroupId,
+                          variantName: ui.variantName,
+                          onGroupChanged: (groupId) {
+                            ref
+                                .read(productFormUiProvider.notifier)
+                                .setGroupId(groupId);
+                          },
+                          onVariantNameChanged: (name) {
+                            ref
+                                .read(productFormUiProvider.notifier)
+                                .setVariantName(name);
+                          },
+                        ),
+                      ],
+                      const SizedBox(height: 16),
                     ],
                   ),
                 ),
@@ -482,6 +532,18 @@ class _ProductAddEditScreenState extends ConsumerState<ProductAddEditScreen> {
       setState(() {
         _c.categoryController.text = '未分类';
       });
+    }
+
+    // 设置商品组ID和变体名称
+    if (widget.product!.groupId != null && mounted) {
+      ref
+          .read(productFormUiProvider.notifier)
+          .setGroupId(widget.product!.groupId);
+    }
+    if (widget.product!.variantName != null && mounted) {
+      ref
+          .read(productFormUiProvider.notifier)
+          .setVariantName(widget.product!.variantName);
     }
   }
 }

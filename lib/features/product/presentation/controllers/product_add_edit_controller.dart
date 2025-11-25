@@ -27,6 +27,17 @@ class AuxiliaryUnitBarcodeData {
   const AuxiliaryUnitBarcodeData({required this.id, required this.barcode});
 }
 
+/// 变体数据（用于批量创建）
+class VariantFormData {
+  final String variantName;
+  final String barcode;
+
+  const VariantFormData({
+    required this.variantName,
+    this.barcode = '',
+  });
+}
+
 /// 表单数据封装
 class ProductFormData {
   final int? productId;
@@ -48,6 +59,12 @@ class ProductFormData {
   final String? remarks;
   final List<UnitProduct>? productUnits;
   final List<AuxiliaryUnitBarcodeData>? auxiliaryUnitBarcodes;
+  // 商品组相关
+  final int? groupId;
+  final String? variantName;
+  // 多变体模式
+  final bool isMultiVariantMode;
+  final List<VariantFormData> variants;
 
   const ProductFormData({
     this.productId,
@@ -68,6 +85,10 @@ class ProductFormData {
     this.remarks,
     this.productUnits,
     this.auxiliaryUnitBarcodes,
+    this.groupId,
+    this.variantName,
+    this.isMultiVariantMode = false,
+    this.variants = const [],
   });
 }
 
@@ -100,6 +121,158 @@ class ProductAddEditController {
 
   /// 提交表单并返回操作结果
   Future<ProductOperationResult> submitForm(ProductFormData data) async {
+    // 多变体模式：批量创建商品
+    if (data.isMultiVariantMode && data.variants.isNotEmpty && data.productId == null) {
+      return _submitMultiVariants(data);
+    }
+    
+    // 单商品模式
+    return _submitSingleProduct(data);
+  }
+
+  /// 批量创建多个变体商品
+  Future<ProductOperationResult> _submitMultiVariants(ProductFormData data) async {
+    try {
+      // 1. 处理类别
+      int? categoryId = await _resolveCategory(data);
+
+      // 2. 处理单位
+      int? unitId = await _resolveUnit(data);
+      if (unitId == null) {
+        return ProductOperationResult.failure('请选择计量单位');
+      }
+
+      // 2.1 处理辅单位
+      await _processAuxiliaryUnits(data.productUnits);
+
+      // 3. 批量创建变体商品
+      final ops = ref.read(productOperationsProvider.notifier);
+      int successCount = 0;
+      final List<String> errors = [];
+
+      for (final variant in data.variants) {
+        if (variant.variantName.trim().isEmpty) continue;
+
+        try {
+          // 构建变体商品名称：基础名称 + 变体名称
+          final productName = '${data.name.trim()} ${variant.variantName.trim()}';
+          
+          Money? toMoney(double? yuan) =>
+              yuan == null ? null : Money((yuan * 100).round());
+
+          final product = ProductModel(
+            id: DateTime.now().millisecondsSinceEpoch + successCount,
+            name: productName,
+            image: data.imagePath,
+            categoryId: categoryId,
+            baseUnitId: unitId,
+            groupId: data.groupId,
+            variantName: variant.variantName.trim(),
+            suggestedRetailPrice: toMoney(data.suggestedRetailPriceInCents),
+            retailPrice: toMoney(data.retailPriceInCents),
+            promotionalPrice: toMoney(data.promotionalPriceInCents),
+            stockWarningValue: data.stockWarningValue,
+            shelfLife: data.shelfLife,
+            shelfLifeUnit: ShelfLifeUnit.values.byName(data.shelfLifeUnit),
+            enableBatchManagement: data.enableBatchManagement,
+            remarks: data.remarks?.trim(),
+            lastUpdated: DateTime.now(),
+          );
+
+          await ops.addProduct(product);
+
+          // 保存单位配置
+          await _saveProductUnits(product, data.productUnits);
+
+          // 保存条码（如果变体有自己的条码）
+          if (variant.barcode.trim().isNotEmpty) {
+            await _saveMainBarcode(product, variant.barcode.trim());
+          }
+
+          successCount++;
+        } catch (e) {
+          errors.add('${variant.variantName}: $e');
+        }
+      }
+
+      // 刷新数据
+      ref.invalidate(allProductsProvider);
+      ref.invalidate(categoryListProvider);
+
+      if (successCount == 0) {
+        return ProductOperationResult.failure('创建失败: ${errors.join(', ')}');
+      }
+
+      final message = successCount == data.variants.length
+          ? '成功创建 $successCount 个变体商品'
+          : '成功创建 $successCount 个变体商品，${errors.length} 个失败';
+
+      return ProductOperationResult.success(message: message);
+    } catch (e) {
+      return ProductOperationResult.failure('批量创建失败: ${e.toString()}');
+    }
+  }
+
+  /// 解析类别ID
+  Future<int?> _resolveCategory(ProductFormData data) async {
+    int? categoryId = data.selectedCategoryId;
+    if ((categoryId == null) && data.newCategoryName.trim().isNotEmpty) {
+      final categoryNotifier = ref.read(categoryListProvider.notifier);
+      await categoryNotifier.loadCategories();
+      final categories = ref.read(categoryListProvider).categories;
+      CategoryModel? existingCat;
+      try {
+        existingCat = categories.firstWhere(
+          (c) =>
+              c.name.toLowerCase() ==
+              data.newCategoryName.trim().toLowerCase(),
+        );
+      } catch (e) {
+        existingCat = null;
+      }
+      if (existingCat != null) {
+        categoryId = existingCat.id;
+      } else {
+        final service = ref.read(categoryServiceProvider);
+        categoryId = await service.addCategory(
+          name: data.newCategoryName.trim(),
+        );
+        ref.invalidate(categoryListProvider);
+      }
+    }
+    return categoryId;
+  }
+
+  /// 解析单位ID
+  Future<int?> _resolveUnit(ProductFormData data) async {
+    int? unitId = data.selectedUnitId;
+    if (unitId == null && data.newUnitName.trim().isNotEmpty) {
+      final units = ref
+          .read(allUnitsProvider)
+          .maybeWhen(data: (u) => u, orElse: () => <Unit>[]);
+      Unit? existingUnit;
+      existingUnit = units
+          .where(
+            (u) =>
+                u.name.toLowerCase() == data.newUnitName.trim().toLowerCase(),
+          )
+          .firstOrNull;
+
+      if (existingUnit != null) {
+        unitId = existingUnit.id;
+      } else {
+        final unitCtrl = ref.read(unitControllerProvider.notifier);
+        final newUnit = await unitCtrl.addUnit(
+          Unit(name: data.newUnitName.trim()),
+        );
+        unitId = newUnit.id;
+      }
+    }
+    return unitId;
+  }
+
+  /// 提交单个商品
+  Future<ProductOperationResult> _submitSingleProduct(ProductFormData data) async {
     try {
       // 1. 处理类别
       int? categoryId = data.selectedCategoryId;
@@ -186,6 +359,9 @@ class ProductAddEditController {
         image: data.imagePath,
         categoryId: categoryId,
         baseUnitId: unitId,
+        // 商品组相关
+        groupId: data.groupId,
+        variantName: data.variantName?.trim(),
         // 可选字段按需传入
         suggestedRetailPrice: toMoney(data.suggestedRetailPriceInCents),
         retailPrice: toMoney(data.retailPriceInCents),

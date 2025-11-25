@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/database/database.dart';
 import '../../../product/application/provider/product_providers.dart';
 import '../../../product/application/provider/product_unit_providers.dart';
+import '../../../product/application/provider/unit_providers.dart';
 
 class InboundRecordItemTile extends ConsumerWidget {
   final InboundItemData item;
@@ -11,7 +12,7 @@ class InboundRecordItemTile extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    // 先获取unitProduct以获得productId
+    // 先获取unitProduct以获得productId和unitId
     final unitProductAsync = ref.watch(productUnitByIdProvider(item.unitProductId));
     
     return unitProductAsync.when(
@@ -23,6 +24,7 @@ class InboundRecordItemTile extends ConsumerWidget {
         }
         
         final productAsync = ref.watch(productByIdProvider(unitProduct.productId));
+        final unitAsync = ref.watch(unitByIdProvider(unitProduct.unitId));
         
         return ListTile(
           contentPadding: const EdgeInsets.only(
@@ -52,17 +54,20 @@ class InboundRecordItemTile extends ConsumerWidget {
                   ),
                 ),
               ),
+              const SizedBox(width: 8),
+              unitAsync.when(
+                data: (unit) => Text(
+                  unit?.name ?? '',
+                  style: const TextStyle(fontSize: 14, color: Colors.grey),
+                ),
+                loading: () => const SizedBox.shrink(),
+                error: (err, stack) => const SizedBox.shrink(),
+              ),
             ],
           ),
-          trailing: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              Text(
-                '数量: ${item.quantity.toStringAsFixed(item.quantity.truncateToDouble() == item.quantity ? 0 : 2)}',
-              ),
-              
-            ],
+          trailing: Text(
+            item.quantity.toStringAsFixed(item.quantity.truncateToDouble() == item.quantity ? 0 : 2),
+            style: const TextStyle(fontSize: 16),
           ),
         );
       },

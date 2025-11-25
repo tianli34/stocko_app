@@ -218,3 +218,10 @@ final unitControllerProvider =
       final productRepository = ref.watch(productRepositoryProvider);
       return UnitController(repository, productRepository, ref);
     });
+
+/// 根据ID获取单位的Provider
+/// 用于在UI中显示单位信息
+final unitByIdProvider = FutureProvider.family<Unit?, int>((ref, unitId) async {
+  final repository = ref.watch(unitRepositoryProvider);
+  return repository.getUnitById(unitId);
+});

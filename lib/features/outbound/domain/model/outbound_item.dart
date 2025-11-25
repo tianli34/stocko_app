@@ -18,8 +18,8 @@ abstract class OutboundItemModel with _$OutboundItemModel {
     /// 所属出库单ID（新建时可能为空，保存后回填）
     int? receiptId,
 
-    /// 商品ID（必填）
-    required int productId,
+    /// 产品单位ID（必填）
+    required int unitProductId,
 
     /// 批次号（可空，空批次与有批次的唯一性策略不同）
     int? batchId,
@@ -33,12 +33,12 @@ abstract class OutboundItemModel with _$OutboundItemModel {
 
   /// 生成用于判定同一出库单中的“唯一性键”
   /// 与表约束一致：
-  /// - 当 batchId 非空：唯一键 = (receiptId, productId, batchId)
-  /// - 当 batchId 为空：唯一键 = (receiptId, productId)
+  /// - 当 batchId 非空：唯一键 = (receiptId, unitProductId, batchId)
+  /// - 当 batchId 为空：唯一键 = (receiptId, unitProductId)
   String uniqueKey({int? overrideReceiptId}) {
     final rid = overrideReceiptId ?? receiptId;
     final batchKey = batchId?.toString() ?? 'null';
-    return '${rid ?? 'null'}#$productId#$batchKey';
+    return '${rid ?? 'null'}#$unitProductId#$batchKey';
   }
 
   /// 增加数量，返回新实例

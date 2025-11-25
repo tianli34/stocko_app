@@ -8,6 +8,7 @@ import '../../features/product/presentation/screens/product_list_screen.dart';
 import '../../features/product/presentation/screens/product_add_edit_screen.dart';
 import '../../features/product/presentation/screens/product_detail_screen.dart';
 import '../../features/product/presentation/screens/product_ranking_screen.dart';
+import '../../features/product/presentation/screens/product_group_list_screen.dart';
 import '../../features/product/presentation/screens/category_selection_screen.dart';
 import '../../features/product/application/provider/product_providers.dart';
 import '../../features/database/presentation/screens/database_viewer_screen.dart';
@@ -254,6 +255,11 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (context, state) =>
             const CategorySelectionScreen(isSelectionMode: false),
         routes: [],
+      ),
+      GoRoute(
+        path: AppRoutes.productGroups,
+        name: 'product-groups',
+        builder: (context, state) => const ProductGroupListScreen(),
       ),
       GoRoute(
         path: AppRoutes.inboundCreate,

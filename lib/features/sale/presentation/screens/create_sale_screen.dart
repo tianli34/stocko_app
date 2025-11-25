@@ -46,7 +46,6 @@ class _CreateSaleScreenState extends ConsumerState<CreateSaleScreen> {
   Customer? _selectedCustomer;
   Shop? _selectedShop;
   bool _isProcessing = false;
-  String? _lastScannedBarcode;
 
   final FocusNode _shopFocusNode = FocusNode();
   final FocusNode _customerFocusNode = FocusNode();
@@ -225,7 +224,6 @@ class _CreateSaleScreenState extends ConsumerState<CreateSaleScreen> {
   }
 
   void _continuousScan() {
-    _lastScannedBarcode = null; // 重置上次扫描的条码
     Navigator.of(context).push(
       MaterialPageRoute(
         builder: (context) => Scaffold(
@@ -525,13 +523,7 @@ class _CreateSaleScreenState extends ConsumerState<CreateSaleScreen> {
   }
 
   void _handleContinuousProductScan(String barcode) async {
-    // 连续扫码去重：如果条码与上一个相同，则忽略
-    if (barcode == _lastScannedBarcode) {
-      return;
-    }
-
     // 在连续扫码模式下，不显示全局的加载提示，而是快速反馈
-    HapticFeedback.lightImpact();
     showAppSnackBar(context, message: '条码: $barcode...');
 
     try {
@@ -557,13 +549,12 @@ class _CreateSaleScreenState extends ConsumerState<CreateSaleScreen> {
               sellingPriceInCents: sellingPrice,
               conversionRate: result.conversionRate,
             );
-        _lastScannedBarcode = barcode; // 仅在成功时更新上一个条码
-        // 成功添加商品后播放音效
+        // 成功添加商品后播放音效和震动反馈
+        HapticFeedback.lightImpact();
         SoundHelper.playSuccessSound();
         // 成功添加后给予一个更明确的提示
         showAppSnackBar(context, message: '✅ ${result.product.name} 已添加');
       } else {
-        _lastScannedBarcode = null; // 如果未找到，则允许立即重扫
         // 未找到货品时给予一个失败提示
         showAppSnackBar(
           context,
@@ -573,7 +564,6 @@ class _CreateSaleScreenState extends ConsumerState<CreateSaleScreen> {
       }
     } catch (e) {
       if (!mounted) return;
-      _lastScannedBarcode = null; // 如果出错，则允许立即重扫
       showAppSnackBar(context, message: '❌ 查询失败: $e', isError: true);
     }
   }

@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../domain/model/product_unit.dart';
+import '../widgets/multi_variant_input_section.dart';
 
 /// 描述货品表单在 UI 层需要维护的可序列化状态
 class ProductFormUiState {
@@ -12,6 +13,10 @@ class ProductFormUiState {
   final String shelfLifeUnit; // days | months | years
   final bool enableBatchManagement;
   final bool hasEnteredAuxUnitPage; // 是否进入过辅单位编辑页面
+  final int? selectedGroupId; // 商品组ID
+  final String? variantName; // 变体名称（单变体模式）
+  final List<VariantInputData> variants; // 多变体列表
+  final bool isMultiVariantMode; // 是否为多变体录入模式
 
   const ProductFormUiState({
     this.selectedCategoryId,
@@ -22,6 +27,10 @@ class ProductFormUiState {
     this.shelfLifeUnit = 'months',
     this.enableBatchManagement = false,
     this.hasEnteredAuxUnitPage = false,
+    this.selectedGroupId,
+    this.variantName,
+    this.variants = const [],
+    this.isMultiVariantMode = false,
   });
 
   ProductFormUiState copyWith({
@@ -38,6 +47,12 @@ class ProductFormUiState {
     String? shelfLifeUnit,
     bool? enableBatchManagement,
     bool? hasEnteredAuxUnitPage,
+    int? selectedGroupId,
+    bool selectedGroupIdToNull = false,
+    String? variantName,
+    bool variantNameToNull = false,
+    List<VariantInputData>? variants,
+    bool? isMultiVariantMode,
   }) {
     return ProductFormUiState(
       selectedCategoryId: selectedCategoryIdToNull
@@ -60,6 +75,14 @@ class ProductFormUiState {
           enableBatchManagement ?? this.enableBatchManagement,
       hasEnteredAuxUnitPage:
           hasEnteredAuxUnitPage ?? this.hasEnteredAuxUnitPage,
+      selectedGroupId: selectedGroupIdToNull
+          ? null
+          : (selectedGroupId ?? this.selectedGroupId),
+      variantName: variantNameToNull
+          ? null
+          : (variantName ?? this.variantName),
+      variants: variants ?? this.variants,
+      isMultiVariantMode: isMultiVariantMode ?? this.isMultiVariantMode,
     );
   }
 }
@@ -110,6 +133,28 @@ class ProductFormUiNotifier extends StateNotifier<ProductFormUiState> {
 
   void setHasEnteredAuxUnitPage(bool hasEntered) {
     state = state.copyWith(hasEnteredAuxUnitPage: hasEntered);
+  }
+
+  void setGroupId(int? id) {
+    state = state.copyWith(
+      selectedGroupId: id,
+      selectedGroupIdToNull: id == null,
+    );
+  }
+
+  void setVariantName(String? name) {
+    state = state.copyWith(
+      variantName: name,
+      variantNameToNull: name == null || name.isEmpty,
+    );
+  }
+
+  void setVariants(List<VariantInputData> variants) {
+    state = state.copyWith(variants: variants);
+  }
+
+  void setMultiVariantMode(bool isMultiVariant) {
+    state = state.copyWith(isMultiVariantMode: isMultiVariant);
   }
 
   void reset() {

@@ -7,6 +7,7 @@ import 'dart:io';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'products_table.dart';
 import 'categories_table.dart';
+import 'product_groups_table.dart';
 import 'units_table.dart';
 import 'product_units_table.dart';
 import 'shops_table.dart';
@@ -27,6 +28,7 @@ import 'outbound_receipts_table.dart';
 import 'outbound_receipt_items_table.dart';
 import '../../features/product/data/dao/product_dao.dart';
 import '../../features/product/data/dao/category_dao.dart';
+import '../../features/product/data/dao/product_group_dao.dart';
 import '../../features/product/data/dao/unit_dao.dart';
 import '../../features/product/data/dao/product_unit_dao.dart';
 import '../../features/purchase/data/dao/supplier_dao.dart';
@@ -51,6 +53,7 @@ part 'database.g.dart';
 @DriftDatabase(
   tables: [
     Product,
+    ProductGroup,
     Category,
     Unit,
     UnitProduct,
@@ -73,6 +76,7 @@ part 'database.g.dart';
   ],
   daos: [
     ProductDao,
+    ProductGroupDao,
     CategoryDao,
     UnitDao,
     ProductUnitDao,
@@ -96,7 +100,7 @@ part 'database.g.dart';
 class AppDatabase extends _$AppDatabase {
   AppDatabase(super.e);
   @override
-  int get schemaVersion => 25; 
+  int get schemaVersion => 27; 
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -151,13 +155,79 @@ class AppDatabase extends _$AppDatabase {
       );
       // 为出库单明细表创建部分唯一索引
       await customStatement(
-        'CREATE UNIQUE INDEX IF NOT EXISTS outbound_item_unique_with_batch ON outbound_item(receipt_id, product_id, batch_id) WHERE batch_id IS NOT NULL;',
+        'CREATE UNIQUE INDEX IF NOT EXISTS outbound_item_unique_with_batch ON outbound_item(receipt_id, unit_product_id, batch_id) WHERE batch_id IS NOT NULL;',
       );
       await customStatement(
-        'CREATE UNIQUE INDEX IF NOT EXISTS outbound_item_unique_without_batch ON outbound_item(receipt_id, product_id) WHERE batch_id IS NULL;',
+        'CREATE UNIQUE INDEX IF NOT EXISTS outbound_item_unique_without_batch ON outbound_item(receipt_id, unit_product_id) WHERE batch_id IS NULL;',
       );
     },
     onUpgrade: (Migrator m, int from, int to) async {
+      
+      if (from < 27 && to >= 27) {
+        // 创建商品组表
+        await m.createTable(productGroup);
+        // 为商品表添加 groupId 和 variantName 列
+        await m.addColumn(product, product.groupId);
+        await m.addColumn(product, product.variantName);
+      }
+      
+      if (from < 26 && to >= 26) {
+        // 迁移 outbound_item 表：将 product_id 改为 unit_product_id
+        
+        // 检查旧表是否存在 product_id 列
+        final outboundResult = await customSelect(
+          "SELECT COUNT(*) as count FROM pragma_table_info('outbound_item') WHERE name='product_id'",
+        ).getSingle();
+        
+        final hasOutboundProductIdColumn = outboundResult.read<int>('count') > 0;
+        
+        if (hasOutboundProductIdColumn) {
+          // 1. 创建新表
+          await customStatement('''
+            CREATE TABLE IF NOT EXISTS outbound_item_new (
+              id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+              receipt_id INTEGER NOT NULL REFERENCES outbound_receipt (id) ON DELETE CASCADE,
+              unit_product_id INTEGER NOT NULL REFERENCES unit_product (id) ON DELETE RESTRICT,
+              batch_id INTEGER REFERENCES product_batch (id),
+              quantity INTEGER NOT NULL,
+              CHECK(quantity > 0)
+            );
+          ''');
+          
+          // 2. 迁移数据：将 product_id 映射到对应的 unit_product_id（使用基础单位）
+          await customStatement('''
+            INSERT INTO outbound_item_new (id, receipt_id, unit_product_id, batch_id, quantity)
+            SELECT 
+              oi.id,
+              oi.receipt_id,
+              COALESCE(
+                (SELECT up.id FROM unit_product up WHERE up.product_id = oi.product_id AND up.conversion_rate = 1 LIMIT 1),
+                (SELECT up.id FROM unit_product up WHERE up.product_id = oi.product_id LIMIT 1)
+              ) as unit_product_id,
+              oi.batch_id,
+              oi.quantity
+            FROM outbound_item oi
+            WHERE EXISTS (SELECT 1 FROM unit_product up WHERE up.product_id = oi.product_id);
+          ''');
+          
+          // 3. 删除旧表
+          await customStatement('DROP TABLE outbound_item;');
+          
+          // 4. 重命名新表
+          await customStatement('ALTER TABLE outbound_item_new RENAME TO outbound_item;');
+        }
+        
+        // 5. 重建索引（无论是否迁移都需要）
+        await customStatement('DROP INDEX IF EXISTS outbound_item_unique_with_batch;');
+        await customStatement('DROP INDEX IF EXISTS outbound_item_unique_without_batch;');
+        
+        await customStatement(
+          'CREATE UNIQUE INDEX IF NOT EXISTS outbound_item_unique_with_batch ON outbound_item(receipt_id, unit_product_id, batch_id) WHERE batch_id IS NOT NULL;',
+        );
+        await customStatement(
+          'CREATE UNIQUE INDEX IF NOT EXISTS outbound_item_unique_without_batch ON outbound_item(receipt_id, unit_product_id) WHERE batch_id IS NULL;',
+        );
+      }
       
       if (from < 25 && to >= 25) {
         // 迁移 inbound_item 表：将 product_id 改为 unit_product_id

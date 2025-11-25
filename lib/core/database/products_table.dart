@@ -2,6 +2,7 @@ import 'package:drift/drift.dart';
 import 'package:stocko_app/features/product/domain/model/product.dart';
 import 'categories_table.dart';
 import 'units_table.dart';
+import 'product_groups_table.dart';
 
 // --- 类型转换器 ---
 class MoneyConverter extends TypeConverter<Money, int> {
@@ -24,6 +25,13 @@ class Product extends Table {
   TextColumn get image => text().nullable()();
   IntColumn get baseUnitId => integer().references(Unit, #id)();
   IntColumn get categoryId => integer().references(Category, #id).nullable()();
+  
+  /// 商品组ID - 用于关联同系列商品（如乐事薯片的各种口味），可空表示普通商品
+  IntColumn get groupId => integer().references(ProductGroup, #id).nullable()();
+  
+  /// 变体名称 - 如"黄瓜味"、"番茄味"，仅当 groupId 不为空时有意义
+  TextColumn get variantName => text().nullable()();
+  
   TextColumn get specification => text().nullable()();
   TextColumn get brand => text().nullable()();
 

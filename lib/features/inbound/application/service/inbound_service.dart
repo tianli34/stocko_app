@@ -193,14 +193,17 @@ class InboundService {
       final product = await _database.productDao.getProductById(unitProduct.productId);
 
       if (product?.enableBatchManagement == true && item.productionDate != null) {
+        // 将入库数量换算为基本单位数量
+        final baseUnitQuantity = item.model.quantity * unitProduct.conversionRate;
+        
         await _batchDao.upsertBatchIncrement(
           productId: unitProduct.productId,
           productionDate: item.productionDate!,
           shopId: shopId,
-          increment: item.model.quantity,
+          increment: baseUnitQuantity,
         );
         print(
-          '📦 批次(商品:${unitProduct.productId}, 日期:${item.productionDate}, 店铺:$shopId) 数量累计 +${item.model.quantity}',
+          '📦 批次(商品:${unitProduct.productId}, 日期:${item.productionDate}, 店铺:$shopId) 数量累计 +$baseUnitQuantity',
         );
       }
     }
@@ -367,12 +370,15 @@ class InboundService {
   batchId = batchIdOnly;
       }
 
+      // 将入库数量换算为基本单位数量
+      final baseUnitQuantity = item.model.quantity * unitProduct.conversionRate;
+
       // 先更新库存数量和记录流水
       final success = await _inventoryService.inbound(
         productId: unitProduct.productId,
         shopId: shopId,
         batchId: batchId,
-        quantity: item.model.quantity,
+        quantity: baseUnitQuantity,
         time: DateTime.now(),
       );
 
@@ -385,7 +391,7 @@ class InboundService {
         productId: unitProduct.productId,
         shopId: shopId,
         batchId: batchId,
-        inboundQuantity: item.model.quantity,
+        inboundQuantity: baseUnitQuantity,
         inboundUnitPriceInCents: item.unitPriceInCents,
       );
 
