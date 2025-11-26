@@ -61,6 +61,36 @@ class ProductFormControllers {
     // categoryController 与 unitController 初始文本由页面选择逻辑/回填决定
   }
 
+  /// 保存所有控制器的当前值
+  Map<String, String> saveAllValues() {
+    return {
+      'name': nameController.text,
+      'barcode': barcodeController.text,
+      'retailPrice': retailPriceController.text,
+      'promotionalPrice': promotionalPriceController.text,
+      'suggestedRetailPrice': suggestedRetailPriceController.text,
+      'stockWarningValue': stockWarningValueController.text,
+      'shelfLife': shelfLifeController.text,
+      'remarks': remarksController.text,
+      'category': categoryController.text,
+      'unit': unitController.text,
+    };
+  }
+
+  /// 恢复所有控制器的值
+  void restoreAllValues(Map<String, String> values) {
+    nameController.text = values['name'] ?? '';
+    barcodeController.text = values['barcode'] ?? '';
+    retailPriceController.text = values['retailPrice'] ?? '';
+    promotionalPriceController.text = values['promotionalPrice'] ?? '';
+    suggestedRetailPriceController.text = values['suggestedRetailPrice'] ?? '';
+    stockWarningValueController.text = values['stockWarningValue'] ?? '';
+    shelfLifeController.text = values['shelfLife'] ?? '';
+    remarksController.text = values['remarks'] ?? '';
+    categoryController.text = values['category'] ?? '';
+    unitController.text = values['unit'] ?? '';
+  }
+
   void dispose() {
     // 文本控制器
     nameController.dispose();

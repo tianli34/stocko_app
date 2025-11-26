@@ -17,6 +17,8 @@ class ProductFormUiState {
   final String? variantName; // 变体名称（单变体模式）
   final List<VariantInputData> variants; // 多变体列表
   final bool isMultiVariantMode; // 是否为多变体录入模式
+  final bool isProductGroupEnabled; // 商品组开关状态
+  final String? productGroupName; // 商品组名称（开关模式下使用）
 
   const ProductFormUiState({
     this.selectedCategoryId,
@@ -31,6 +33,8 @@ class ProductFormUiState {
     this.variantName,
     this.variants = const [],
     this.isMultiVariantMode = false,
+    this.isProductGroupEnabled = false, // 默认关闭商品组开关
+    this.productGroupName,
   });
 
   ProductFormUiState copyWith({
@@ -53,6 +57,9 @@ class ProductFormUiState {
     bool variantNameToNull = false,
     List<VariantInputData>? variants,
     bool? isMultiVariantMode,
+    bool? isProductGroupEnabled,
+    String? productGroupName,
+    bool productGroupNameToNull = false,
   }) {
     return ProductFormUiState(
       selectedCategoryId: selectedCategoryIdToNull
@@ -83,6 +90,10 @@ class ProductFormUiState {
           : (variantName ?? this.variantName),
       variants: variants ?? this.variants,
       isMultiVariantMode: isMultiVariantMode ?? this.isMultiVariantMode,
+      isProductGroupEnabled: isProductGroupEnabled ?? this.isProductGroupEnabled,
+      productGroupName: productGroupNameToNull
+          ? null
+          : (productGroupName ?? this.productGroupName),
     );
   }
 }
@@ -155,6 +166,17 @@ class ProductFormUiNotifier extends StateNotifier<ProductFormUiState> {
 
   void setMultiVariantMode(bool isMultiVariant) {
     state = state.copyWith(isMultiVariantMode: isMultiVariant);
+  }
+
+  void setProductGroupEnabled(bool enabled) {
+    state = state.copyWith(isProductGroupEnabled: enabled);
+  }
+
+  void setProductGroupName(String? name) {
+    state = state.copyWith(
+      productGroupName: name,
+      productGroupNameToNull: name == null || name.isEmpty,
+    );
   }
 
   void reset() {

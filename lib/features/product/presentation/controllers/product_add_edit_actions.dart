@@ -133,11 +133,11 @@ class ProductAddEditActions {
 
     final ui = ref.read(productFormUiProvider);
 
-    // 多变体模式验证
-    if (ui.isMultiVariantMode && productId == null) {
-      // 检查是否选择了商品组
-      if (ui.selectedGroupId == null) {
-        onError('❌ 多变体模式需要选择商品组');
+    // 多变体模式验证（商品组开关开启时）
+    if (ui.isProductGroupEnabled && productId == null) {
+      // 检查商品名称（作为商品组名称）
+      if (nameController.text.trim().isEmpty) {
+        onError('❌ 请输入商品名称（将作为商品组名称）');
         return;
       }
       // 检查是否有有效的变体

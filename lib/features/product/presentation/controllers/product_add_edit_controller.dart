@@ -14,9 +14,11 @@ import '../../application/provider/product_providers.dart';
 import '../../application/provider/unit_providers.dart';
 import '../../application/provider/product_unit_providers.dart';
 import '../../application/provider/barcode_providers.dart';
+import '../../application/provider/product_group_providers.dart';
 import '../../application/category_service.dart';
 import '../../application/provider/unit_edit_form_providers.dart';
 import '../../data/repository/product_unit_repository.dart';
+import '../../domain/model/product_group.dart';
 import '../state/product_form_ui_provider.dart';
 
 /// 辅单位条码数据
@@ -145,7 +147,29 @@ class ProductAddEditController {
       // 2.1 处理辅单位
       await _processAuxiliaryUnits(data.productUnits);
 
-      // 3. 批量创建变体商品
+      // 3. 处理商品组：如果没有选择已有商品组，则创建新商品组
+      int? groupId = data.groupId;
+      if (groupId == null && data.name.trim().isNotEmpty) {
+        // 验证商品组名称唯一性
+        final existingGroups = await ref.read(allProductGroupsProvider.future);
+        final nameExists = existingGroups.any(
+          (g) => g.name.toLowerCase() == data.name.trim().toLowerCase(),
+        );
+        if (nameExists) {
+          return ProductOperationResult.failure('商品组名称"${data.name.trim()}"已存在，请选择已有商品组或使用其他名称');
+        }
+        
+        // 创建新商品组
+        final groupModel = ProductGroupModel(name: data.name.trim());
+        groupId = await ref
+            .read(productGroupOperationsProvider.notifier)
+            .createProductGroup(groupModel);
+        if (groupId == null) {
+          return ProductOperationResult.failure('创建商品组失败');
+        }
+      }
+
+      // 4. 批量创建变体商品
       final ops = ref.read(productOperationsProvider.notifier);
       int successCount = 0;
       final List<String> errors = [];
@@ -166,7 +190,7 @@ class ProductAddEditController {
             image: data.imagePath,
             categoryId: categoryId,
             baseUnitId: unitId,
-            groupId: data.groupId,
+            groupId: groupId,
             variantName: variant.variantName.trim(),
             suggestedRetailPrice: toMoney(data.suggestedRetailPriceInCents),
             retailPrice: toMoney(data.retailPriceInCents),
@@ -198,6 +222,7 @@ class ProductAddEditController {
       // 刷新数据
       ref.invalidate(allProductsProvider);
       ref.invalidate(categoryListProvider);
+      ref.invalidate(allProductGroupsProvider);
 
       if (successCount == 0) {
         return ProductOperationResult.failure('创建失败: ${errors.join(', ')}');

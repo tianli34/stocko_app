@@ -48,6 +48,8 @@ class _AuxiliaryUnitEditScreenState
     for (final aux in _auxiliaryUnits) {
       aux.dispose();
     }
+    // 不在此处清理 unitEditFormProvider
+    // 由父页面 ProductAddEditScreen 统一管理生命周期
     super.dispose();
   }
 

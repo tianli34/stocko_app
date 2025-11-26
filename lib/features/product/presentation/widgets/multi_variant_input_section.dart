@@ -1,8 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../../core/database/database.dart';
-import '../../application/provider/product_group_providers.dart';
-import '../../domain/model/product_group.dart';
 
 /// 单个变体数据模型
 class VariantInputData {
@@ -28,24 +25,27 @@ class VariantInputData {
   }
 
   bool get isValid => variantName.trim().isNotEmpty;
-  bool get isEmpty =>
-      variantName.trim().isEmpty && barcode.trim().isEmpty;
+  bool get isEmpty => variantName.trim().isEmpty && barcode.trim().isEmpty;
 }
 
-/// 多变体录入区域组件
+/// 多变体录入区域组件（开关模式）
+/// 
+/// 新方案：
+/// - 商品组开关：开启后显示变体列表
+/// - 商品名称字段在开关开启时由外部切换为下拉框
 class MultiVariantInputSection extends ConsumerStatefulWidget {
-  final int? selectedGroupId;
+  final bool isProductGroupEnabled;
   final List<VariantInputData> variants;
-  final ValueChanged<int?> onGroupChanged;
+  final ValueChanged<bool> onProductGroupEnabledChanged;
   final ValueChanged<List<VariantInputData>> onVariantsChanged;
   final bool enabled;
   final Future<String?> Function()? onScanBarcode;
 
   const MultiVariantInputSection({
     super.key,
-    this.selectedGroupId,
+    required this.isProductGroupEnabled,
     required this.variants,
-    required this.onGroupChanged,
+    required this.onProductGroupEnabledChanged,
     required this.onVariantsChanged,
     this.enabled = true,
     this.onScanBarcode,
@@ -94,11 +94,9 @@ class _MultiVariantInputSectionState
   @override
   void didUpdateWidget(MultiVariantInputSection oldWidget) {
     super.didUpdateWidget(oldWidget);
-    // 同步控制器
     for (final variant in widget.variants) {
       _ensureControllers(variant);
     }
-    // 清理不再需要的控制器
     final currentIds = widget.variants.map((v) => v.id).toSet();
     final toRemove =
         _nameControllers.keys.where((id) => !currentIds.contains(id)).toList();
@@ -139,140 +137,170 @@ class _MultiVariantInputSectionState
     widget.onVariantsChanged(newList);
   }
 
+  /// 处理开关切换
+  Future<void> _handleSwitchChanged(bool value) async {
+    if (!value && widget.variants.isNotEmpty) {
+      // 关闭开关时，如果有变体数据，提示用户
+      final hasData = widget.variants.any(
+          (v) => v.variantName.trim().isNotEmpty || v.barcode.trim().isNotEmpty);
+      if (hasData) {
+        final confirm = await showDialog<bool>(
+          context: context,
+          builder: (ctx) => AlertDialog(
+            title: const Text('确认关闭'),
+            content: const Text('关闭商品组将清除已录入的变体数据，是否继续？'),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(ctx, false),
+                child: const Text('取消'),
+              ),
+              TextButton(
+                onPressed: () => Navigator.pop(ctx, true),
+                child: const Text('确认'),
+              ),
+            ],
+          ),
+        );
+        if (confirm != true) return;
+      }
+      // 清除变体数据
+      widget.onVariantsChanged([]);
+    } else if (value && widget.variants.isEmpty) {
+      // 开启开关时，自动添加一个空变体
+      _addVariant();
+    }
+    widget.onProductGroupEnabledChanged(value);
+  }
+
   @override
   Widget build(BuildContext context) {
-    final groupsAsync = ref.watch(allProductGroupsProvider);
     final theme = Theme.of(context);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // 商品组选择
-        groupsAsync.when(
-          data: (groups) => _buildGroupSelector(context, groups),
-          loading: () => const SizedBox(
-            height: 56,
-            child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
-          ),
-          error: (e, _) => Text('加载商品组失败: $e'),
-        ),
+        // 商品组开关
+        _buildGroupSwitch(context),
 
-        // 多变体录入区域（仅当选择了商品组时显示）
-        if (widget.selectedGroupId != null) ...[
+        // 商品组开启时：显示变体列表
+        if (widget.isProductGroupEnabled) ...[
           const SizedBox(height: 16),
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: theme.primaryColor.withValues(alpha: 0.05),
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(
-                color: theme.primaryColor.withValues(alpha: 0.2),
-              ),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Icon(Icons.layers, size: 20, color: theme.primaryColor),
-                    const SizedBox(width: 8),
-                    Text(
-                      '变体列表',
-                      style: theme.textTheme.titleSmall?.copyWith(
-                        fontWeight: FontWeight.bold,
-                        color: theme.primaryColor,
-                      ),
-                    ),
-                    const Spacer(),
-                    TextButton.icon(
-                      onPressed: widget.enabled ? _addVariant : null,
-                      icon: const Icon(Icons.add, size: 18),
-                      label: const Text('添加变体'),
-                      style: TextButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(horizontal: 8),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  '录入同一商品组下的多个变体，如不同口味、规格等',
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: Colors.grey[600],
-                  ),
-                ),
-                const SizedBox(height: 12),
-                // 变体列表
-                ...widget.variants.asMap().entries.map((entry) {
-                  final index = entry.key;
-                  final variant = entry.value;
-                  return _buildVariantItem(context, index, variant);
-                }),
-              ],
-            ),
-          ),
+          _buildVariantList(context, theme),
         ],
       ],
     );
   }
 
-  Widget _buildGroupSelector(
-      BuildContext context, List<ProductGroupData> groups) {
-    return Row(
-      children: [
-        Expanded(
-          child: DropdownButtonFormField<int?>(
-            value: widget.selectedGroupId,
-            decoration: InputDecoration(
-              labelText: '商品组（批量录入变体）',
-              hintText: '选择商品组以批量录入变体',
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-              contentPadding:
-                  const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
-            ),
-            items: [
-              const DropdownMenuItem<int?>(
-                value: null,
-                child: Text('无（普通商品）'),
-              ),
-              ...groups.map((g) => DropdownMenuItem<int?>(
-                    value: g.id,
-                    child: Text(g.name),
-                  )),
-            ],
-            onChanged: widget.enabled
-                ? (value) {
-                    widget.onGroupChanged(value);
-                    // 选择商品组后，如果变体列表为空，自动添加一个
-                    if (value != null && widget.variants.isEmpty) {
-                      _addVariant();
-                    }
-                  }
-                : null,
+  /// 构建商品组开关
+  Widget _buildGroupSwitch(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: Colors.grey.shade50,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.grey.shade200),
+      ),
+      child: Row(
+        children: [
+          Icon(
+            Icons.layers_outlined,
+            color: widget.isProductGroupEnabled
+                ? Theme.of(context).primaryColor
+                : Colors.grey,
           ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  '启用商品组',
+                  style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                        fontWeight: FontWeight.w500,
+                      ),
+                ),
+                Text(
+                  '开启后可批量录入同组变体商品',
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: Colors.grey.shade600,
+                      ),
+                ),
+              ],
+            ),
+          ),
+          Switch(
+            value: widget.isProductGroupEnabled,
+            onChanged: widget.enabled ? _handleSwitchChanged : null,
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// 构建变体列表
+  Widget _buildVariantList(BuildContext context, ThemeData theme) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: theme.primaryColor.withValues(alpha: 0.05),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: theme.primaryColor.withValues(alpha: 0.2),
         ),
-        const SizedBox(width: 8),
-        IconButton(
-          icon: const Icon(Icons.add_circle_outline),
-          tooltip: '新建商品组',
-          onPressed: widget.enabled
-              ? () => _showCreateGroupDialog(context)
-              : null,
-        ),
-      ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.list_alt, size: 20, color: theme.primaryColor),
+              const SizedBox(width: 8),
+              Text(
+                '变体列表',
+                style: theme.textTheme.titleSmall?.copyWith(
+                  fontWeight: FontWeight.bold,
+                  color: theme.primaryColor,
+                ),
+              ),
+              const Spacer(),
+              TextButton.icon(
+                onPressed: widget.enabled ? _addVariant : null,
+                icon: const Icon(Icons.add, size: 18),
+                label: const Text('添加变体'),
+                style: TextButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(
+            '商品名称将作为商品组名称，每个变体将创建独立商品',
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: Colors.grey[600],
+            ),
+          ),
+          const SizedBox(height: 12),
+          // 变体列表
+          ...widget.variants.asMap().entries.map((entry) {
+            final index = entry.key;
+            final variant = entry.value;
+            return _buildVariantItem(context, index, variant);
+          }),
+        ],
+      ),
     );
   }
 
   Widget _buildVariantItem(
       BuildContext context, int index, VariantInputData variant) {
-    final theme = Theme.of(context);
     final isFirst = index == 0;
 
     return Dismissible(
       key: Key(variant.id),
-      direction: widget.variants.length > 1 ? DismissDirection.endToStart : DismissDirection.none,
+      direction: widget.variants.length > 1
+          ? DismissDirection.endToStart
+          : DismissDirection.none,
       background: Container(
         margin: EdgeInsets.only(top: isFirst ? 0 : 12),
         padding: const EdgeInsets.only(right: 20),
@@ -330,7 +358,7 @@ class _MultiVariantInputSectionState
                 enabled: widget.enabled,
                 decoration: InputDecoration(
                   labelText: '变体名称 *',
-                  hintText: '如：黄瓜味、大包装',
+                  hintText: '如：黄瓜味',
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8),
                   ),
@@ -361,50 +389,6 @@ class _MultiVariantInputSectionState
     if (barcode != null && barcode.isNotEmpty) {
       _barcodeControllers[variant.id]?.text = barcode;
       _updateVariant(index, variant.copyWith(barcode: barcode));
-    }
-  }
-
-  Future<void> _showCreateGroupDialog(BuildContext context) async {
-    final nameController = TextEditingController();
-
-    final result = await showDialog<String>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('新建商品组'),
-        content: TextField(
-          controller: nameController,
-          decoration: const InputDecoration(
-            labelText: '商品组名称',
-            hintText: '如：乐事薯片',
-          ),
-          autofocus: true,
-          onSubmitted: (value) => Navigator.pop(ctx, value),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text('取消'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, nameController.text),
-            child: const Text('创建'),
-          ),
-        ],
-      ),
-    );
-
-    if (result != null && result.trim().isNotEmpty) {
-      final model = ProductGroupModel(name: result.trim());
-      final id = await ref
-          .read(productGroupOperationsProvider.notifier)
-          .createProductGroup(model);
-      if (id != null) {
-        widget.onGroupChanged(id);
-        // 自动添加第一个变体
-        if (widget.variants.isEmpty) {
-          _addVariant();
-        }
-      }
     }
   }
 }

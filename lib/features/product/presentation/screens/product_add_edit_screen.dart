@@ -13,11 +13,11 @@ import '../widgets/sections/shelf_life_section.dart';
 import '../widgets/sections/pricing_section.dart';
 import '../widgets/inputs/app_text_field.dart';
 // coordinator 逻辑已移动到 actions
-import '../widgets/sections/basic_info_section.dart';
+import '../widgets/sections/basic_info_section.dart' show BasicInfoSection, ProductGroupOption;
 import '../widgets/sections/unit_category_section.dart';
 import '../widgets/product_form_action_bar.dart';
-import '../widgets/product_group_selector.dart';
 import '../widgets/multi_variant_input_section.dart';
+import '../../application/provider/product_group_providers.dart';
 import '../controllers/product_form_controllers.dart';
 import '../state/product_form_ui_provider.dart';
 import '../controllers/product_add_edit_actions.dart';
@@ -49,15 +49,34 @@ class _ProductAddEditScreenState extends ConsumerState<ProductAddEditScreen> {
     super.didChangeDependencies();
   }
 
+  /// 清除表单验证错误
+  void _clearValidationErrors() {
+    // 保存当前所有控制器的值
+    final savedValues = _c.saveAllValues();
+    // 重置表单以清除验证错误
+    _formKey.currentState?.reset();
+    // 恢复所有控制器的值
+    _c.restoreAllValues(savedValues);
+    setState(() {});
+  }
+
   @override
   void initState() {
     super.initState();
+    // 新建模式下立即重置表单UI状态，避免沿用上一次未完成的选择
+    if (widget.product == null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        ref.read(productFormUiProvider.notifier).reset();
+      });
+    }
+    // 监听全局焦点变化，当焦点改变时清除验证错误
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      FocusManager.instance.addListener(_onFocusChanged);
+    });
     // 首帧后做必要的初始化（不要在这里重置 unitEditFormProvider，以便父页生命周期内多次进入子页可保留数据）
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      // 编辑模式：每次打开父页即清空辅单位缓存，避免沿用上一次编辑的临时数据
-      if (widget.product != null) {
-        ref.read(unitEditFormProvider.notifier).resetUnitEditForm();
-      }
+      // 每次打开父页即清空辅单位缓存，避免沿用上一次编辑的临时数据
+      ref.read(unitEditFormProvider.notifier).resetUnitEditForm();
       if (widget.product?.id != null) {
         ref.invalidate(mainBarcodeProvider(widget.product!.id!));
       }
@@ -68,6 +87,9 @@ class _ProductAddEditScreenState extends ConsumerState<ProductAddEditScreen> {
     });
     // 初始化表单控制器
     _c = ProductFormControllers()..init(widget.product);
+
+    // 监听单位输入框变化，当内容改变时检查是否需要清除选中状态
+    _c.unitController.addListener(_onUnitTextChanged);
 
     // 如果有初始条码，填充到条码输入框并让名称输入框获得焦点
     if (widget.initialBarcode != null && widget.initialBarcode!.isNotEmpty) {
@@ -83,14 +105,46 @@ class _ProductAddEditScreenState extends ConsumerState<ProductAddEditScreen> {
 
   // 控制器初始化已移动到 ProductFormControllers
 
+  /// 焦点变化回调
+  void _onFocusChanged() {
+    // 当焦点改变时清除验证错误
+    _clearValidationErrors();
+  }
+
+  /// 单位输入框文本变化回调
+  void _onUnitTextChanged() {
+    final ui = ref.read(productFormUiProvider);
+    final currentText = _c.unitController.text.trim();
+    
+    // 如果有选中的单位ID，检查输入框内容是否与选中单位匹配
+    if (ui.selectedUnitId != null) {
+      final unitsAsync = ref.read(allUnitsProvider);
+      unitsAsync.whenData((units) {
+        final selectedUnit = units.where((u) => u.id == ui.selectedUnitId).firstOrNull;
+        // 如果输入框内容与选中单位不匹配，清除选中状态
+        if (selectedUnit == null || selectedUnit.name != currentText) {
+          ref.read(productFormUiProvider.notifier).setUnitId(null);
+        }
+      });
+    }
+  }
+
   @override
   void dispose() {
-    // 在父页结束时异步清空辅单位临时状态，避免在 dispose 生命周期直接修改 provider
-    Future.microtask(() {
-      ref.read(unitEditFormProvider.notifier).resetUnitEditForm();
-    });
+    // 移除焦点监听
+    FocusManager.instance.removeListener(_onFocusChanged);
+    // 移除单位输入框监听
+    _c.unitController.removeListener(_onUnitTextChanged);
+    // 在 dispose 前先获取 notifier 引用，确保能正确清理
+    final unitNotifier = ref.read(unitEditFormProvider.notifier);
+    final formNotifier = ref.read(productFormUiProvider.notifier);
     _c.dispose();
     super.dispose();
+    // 异步清空辅单位临时状态和表单状态
+    Future.microtask(() {
+      unitNotifier.resetUnitEditForm();
+      formNotifier.reset();
+    });
   }
 
   @override
@@ -124,11 +178,15 @@ class _ProductAddEditScreenState extends ConsumerState<ProductAddEditScreen> {
       productId: widget.product?.id,
     );
     return GestureDetector(
-      onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
+      onTap: () {
+        FocusManager.instance.primaryFocus?.unfocus();
+        // 清除验证错误
+        _clearValidationErrors();
+      },
       behavior: HitTestBehavior.opaque,
       child: Scaffold(
         appBar: AppBar(
-          title: Text(isEdit ? '编辑货品' : '添加2货品'),
+          title: Text(isEdit ? '编辑货品' : '添加货品'),
           elevation: 0,
           actions: [],
         ),
@@ -146,22 +204,8 @@ class _ProductAddEditScreenState extends ConsumerState<ProductAddEditScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      BasicInfoSection(
-                        initialImagePath: ui.selectedImagePath,
-                        onImageChanged: (imagePath) {
-                          ref
-                              .read(productFormUiProvider.notifier)
-                              .setImagePath(imagePath);
-                        },
-                        nameController: _c.nameController,
-                        nameFocusNode: _c.nameFocusNode,
-                        onNameSubmitted: () => _c.unitFocusNode.requestFocus(),
-                        barcodeController: _c.barcodeController,
-                        onScan: () => actions.scanBarcode(
-                          _c.barcodeController,
-                          nextFocus: _c.nameFocusNode,
-                        ),
-                      ),
+                      // 基础信息区（根据商品组开关状态切换名称输入模式）
+                      _buildBasicInfoSection(ui, actions, isEdit),
                       const SizedBox(height: 16),
                       // 单位 + 类别组合
                       unitsAsyncValue.when(
@@ -324,19 +368,25 @@ class _ProductAddEditScreenState extends ConsumerState<ProductAddEditScreen> {
                         onSubmitted: _submitForm,
                       ),
                       const SizedBox(height: 16),
-                      // 商品组选择（可选）- 新增模式支持多变体录入
+                      // 商品组功能
                       if (!isEdit) ...[
+                        // 新增模式：商品组开关 + 变体列表
                         MultiVariantInputSection(
-                          selectedGroupId: ui.selectedGroupId,
+                          isProductGroupEnabled: ui.isProductGroupEnabled,
                           variants: ui.variants,
-                          onGroupChanged: (groupId) {
+                          onProductGroupEnabledChanged: (enabled) {
                             ref
                                 .read(productFormUiProvider.notifier)
-                                .setGroupId(groupId);
-                            // 选择商品组时自动开启多变体模式
+                                .setProductGroupEnabled(enabled);
                             ref
                                 .read(productFormUiProvider.notifier)
-                                .setMultiVariantMode(groupId != null);
+                                .setMultiVariantMode(enabled);
+                            // 关闭时清除商品组选择
+                            if (!enabled) {
+                              ref
+                                  .read(productFormUiProvider.notifier)
+                                  .setGroupId(null);
+                            }
                           },
                           onVariantsChanged: (variants) {
                             ref
@@ -353,22 +403,9 @@ class _ProductAddEditScreenState extends ConsumerState<ProductAddEditScreen> {
                             }
                           },
                         ),
-                      ] else ...[
-                        // 编辑模式使用原有的单变体选择器
-                        ProductGroupSelector(
-                          selectedGroupId: ui.selectedGroupId,
-                          variantName: ui.variantName,
-                          onGroupChanged: (groupId) {
-                            ref
-                                .read(productFormUiProvider.notifier)
-                                .setGroupId(groupId);
-                          },
-                          onVariantNameChanged: (name) {
-                            ref
-                                .read(productFormUiProvider.notifier)
-                                .setVariantName(name);
-                          },
-                        ),
+                      ] else if (widget.product?.groupId != null) ...[
+                        // 编辑模式：只读显示商品组信息（仅当商品属于某个组时显示）
+                        _buildReadOnlyGroupInfo(context),
                       ],
                       const SizedBox(height: 16),
                     ],
@@ -470,9 +507,143 @@ class _ProductAddEditScreenState extends ConsumerState<ProductAddEditScreen> {
     if (selectedUnitId != null &&
         !units.any((unit) => unit.id == selectedUnitId)) {
       ref.read(productFormUiProvider.notifier).setUnitId(null);
-      _c.unitController.clear();
+      // 注意：不要清空 unitController，保留用户输入的新单位名称
+      // 用户可能输入了一个新单位名称，虽然没有对应的ID，但应该保留
     }
     // 允许用户不选择单位，不强制设置默认值
+  }
+
+  /// 构建基础信息区（根据商品组开关状态切换名称输入模式）
+  Widget _buildBasicInfoSection(
+    ProductFormUiState ui,
+    ProductAddEditActions actions,
+    bool isEdit,
+  ) {
+    final groupsAsync = ref.watch(allProductGroupsProvider);
+    
+    return groupsAsync.when(
+      data: (groups) {
+        // 转换为 ProductGroupOption 列表
+        final groupOptions = groups
+            .map((g) => ProductGroupOption(id: g.id, name: g.name))
+            .toList();
+        
+        return BasicInfoSection(
+          initialImagePath: ui.selectedImagePath,
+          onImageChanged: (imagePath) {
+            ref.read(productFormUiProvider.notifier).setImagePath(imagePath);
+          },
+          nameController: _c.nameController,
+          nameFocusNode: _c.nameFocusNode,
+          onNameSubmitted: () => _c.unitFocusNode.requestFocus(),
+          barcodeController: _c.barcodeController,
+          onScan: () => actions.scanBarcode(
+            _c.barcodeController,
+            nextFocus: _c.nameFocusNode,
+          ),
+          // 商品组模式（仅新增模式且开关开启时生效）
+          isProductGroupEnabled: !isEdit && ui.isProductGroupEnabled,
+          selectedGroupId: ui.selectedGroupId,
+          productGroups: groupOptions,
+          onGroupSelected: (groupId) {
+            ref.read(productFormUiProvider.notifier).setGroupId(groupId);
+          },
+        );
+      },
+      loading: () => BasicInfoSection(
+        initialImagePath: ui.selectedImagePath,
+        onImageChanged: (imagePath) {
+          ref.read(productFormUiProvider.notifier).setImagePath(imagePath);
+        },
+        nameController: _c.nameController,
+        nameFocusNode: _c.nameFocusNode,
+        onNameSubmitted: () => _c.unitFocusNode.requestFocus(),
+        barcodeController: _c.barcodeController,
+        onScan: () => actions.scanBarcode(
+          _c.barcodeController,
+          nextFocus: _c.nameFocusNode,
+        ),
+      ),
+      error: (e, _) => BasicInfoSection(
+        initialImagePath: ui.selectedImagePath,
+        onImageChanged: (imagePath) {
+          ref.read(productFormUiProvider.notifier).setImagePath(imagePath);
+        },
+        nameController: _c.nameController,
+        nameFocusNode: _c.nameFocusNode,
+        onNameSubmitted: () => _c.unitFocusNode.requestFocus(),
+        barcodeController: _c.barcodeController,
+        onScan: () => actions.scanBarcode(
+          _c.barcodeController,
+          nextFocus: _c.nameFocusNode,
+        ),
+      ),
+    );
+  }
+
+  /// 构建只读商品组信息（编辑模式）
+  Widget _buildReadOnlyGroupInfo(BuildContext context) {
+    final groupsAsync = ref.watch(allProductGroupsProvider);
+    
+    return groupsAsync.when(
+      data: (groups) {
+        final group = groups.where((g) => g.id == widget.product?.groupId).firstOrNull;
+        final groupName = group?.name ?? '未知商品组';
+        
+        return Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: Colors.grey.shade100,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: Colors.grey.shade300),
+          ),
+          child: Row(
+            children: [
+              Icon(Icons.folder_outlined, color: Colors.grey.shade600),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      '所属商品组',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Colors.grey.shade600,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      groupName,
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    if (widget.product?.variantName != null && 
+                        widget.product!.variantName!.isNotEmpty) ...[
+                      const SizedBox(height: 4),
+                      Text(
+                        '变体：${widget.product!.variantName}',
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: Colors.grey.shade700,
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+      loading: () => const SizedBox(
+        height: 56,
+        child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
+      ),
+      error: (e, _) => Text('加载商品组失败: $e'),
+    );
   }
 
   /// 在编辑模式下回填单位和类别数据
