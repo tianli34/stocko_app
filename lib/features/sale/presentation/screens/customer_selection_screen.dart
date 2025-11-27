@@ -45,7 +45,7 @@ class _CustomerSelectionScreenState extends ConsumerState<CustomerSelectionScree
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('选择客户'),
+        title: const Text('客户管理'),
         actions: [
           IconButton(
             onPressed: () => _showAddCustomerDialog(context),
@@ -155,12 +155,6 @@ class _CustomerSelectionScreenState extends ConsumerState<CustomerSelectionScree
                 fontSize: 16,
               ),
             ),
-            onTap: () {
-              setState(() {
-                _selectedCustomerId = customer.id;
-              });
-              _confirmSelection();
-            },
           ),
         ),
       ),

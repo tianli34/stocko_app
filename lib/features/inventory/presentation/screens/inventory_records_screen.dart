@@ -141,7 +141,7 @@ class _InventoryRecordsScreenState extends ConsumerState<InventoryRecordsScreen>
                                   ),
                                   const SizedBox(height: 24),
                                   OutlinedButton.icon(
-                                    onPressed: () => context.go(AppRoutes.purchaseRecords),
+                                    onPressed: () => context.go(AppRoutes.inventoryPurchaseRecords),
                                     icon: const Icon(Icons.shopping_cart),
                                     label: const Text('查看采购记录'),
                                   ),
@@ -197,8 +197,8 @@ class _InventoryRecordsScreenState extends ConsumerState<InventoryRecordsScreen>
           mainAxisSize: MainAxisSize.min,
           children: [
             FloatingActionButton(
-              heroTag: 'purchase',
-              onPressed: () => context.go(AppRoutes.purchaseRecords),
+              heroTag: 'inbound-to-purchase',
+              onPressed: () => context.go(AppRoutes.inventoryPurchaseRecords),
               tooltip: '采购记录',
               child: const Icon(Icons.shopping_cart),
             ),

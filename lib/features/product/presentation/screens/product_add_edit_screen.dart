@@ -44,9 +44,21 @@ class _ProductAddEditScreenState extends ConsumerState<ProductAddEditScreen> {
   // UI 常量（可放置于组件内，不进 provider）
   final List<String> _shelfLifeUnitOptions = ['days', 'months', 'years'];
 
+  bool _hasResetFormState = false;
+
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
+    // 新建模式下重置表单状态，避免变体列表残留上一次创建商品时的数据
+    // 使用 Future 延迟执行，避免在 widget tree building 时修改 provider
+    if (!_hasResetFormState && widget.product == null) {
+      _hasResetFormState = true;
+      Future(() {
+        if (mounted) {
+          ref.read(productFormUiProvider.notifier).reset();
+        }
+      });
+    }
   }
 
   /// 清除表单验证错误
@@ -63,17 +75,11 @@ class _ProductAddEditScreenState extends ConsumerState<ProductAddEditScreen> {
   @override
   void initState() {
     super.initState();
-    // 新建模式下立即重置表单UI状态，避免沿用上一次未完成的选择
-    if (widget.product == null) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        ref.read(productFormUiProvider.notifier).reset();
-      });
-    }
     // 监听全局焦点变化，当焦点改变时清除验证错误
     WidgetsBinding.instance.addPostFrameCallback((_) {
       FocusManager.instance.addListener(_onFocusChanged);
     });
-    // 首帧后做必要的初始化（不要在这里重置 unitEditFormProvider，以便父页生命周期内多次进入子页可保留数据）
+    // 首帧后做必要的初始化
     WidgetsBinding.instance.addPostFrameCallback((_) {
       // 每次打开父页即清空辅单位缓存，避免沿用上一次编辑的临时数据
       ref.read(unitEditFormProvider.notifier).resetUnitEditForm();
@@ -563,6 +569,13 @@ class _ProductAddEditScreenState extends ConsumerState<ProductAddEditScreen> {
           _c.barcodeController,
           nextFocus: _c.nameFocusNode,
         ),
+        // 保持与 data 状态一致的参数，避免状态切换时触发 didUpdateWidget 中的名称同步
+        isProductGroupEnabled: !isEdit && ui.isProductGroupEnabled,
+        selectedGroupId: ui.selectedGroupId,
+        productGroups: const [],
+        onGroupSelected: (groupId) {
+          ref.read(productFormUiProvider.notifier).setGroupId(groupId);
+        },
       ),
       error: (e, _) => BasicInfoSection(
         initialImagePath: ui.selectedImagePath,
@@ -577,6 +590,13 @@ class _ProductAddEditScreenState extends ConsumerState<ProductAddEditScreen> {
           _c.barcodeController,
           nextFocus: _c.nameFocusNode,
         ),
+        // 保持与 data 状态一致的参数，避免状态切换时触发 didUpdateWidget 中的名称同步
+        isProductGroupEnabled: !isEdit && ui.isProductGroupEnabled,
+        selectedGroupId: ui.selectedGroupId,
+        productGroups: const [],
+        onGroupSelected: (groupId) {
+          ref.read(productFormUiProvider.notifier).setGroupId(groupId);
+        },
       ),
     );
   }

@@ -52,15 +52,9 @@ class _BasicInfoSectionState extends State<BasicInfoSection> {
   @override
   void initState() {
     super.initState();
-    // 如果有选中的商品组且商品组模式开启，同步名称到控制器
-    if (widget.isProductGroupEnabled && widget.selectedGroupId != null) {
-      final group = widget.productGroups
-          .where((g) => g.id == widget.selectedGroupId)
-          .firstOrNull;
-      if (group != null && widget.nameController.text != group.name) {
-        widget.nameController.text = group.name;
-      }
-    }
+    // 注意：不在 initState 中同步商品组名称到控制器
+    // 因为在新建模式下，selectedGroupId 可能是上一次编辑残留的状态
+    // 名称同步应该只在 didUpdateWidget 中处理（当用户主动选择商品组时）
     // 监听焦点变化，当失去焦点时关闭下拉选项
     widget.nameFocusNode.addListener(_onFocusChanged);
   }

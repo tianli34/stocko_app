@@ -2,10 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/constants/app_routes.dart';
+import '../../../../core/database/purchase_orders_table.dart';
 import '../../application/provider/supplier_providers.dart';
 import '../../data/dao/purchase_dao.dart';
 import '../../../../core/database/database.dart';
 import '../../../product/data/repository/product_repository.dart';
+import '../../../inbound/application/service/inbound_service.dart';
 
 // Provider for PurchaseDao
 final purchaseDaoProvider = Provider<PurchaseDao>((ref) {
@@ -83,6 +85,7 @@ class PurchaseRecordsScreen extends ConsumerWidget {
         error: (error, stack) => Center(child: Text('加载失败: $error')),
       ),
       floatingActionButton: FloatingActionButton.extended(
+        heroTag: 'purchase-to-inbound',
         onPressed: () => context.go(AppRoutes.inventoryInboundRecords),
         icon: const Icon(Icons.inventory_2),
         label: const Text('入库记录'),
@@ -102,13 +105,45 @@ class PurchaseOrderCard extends ConsumerStatefulWidget {
 
 class _PurchaseOrderCardState extends ConsumerState<PurchaseOrderCard> {
   bool _isExpanded = false;
+  bool _isProcessing = false;
+
+  Future<void> _handleInbound(BuildContext context, WidgetRef ref) async {
+    setState(() => _isProcessing = true);
+
+    try {
+      final inboundService = ref.read(inboundServiceProvider);
+      await inboundService.processInboundFromPurchaseOrder(
+        purchaseOrderId: widget.order.id,
+        shopId: widget.order.shopId, // 使用采购订单的店铺
+      );
+      
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('入库成功')),
+        );
+        // 刷新列表
+        ref.invalidate(purchaseOrdersProvider);
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('入库失败: $e')),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isProcessing = false);
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     final suppliersAsync = ref.watch(allSuppliersProvider);
     final itemsAsync = ref.watch(purchaseOrderItemsProvider(widget.order.id));
+    final isPendingInbound = widget.order.status == PurchaseOrderStatus.pendingInbound;
 
-    return Card(
+    Widget cardContent = Card(
       margin: const EdgeInsets.only(bottom: 12),
       child: Column(
         children: [
@@ -126,9 +161,32 @@ class _PurchaseOrderCardState extends ConsumerState<PurchaseOrderCard> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(
-                          '订单号: ${widget.order.id}',
-                          style: const TextStyle(fontWeight: FontWeight.bold),
+                        Row(
+                          children: [
+                            Text(
+                              '订单号: ${widget.order.id}',
+                              style: const TextStyle(fontWeight: FontWeight.bold),
+                            ),
+                            if (isPendingInbound) ...[
+                              const SizedBox(width: 8),
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                decoration: BoxDecoration(
+                                  color: Colors.orange.shade100,
+                                  borderRadius: BorderRadius.circular(4),
+                                  border: Border.all(color: Colors.orange),
+                                ),
+                                child: const Text(
+                                  '待入库',
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    color: Colors.orange,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ],
                         ),
                         const SizedBox(height: 4),
                         Text('日期: ${widget.order.createdAt.toString().substring(0, 10)}'),
@@ -207,6 +265,54 @@ class _PurchaseOrderCardState extends ConsumerState<PurchaseOrderCard> {
         ],
       ),
     );
+
+    // 待入库订单显示左滑入库按钮
+    if (isPendingInbound) {
+      return Dismissible(
+        key: Key('purchase_order_${widget.order.id}'),
+        direction: DismissDirection.endToStart,
+        confirmDismiss: (direction) async {
+          await _handleInbound(context, ref);
+          return false; // 不真正删除，只是触发入库
+        },
+        background: Container(
+          alignment: Alignment.centerRight,
+          padding: const EdgeInsets.only(right: 20),
+          margin: const EdgeInsets.only(bottom: 12),
+          decoration: BoxDecoration(
+            color: Colors.green,
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: _isProcessing
+              ? const SizedBox(
+                  width: 24,
+                  height: 24,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                  ),
+                )
+              : const Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.inventory_2, color: Colors.white),
+                    SizedBox(width: 8),
+                    Text(
+                      '入库',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                      ),
+                    ),
+                  ],
+                ),
+        ),
+        child: cardContent,
+      );
+    }
+
+    return cardContent;
   }
 }
 

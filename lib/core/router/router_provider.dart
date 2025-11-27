@@ -172,7 +172,14 @@ final routerProvider = Provider<GoRouter>((ref) {
                             child: const Text('库存查询'),
                           ),
                         ),
-
+                        const SizedBox(height: 16),
+                        SizedBox(
+                          width: 200,
+                          child: ElevatedButton(
+                            onPressed: () => context.push('/inventory/purchase'),
+                            child: const Text('采购管理'),
+                          ),
+                        ),
                         const SizedBox(height: 20),
                         ElevatedButton(
                           onPressed: () => context.go(AppRoutes.home),
@@ -187,6 +194,42 @@ final routerProvider = Provider<GoRouter>((ref) {
                     path: 'inbound-records',
                     name: 'inventory-inbound-records',
                     builder: (context, state) => const InventoryRecordsScreen(),
+                  ),
+                  GoRoute(
+                    path: 'purchase-records',
+                    name: 'inventory-purchase-records',
+                    builder: (context, state) => const PurchaseRecordsScreen(),
+                  ),
+                  GoRoute(
+                    path: 'purchase',
+                    name: 'purchase',
+                    builder: (context, state) => Scaffold(
+                      appBar: AppBar(title: const Text('采购管理')),
+                      body: Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const Text(
+                              '采购管理功能',
+                              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                            ),
+                            const SizedBox(height: 40),
+                            SizedBox(
+                              width: 200,
+                              child: ElevatedButton(
+                                onPressed: () => context.push(AppRoutes.inventoryPurchaseRecords),
+                                child: const Text('采购记录'),
+                              ),
+                            ),
+                            const SizedBox(height: 20),
+                            ElevatedButton(
+                              onPressed: () => context.go(AppRoutes.home),
+                              child: const Text('返回首页'),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
                   ),
                 ],
               ),
@@ -270,43 +313,6 @@ final routerProvider = Provider<GoRouter>((ref) {
               : null;
           return CreateInboundScreen(payload: payload);
         },
-      ),
-      GoRoute(
-        path: AppRoutes.purchase,
-        name: 'purchase',
-        builder: (context, state) => Scaffold(
-          appBar: AppBar(title: const Text('采购管理')),
-          body: Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const Text(
-                  '采购管理功能',
-                  style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-                ),
-                const SizedBox(height: 40),
-                SizedBox(
-                  width: 200,
-                  child: ElevatedButton(
-                    onPressed: () => context.push(AppRoutes.purchaseRecords),
-                    child: const Text('采购记录'),
-                  ),
-                ),
-                const SizedBox(height: 20),
-                ElevatedButton(
-                  onPressed: () => context.go(AppRoutes.home),
-                  child: const Text('返回首页'),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-
-      GoRoute(
-        path: AppRoutes.purchaseRecords,
-        name: 'purchase-records',
-        builder: (context, state) => const PurchaseRecordsScreen(),
       ),
       GoRoute(
         path: AppRoutes.databaseViewer,

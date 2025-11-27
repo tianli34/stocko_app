@@ -48,8 +48,89 @@ class InboundService {
       _inboundItemDao = _database.inboundItemDao;
       // _productSupplierDao = _database.productSupplierDao;
 
+  /// 将UI状态模型转换为内部处理用的元组列表（共享方法）
+  Future<List<_PurchaseItem>> _convertToInternalItems(
+    List<InboundItemState> inboundItems,
+  ) async {
+    return await Future.wait(inboundItems.map((item) async {
+      // 根据productId和unitId查找unitProductId
+      final unitProduct = await _database.productUnitDao.getUnitProductByProductAndUnit(
+        item.productId,
+        item.unitId,
+      );
+      if (unitProduct == null) {
+        throw Exception('未找到产品${item.productName}的单位${item.unitName}配置');
+      }
+      
+      final domainModel = InboundItemModel(
+        unitProductId: unitProduct.id,
+        quantity: item.quantity,
+      );
+      return (
+        model: domainModel,
+        unitPriceInCents: item.unitPriceInCents,
+        productName: item.productName,
+        unitName: item.unitName,
+        productionDate: item.productionDate
+      );
+    }).toList());
+  }
+
+  /// 执行采购流程（共享方法）
+  /// 返回采购订单ID和订单号
+  Future<({int orderId, String orderNumber})> _processPurchase({
+    required int shopId,
+    required List<_PurchaseItem> internalItems,
+    required int? supplierId,
+    required String? supplierName,
+    PurchaseOrderStatus status = PurchaseOrderStatus.completed,
+  }) async {
+    // 允许仅提供名称时自动创建供应商
+    final actualSupplierId = await _ensureSupplierExists(supplierId, supplierName);
+    print('✅ 确认供应商ID: $actualSupplierId');
+
+    final purchaseOrderData = await _createPurchaseOrder(
+      supplierId: actualSupplierId,
+      shopId: shopId,
+      purchaseItems: internalItems,
+      status: status,
+    );
+    print('✅ 采购订单创建完成，ID: ${purchaseOrderData.orderId}');
+    
+    return purchaseOrderData;
+  }
+
+  /// 仅采购（不入库）- 创建待入库状态的采购单
+  /// 1. 检查并创建供应商
+  /// 2. 创建采购单（状态为待入库）
+  Future<String> processPurchaseOnly({
+    required int shopId,
+    required List<InboundItemState> inboundItems,
+    required int? supplierId,
+    required String? supplierName,
+  }) async {
+    print('🚀 开始执行采购流程...');
+    print('🏪 店铺ID: $shopId');
+    print('📦 商品数量: ${inboundItems.length}');
+
+    return await _database.transaction(() async {
+      final internalItems = await _convertToInternalItems(inboundItems);
+
+      final purchaseOrderData = await _processPurchase(
+        shopId: shopId,
+        internalItems: internalItems,
+        supplierId: supplierId,
+        supplierName: supplierName,
+        status: PurchaseOrderStatus.pendingInbound, // 待入库状态
+      );
+
+      print('🎉 采购流程执行完成！采购单号: ${purchaseOrderData.orderNumber}');
+      return purchaseOrderData.orderNumber;
+    });
+  }
+
   /// 一键入库
-  /// 1. 如果是采购模式，检查并创建供应商、创建采购单、写入货品供应商关联
+  /// 1. 如果是采购模式，检查并创建供应商、创建采购单
   /// 2. 写入批次表
   /// 3. 写入入库单表、入库单明细表
   /// 4. 更新库存
@@ -58,7 +139,7 @@ class InboundService {
     required List<InboundItemState> inboundItems,
     required String source,
     required bool isPurchaseMode,
-  int? supplierId,
+    int? supplierId,
     String? supplierName,
     String? remarks,
   }) async {
@@ -73,70 +154,138 @@ class InboundService {
       String? id;
 
       // 1. 将UI状态模型转换为内部处理用的元组列表
-      final internalItems = await Future.wait(inboundItems.map((item) async {
-        // 根据productId和unitId查找unitProductId
-        final unitProduct = await _database.productUnitDao.getUnitProductByProductAndUnit(
-          item.productId,
-          item.unitId,
-        );
-        if (unitProduct == null) {
-          throw Exception('未找到产品${item.productName}的单位${item.unitName}配置');
-        }
-        
-        final domainModel = InboundItemModel(
-          // UI上的id是临时的，数据库中会自增，此处不传
-          unitProductId: unitProduct.id,
-          quantity: item.quantity,
-          // batchNumber和receiptId在后续流程中确定
-        );
-        return (
-          model: domainModel,
-          unitPriceInCents: item.unitPriceInCents,
-          productName: item.productName,
-          unitName: item.unitName,
-          productionDate: item.productionDate
-        );
-      }).toList());
+      final internalItems = await _convertToInternalItems(inboundItems);
 
       if (isPurchaseMode) {
         // --- 采购模式下的特定逻辑 ---
-        // 允许仅提供名称时自动创建供应商
-        final actualSupplierId =
-            await _ensureSupplierExists(supplierId, supplierName);
-        print('✅ 确认供应商ID: $actualSupplierId');
-
-        final purchaseOrderData = await _createPurchaseOrder(
-          supplierId: actualSupplierId,
+        final purchaseOrderData = await _processPurchase(
           shopId: shopId,
-          purchaseItems: internalItems,
+          internalItems: internalItems,
+          supplierId: supplierId,
+          supplierName: supplierName,
         );
         purchaseOrderId = purchaseOrderData.orderId;
         id = purchaseOrderData.orderNumber;
-        print('✅ 采购订单创建完成，ID: $purchaseOrderId');
-
-        // await _writeProductSupplierRecords(
-        //   supplierId: actualSupplierId,
-        //   purchaseItems: internalItems,
-        // );
       }
 
-      // --- 通用逻辑 ---
-      await _writeBatchRecords(shopId: shopId, inboundItems: internalItems);
-
-      final receiptNumber = await _writeInboundRecords(
+      // --- 通用入库逻辑 ---
+      final receiptNumber = await _processInboundCore(
         shopId: shopId,
-        inboundItems: internalItems,
+        internalItems: internalItems,
         purchaseOrderId: purchaseOrderId,
         id: id,
         remarks: remarks,
         source: source,
       );
 
-      await _writeInventoryRecords(shopId: shopId, inboundItems: internalItems);
-
       print('🎉 一键入库流程执行完成！入库单号: $receiptNumber');
       return receiptNumber;
     });
+  }
+
+  /// 根据采购订单入库（供待入库订单使用）
+  /// 将待入库的采购订单执行入库，并更新状态为已入库
+  Future<String> processInboundFromPurchaseOrder({
+    required int purchaseOrderId,
+    required int shopId,
+    String? remarks,
+  }) async {
+    print('🚀 开始执行采购订单入库流程...');
+    print('📋 采购订单ID: $purchaseOrderId');
+    print('🏪 店铺ID: $shopId');
+
+    return await _database.transaction(() async {
+      // 1. 获取采购订单及其明细
+      final orderItems = await _purchaseDao.getPurchaseOrderItems(purchaseOrderId);
+      if (orderItems.isEmpty) {
+        throw Exception('采购订单明细为空');
+      }
+
+      // 2. 将采购订单明细转换为内部处理格式
+      final internalItems = await Future.wait(orderItems.map((item) async {
+        final unitProduct = await _database.productUnitDao.getUnitProductById(item.unitProductId);
+        if (unitProduct == null) {
+          throw Exception('未找到产品单位配置，ID: ${item.unitProductId}');
+        }
+        final product = await _database.productDao.getProductById(unitProduct.productId);
+        final unit = await _database.unitDao.getUnitById(unitProduct.unitId);
+        
+        final domainModel = InboundItemModel(
+          unitProductId: item.unitProductId,
+          quantity: item.quantity,
+        );
+        return (
+          model: domainModel,
+          unitPriceInCents: item.unitPriceInCents,
+          productName: product?.name ?? '未知商品',
+          unitName: unit?.name ?? '',
+          productionDate: item.productionDate,
+        );
+      }).toList());
+
+      // 3. 执行入库核心逻辑
+      final receiptNumber = await _processInboundCore(
+        shopId: shopId,
+        internalItems: internalItems,
+        purchaseOrderId: purchaseOrderId,
+        id: 'PO$purchaseOrderId',
+        remarks: remarks,
+        source: '采购入库',
+      );
+
+      // 4. 更新采购订单状态为已入库
+      await _updatePurchaseOrderStatus(purchaseOrderId, PurchaseOrderStatus.inbounded);
+
+      print('🎉 采购订单入库完成！入库单号: $receiptNumber');
+      return receiptNumber;
+    });
+  }
+
+  /// 入库核心逻辑（共享方法）
+  /// 1. 写入批次表
+  /// 2. 写入入库单表、入库单明细表
+  /// 3. 更新库存
+  Future<String> _processInboundCore({
+    required int shopId,
+    required List<_PurchaseItem> internalItems,
+    int? purchaseOrderId,
+    String? id,
+    String? remarks,
+    required String source,
+  }) async {
+    // 1. 写入批次记录
+    await _writeBatchRecords(shopId: shopId, inboundItems: internalItems);
+
+    // 2. 写入入库单记录
+    final receiptNumber = await _writeInboundRecords(
+      shopId: shopId,
+      inboundItems: internalItems,
+      purchaseOrderId: purchaseOrderId,
+      id: id,
+      remarks: remarks,
+      source: source,
+    );
+
+    // 3. 更新库存记录
+    await _writeInventoryRecords(shopId: shopId, inboundItems: internalItems);
+
+    return receiptNumber;
+  }
+
+  /// 更新采购订单状态
+  Future<void> _updatePurchaseOrderStatus(int orderId, PurchaseOrderStatus status) async {
+    final order = await _purchaseDao.getPurchaseOrderById(orderId);
+    if (order == null) {
+      throw Exception('采购订单不存在，ID: $orderId');
+    }
+    
+    await (_database.update(_database.purchaseOrder)
+      ..where((tbl) => tbl.id.equals(orderId)))
+      .write(PurchaseOrderCompanion(
+        status: drift.Value(status),
+        updatedAt: drift.Value(DateTime.now()),
+      ));
+    print('✅ 采购订单状态更新为: $status');
   }
 
   /// 创建采购订单（包括订单头和所有明细）
@@ -144,6 +293,7 @@ class InboundService {
     required int supplierId,
     required int shopId,
     required List<_PurchaseItem> purchaseItems,
+    PurchaseOrderStatus status = PurchaseOrderStatus.completed,
   }) async {
     // 生成采购单号
     final purchaseNumber = 'PO${DateTime.now().millisecondsSinceEpoch}';
@@ -153,7 +303,7 @@ class InboundService {
       // id is auto-increment, so we don't set it.
       supplierId: drift.Value(supplierId),
       shopId: drift.Value(shopId),
-      status: drift.Value(PurchaseOrderStatus.completed),
+      status: drift.Value(status),
     );
 
     // 准备订单明细列表（不包含purchaseOrderId，将在createFullPurchaseOrder中填充）

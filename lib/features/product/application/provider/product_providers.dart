@@ -4,6 +4,7 @@ import '../../domain/model/product.dart';
 import '../../domain/model/category.dart';
 import '../../data/repository/product_repository.dart'; // 这里包含了 productRepositoryProvider
 import '../category_notifier.dart';
+import 'product_group_providers.dart';
 
 // 注意：这个文件展示了使用 AsyncNotifier 重构后的代码结构
 // 这是 product_providers.dart 的完整重构版本
@@ -315,3 +316,120 @@ final allProductsWithUnitProvider =
         wholesalePriceInCents: e.wholesalePriceInCents,
       )).toList());
     });
+
+/// 商品组聚合数据模型
+class ProductGroupAggregate {
+  final int? groupId;
+  final String? groupName;
+  final String? groupImage;
+  final List<ProductModel> products;
+  
+  const ProductGroupAggregate({
+    this.groupId,
+    this.groupName,
+    this.groupImage,
+    required this.products,
+  });
+  
+  /// 是否为商品组（有多个商品）
+  bool get isGroup => groupId != null && products.length > 1;
+  
+  /// 获取展示名称
+  String get displayName => groupName ?? products.first.name;
+  
+  /// 获取展示图片
+  String? get displayImage => groupImage ?? products.first.image;
+  
+  /// 获取价格范围
+  String get priceRange {
+    if (products.isEmpty) return '价格待定';
+    if (products.length == 1) return products.first.formattedPrice;
+    
+    final prices = products
+        .map((p) => p.effectivePrice?.cents)
+        .whereType<int>()
+        .toList();
+    if (prices.isEmpty) return '价格待定';
+    
+    prices.sort();
+    final minPrice = prices.first / 100;
+    final maxPrice = prices.last / 100;
+    
+    if (minPrice == maxPrice) {
+      return '¥${minPrice.toStringAsFixed(2)}';
+    }
+    return '¥${minPrice.toStringAsFixed(2)} - ¥${maxPrice.toStringAsFixed(2)}';
+  }
+}
+
+/// 是否启用商品组聚合视图
+final groupedViewEnabledProvider = StateProvider<bool>((ref) => true);
+
+/// 按商品组聚合的产品列表
+final groupedProductsProvider = Provider<AsyncValue<List<ProductGroupAggregate>>>((ref) {
+  final productsAsync = ref.watch(filteredProductsProvider);
+  final groupsAsync = ref.watch(allProductGroupsProvider);
+  
+  return productsAsync.when(
+    data: (products) {
+      return groupsAsync.when(
+        data: (groups) {
+          final Map<int?, ProductGroupAggregate> groupMap = {};
+          
+          for (final product in products) {
+            final groupId = product.groupId;
+            
+            if (groupId != null) {
+              // 有商品组的商品
+              if (groupMap.containsKey(groupId)) {
+                final existing = groupMap[groupId]!;
+                groupMap[groupId] = ProductGroupAggregate(
+                  groupId: groupId,
+                  groupName: existing.groupName,
+                  groupImage: existing.groupImage,
+                  products: [...existing.products, product],
+                );
+              } else {
+                final group = groups.where((g) => g.id == groupId).firstOrNull;
+                groupMap[groupId] = ProductGroupAggregate(
+                  groupId: groupId,
+                  groupName: group?.name,
+                  groupImage: group?.image,
+                  products: [product],
+                );
+              }
+            } else {
+              // 没有商品组的商品，使用负数ID作为key避免冲突
+              final uniqueKey = -(product.id ?? 0);
+              groupMap[uniqueKey] = ProductGroupAggregate(
+                groupId: null,
+                groupName: null,
+                groupImage: null,
+                products: [product],
+              );
+            }
+          }
+          
+          // 转换为列表并排序
+          final result = groupMap.values.toList();
+          result.sort((a, b) {
+            // 优先按最新更新时间排序
+            final aTime = a.products.map((p) => p.lastUpdated).whereType<DateTime>().fold<DateTime?>(null, (prev, curr) => prev == null || curr.isAfter(prev) ? curr : prev);
+            final bTime = b.products.map((p) => p.lastUpdated).whereType<DateTime>().fold<DateTime?>(null, (prev, curr) => prev == null || curr.isAfter(prev) ? curr : prev);
+            
+            if (aTime == null && bTime == null) return 0;
+            if (aTime == null) return 1;
+            if (bTime == null) return -1;
+            return bTime.compareTo(aTime);
+          });
+          
+          return AsyncValue.data(result);
+        },
+        loading: () => const AsyncValue.loading(),
+        error: (e, st) => AsyncValue.error(e, st),
+      );
+    },
+    loading: () => const AsyncValue.loading(),
+    error: (e, st) => AsyncValue.error(e, st),
+  );
+});

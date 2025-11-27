@@ -19,7 +19,7 @@ class StockoApp extends ConsumerWidget {
     
     return AppInitializer(
       child: MaterialApp.router(
-        title: '铺得�?库存管理系统',
+        title: '铺得�?库存管理系统',
         theme: AppTheme.lightTheme,
         darkTheme: AppTheme.darkTheme,
         themeMode: ThemeMode.system,
@@ -46,7 +46,7 @@ import 'config/flavor_config.dart';
 // AppInitializer is now injected inside StockoApp via MaterialApp.builder
 
 Future<void> runStockoApp(FlavorConfig config) async {
-  // 1. 确保 Flutter 引擎的绑定已经初始化�?
+  // 1. 确保 Flutter 引擎的绑定已经初始化�?
   WidgetsFlutterBinding.ensureInitialized();
 
   // 2. 设置系统UI样式，移除底部导航栏的半透明遮罩
@@ -61,7 +61,7 @@ Future<void> runStockoApp(FlavorConfig config) async {
   // 启用边到边显示（可选，让应用内容延伸到系统栏下方）
   SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
 
-  // 3. 初始化图片缓存服�?
+  // 3. 初始化图片缓存服�?
   final imageCacheService = ImageCacheService();
   await imageCacheService.initialize();
 
@@ -79,7 +79,7 @@ void main() {
   runStockoApp(
     FlavorConfig(
       flavor: AppFlavor.personalized,
-      appTitle: "定制版库存管�?,
+      appTitle: "定制版库存管�?,
       featureFlags: {Feature.showDatabaseTools: true},
     ),
   );
@@ -89,7 +89,7 @@ import 'package:stocko_app/config/flavor_config.dart';
 import 'package:stocko_app/main.dart' as app;
 
 void main() {
-  // 定义通用版配�?
+  // 定义通用版配�?
   final genericConfig = FlavorConfig(
     flavor: AppFlavor.generic,
     appTitle: "通用库存管理",
@@ -106,10 +106,10 @@ import 'package:stocko_app/config/flavor_config.dart';
 import 'package:stocko_app/main.dart' as app;
 
 void main() {
-  // 定义定制版配�?
+  // 定义定制版配�?
   final personalizedConfig = FlavorConfig(
     flavor: AppFlavor.personalized,
-    appTitle: "定制版库存管�?,
+    appTitle: "定制版库存管�?,
     featureFlags: {
       Feature.showDatabaseTools: true, // 定制版保留数据库工具
     },
@@ -131,11 +131,11 @@ enum Feature {
   showDatabaseTools,
 }
 
-// Flavor 配置�?
+// Flavor 配置�?
 class FlavorConfig {
   final AppFlavor flavor;
   final String appTitle;
-  // 在这里添加更多需要根�?Flavor 变化的配�?
+  // 在这里添加更多需要根�?Flavor 变化的配�?
   // 例如：API 地址、主题颜色、功能开关等
   final Map<Feature, bool> featureFlags;
 
@@ -146,9 +146,9 @@ class FlavorConfig {
   });
 }
 
-// 创建一�?Provider 来访�?FlavorConfig
+// 创建一�?Provider 来访�?FlavorConfig
 final flavorConfigProvider = Provider<FlavorConfig>((ref) {
-  // 这个 provider 必须�?main 入口文件中被 override
+  // 这个 provider 必须�?main 入口文件中被 override
   throw UnimplementedError('flavorConfigProvider must be overridden in the main entry point.');
 });
 // 路由路径常量
@@ -180,7 +180,7 @@ class AppRoutes {
   static const String customers = '/customers';
   static const String productRestoreDebug = '/debug/product-restore';
 
-  // 辅助方法，用于生成带参数的路�?
+  // 辅助方法，用于生成带参数的路�?
   static String productDetailPath(String id) => '/products/$id';
   static String productEditPath(String id) => '/product/$id/edit';
   static String purchaseDetailPath(String purchaseNumber) =>
@@ -189,23 +189,23 @@ class AppRoutes {
 import 'package:drift/drift.dart';
 import 'package:stocko_app/core/database/product_units_table.dart';
 
-/// 条码�?
-/// 存储产品单位对应的条码信�?
+/// 条码�?
+/// 存储产品单位对应的条码信�?
 class Barcode extends Table {
   /// 主键 - 条码ID
   IntColumn get id => integer().autoIncrement()();
 
-  /// 外键 - 产品单位ID，关联到product_units�?
+  /// 外键 - 产品单位ID，关联到product_units�?
   IntColumn get unitProductId => integer().references(UnitProduct, #id)();
 
-  /// 条码�?
+  /// 条码�?
   TextColumn get barcodeValue => text().unique()();
 }
 import 'package:drift/drift.dart';
 import 'products_table.dart';
 import 'shops_table.dart';
 
-/// 批次�?不用表名 Batch，因为Batch �?Drift 的保留字
+/// 批次�?不用表名 Batch，因为Batch �?Drift 的保留字
 class ProductBatch extends Table {
   /// 主键
   IntColumn get id => integer().autoIncrement()();
@@ -221,7 +221,7 @@ class ProductBatch extends Table {
   /// 生产日期
   DateTimeColumn get productionDate => dateTime()();
 
-  /// 累计入库数量，非负，即同一批次的货品数�?
+  /// 累计入库数量，非负，即同一批次的货品数�?
   IntColumn get totalInboundQuantity =>
       integer().named('total_inbound_quantity')();
 
@@ -237,23 +237,23 @@ class ProductBatch extends Table {
   /// 创建时间（由数据库默认生成）
   DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
 
-  /// 最后更新时间（注意：不会自动在更新时刷新，需要应用层或触发器维护�?
+  /// 最后更新时间（注意：不会自动在更新时刷新，需要应用层或触发器维护�?
   DateTimeColumn get updatedAt => dateTime().withDefault(currentDateAndTime)();
 
-  /// 业务唯一键：同一店铺、同一产品、同一生产日期只能有一个批�?
+  /// 业务唯一键：同一店铺、同一产品、同一生产日期只能有一个批�?
   @override
   List<Set<Column>> get uniqueKeys => [
     {productId, productionDate, shopId},
   ];
 
-  /// 表级约束：数量非�?
+  /// 表级约束：数量非�?
   @override
   List<String> get customConstraints => ['CHECK(total_inbound_quantity >= 0)'];
 }
 import 'package:drift/drift.dart';
 
-/// 类别表定�?
-/// 用于存储产品类别信息的数据库表结�?
+/// 类别表定�?
+/// 用于存储产品类别信息的数据库表结�?
 class Category extends Table {
   /// 类别ID - 主键
   IntColumn get id => integer().autoIncrement()();
@@ -299,7 +299,7 @@ import 'inbound_receipts_table.dart';
 import 'inbound_receipt_items_table.dart';
 import 'purchase_orders_table.dart';
 import 'purchase_order_items_table.dart';
-import 'barcodes_table.dart'; // 新增条码�?
+import 'barcodes_table.dart'; // 新增条码�?
 import 'customers_table.dart';
 import 'sales_transactions_table.dart';
 import 'sales_transaction_items_table.dart';
@@ -344,7 +344,7 @@ part 'database.g.dart';
     InboundItem,
     PurchaseOrder,
     PurchaseOrderItem,
-    Barcode, // 新增条码�?
+    Barcode, // 新增条码�?
     Customers,
     SalesTransaction,
     SalesTransactionItem,
@@ -390,7 +390,7 @@ class AppDatabase extends _$AppDatabase {
       await customStatement(
         'CREATE INDEX IF NOT EXISTS idx_barcode_unit_product_id ON barcode(unit_product_id);',
       );
-      // 采购单相关索�?
+      // 采购单相关索�?
       await customStatement(
         'CREATE INDEX IF NOT EXISTS idx_po_supplier ON purchase_order(supplier_id);',
       );
@@ -481,7 +481,7 @@ class AppDatabase extends _$AppDatabase {
         await m.createTable(salesTransactionItem);
       }
       if (from < 19 && to >= 19) {
-        // 新增采购�?明细索引与唯一索引
+        // 新增采购�?明细索引与唯一索引
         await customStatement(
           'CREATE INDEX IF NOT EXISTS idx_po_supplier ON purchase_order(supplier_id);',
         );
@@ -503,7 +503,7 @@ class AppDatabase extends _$AppDatabase {
         // This is now handled by the migration to version 21
       }
       if (from < 18 && to >= 18) {
-        // �?sales_transaction_items 表的 unit_id 列添加明确的列名
+        // �?sales_transaction_items 表的 unit_id 列添加明确的列名
         // 由于我们已经修改了表结构，需要重新创建表
         await m.createTable(salesTransactionItem);
       }
@@ -519,16 +519,16 @@ class AppDatabase extends _$AppDatabase {
         await m.createTable(purchaseOrderItem);
       }
       if (from < 13 && to >= 13) {
-        // �?product_units 表添�?wholesale_price �?
+        // �?product_units 表添�?wholesale_price �?
         await m.addColumn(unitProduct, unitProduct.wholesalePriceInCents);
       }
       if (from < 12 && to >= 12) {
-        // 重建采购表以�?production_date 列可为空
+        // 重建采购表以�?production_date 列可为空
         // This migration is now obsolete as purchasesTable is removed.
         // The logic is replaced by migration to version 14.
       }
       if (from < 11 && to >= 11) {
-        // 添加条码�?
+        // 添加条码�?
         await m.createTable(barcode);
         // 创建条码表的索引
         await customStatement(
@@ -544,28 +544,28 @@ class AppDatabase extends _$AppDatabase {
         // The logic is replaced by migration to version 14.
       }
       if (from == 1 && to == 2) {
-        // 从版�?升级到版�?：修改产品表的ID列为非空
+        // 从版�?升级到版�?：修改产品表的ID列为非空
         // 由于SQLite不支持直接修改列的null约束，我们需要重建表
         await m.recreateAllViews();
       }
       if (from == 2 && to == 3) {
-        // 从版�?升级到版�?：添加类别表
+        // 从版�?升级到版�?：添加类别表
         await m.createTable(category);
       }
       if (from == 3 && to == 4) {
-        // 从版�?升级到版�?：添加单位表
+        // 从版�?升级到版�?：添加单位表
         await m.createTable(unit);
       }
       if (from == 4 && to == 5) {
-        // 从版�?升级到版�?：添加产品单位表
+        // 从版�?升级到版�?：添加产品单位表
         await m.createTable(unitProduct);
       }
       if (from == 5 && to == 6) {
-        // 从版�?升级到版�?：添加店铺表
+        // 从版�?升级到版�?：添加店铺表
         await m.createTable(shop);
       }
       if (from == 6 && to == 7) {
-        // 从版�?升级到版�?：添加所有缺失的�?
+        // 从版�?升级到版�?：添加所有缺失的�?
         await m.createTable(supplier);
         await m.createTable(productBatch);
         await m.createTable(stock);
@@ -574,9 +574,9 @@ class AppDatabase extends _$AppDatabase {
         await m.createTable(inboundReceipt);
         await m.createTable(inboundItem);
       }
-      // 处理从旧版本直接升级到版�?的情�?
+      // 处理从旧版本直接升级到版�?的情�?
       if (from < 7 && to == 7) {
-        // 确保所有表都存�?
+        // 确保所有表都存�?
         if (from < 3) await m.createTable(category);
         if (from < 4) await m.createTable(unit);
         if (from < 5) await m.createTable(unitProduct);
@@ -591,41 +591,41 @@ class AppDatabase extends _$AppDatabase {
       }
       // 保留原有的迁移逻辑
       if (from == 1 && to == 3) {
-        // 从版�?直接升级到版�?
+        // 从版�?直接升级到版�?
         await m.recreateAllViews();
         await m.createTable(category);
       }
       if (from == 1 && to == 4) {
-        // 从版�?直接升级到版�?
+        // 从版�?直接升级到版�?
         await m.recreateAllViews();
         await m.createTable(category);
         await m.createTable(unit);
       }
       if (from == 1 && to == 5) {
-        // 从版�?直接升级到版�?
+        // 从版�?直接升级到版�?
         await m.recreateAllViews();
         await m.createTable(category);
         await m.createTable(unit);
         await m.createTable(unitProduct);
       }
       if (from == 2 && to == 4) {
-        // 从版�?直接升级到版�?
+        // 从版�?直接升级到版�?
         await m.createTable(category);
         await m.createTable(unit);
       }
       if (from == 2 && to == 5) {
-        // 从版�?升级到版�?
+        // 从版�?升级到版�?
         await m.createTable(category);
         await m.createTable(unit);
         await m.createTable(unitProduct);
       }
       if (from == 3 && to == 5) {
-        // 从版�?升级到版�?
+        // 从版�?升级到版�?
         await m.createTable(unit);
         await m.createTable(unitProduct);
       }
       // 在任何版本升级后都确保条码表索引存在（移除了产品表条码索引，因为产品表已无条码字段）
-      // 注释掉：产品表已无条码字�?
+      // 注释掉：产品表已无条码字�?
       // await customStatement(
       //   'CREATE INDEX IF NOT EXISTS idx_products_barcode ON products(barcode);',
       // );
@@ -733,7 +733,7 @@ class $UnitTable extends Unit with TableInfo<$UnitTable, UnitData> {
 class UnitData extends DataClass implements Insertable<UnitData> {
   final int id;
 
-  /// 单位名称（唯一，例�?"千克"�?�?�?�?�?  final String name;
+  /// 单位名称（唯一，例�?"千克"�?�?�?�?�?  final String name;
   const UnitData({required this.id, required this.name});
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -2386,14 +2386,14 @@ class UnitProductData extends DataClass implements Insertable<UnitProductData> {
   /// 外键 - 单位ID
   final int unitId;
 
-  /// 换算率（相对于基础单位�?  final int conversionRate;
+  /// 换算率（相对于基础单位�?  final int conversionRate;
 
-  /// 售价（以分为单位存储，避免浮点数精度问题�?  final int? sellingPriceInCents;
+  /// 售价（以分为单位存储，避免浮点数精度问题�?  final int? sellingPriceInCents;
 
   /// 批发价（以分为单位存储）
   final int? wholesalePriceInCents;
 
-  /// 最后更新时�?  final DateTime lastUpdated;
+  /// 最后更新时�?  final DateTime lastUpdated;
   const UnitProductData({
     required this.id,
     required this.productId,
@@ -2826,7 +2826,7 @@ class ShopData extends DataClass implements Insertable<ShopData> {
   /// 创建时间
   final DateTime createdAt;
 
-  /// 最后更新时�?  final DateTime updatedAt;
+  /// 最后更新时�?  final DateTime updatedAt;
   const ShopData({
     required this.id,
     required this.name,
@@ -3142,12 +3142,12 @@ class SupplierData extends DataClass implements Insertable<SupplierData> {
   /// 主键 - 供应商ID
   final int id;
 
-  /// 供应商名�?  final String name;
+  /// 供应商名�?  final String name;
 
   /// 创建时间
   final DateTime createdAt;
 
-  /// 最后更新时�?  final DateTime updatedAt;
+  /// 最后更新时�?  final DateTime updatedAt;
   const SupplierData({
     required this.id,
     required this.name,
@@ -3541,7 +3541,7 @@ class ProductBatchData extends DataClass
   /// 生产日期
   final DateTime productionDate;
 
-  /// 累计入库数量，非负，即同一批次的货品数�?  final int totalInboundQuantity;
+  /// 累计入库数量，非负，即同一批次的货品数�?  final int totalInboundQuantity;
 
   /// 外键 - 店铺ID
   final int shopId;
@@ -3549,7 +3549,7 @@ class ProductBatchData extends DataClass
   /// 创建时间（由数据库默认生成）
   final DateTime createdAt;
 
-  /// 最后更新时间（注意：不会自动在更新时刷新，需要应用层或触发器维护�?  final DateTime updatedAt;
+  /// 最后更新时间（注意：不会自动在更新时刷新，需要应用层或触发器维护�?  final DateTime updatedAt;
   const ProductBatchData({
     required this.id,
     required this.productId,
@@ -4036,12 +4036,12 @@ class StockData extends DataClass implements Insertable<StockData> {
   /// 外键 - 货品ID
   final int productId;
 
-  /// 外键 - 批次�?  final int? batchId;
+  /// 外键 - 批次�?  final int? batchId;
 
   /// 数量
   final int quantity;
 
-  /// 移动加权平均单价（以分为单位�?  final int averageUnitPriceInCents;
+  /// 移动加权平均单价（以分为单位�?  final int averageUnitPriceInCents;
 
   /// 外键 - 店铺ID
   final int shopId;
@@ -4049,7 +4049,7 @@ class StockData extends DataClass implements Insertable<StockData> {
   /// 创建时间
   final DateTime createdAt;
 
-  /// 最后更新时�?  final DateTime updatedAt;
+  /// 最后更新时�?  final DateTime updatedAt;
   const StockData({
     required this.id,
     required this.productId,
@@ -4551,7 +4551,7 @@ class InventoryTransactionData extends DataClass
   /// 外键 - 产品ID
   final int productId;
 
-  /// 流水类型（入库、出库等�?  final String transactionType;
+  /// 流水类型（入库、出库等�?  final String transactionType;
 
   /// 变动数量
   final int quantity;
@@ -5039,7 +5039,7 @@ class LocationsTableData extends DataClass
   /// 主键 - 货位ID
   final String id;
 
-  /// 货位编码（如：A-01-01�?  final String code;
+  /// 货位编码（如：A-01-01�?  final String code;
 
   /// 货位名称
   final String name;
@@ -5056,7 +5056,7 @@ class LocationsTableData extends DataClass
   /// 创建时间
   final DateTime createdAt;
 
-  /// 最后更新时�?  final DateTime updatedAt;
+  /// 最后更新时�?  final DateTime updatedAt;
   const LocationsTableData({
     required this.id,
     required this.code,
@@ -5518,7 +5518,7 @@ class $PurchaseOrderTable extends PurchaseOrder
 
 class PurchaseOrderData extends DataClass
     implements Insertable<PurchaseOrderData> {
-  /// 主键 - 采购订单�?  final int id;
+  /// 主键 - 采购订单�?  final int id;
 
   /// 外键 - 供应商ID
   final int supplierId;
@@ -5530,7 +5530,7 @@ class PurchaseOrderData extends DataClass
   /// 创建时间
   final DateTime createdAt;
 
-  /// 最后更新时�?  final DateTime updatedAt;
+  /// 最后更新时�?  final DateTime updatedAt;
   const PurchaseOrderData({
     required this.id,
     required this.supplierId,
@@ -5988,9 +5988,9 @@ class InboundReceiptData extends DataClass
   /// 来源
   final String source;
 
-  /// 外键 - 采购单ID（如果来自采购单�?  final int? purchaseOrderId;
+  /// 外键 - 采购单ID（如果来自采购单�?  final int? purchaseOrderId;
 
-  /// 入库单状态：preset draft(草稿), completed(已完�?
+  /// 入库单状态：preset draft(草稿), completed(已完�?
   final String status;
 
   /// 备注
@@ -5999,7 +5999,7 @@ class InboundReceiptData extends DataClass
   /// 创建时间
   final DateTime createdAt;
 
-  /// 最后更新时�?  final DateTime updatedAt;
+  /// 最后更新时�?  final DateTime updatedAt;
   const InboundReceiptData({
     required this.id,
     required this.shopId,
@@ -6445,7 +6445,7 @@ class InboundItemData extends DataClass implements Insertable<InboundItemData> {
   /// 外键 - 商品ID
   final int productId;
 
-  /// 批次�?  final int? batchId;
+  /// 批次�?  final int? batchId;
 
   /// 入库数量
   final int quantity;
@@ -6850,7 +6850,7 @@ class PurchaseOrderItemData extends DataClass
   /// 生产日期
   final DateTime? productionDate;
 
-  /// 单位价格（以分为单位�?  final int unitPriceInCents;
+  /// 单位价格（以分为单位�?  final int unitPriceInCents;
 
   /// 数量
   final int quantity;
@@ -7202,9 +7202,9 @@ class BarcodeData extends DataClass implements Insertable<BarcodeData> {
   /// 主键 - 条码ID
   final int id;
 
-  /// 外键 - 产品单位ID，关联到product_units�?  final int unitProductId;
+  /// 外键 - 产品单位ID，关联到product_units�?  final int unitProductId;
 
-  /// 条码�?  final String barcodeValue;
+  /// 条码�?  final String barcodeValue;
   const BarcodeData({
     required this.id,
     required this.unitProductId,
@@ -7809,12 +7809,12 @@ class SalesTransactionData extends DataClass
   /// 店铺ID
   final int shopId;
 
-  /// 总金�?  final double totalAmount;
+  /// 总金�?  final double totalAmount;
 
   /// 实收金额
   final double actualAmount;
 
-  /// 状�?(preset,credit, Settled, cancelled)
+  /// 状�?(preset,credit, Settled, cancelled)
   final String status;
 
   /// 备注
@@ -7823,7 +7823,7 @@ class SalesTransactionData extends DataClass
   /// 创建时间
   final DateTime createdAt;
 
-  /// 最后更新时�?  final DateTime updatedAt;
+  /// 最后更新时�?  final DateTime updatedAt;
   const SalesTransactionData({
     required this.id,
     required this.customerId,
@@ -8719,7 +8719,7 @@ class OutboundReceiptData extends DataClass
   /// 原因
   final String reason;
 
-  /// 外键 - 销售单ID（如果来自销售单�?  final int? salesTransactionId;
+  /// 外键 - 销售单ID（如果来自销售单�?  final int? salesTransactionId;
 
   /// 创建时间
   final DateTime createdAt;
@@ -9095,7 +9095,7 @@ class OutboundItemData extends DataClass
   /// 外键 - 商品ID
   final int productId;
 
-  /// 批次�?  final int? batchId;
+  /// 批次�?  final int? batchId;
 
   /// 数量
   final int quantity;
@@ -20460,13 +20460,13 @@ import 'package:drift/drift.dart';
 import 'database.dart';
 
 /// 数据库初始化服务
-/// 负责初始化各种默认数�?
+/// 负责初始化各种默认数�?
 class DatabaseInitializer {
   final AppDatabase _database;
 
   DatabaseInitializer(this._database);
 
-  /// 初始化所有默认数�?
+  /// 初始化所有默认数�?
   Future<void> initializeAllDefaults() async {
     await initializeDefaultShops();
     await initializeDefaultCategories();
@@ -20475,19 +20475,19 @@ class DatabaseInitializer {
     await initializeDefaultProductUnits();
     await initializeDefaultBarcodes();
     await initializeDefaultCustomers();
-    // 可以继续添加其他初始化方�?
+    // 可以继续添加其他初始化方�?
   }
 
-  /// 初始化默认店�?
+  /// 初始化默认店�?
   Future<void> initializeDefaultShops() async {
     try {
-      // 检查是否已有数�?
+      // 检查是否已有数�?
       final count = await (_database.select(
         _database.shop,
       )..limit(1)).get();
 
       if (count.isNotEmpty) {
-        print('🏪 店铺数据已存在，跳过初始�?);
+        print('🏪 店铺数据已存在，跳过初始�?);
         return;
       }
 
@@ -20515,14 +20515,14 @@ class DatabaseInitializer {
         }
       });
 
-      print('�?成功初始�?${defaultShops.length} 个默认店�?);
+      print('�?成功初始�?${defaultShops.length} 个默认店�?);
     } catch (e) {
-      print('�?初始化默认店铺失�? $e');
+      print('�?初始化默认店铺失�? $e');
       rethrow;
     }
   }
 
-  /// 初始化默认类�?
+  /// 初始化默认类�?
   Future<void> initializeDefaultCategories() async {
     try {
       final count = await (_database.select(
@@ -20530,7 +20530,7 @@ class DatabaseInitializer {
       )..limit(1)).get();
 
       if (count.isNotEmpty) {
-        print('📂 类别数据已存在，跳过初始�?);
+        print('📂 类别数据已存在，跳过初始�?);
         return;
       }
 
@@ -20545,7 +20545,7 @@ class DatabaseInitializer {
         ),
         CategoryCompanion.insert(
           id: const Value(3),
-          name: '日用�?,
+          name: '日用�?,
         ),
       ];
 
@@ -20555,14 +20555,14 @@ class DatabaseInitializer {
         }
       });
 
-      print('�?成功初始�?${defaultCategories.length} 个默认类�?);
+      print('�?成功初始�?${defaultCategories.length} 个默认类�?);
     } catch (e) {
-      print('�?初始化默认类别失�? $e');
+      print('�?初始化默认类别失�? $e');
       rethrow;
     }
   }
 
-  /// 初始化默认单�?
+  /// 初始化默认单�?
   Future<void> initializeDefaultUnits() async {
     try {
       final count = await (_database.select(
@@ -20570,13 +20570,13 @@ class DatabaseInitializer {
       )..limit(1)).get();
 
       if (count.isNotEmpty) {
-        print('📏 单位数据已存在，跳过初始�?);
+        print('📏 单位数据已存在，跳过初始�?);
         return;
       }
       final defaultUnits = [
         UnitCompanion.insert(
           id: Value(1),
-          name: '�?,
+          name: '�?,
           
           
         ),
@@ -20586,19 +20586,19 @@ class DatabaseInitializer {
         ),
         UnitCompanion.insert(
           id: Value(3),
-          name: '�?,
+          name: '�?,
           
           
         ),
         UnitCompanion.insert(
           id: Value(4),
-          name: '�?,
+          name: '�?,
           
           
         ),
         UnitCompanion.insert(
           id: Value(5),
-          name: '�?,
+          name: '�?,
           
         ),
       ];
@@ -20609,14 +20609,14 @@ class DatabaseInitializer {
         }
       });
 
-      print('�?成功初始�?${defaultUnits.length} 个默认单�?);
+      print('�?成功初始�?${defaultUnits.length} 个默认单�?);
     } catch (e) {
-      print('�?初始化默认单位失�? $e');
+      print('�?初始化默认单位失�? $e');
       rethrow;
     }
   }
 
-  /// 初始化默认商�?
+  /// 初始化默认商�?
   Future<void> initializeDefaultProducts() async {
     try {
       final count = await (_database.select(
@@ -20624,7 +20624,7 @@ class DatabaseInitializer {
       )..limit(1)).get();
 
       if (count.isNotEmpty) {
-        print('📦 商品数据已存在，跳过初始�?);
+        print('📦 商品数据已存在，跳过初始�?);
         return;
       }
 
@@ -20633,61 +20633,61 @@ class DatabaseInitializer {
           id: const Value(1),
           name: '可口可乐',
           categoryId: const Value(2),
-          baseUnitId: 4, // �?
+          baseUnitId: 4, // �?
         ),
         ProductCompanion.insert(
           id: const Value(2),
           name: '康师傅冰红茶',
           categoryId: const Value(2),
-          baseUnitId: 4, // �?
+          baseUnitId: 4, // �?
         ),
         ProductCompanion.insert(
           id: const Value(3),
           name: '农夫山泉',
           categoryId: const Value(2),
-          baseUnitId: 4, // �?
+          baseUnitId: 4, // �?
         ),
         ProductCompanion.insert(
           id: const Value(4),
-          name: '奥利�?,
+          name: '奥利�?,
           categoryId: const Value(1),
-          baseUnitId: 5, // �?
+          baseUnitId: 5, // �?
         ),
         ProductCompanion.insert(
           id: const Value(5),
           name: '乐事薯片',
           categoryId: const Value(1),
-          baseUnitId: 5, // �?
+          baseUnitId: 5, // �?
         ),
         ProductCompanion.insert(
           id: const Value(6),
-          name: '统一老坛酸菜牛肉�?,
+          name: '统一老坛酸菜牛肉�?,
           categoryId: const Value(1),
-          baseUnitId: 5, // �?
+          baseUnitId: 5, // �?
         ),
         ProductCompanion.insert(
           id: const Value(7),
           name: '清风抽纸',
           categoryId: const Value(3),
-          baseUnitId: 5, // �?
+          baseUnitId: 5, // �?
         ),
         ProductCompanion.insert(
           id: const Value(8),
-          name: '高露洁牙�?,
+          name: '高露洁牙�?,
           categoryId: const Value(3),
-          baseUnitId: 1, // �?
+          baseUnitId: 1, // �?
         ),
         ProductCompanion.insert(
           id: const Value(9),
           name: '娃哈哈AD钙奶',
           categoryId: const Value(2),
-          baseUnitId: 4, // �?
+          baseUnitId: 4, // �?
         ),
         ProductCompanion.insert(
           id: const Value(10),
           name: '达利园蛋黄派',
           categoryId: const Value(1),
-          baseUnitId: 5, // �?
+          baseUnitId: 5, // �?
         ),
       ];
 
@@ -20697,14 +20697,14 @@ class DatabaseInitializer {
         }
       });
 
-      print('�?成功初始�?${defaultProducts.length} 个默认商�?);
+      print('�?成功初始�?${defaultProducts.length} 个默认商�?);
     } catch (e) {
-      print('�?初始化默认商品失�? $e');
+      print('�?初始化默认商品失�? $e');
       rethrow;
     }
   }
 
-  /// 初始化默认商品单位关�?
+  /// 初始化默认商品单位关�?
   Future<void> initializeDefaultProductUnits() async {
     try {
       final count = await (_database.select(
@@ -20712,12 +20712,12 @@ class DatabaseInitializer {
       )..limit(1)).get();
 
       if (count.isNotEmpty) {
-        print('📦 产品单位数据已存在，跳过初始�?);
+        print('📦 产品单位数据已存在，跳过初始�?);
         return;
       }
 
       final defaultProductUnits = [
-        // 可口可乐, �?
+        // 可口可乐, �?
         UnitProductCompanion.insert(
           id: const Value(1),
           productId: 1,
@@ -20725,7 +20725,7 @@ class DatabaseInitializer {
           conversionRate: 1,
           lastUpdated: Value(DateTime.now()),
         ),
-        // 康师傅冰红茶, �?
+        // 康师傅冰红茶, �?
         UnitProductCompanion.insert(
           id: const Value(2),
           productId: 2,
@@ -20733,7 +20733,7 @@ class DatabaseInitializer {
           conversionRate: 1,
           lastUpdated: Value(DateTime.now()),
         ),
-        // 农夫山泉, �?
+        // 农夫山泉, �?
         UnitProductCompanion.insert(
           id: const Value(3),
           productId: 3,
@@ -20741,7 +20741,7 @@ class DatabaseInitializer {
           conversionRate: 1,
           lastUpdated: Value(DateTime.now()),
         ),
-        // 奥利�? �?
+        // 奥利�? �?
         UnitProductCompanion.insert(
           id: const Value(4),
           productId: 4,
@@ -20749,7 +20749,7 @@ class DatabaseInitializer {
           conversionRate: 1,
           lastUpdated: Value(DateTime.now()),
         ),
-        // 乐事薯片, �?
+        // 乐事薯片, �?
         UnitProductCompanion.insert(
           id: const Value(5),
           productId: 5,
@@ -20757,7 +20757,7 @@ class DatabaseInitializer {
           conversionRate: 1,
           lastUpdated: Value(DateTime.now()),
         ),
-        // 统一老坛酸菜牛肉�? �?
+        // 统一老坛酸菜牛肉�? �?
         UnitProductCompanion.insert(
           id: const Value(6),
           productId: 6,
@@ -20765,7 +20765,7 @@ class DatabaseInitializer {
           conversionRate: 1,
           lastUpdated: Value(DateTime.now()),
         ),
-        // 清风抽纸, �?
+        // 清风抽纸, �?
         UnitProductCompanion.insert(
           id: const Value(7),
           productId: 7,
@@ -20773,7 +20773,7 @@ class DatabaseInitializer {
           conversionRate: 1,
           lastUpdated: Value(DateTime.now()),
         ),
-        // 高露洁牙�? �?
+        // 高露洁牙�? �?
         UnitProductCompanion.insert(
           id: const Value(8),
           productId: 8,
@@ -20781,7 +20781,7 @@ class DatabaseInitializer {
           conversionRate: 1,
           lastUpdated: Value(DateTime.now()),
         ),
-        // 娃哈哈AD钙奶, �?
+        // 娃哈哈AD钙奶, �?
         UnitProductCompanion.insert(
           id: const Value(9),
           productId: 9,
@@ -20789,7 +20789,7 @@ class DatabaseInitializer {
           conversionRate: 1,
           lastUpdated: Value(DateTime.now()),
         ),
-        // 达利园蛋黄派, �?
+        // 达利园蛋黄派, �?
         UnitProductCompanion.insert(
           id: const Value(10),
           productId: 10,
@@ -20805,14 +20805,14 @@ class DatabaseInitializer {
         }
       });
 
-      print('�?成功初始�?${defaultProductUnits.length} 个默认产品单�?);
+      print('�?成功初始�?${defaultProductUnits.length} 个默认产品单�?);
     } catch (e) {
-      print('�?初始化默认产品单位失�? $e');
+      print('�?初始化默认产品单位失�? $e');
       rethrow;
     }
   }
 
-  /// 初始化默认条�?
+  /// 初始化默认条�?
   Future<void> initializeDefaultBarcodes() async {
     try {
       final count = await (_database.select(
@@ -20820,7 +20820,7 @@ class DatabaseInitializer {
       )..limit(1)).get();
 
       if (count.isNotEmpty) {
-        print('🏷�?条码数据已存在，跳过初始�?);
+        print('🏷�?条码数据已存在，跳过初始�?);
         return;
       }
 
@@ -20828,11 +20828,11 @@ class DatabaseInitializer {
         BarcodeCompanion.insert(unitProductId: 1, barcodeValue: '6901234567890'), // 可口可乐
         BarcodeCompanion.insert(unitProductId: 2, barcodeValue: '6901234567891'), // 康师傅冰红茶
         BarcodeCompanion.insert(unitProductId: 3, barcodeValue: '6901234567892'), // 农夫山泉
-        BarcodeCompanion.insert(unitProductId: 4, barcodeValue: '6901234567893'), // 奥利�?
+        BarcodeCompanion.insert(unitProductId: 4, barcodeValue: '6901234567893'), // 奥利�?
         BarcodeCompanion.insert(unitProductId: 5, barcodeValue: '6901234567894'), // 乐事薯片
-        BarcodeCompanion.insert(unitProductId: 6, barcodeValue: '6901234567895'), // 统一老坛酸菜牛肉�?
+        BarcodeCompanion.insert(unitProductId: 6, barcodeValue: '6901234567895'), // 统一老坛酸菜牛肉�?
         BarcodeCompanion.insert(unitProductId: 7, barcodeValue: '6901234567896'), // 清风抽纸
-        BarcodeCompanion.insert(unitProductId: 8, barcodeValue: '6901234567897'), // 高露洁牙�?
+        BarcodeCompanion.insert(unitProductId: 8, barcodeValue: '6901234567897'), // 高露洁牙�?
         BarcodeCompanion.insert(unitProductId: 9, barcodeValue: '6901234567898'), // 娃哈哈AD钙奶
         BarcodeCompanion.insert(unitProductId: 10, barcodeValue: '6901234567899'), // 达利园蛋黄派
       ];
@@ -20843,14 +20843,14 @@ class DatabaseInitializer {
         }
       });
 
-      print('�?成功初始�?${defaultBarcodes.length} 个默认条�?);
+      print('�?成功初始�?${defaultBarcodes.length} 个默认条�?);
     } catch (e) {
-      print('�?初始化默认条码失�? $e');
+      print('�?初始化默认条码失�? $e');
       rethrow;
     }
   }
 
-  /// 初始化默认客�?
+  /// 初始化默认客�?
   Future<void> initializeDefaultCustomers() async {
     try {
       final count = await (_database.select(
@@ -20858,7 +20858,7 @@ class DatabaseInitializer {
       )..limit(1)).get();
 
       if (count.isNotEmpty) {
-        print('👥 客户数据已存在，跳过初始�?);
+        print('👥 客户数据已存在，跳过初始�?);
         return;
       }
 
@@ -20875,22 +20875,22 @@ class DatabaseInitializer {
         }
       });
 
-      print('�?成功初始�?${defaultCustomers.length} 个默认客�?);
+      print('�?成功初始�?${defaultCustomers.length} 个默认客�?);
     } catch (e) {
-      print('�?初始化默认客户失�? $e');
+      print('�?初始化默认客户失�? $e');
       rethrow;
     }
   }
 
-  /// 重置所有数据（仅用于开�?测试�?
+  /// 重置所有数据（仅用于开�?测试�?
   Future<void> resetAllData() async {
     await _database.transaction(() async {
-      // 删除销售相关的表数�?
+      // 删除销售相关的表数�?
       await _database.delete(_database.salesTransactionItem).go();
       await _database.delete(_database.salesTransaction).go();
       await _database.delete(_database.customers).go();
 
-      // 删除业务数据�?
+      // 删除业务数据�?
       await _database.delete(_database.inboundItem).go();
       await _database.delete(_database.inboundReceipt).go();
       await _database.delete(_database.purchaseOrderItem).go();
@@ -20900,7 +20900,7 @@ class DatabaseInitializer {
       await _database.delete(_database.productBatch).go();
       await _database.delete(_database.supplier).go();
 
-      // 删除基础数据�?
+      // 删除基础数据�?
       await _database.delete(_database.barcode).go();
       await _database.delete(_database.unitProduct).go();
       await _database.delete(_database.product).go();
@@ -20929,16 +20929,16 @@ final databaseInitializationProvider = FutureProvider<void>((ref) async {
     await initializer.initializeAllDefaults();
     print('🎉 数据库初始化完成');
     
-    // 初始化备份功�?
+    // 初始化备份功�?
     await BackupInitializationService.initialize(database);
-    print('🎉 备份功能初始化完�?);
+    print('🎉 备份功能初始化完�?);
   } catch (e) {
-    print('💥 初始化失�? $e');
+    print('💥 初始化失�? $e');
     rethrow;
   }
 });
 
-/// 手动重置数据�?Provider（用于开�?测试�?
+/// 手动重置数据�?Provider（用于开�?测试�?
 final resetDatabaseProvider = FutureProvider.family<void, bool>((
   ref,
   force,
@@ -20967,11 +20967,11 @@ class InboundReceipt extends Table {
   /// 来源
   TextColumn get source => text()();
 
-  /// 外键 - 采购单ID（如果来自采购单�?
+  /// 外键 - 采购单ID（如果来自采购单�?
   IntColumn get purchaseOrderId =>
       integer().references(PurchaseOrder, #id).nullable()();
 
-  /// 入库单状态：preset draft(草稿), completed(已完�?
+  /// 入库单状态：preset draft(草稿), completed(已完�?
   TextColumn get status => text().withDefault(const Constant('preset'))();
 
   /// 备注
@@ -20980,7 +20980,7 @@ class InboundReceipt extends Table {
   /// 创建时间
   DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
 
-  /// 最后更新时�?
+  /// 最后更新时�?
   DateTimeColumn get updatedAt => dateTime().withDefault(currentDateAndTime)();
 }
 import 'package:drift/drift.dart';
@@ -20989,7 +20989,7 @@ import 'inbound_receipts_table.dart';
 import 'batches_table.dart';
 
 /// 入库单明细表
-/// 存储入库单中的具体商品明细信�?
+/// 存储入库单中的具体商品明细信�?
 class InboundItem extends Table {
   /// 主键 - 明细ID
   IntColumn get id => integer().autoIncrement()();
@@ -21000,7 +21000,7 @@ class InboundItem extends Table {
   /// 外键 - 商品ID
   IntColumn get productId => integer().references(Product, #id)();
 
-  /// 批次�?
+  /// 批次�?
   IntColumn get batchId => integer().references(ProductBatch, #id).nullable()();
 
   /// 入库数量
@@ -21011,8 +21011,8 @@ import 'products_table.dart';
 import 'shops_table.dart';
 import 'batches_table.dart';
 
-/// 库存�?
-/// 存储产品在各店铺的库存信�?
+/// 库存�?
+/// 存储产品在各店铺的库存信�?
 class Stock extends Table {
   /// 主键 - 库存ID
   IntColumn get id => integer().autoIncrement()();
@@ -21020,14 +21020,14 @@ class Stock extends Table {
   /// 外键 - 货品ID
   IntColumn get productId => integer().references(Product, #id)();
 
-  /// 外键 - 批次�?
+  /// 外键 - 批次�?
   IntColumn get batchId =>
       integer().references(ProductBatch, #id).nullable()();
 
   /// 数量
   IntColumn get quantity => integer()();
 
-  /// 移动加权平均单价（以分为单位�?
+  /// 移动加权平均单价（以分为单位�?
   IntColumn get averageUnitPriceInCents => integer().withDefault(const Constant(0))();
 
   /// 外键 - 店铺ID
@@ -21036,7 +21036,7 @@ class Stock extends Table {
   /// 创建时间
   DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
 
-  /// 最后更新时�?
+  /// 最后更新时�?
   DateTimeColumn get updatedAt => dateTime().withDefault(currentDateAndTime)();
 
 }
@@ -21045,8 +21045,8 @@ import 'products_table.dart';
 import 'shops_table.dart';
 import 'batches_table.dart';
 
-/// 库存流水�?
-/// 记录产品库存变动的历史记�?
+/// 库存流水�?
+/// 记录产品库存变动的历史记�?
 class InventoryTransaction extends Table {
   /// 主键 - 流水ID
   IntColumn get id => integer().autoIncrement()();
@@ -21054,7 +21054,7 @@ class InventoryTransaction extends Table {
   /// 外键 - 产品ID
   IntColumn get productId => integer().references(Product, #id)();
 
-  /// 流水类型（入库、出库等�?
+  /// 流水类型（入库、出库等�?
   TextColumn get transactionType => text()
       .named('type')
       .check(
@@ -21078,7 +21078,7 @@ class InventoryTransaction extends Table {
 }
 import 'package:drift/drift.dart';
 
-/// 货位�?
+/// 货位�?
 /// 存储仓库货位信息
 class LocationsTable extends Table {
   @override
@@ -21087,7 +21087,7 @@ class LocationsTable extends Table {
   /// 主键 - 货位ID
   TextColumn get id => text().named('id')();
 
-  /// 货位编码（如：A-01-01�?
+  /// 货位编码（如：A-01-01�?
   TextColumn get code => text().named('code').unique()();
 
   /// 货位名称
@@ -21107,7 +21107,7 @@ class LocationsTable extends Table {
   DateTimeColumn get createdAt =>
       dateTime().named('created_at').withDefault(currentDateAndTime)();
 
-  /// 最后更新时�?
+  /// 最后更新时�?
   DateTimeColumn get updatedAt =>
       dateTime().named('updated_at').withDefault(currentDateAndTime)();
 
@@ -21136,7 +21136,7 @@ class OutboundReceipt extends Table {
   /// 原因
   TextColumn get reason => text()();
 
-  /// 外键 - 销售单ID（如果来自销售单�?
+  /// 外键 - 销售单ID（如果来自销售单�?
   IntColumn get salesTransactionId =>
       integer().references(SalesTransaction, #id).nullable()();
 
@@ -21149,7 +21149,7 @@ import 'outbound_receipts_table.dart';
 import 'batches_table.dart';
 
 /// 出库单明细表
-/// 存储出库单中的具体商品明细信�?
+/// 存储出库单中的具体商品明细信�?
 class OutboundItem extends Table {
   /// 主键 - 明细ID
   IntColumn get id => integer().autoIncrement()();
@@ -21160,7 +21160,7 @@ class OutboundItem extends Table {
   /// 外键 - 商品ID
   IntColumn get productId => integer().references(Product, #id)();
 
-  /// 批次�?
+  /// 批次�?
   IntColumn get batchId => integer().references(ProductBatch, #id).nullable()();
 
   /// 数量
@@ -21171,7 +21171,7 @@ import 'package:stocko_app/features/product/domain/model/product.dart';
 import 'categories_table.dart';
 import 'units_table.dart';
 
-// --- 类型转换�?---
+// --- 类型转换�?---
 class MoneyConverter extends TypeConverter<Money, int> {
   const MoneyConverter();
   @override
@@ -21195,7 +21195,7 @@ class Product extends Table {
   TextColumn get specification => text().nullable()();
   TextColumn get brand => text().nullable()();
 
-  // 使用 MoneyConverter，列名更简�?
+  // 使用 MoneyConverter，列名更简�?
   IntColumn get suggestedRetailPrice =>
       integer().map(const MoneyConverter()).nullable()();
   IntColumn get retailPrice =>
@@ -21205,7 +21205,7 @@ class Product extends Table {
 
   IntColumn get stockWarningValue => integer().nullable()();
   IntColumn get shelfLife =>
-      integer().nullable()(); // 注释：保质期数值，单位�?shelfLifeUnit 决定
+      integer().nullable()(); // 注释：保质期数值，单位�?shelfLifeUnit 决定
 
   TextColumn get shelfLifeUnit => text()
       .map(const EnumNameConverter(ShelfLifeUnit.values))
@@ -21225,7 +21225,7 @@ import 'package:drift/drift.dart';
 import 'products_table.dart';
 import 'units_table.dart';
 
-/// 产品单位关联�?
+/// 产品单位关联�?
 /// 存储产品与单位的关联关系及换算率信息
 class UnitProduct extends Table {
   /// 主键 - ID
@@ -21237,32 +21237,32 @@ class UnitProduct extends Table {
   /// 外键 - 单位ID
   IntColumn get unitId => integer().references(Unit, #id)();
 
-  /// 换算率（相对于基础单位�?
+  /// 换算率（相对于基础单位�?
   IntColumn get conversionRate => integer()();
 
-  /// 售价（以分为单位存储，避免浮点数精度问题�?
+  /// 售价（以分为单位存储，避免浮点数精度问题�?
   IntColumn get sellingPriceInCents => integer().nullable()();
 
   /// 批发价（以分为单位存储）
   IntColumn get wholesalePriceInCents => integer().nullable()();
 
-  /// 最后更新时�?
+  /// 最后更新时�?
   DateTimeColumn get lastUpdated =>
       dateTime().withDefault(currentDateAndTime)();
 
   @override
   List<Set<Column>> get uniqueKeys => [
-    {productId, unitId}, // 同一产品的同一单位只能有一个记�?
+    {productId, unitId}, // 同一产品的同一单位只能有一个记�?
   ];
 }
 import 'package:drift/drift.dart';
 import 'shops_table.dart';
 import 'suppliers_table.dart';
 
-/// 采购订单�?
-/// 存储采购订单的宏观信息，如供应商、店铺、采购日期等�?
+/// 采购订单�?
+/// 存储采购订单的宏观信息，如供应商、店铺、采购日期等�?
 class PurchaseOrder extends Table {
-  /// 主键 - 采购订单�?
+  /// 主键 - 采购订单�?
   IntColumn get id => integer().autoIncrement()();
 
   /// 外键 - 供应商ID
@@ -21278,17 +21278,17 @@ class PurchaseOrder extends Table {
   /// 创建时间
   DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
 
-  /// 最后更新时�?
+  /// 最后更新时�?
   DateTimeColumn get updatedAt => dateTime().withDefault(currentDateAndTime)();
 }
 
-/// 订单状态枚�?
+/// 订单状态枚�?
 enum PurchaseOrderStatus { preset, draft, completed }
 import 'package:drift/drift.dart';
 import 'products_table.dart';
 import 'purchase_orders_table.dart';
 
-/// 采购订单明细�?
+/// 采购订单明细�?
 /// 存储采购订单中的具体货品信息
 class PurchaseOrderItem extends Table {
   /// 主键 - 自增ID
@@ -21305,7 +21305,7 @@ class PurchaseOrderItem extends Table {
   /// 生产日期
   DateTimeColumn get productionDate => dateTime().nullable()();
 
-  /// 单位价格（以分为单位�?
+  /// 单位价格（以分为单位�?
   IntColumn get unitPriceInCents => integer()();
 
   /// 数量
@@ -21332,13 +21332,13 @@ class SalesTransaction extends Table {
   /// 店铺ID
   IntColumn get shopId => integer().references(Shop, #id)();
 
-  /// 总金�?
+  /// 总金�?
   RealColumn get totalAmount => real()();
 
   /// 实收金额
   RealColumn get actualAmount => real()();
 
-  /// 状�?(preset,credit, Settled, cancelled)
+  /// 状�?(preset,credit, Settled, cancelled)
   TextColumn get status => text().withDefault(const Constant('preset'))();
 
   /// 备注
@@ -21347,7 +21347,7 @@ class SalesTransaction extends Table {
   /// 创建时间
   DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
 
-  /// 最后更新时�?
+  /// 最后更新时�?
   DateTimeColumn get updatedAt => dateTime().withDefault(currentDateAndTime)();
 }
 import 'package:drift/drift.dart';
@@ -21366,8 +21366,8 @@ class SalesTransactionItem extends Table {
 }
 import 'package:drift/drift.dart';
 
-/// 店铺�?
-/// 存储店铺的基本信�?
+/// 店铺�?
+/// 存储店铺的基本信�?
 class Shop extends Table {
   /// 主键 - 店铺ID
   IntColumn get id => integer().autoIncrement()();
@@ -21381,35 +21381,35 @@ class Shop extends Table {
   /// 创建时间
   DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
 
-  /// 最后更新时�?
+  /// 最后更新时�?
   DateTimeColumn get updatedAt => dateTime().withDefault(currentDateAndTime)();
 }
 import 'package:drift/drift.dart';
 
 /// 供应商表
-/// 存储供应商信�?
+/// 存储供应商信�?
 class Supplier extends Table {
   /// 主键 - 供应商ID
   IntColumn get id => integer().autoIncrement()();
 
-  /// 供应商名�?
+  /// 供应商名�?
   TextColumn get name => text()();
 
   /// 创建时间
   DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
 
-  /// 最后更新时�?
+  /// 最后更新时�?
   DateTimeColumn get updatedAt => dateTime().withDefault(currentDateAndTime)();
 }
 import 'package:drift/drift.dart';
 
-/// 单位�?
-/// 存储产品的计量单位信息（�?kg, pcs, m�?
+/// 单位�?
+/// 存储产品的计量单位信息（�?kg, pcs, m�?
 class Unit extends Table {
 
   IntColumn get id => integer().autoIncrement()();
 
-  /// 单位名称（唯一，例�?"千克"�?�?�?�?�?
+  /// 单位名称（唯一，例�?"千克"�?�?�?�?�?
   TextColumn get name => text().unique()();
 }
 import 'package:flutter/material.dart';
@@ -21419,7 +21419,7 @@ import '../services/user_agreement_provider.dart';
 import '../../features/settings/presentation/widgets/privacy_policy_dialog.dart';
 
 /// 应用启动初始化Widget
-/// 负责数据库初始化和用户协议检�?
+/// 负责数据库初始化和用户协议检�?
 class AppInitializer extends ConsumerStatefulWidget {
   final Widget child;
 
@@ -21439,11 +21439,11 @@ class _AppInitializerState extends ConsumerState<AppInitializer> {
 
     return initializationState.when(
       data: (_) {
-        // 数据库初始化完成后，检查用户协�?
+        // 数据库初始化完成后，检查用户协�?
         return agreementStatus.when(
           data: (hasAccepted) {
             if (!hasAccepted && !_agreementDialogShown) {
-              // 用户未同意协议，显示协议对话�?
+              // 用户未同意协议，显示协议对话�?
               WidgetsBinding.instance.addPostFrameCallback((_) {
                 if (mounted && !_agreementDialogShown) {
                   _agreementDialogShown = true;
@@ -21486,7 +21486,7 @@ class _AppInitializerState extends ConsumerState<AppInitializer> {
   }
 }
 
-/// 初始化加载界�?
+/// 初始化加载界�?
 class _LoadingScreen extends StatelessWidget {
   const _LoadingScreen();
 
@@ -21513,7 +21513,7 @@ class _LoadingScreen extends StatelessWidget {
 
               // App Title
               Text(
-                '铺得�?App',
+                '铺得�?App',
                 style: TextStyle(
                   fontSize: 28,
                   fontWeight: FontWeight.bold,
@@ -21548,7 +21548,7 @@ class _LoadingScreen extends StatelessWidget {
   }
 }
 
-/// 初始化错误界�?
+/// 初始化错误界�?
 class _ErrorScreen extends StatelessWidget {
   final Object error;
   final VoidCallback onRetry;
@@ -21572,7 +21572,7 @@ class _ErrorScreen extends StatelessWidget {
 
                 // Error Title
                 Text(
-                  '初始化失�?,
+                  '初始化失�?,
                   style: TextStyle(
                     fontSize: 24,
                     fontWeight: FontWeight.bold,
@@ -21583,7 +21583,7 @@ class _ErrorScreen extends StatelessWidget {
 
                 // Error Message
                 Text(
-                  '数据库初始化过程中发生错�?,
+                  '数据库初始化过程中发生错�?,
                   style: TextStyle(fontSize: 16, color: Colors.grey.shade600),
                   textAlign: TextAlign.center,
                 ),
@@ -21737,20 +21737,20 @@ final routerProvider = Provider<GoRouter>((ref) {
               ),
             ],
           ),
-          // 销�?
+          // 销�?
           StatefulShellBranch(
             routes: [
               GoRoute(
                 path: AppRoutes.sales,
                 name: 'sales',
                 builder: (context, state) => Scaffold(
-                  appBar: AppBar(title: const Text('销售管�?)),
+                  appBar: AppBar(title: const Text('销售管�?)),
                   body: Center(
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         const Text(
-                          '销售管理功�?,
+                          '销售管理功�?,
                           style: TextStyle(
                             fontSize: 24,
                             fontWeight: FontWeight.bold,
@@ -21770,7 +21770,7 @@ final routerProvider = Provider<GoRouter>((ref) {
                           child: ElevatedButton(
                             onPressed: () =>
                                 context.push(AppRoutes.saleRecords),
-                            child: const Text('销售记�?),
+                            child: const Text('销售记�?),
                           ),
                         ),
                         const SizedBox(height: 20),
@@ -21817,7 +21817,7 @@ final routerProvider = Provider<GoRouter>((ref) {
                           child: ElevatedButton(
                             onPressed: () =>
                                 context.go(AppRoutes.inboundCreate),
-                            child: const Text('新建入库�?),
+                            child: const Text('新建入库�?),
                           ),
                         ),
                         const SizedBox(height: 16),
@@ -22003,7 +22003,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
     ],
     errorBuilder: (context, state) => Scaffold(
-      appBar: AppBar(title: const Text('页面未找�?)),
+      appBar: AppBar(title: const Text('页面未找�?)),
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -22026,9 +22026,9 @@ import 'package:flutter/material.dart';
 import 'package:stocko_app/core/utils/snackbar_helper.dart';
 import '../widgets/universal_barcode_scanner.dart';
 
-/// 扫码服务�?
+/// 扫码服务�?
 class BarcodeScannerService {
-  /// 可注入的扫描器Widget构建器（用于测试替换�?
+  /// 可注入的扫描器Widget构建器（用于测试替换�?
   /// 生产环境默认构建 UniversalBarcodeScanner
   static Widget Function({
     required BarcodeScannerConfig config,
@@ -22071,7 +22071,7 @@ class BarcodeScannerService {
     );
   }
 
-  /// 简单扫码（使用默认配置�?
+  /// 简单扫码（使用默认配置�?
   static Future<String?> quickScan(
     BuildContext context, {
     String? title,
@@ -22173,13 +22173,13 @@ class BarcodeScannerService {
       return scannedCodes;
     }
 
-    // 连续扫码模式的实现会在后续完�?
-    // 这里先返回单次扫码结�?
+    // 连续扫码模式的实现会在后续完�?
+    // 这里先返回单次扫码结�?
     final code = await scan(
       context,
       config: const BarcodeScannerConfig(
         title: '连续扫码模式',
-        subtitle: '扫描完成后点击返回按钮结�?,
+        subtitle: '扫描完成后点击返回按钮结�?,
       ),
     );
     if (code != null) {
@@ -22209,7 +22209,7 @@ class ImageCachePerformanceMonitor {
 
   DateTime? _sessionStartTime;
 
-  /// 初始化监�?
+  /// 初始化监�?
   void initialize() {
     _sessionStartTime = DateTime.now();
     _cacheHits = 0;
@@ -22218,7 +22218,7 @@ class ImageCachePerformanceMonitor {
     _loadTimes.clear();
     _imageRequests.clear();
 
-    debugPrint('图片缓存性能监控已启�?);
+    debugPrint('图片缓存性能监控已启�?);
   }
 
   /// 记录缓存命中
@@ -22232,14 +22232,14 @@ class ImageCachePerformanceMonitor {
     }
   }
 
-  /// 记录缓存未命�?
+  /// 记录缓存未命�?
   void recordCacheMiss(String imagePath) {
     _cacheMisses++;
     _totalRequests++;
     _recordImageRequest(imagePath);
 
     if (kDebugMode) {
-      debugPrint('缓存未命�? $imagePath');
+      debugPrint('缓存未命�? $imagePath');
     }
   }
 
@@ -22258,7 +22258,7 @@ class ImageCachePerformanceMonitor {
     _imageRequests[fileName] = (_imageRequests[fileName] ?? 0) + 1;
   }
 
-  /// 获取缓存命中�?
+  /// 获取缓存命中�?
   double getCacheHitRate() {
     if (_totalRequests == 0) return 0.0;
     return _cacheHits / _totalRequests;
@@ -22275,7 +22275,7 @@ class ImageCachePerformanceMonitor {
     return Duration(milliseconds: (totalMs / _loadTimes.length).round());
   }
 
-  /// 获取最快加载时�?
+  /// 获取最快加载时�?
   Duration getFastestLoadTime() {
     if (_loadTimes.isEmpty) return Duration.zero;
 
@@ -22284,7 +22284,7 @@ class ImageCachePerformanceMonitor {
     );
   }
 
-  /// 获取最慢加载时�?
+  /// 获取最慢加载时�?
   Duration getSlowestLoadTime() {
     if (_loadTimes.isEmpty) return Duration.zero;
 
@@ -22334,18 +22334,18 @@ class ImageCachePerformanceMonitor {
     debugPrint('会话时长: ${_formatDuration(report['sessionDuration'])}');
     debugPrint('总请求数: ${report['totalRequests']}');
     debugPrint('缓存命中: ${report['cacheHits']}');
-    debugPrint('缓存未命�? ${report['cacheMisses']}');
-    debugPrint('命中�? ${(report['hitRate'] * 100).toStringAsFixed(1)}%');
+    debugPrint('缓存未命�? ${report['cacheMisses']}');
+    debugPrint('命中�? ${(report['hitRate'] * 100).toStringAsFixed(1)}%');
     debugPrint('平均加载时间: ${report['averageLoadTime'].inMilliseconds}ms');
-    debugPrint('最快加载时�? ${report['fastestLoadTime'].inMilliseconds}ms');
-    debugPrint('最慢加载时�? ${report['slowestLoadTime'].inMilliseconds}ms');
+    debugPrint('最快加载时�? ${report['fastestLoadTime'].inMilliseconds}ms');
+    debugPrint('最慢加载时�? ${report['slowestLoadTime'].inMilliseconds}ms');
 
     final mostRequested =
         report['mostRequestedImages'] as List<MapEntry<String, int>>;
     if (mostRequested.isNotEmpty) {
       debugPrint('最常请求的图片:');
       for (final entry in mostRequested) {
-        debugPrint('  ${entry.key}: ${entry.value}�?);
+        debugPrint('  ${entry.key}: ${entry.value}�?);
       }
     }
 
@@ -22361,10 +22361,10 @@ class ImageCachePerformanceMonitor {
     _imageRequests.clear();
     _sessionStartTime = DateTime.now();
 
-    debugPrint('性能监控数据已重�?);
+    debugPrint('性能监控数据已重�?);
   }
 
-  /// 格式化持续时�?
+  /// 格式化持续时�?
   String _formatDuration(Duration duration) {
     final hours = duration.inHours;
     final minutes = duration.inMinutes.remainder(60);
@@ -22391,9 +22391,9 @@ class ImageCachePerformanceMonitor {
     } else if (hitRate >= 0.7 && avgLoadTime <= 300) {
       return 'B'; // 中等
     } else if (hitRate >= 0.6 && avgLoadTime <= 500) {
-      return 'C'; // 一�?
+      return 'C'; // 一�?
     } else {
-      return 'D'; // 需要优�?
+      return 'D'; // 需要优�?
     }
   }
 
@@ -22408,7 +22408,7 @@ class ImageCachePerformanceMonitor {
     }
 
     if (avgLoadTime > 300) {
-      suggestions.add('平均加载时间较长，考虑降低图片质量或优化压缩算�?);
+      suggestions.add('平均加载时间较长，考虑降低图片质量或优化压缩算�?);
     }
 
     if (_totalRequests > 1000 && _loadTimes.length < _totalRequests * 0.8) {
@@ -22417,11 +22417,11 @@ class ImageCachePerformanceMonitor {
 
     final mostRequested = getMostRequestedImages(limit: 3);
     if (mostRequested.isNotEmpty && mostRequested.first.value > 10) {
-      suggestions.add('考虑为高频访问图�?"${mostRequested.first.key}" 设置更高的缓存优先级');
+      suggestions.add('考虑为高频访问图�?"${mostRequested.first.key}" 设置更高的缓存优先级');
     }
 
     if (suggestions.isEmpty) {
-      suggestions.add('缓存性能良好，继续保持当前配�?);
+      suggestions.add('缓存性能良好，继续保持当前配�?);
     }
 
     return suggestions;
@@ -22446,13 +22446,13 @@ class ImageCacheService {
   final Map<String, Uint8List> _byteCache = {};
 
   // 缓存大小限制
-  static const int maxMemoryCacheSize = 50; // 最大内存缓存图片数�?
-  static const int maxByteCacheSize = 20; // 最大字节缓存数�?
+  static const int maxMemoryCacheSize = 50; // 最大内存缓存图片数�?
+  static const int maxByteCacheSize = 20; // 最大字节缓存数�?
 
-  // 缩略图缓存目�?
+  // 缩略图缓存目�?
   String? _thumbnailCacheDir;
 
-  /// 初始化缓存服�?
+  /// 初始化缓存服�?
   Future<void> initialize() async {
     try {
       final Directory appDir = await getApplicationDocumentsDirectory();
@@ -22464,9 +22464,9 @@ class ImageCacheService {
         await cacheDir.create(recursive: true);
       }
 
-      debugPrint('图片缓存服务初始化完�? $_thumbnailCacheDir');
+      debugPrint('图片缓存服务初始化完�? $_thumbnailCacheDir');
     } catch (e) {
-      debugPrint('图片缓存服务初始化失�? $e');
+      debugPrint('图片缓存服务初始化失�? $e');
     }
   }
 
@@ -22483,20 +22483,20 @@ class ImageCacheService {
     DateTime? fileModifiedTime,
   }) async {
     try {
-      // 生成缓存�?
+      // 生成缓存�?
       final cacheKey =
           _generateCacheKey(imagePath, width, height, quality, fileModifiedTime);
 
-      // 检查字节缓�?
+      // 检查字节缓�?
       if (_byteCache.containsKey(cacheKey)) {
-        debugPrint('从字节缓存加载图�? $cacheKey');
+        debugPrint('从字节缓存加载图�? $cacheKey');
         return _byteCache[cacheKey];
       }
 
-      // 检查磁盘缓�?
+      // 检查磁盘缓�?
       final cachedBytes = await _getCachedThumbnail(cacheKey);
       if (cachedBytes != null) {
-        debugPrint('从磁盘缓存加载图�? $cacheKey');
+        debugPrint('从磁盘缓存加载图�? $cacheKey');
         _addToByteCache(cacheKey, cachedBytes);
         return cachedBytes;
       }
@@ -22510,10 +22510,10 @@ class ImageCacheService {
       );
 
       if (optimizedBytes != null) {
-        // 保存到缓�?
+        // 保存到缓�?
         await _saveThumbnailCache(cacheKey, optimizedBytes);
         _addToByteCache(cacheKey, optimizedBytes);
-        debugPrint('生成并缓存优化图�? $cacheKey');
+        debugPrint('生成并缓存优化图�? $cacheKey');
       }
 
       return optimizedBytes;
@@ -22526,13 +22526,13 @@ class ImageCacheService {
   /// 获取内存中的UI图片对象
   Future<ui.Image?> getUIImage(String imagePath) async {
     try {
-      // 检查内存缓�?
+      // 检查内存缓�?
       if (_memoryCache.containsKey(imagePath)) {
         debugPrint('从内存缓存加载UI图片: $imagePath');
         return _memoryCache[imagePath];
       }
 
-      // 从文件加�?
+      // 从文件加�?
       final file = File(imagePath);
       if (!await file.exists()) {
         return null;
@@ -22543,7 +22543,7 @@ class ImageCacheService {
       final frame = await codec.getNextFrame();
       final image = frame.image;
 
-      // 添加到内存缓�?
+      // 添加到内存缓�?
       _addToMemoryCache(imagePath, image);
       debugPrint('加载并缓存UI图片: $imagePath');
 
@@ -22557,7 +22557,7 @@ class ImageCacheService {
   /// 预加载图片到缓存
   Future<void> preloadImage(String imagePath) async {
     try {
-      // 获取文件修改时间，确保预加载的缓存键与实际使用时一�?
+      // 获取文件修改时间，确保预加载的缓存键与实际使用时一�?
       DateTime? fileModifiedTime;
       try {
         final file = File(imagePath);
@@ -22570,22 +22570,22 @@ class ImageCacheService {
         debugPrint('预加载时获取文件修改时间失败: $e');
       }
       
-      // 预加载常用尺寸的缩略�?
+      // 预加载常用尺寸的缩略�?
       await Future.wait([
-        getOptimizedImage(imagePath, width: 60, height: 80, fileModifiedTime: fileModifiedTime), // 列表缩略�?
-        getOptimizedImage(imagePath, width: 120, height: 120, fileModifiedTime: fileModifiedTime), // 对话框图�?
-        getOptimizedImage(imagePath, width: 200, height: 200, fileModifiedTime: fileModifiedTime), // 详情页图�?
+        getOptimizedImage(imagePath, width: 60, height: 80, fileModifiedTime: fileModifiedTime), // 列表缩略�?
+        getOptimizedImage(imagePath, width: 120, height: 120, fileModifiedTime: fileModifiedTime), // 对话框图�?
+        getOptimizedImage(imagePath, width: 200, height: 200, fileModifiedTime: fileModifiedTime), // 详情页图�?
       ]);
-      debugPrint('预加载图片完�? $imagePath');
+      debugPrint('预加载图片完�? $imagePath');
     } catch (e) {
-      debugPrint('预加载图片失�? $e');
+      debugPrint('预加载图片失�? $e');
     }
   }
 
-  /// 清理单个图片的缓�?
+  /// 清理单个图片的缓�?
   Future<void> clearImageCache(String imagePath) async {
     try {
-      // 从内存缓存移�?
+      // 从内存缓存移�?
       _memoryCache.remove(imagePath);
 
       // 从字节缓存移除相关项
@@ -22597,7 +22597,7 @@ class ImageCacheService {
         _byteCache.remove(key);
       }
 
-      // 从磁盘缓存移除相关文�?
+      // 从磁盘缓存移除相关文�?
       if (_thumbnailCacheDir != null) {
         final cacheDir = Directory(_thumbnailCacheDir!);
         if (await cacheDir.exists()) {
@@ -22616,7 +22616,7 @@ class ImageCacheService {
     }
   }
 
-  /// 清理所有缓�?
+  /// 清理所有缓�?
   Future<void> clearAllCache() async {
     try {
       // 清理内存缓存
@@ -22632,13 +22632,13 @@ class ImageCacheService {
         }
       }
 
-      debugPrint('清理所有图片缓�?);
+      debugPrint('清理所有图片缓�?);
     } catch (e) {
-      debugPrint('清理所有缓存失�? $e');
+      debugPrint('清理所有缓存失�? $e');
     }
   }
 
-  /// 获取缓存状态信�?
+  /// 获取缓存状态信�?
   Map<String, dynamic> getCacheStatus() {
     return {
       'memoryCount': _memoryCache.length,
@@ -22651,7 +22651,7 @@ class ImageCacheService {
 
   // 私有方法
 
-  /// 生成缓存�?
+  /// 生成缓存�?
   String _generateCacheKey(
     String imagePath,
     int? width,
@@ -22692,13 +22692,13 @@ class ImageCacheService {
       final targetWidth = width ?? originalImage.width;
       final targetHeight = height ?? originalImage.height;
 
-      // 如果尺寸相同，返回原始数�?
+      // 如果尺寸相同，返回原始数�?
       if (targetWidth == originalImage.width &&
           targetHeight == originalImage.height) {
         return originalBytes;
       }
 
-      // 创建画布并绘制缩放后的图�?
+      // 创建画布并绘制缩放后的图�?
       final recorder = ui.PictureRecorder();
       final canvas = Canvas(recorder);
 
@@ -22721,7 +22721,7 @@ class ImageCacheService {
       final picture = recorder.endRecording();
       final resizedImage = await picture.toImage(targetWidth, targetHeight);
 
-      // 转换为字节数�?
+      // 转换为字节数�?
       final byteData = await resizedImage.toByteData(
         format: ui.ImageByteFormat.png,
       );
@@ -22765,9 +22765,9 @@ class ImageCacheService {
     }
   }
 
-  /// 添加到内存缓�?
+  /// 添加到内存缓�?
   void _addToMemoryCache(String key, ui.Image image) {
-    // 如果缓存已满，移除最旧的�?
+    // 如果缓存已满，移除最旧的�?
     if (_memoryCache.length >= maxMemoryCacheSize) {
       final firstKey = _memoryCache.keys.first;
       _memoryCache[firstKey]?.dispose();
@@ -22777,9 +22777,9 @@ class ImageCacheService {
     _memoryCache[key] = image;
   }
 
-  /// 添加到字节缓�?
+  /// 添加到字节缓�?
   void _addToByteCache(String key, Uint8List bytes) {
-    // 如果缓存已满，移除最旧的�?
+    // 如果缓存已满，移除最旧的�?
     if (_byteCache.length >= maxByteCacheSize) {
       final firstKey = _byteCache.keys.first;
       _byteCache.remove(firstKey);
@@ -22827,7 +22827,7 @@ class ImageService {
     return ImageService._internal(picker: picker, cacheService: cacheService);
   }
 
-  /// 从相机拍�?
+  /// 从相机拍�?
   Future<String?> pickImageFromCamera() async {
     try {
       final XFile? image = await _picker.pickImage(
@@ -22867,14 +22867,14 @@ class ImageService {
     }
   }
 
-  /// 显示图片选择底部对话�?
+  /// 显示图片选择底部对话�?
   Future<String?> showImagePickerBottomSheet() async {
     // 这个方法需要在调用者中实现UI逻辑
-    // 返回选择的图片路�?
+    // 返回选择的图片路�?
     return null;
   }
 
-  /// 保存图片到本地应用目�?
+  /// 保存图片到本地应用目�?
   Future<String> _saveImageToLocal(XFile image) async {
     try {
       // 获取应用文档目录
@@ -22891,7 +22891,7 @@ class ImageService {
       final String timestamp = DateTime.now().millisecondsSinceEpoch.toString();
       final String extension = path.extension(image.path);
       final String fileName = 'product_$timestamp$extension';
-      final String localPath = path.join(imagesDir, fileName); // 复制文件到本地目�?
+      final String localPath = path.join(imagesDir, fileName); // 复制文件到本地目�?
       await File(image.path).copy(localPath);
       debugPrint('图片保存成功: $localPath');
 
@@ -22921,7 +22921,7 @@ class ImageService {
     }
   }
 
-  /// 检查图片文件是否存�?
+  /// 检查图片文件是否存�?
   Future<bool> imageExists(String imagePath) async {
     try {
       final File imageFile = File(imagePath);
@@ -22944,7 +22944,7 @@ class ImageService {
     }
   }
 
-  /// 清理所有产品图片（慎用�?
+  /// 清理所有产品图片（慎用�?
   Future<void> clearAllProductImages() async {
     try {
       final Directory appDir = await getApplicationDocumentsDirectory();
@@ -22963,7 +22963,7 @@ class ImageService {
   /// 预加载图片到缓存
   Future<void> _preloadImageToCache(String imagePath) async {
     try {
-      // 在后台异步预加载常用尺寸的图�?
+      // 在后台异步预加载常用尺寸的图�?
       unawaited(_cacheService.preloadImage(imagePath));
     } catch (e) {
       debugPrint('预加载图片到缓存失败: $e');
@@ -22993,7 +22993,7 @@ import '../constants/app_routes.dart';
 class ScanProductService {
   /// 扫码并显示产品信息对话框
   /// 
-  /// 流程�?
+  /// 流程�?
   /// 1. 调起扫码界面
   /// 2. 根据条码查询产品信息
   /// 3. 如果找到产品，显示产品信息对话框
@@ -23037,7 +23037,7 @@ class ScanProductService {
       await _handleProductFound(context, payload);
     } catch (e) {
       if (!context.mounted) return;
-      showAppSnackBar(context, message: '查询货品失败�?e', isError: true);
+      showAppSnackBar(context, message: '查询货品失败�?e', isError: true);
     }
   }
 
@@ -23049,8 +23049,8 @@ class ScanProductService {
     final shouldAddProduct = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('未找到货�?),
-        content: Text('未找到条�?"$barcode" 对应的货品，是否新增�?),
+        title: const Text('未找到货�?),
+        content: Text('未找到条�?"$barcode" 对应的货品，是否新增�?),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
@@ -23071,7 +23071,7 @@ class ScanProductService {
     }
   }
 
-  /// 处理找到产品的情�?
+  /// 处理找到产品的情�?
   static Future<void> _handleProductFound(
     BuildContext context,
     ScannedProductPayload payload,
@@ -23096,7 +23096,7 @@ import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 
 /// Toast 提示服务
-/// 提供统一的消息提示功�?
+/// 提供统一的消息提示功�?
 class ToastService {
   /// 显示成功提示
   static void success(String message) {
@@ -23157,9 +23157,9 @@ import 'package:shared_preferences/shared_preferences.dart';
 class UserAgreementService {
   static const String _keyAgreementAccepted = 'user_agreement_accepted';
   static const String _keyAgreementVersion = 'user_agreement_version';
-  static const String currentVersion = '1.0.0'; // 协议版本�?
+  static const String currentVersion = '1.0.0'; // 协议版本�?
 
-  /// 检查用户是否已同意当前版本的协�?
+  /// 检查用户是否已同意当前版本的协�?
   Future<bool> hasAcceptedAgreement() async {
     final prefs = await SharedPreferences.getInstance();
     final accepted = prefs.getBool(_keyAgreementAccepted) ?? false;
@@ -23169,7 +23169,7 @@ class UserAgreementService {
     return accepted && version == currentVersion;
   }
 
-  /// 保存用户同意状�?
+  /// 保存用户同意状�?
   Future<void> acceptAgreement() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool(_keyAgreementAccepted, true);
@@ -23379,7 +23379,7 @@ class LoadingOverlay extends StatelessWidget {
         if (isLoading)
           Container(
             color: Colors.black.withOpacity(0.3),
-            child: LoadingWidget(message: loadingMessage ?? '加载�?..'),
+            child: LoadingWidget(message: loadingMessage ?? '加载�?..'),
           ),
       ],
     );
@@ -23392,7 +23392,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 class AppTheme {
-  // 主色�?
+  // 主色�?
   static const Color primaryColor = Color(0xFF2196F3);
   static const Color secondaryColor = Color(0xFF03DAC6);
   static const Color errorColor = Color(0xFFB00020);
@@ -23431,7 +23431,7 @@ class AppTheme {
 
     appBarTheme: const AppBarTheme(
       // backgroundColor: Color.fromARGB(255, 33, 243, 44),
-      foregroundColor: Color.fromARGB(255, 33, 124, 243), // 文字和图标颜�?
+      foregroundColor: Color.fromARGB(255, 33, 124, 243), // 文字和图标颜�?
       elevation: 8.0,
       toolbarHeight: 37,
 
@@ -23470,7 +23470,7 @@ class AppTheme {
     inputDecorationTheme: InputDecorationTheme(
       isDense: true,
       filled: true,
-      fillColor: Colors.grey.shade50, // 淡灰色背�?
+      fillColor: Colors.grey.shade50, // 淡灰色背�?
       border: UnderlineInputBorder(
         borderSide: BorderSide(color: Colors.grey.shade300),
       ),
@@ -23563,26 +23563,26 @@ class AppTheme {
 }
 import '../../../features/product/domain/model/product_unit.dart';
 
-/// UnitProduct 的扩展方�?
+/// UnitProduct 的扩展方�?
 extension ProductUnitExtensions on UnitProduct {
   /// 判断是否为基础单位
   bool get isBaseUnit => conversionRate == 1.0;
 
-  /// 判断是否为大单位（换算率大于1�?
+  /// 判断是否为大单位（换算率大于1�?
   bool get isLargerUnit => conversionRate > 1.0;
 
-  /// 判断是否为小单位（换算率小于1�?
+  /// 判断是否为小单位（换算率小于1�?
   bool get isSmallerUnit => conversionRate < 1.0;
 
-  /// 获取相对于基础单位的大小关系描�?
+  /// 获取相对于基础单位的大小关系描�?
   String get sizeRelativeToBase {
     if (isBaseUnit) return '基础单位';
-    if (isLargerUnit) return '大单�?;
-    return '小单�?;
+    if (isLargerUnit) return '大单�?;
+    return '小单�?;
   }
 }
 
-/// List<UnitProduct> 的扩展方�?
+/// List<UnitProduct> 的扩展方�?
 extension ProductUnitListExtensions on List<UnitProduct> {
   /// 按换算率从大到小排序
   List<UnitProduct> get sortedByConversionRateDesc {
@@ -23642,16 +23642,16 @@ extension ProductUnitListExtensions on List<UnitProduct> {
 
   /// 获取配置验证错误信息
   String? get configurationError {
-    if (isEmpty) return '至少需要配置一个单�?;
+    if (isEmpty) return '至少需要配置一个单�?;
 
   // 先校验换算率有效性（优先级更高）
   final invalidRates = where((unit) => unit.conversionRate <= 0);
-  if (invalidRates.isNotEmpty) return '换算率必须大�?';
+  if (invalidRates.isNotEmpty) return '换算率必须大�?';
 
   // 再校验基础单位约束
   final baseUnits = where((unit) => unit.isBaseUnit).toList();
-  if (baseUnits.isEmpty) return '必须有一个基础单位（换算率�?�?;
-  if (baseUnits.length > 1) return '只能有一个基础单位（换算率�?�?;
+  if (baseUnits.isEmpty) return '必须有一个基础单位（换算率�?�?;
+  if (baseUnits.length > 1) return '只能有一个基础单位（换算率�?�?;
 
     return null;
   }
@@ -23688,7 +23688,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:audioplayers/audioplayers.dart';
 
-/// 音效播放工具�?
+/// 音效播放工具�?
 class SoundHelper {
   static final AudioPlayer _audioPlayer = AudioPlayer();
 
@@ -23699,7 +23699,7 @@ class SoundHelper {
       await _audioPlayer.play(AssetSource('sounds/scan_success2.mp3'));
     } catch (e) {
       if (kDebugMode) {
-        print('播放音效失败，使用系统音�? $e');
+        print('播放音效失败，使用系统音�? $e');
       }
       SystemSound.play(SystemSoundType.click);
     }
@@ -23708,17 +23708,17 @@ class SoundHelper {
 import 'package:stocko_app/features/product/domain/model/unit.dart';
 import 'package:stocko_app/features/product/domain/model/product_unit.dart';
 
-/// 单位换算工具�?
+/// 单位换算工具�?
 ///
-/// 提供以下功能�?
+/// 提供以下功能�?
 /// 1. 将任意单位的数量换算成基础单位数量
 /// 2. 将基础单位的库存量格式化成用户友好的字符串
 class UnitConverter {
   /// 将任意单位的数量换算成基础单位数量
   ///
-  /// [quantity] 输入的数�?
-  /// [unit] 输入数量对应的单�?
-  /// [allUnits] 产品的所有单位配置列�?
+  /// [quantity] 输入的数�?
+  /// [unit] 输入数量对应的单�?
+  /// [allUnits] 产品的所有单位配置列�?
   ///
   /// 返回换算后的基础单位数量
   /// 如果找不到对应的单位配置，返回原数量
@@ -23727,10 +23727,10 @@ class UnitConverter {
     Unit unit,
     List<UnitProduct> allUnits,
   ) {
-    // 查找对应的产品单位配�?
+    // 查找对应的产品单位配�?
     final unitProduct = allUnits.firstWhere(
       (pu) => pu.unitId == unit.id,
-      orElse: () => throw ArgumentError('找不到单位配�? ${unit.name}'),
+      orElse: () => throw ArgumentError('找不到单位配�? ${unit.name}'),
     );
 
     // 使用换算率计算基础单位数量
@@ -23739,11 +23739,11 @@ class UnitConverter {
 
   /// 将基础单位的库存量格式化成用户友好的字符串
   ///
-  /// [stockInBaseUnit] 基础单位的库存数�?
-  /// [allUnits] 产品的所有单位配置列表，应按换算率从大到小排�?
+  /// [stockInBaseUnit] 基础单位的库存数�?
+  /// [allUnits] 产品的所有单位配置列表，应按换算率从大到小排�?
   /// [unitMap] 单位ID到单位对象的映射
   ///
-  /// 返回格式化的字符串，�?"1 �?5 �? �?"15 �?
+  /// 返回格式化的字符串，�?"1 �?5 �? �?"15 �?
   static String formatStockForDisplay(
     int stockInBaseUnit,
     List<UnitProduct> allUnits,
@@ -23766,7 +23766,7 @@ class UnitConverter {
 
       if (unit == null) continue;
 
-      // 计算当前单位可以表示的数�?
+      // 计算当前单位可以表示的数�?
       final unitQuantity = unitProduct.calculateUnitQuantity(remainingStock);
 
       // 如果是最后一个单位，直接使用剩余数量
@@ -23777,7 +23777,7 @@ class UnitConverter {
         break;
       }
 
-      // 对于非最后一个单位，取整数部�?
+      // 对于非最后一个单位，取整数部�?
       final wholeUnits = unitQuantity.floor();
       if (wholeUnits > 0) {
         parts.add('$wholeUnits ${unit.name}');
@@ -23791,13 +23791,13 @@ class UnitConverter {
     return parts.isEmpty ? '0' : parts.join(' ');
   }
 
-  /// 获取指定单位的库存数�?
+  /// 获取指定单位的库存数�?
   ///
-  /// [stockInBaseUnit] 基础单位的库存数�?
+  /// [stockInBaseUnit] 基础单位的库存数�?
   /// [targetUnit] 目标单位
-  /// [allUnits] 产品的所有单位配置列�?
+  /// [allUnits] 产品的所有单位配置列�?
   ///
-  /// 返回目标单位的库存数�?
+  /// 返回目标单位的库存数�?
   static int getStockInUnit(
     int stockInBaseUnit,
     Unit targetUnit,
@@ -23805,7 +23805,7 @@ class UnitConverter {
   ) {
     final unitProduct = allUnits.firstWhere(
       (pu) => pu.unitId == targetUnit.id,
-      orElse: () => throw ArgumentError('找不到单位配�? ${targetUnit.name}'),
+      orElse: () => throw ArgumentError('找不到单位配�? ${targetUnit.name}'),
     );
 
     return unitProduct.calculateUnitQuantity(stockInBaseUnit);
@@ -23813,30 +23813,30 @@ class UnitConverter {
 
   /// 验证单位换算配置是否合理
   ///
-  /// [allUnits] 产品的所有单位配置列�?
+  /// [allUnits] 产品的所有单位配置列�?
   ///
-  /// 返回验证结果和错误信�?
+  /// 返回验证结果和错误信�?
   static (bool isValid, String? errorMessage) validateUnitConfiguration(
     List<UnitProduct> allUnits,
   ) {
     if (allUnits.isEmpty) {
-      return (false, '至少需要配置一个单�?);
+      return (false, '至少需要配置一个单�?);
     }
 
-    // 检查换算率是否都大�?
+    // 检查换算率是否都大�?
     final invalidRates = allUnits.where((unit) => unit.conversionRate <= 0);
     if (invalidRates.isNotEmpty) {
-      return (false, '换算率必须大�?');
+      return (false, '换算率必须大�?');
     }
 
-    // 检查是否有基础单位（换算率�?的单位）
+    // 检查是否有基础单位（换算率�?的单位）
     final baseUnits = allUnits.where((unit) => unit.conversionRate == 1.0);
     if (baseUnits.isEmpty) {
-      return (false, '必须有一个基础单位（换算率�?�?);
+      return (false, '必须有一个基础单位（换算率�?�?);
     }
 
     if (baseUnits.length > 1) {
-      return (false, '只能有一个基础单位（换算率�?�?);
+      return (false, '只能有一个基础单位（换算率�?�?);
     }
 
     return (true, null);
@@ -23853,9 +23853,9 @@ class UnitConverter {
 
   /// 查找基础单位
   ///
-  /// [allUnits] 产品的所有单位配置列�?
+  /// [allUnits] 产品的所有单位配置列�?
   ///
-  /// 返回基础单位，如果找不到或有多个基础单位则抛出异�?
+  /// 返回基础单位，如果找不到或有多个基础单位则抛出异�?
   static UnitProduct findBaseUnit(List<UnitProduct> allUnits) {
     final baseUnits = allUnits.where((unit) => unit.conversionRate == 1.0).toList();
 
@@ -23870,25 +23870,25 @@ class UnitConverter {
     return baseUnits.first;
   }
 
-  /// 比较两个单位的大小关�?
+  /// 比较两个单位的大小关�?
   ///
-  /// [unit1] 第一个单�?
-  /// [unit2] 第二个单�?
-  /// [allUnits] 产品的所有单位配置列�?
+  /// [unit1] 第一个单�?
+  /// [unit2] 第二个单�?
+  /// [allUnits] 产品的所有单位配置列�?
   ///
-  /// 返回比较结果�?
-  /// - 正数：unit1 �?unit2 �?
-  /// - 负数：unit1 �?unit2 �?
-  /// - 0：unit1 �?unit2 相等
+  /// 返回比较结果�?
+  /// - 正数：unit1 �?unit2 �?
+  /// - 负数：unit1 �?unit2 �?
+  /// - 0：unit1 �?unit2 相等
   static int compareUnits(Unit unit1, Unit unit2, List<UnitProduct> allUnits) {
     final productUnit1 = allUnits.firstWhere(
       (pu) => pu.unitId == unit1.id,
-      orElse: () => throw ArgumentError('找不到单位配�? ${unit1.name}'),
+      orElse: () => throw ArgumentError('找不到单位配�? ${unit1.name}'),
     );
 
     final productUnit2 = allUnits.firstWhere(
       (pu) => pu.unitId == unit2.id,
-      orElse: () => throw ArgumentError('找不到单位配�? ${unit2.name}'),
+      orElse: () => throw ArgumentError('找不到单位配�? ${unit2.name}'),
     );
 
     return productUnit1.conversionRate.compareTo(productUnit2.conversionRate);
@@ -23952,7 +23952,7 @@ class _CachedImageWidgetState extends State<CachedImageWidget> {
   void didUpdateWidget(CachedImageWidget oldWidget) {
     super.didUpdateWidget(oldWidget);
 
-    // 如果图片路径、尺寸、质量或修改时间发生变化，重新加�?
+    // 如果图片路径、尺寸、质量或修改时间发生变化，重新加�?
     if (oldWidget.imagePath != widget.imagePath ||
         oldWidget.width != widget.width ||
         oldWidget.height != widget.height ||
@@ -23975,7 +23975,7 @@ class _CachedImageWidgetState extends State<CachedImageWidget> {
 
     try {
       // 检查图片路径是否为空或无效
-      debugPrint('开始加载图�? ${widget.imagePath}');
+      debugPrint('开始加载图�? ${widget.imagePath}');
       if (widget.imagePath.isEmpty) {
         debugPrint('图片路径为空');
         _performanceMonitor.recordCacheMiss(widget.imagePath);
@@ -23986,9 +23986,9 @@ class _CachedImageWidgetState extends State<CachedImageWidget> {
           });
         }
         return;
-      } // 检查文件是否存�?
+      } // 检查文件是否存�?
       final file = File(widget.imagePath);
-      debugPrint('检查文件是否存�? ${widget.imagePath}');
+      debugPrint('检查文件是否存�? ${widget.imagePath}');
 
       bool fileExists = false;
       try {
@@ -23996,20 +23996,20 @@ class _CachedImageWidgetState extends State<CachedImageWidget> {
         // 在测试环境中，对于明显不存在的路径，直接返回false
         if (widget.imagePath.startsWith('/non/existent/')) {
           fileExists = false;
-          debugPrint('非存在测试路径，假定文件不存�? $fileExists');
+          debugPrint('非存在测试路径，假定文件不存�? $fileExists');
         } else {
           fileExists = await file.exists();
-          debugPrint('文件存在性检查完�? $fileExists');
+          debugPrint('文件存在性检查完�? $fileExists');
         }
       } catch (e) {
-        debugPrint('文件存在性检查异�? $e');
+        debugPrint('文件存在性检查异�? $e');
         fileExists = false;
       }
 
-      debugPrint('文件存在性检查结�? $fileExists');
+      debugPrint('文件存在性检查结�? $fileExists');
 
       if (!fileExists) {
-        debugPrint('图片文件不存在，设置错误状�? ${widget.imagePath}');
+        debugPrint('图片文件不存在，设置错误状�? ${widget.imagePath}');
         _performanceMonitor.recordCacheMiss(widget.imagePath);
         if (mounted) {
           setState(() {
@@ -24025,7 +24025,7 @@ class _CachedImageWidgetState extends State<CachedImageWidget> {
 
       Uint8List? imageBytes;
       if (widget.enableCache) {
-        // 如果没有提供fileModifiedTime，自动获取文件修改时�?
+        // 如果没有提供fileModifiedTime，自动获取文件修改时�?
         DateTime? effectiveFileModifiedTime = widget.fileModifiedTime;
         if (effectiveFileModifiedTime == null) {
           try {
@@ -24055,7 +24055,7 @@ class _CachedImageWidgetState extends State<CachedImageWidget> {
           _performanceMonitor.recordCacheHit(widget.imagePath);
         } else {
           _performanceMonitor.recordCacheMiss(widget.imagePath);
-          // 如果缓存失败，直接读取原始文�?
+          // 如果缓存失败，直接读取原始文�?
           try {
             imageBytes = await file.readAsBytes();
           } catch (e) {
@@ -24106,10 +24106,10 @@ class _CachedImageWidgetState extends State<CachedImageWidget> {
     Widget child;
 
     if (_isLoading) {
-      // 显示加载状�?
+      // 显示加载状�?
       child = widget.placeholder ?? _buildDefaultPlaceholder();
     } else if (_hasError || _imageBytes == null) {
-      // 显示错误状�?
+      // 显示错误状�?
       child = widget.errorWidget ?? _buildDefaultErrorWidget();
     } else {
       // 显示图片
@@ -24204,7 +24204,7 @@ class _CachedImageWidgetState extends State<CachedImageWidget> {
 
 /// 预构建的缓存图片组件变体
 
-/// 产品列表缩略�?
+/// 产品列表缩略�?
 class ProductThumbnailImage extends StatelessWidget {
   final String imagePath;
   final VoidCallback? onTap;
@@ -24213,7 +24213,7 @@ class ProductThumbnailImage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // 根据设备像素密度请求更高分辨率的缓存，以提高清晰�?
+    // 根据设备像素密度请求更高分辨率的缓存，以提高清晰�?
     final pixelRatio = MediaQuery.of(context).devicePixelRatio;
 
     final cacheWidth = (60 * pixelRatio).round();
@@ -24231,7 +24231,7 @@ class ProductThumbnailImage extends StatelessWidget {
           height: cacheHeight.toDouble(),
           fit: BoxFit.cover,
           borderRadius: BorderRadius.circular(6),
-          // 分辨率提高后，可适当降低质量以平衡文件大�?
+          // 分辨率提高后，可适当降低质量以平衡文件大�?
           quality: 100,
           placeholder: _buildPlaceholder(),
           errorWidget: _buildErrorWidget(),
@@ -24325,7 +24325,7 @@ class ProductDetailImage extends StatelessWidget {
           children: [
             CircularProgressIndicator(),
             SizedBox(height: 8),
-            Text('加载�?..', style: TextStyle(color: Colors.grey)),
+            Text('加载�?..', style: TextStyle(color: Colors.grey)),
           ],
         ),
       ),
@@ -24355,7 +24355,7 @@ class ProductDetailImage extends StatelessWidget {
   }
 }
 
-/// 产品对话框图�?
+/// 产品对话框图�?
 class ProductDialogImage extends StatelessWidget {
   final String imagePath;
 
@@ -24416,10 +24416,10 @@ class ProductDialogImage extends StatelessWidget {
 }
 import 'package:flutter/material.dart';
 
-/// 自定义日期选择�?
+/// 自定义日期选择�?
 /// 提供更方便的年月日选择体验
 class CustomDatePicker {
-  /// 显示自定义日期选择�?
+  /// 显示自定义日期选择�?
   static Future<DateTime?> show({
     required BuildContext context,
     DateTime? initialDate,
@@ -24537,7 +24537,7 @@ class _CustomDatePickerDialogState extends State<_CustomDatePickerDialog> {
               child: Column(
                 children: [
                   const Text(
-                    '�?,
+                    '�?,
                     style: TextStyle(fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 8),
@@ -24594,7 +24594,7 @@ class _CustomDatePickerDialogState extends State<_CustomDatePickerDialog> {
               child: Column(
                 children: [
                   const Text(
-                    '�?,
+                    '�?,
                     style: TextStyle(fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 8),
@@ -24648,7 +24648,7 @@ class _CustomDatePickerDialogState extends State<_CustomDatePickerDialog> {
               child: Column(
                 children: [
                   const Text(
-                    '�?,
+                    '�?,
                     style: TextStyle(fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 8),
@@ -24723,7 +24723,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-/// 全屏图片查看�?
+/// 全屏图片查看�?
 /// 支持缩放、平移、旋转等功能
 class FullScreenImageViewer extends StatefulWidget {
   final String imagePath;
@@ -24812,7 +24812,7 @@ class _FullScreenImageViewerState extends State<FullScreenImageViewer>
       ),
       body: Stack(
         children: [
-          // 主要的图片查看区�?
+          // 主要的图片查看区�?
           Center(
             child: InteractiveViewer(
               transformationController: _transformationController,
@@ -24838,7 +24838,7 @@ class _FullScreenImageViewerState extends State<FullScreenImageViewer>
             ),
           ),
 
-          // 底部控制�?
+          // 底部控制�?
           Positioned(
             bottom: 0,
             left: 0,
@@ -24861,7 +24861,7 @@ class _FullScreenImageViewerState extends State<FullScreenImageViewer>
             ),
           ),
 
-          // 缩放级别指示�?
+          // 缩放级别指示�?
           if (_currentScale != 1.0)
             Positioned(
               top: 100,
@@ -25043,7 +25043,7 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class PrivacyDebugHelper {
-  /// 检查隐私政策同意状�?
+  /// 检查隐私政策同意状�?
   static Future<Map<String, dynamic>> checkPrivacyStatus() async {
     final prefs = await SharedPreferences.getInstance();
     
@@ -25058,7 +25058,7 @@ class PrivacyDebugHelper {
     };
   }
   
-  /// 重置隐私政策状态（用于测试�?
+  /// 重置隐私政策状态（用于测试�?
   static Future<void> resetPrivacyStatus() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove('privacy_policy_agreed');
@@ -25078,9 +25078,9 @@ class PrivacyDebugHelper {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('旧Key状�? ${status['oldKey']}'),
-              Text('新Key状�? ${status['newKey']}'),
-              Text('应显示弹�? ${status['shouldShowDialog']}'),
+              Text('旧Key状�? ${status['oldKey']}'),
+              Text('新Key状�? ${status['newKey']}'),
+              Text('应显示弹�? ${status['shouldShowDialog']}'),
               const SizedBox(height: 16),
               const Text('所有存储的Keys:'),
               ...((status['allKeys'] as List).map((key) => Text('- $key'))),
@@ -25099,7 +25099,7 @@ class PrivacyDebugHelper {
                   const SnackBar(content: Text('隐私政策状态已重置')),
                 );
               },
-              child: const Text('重置状�?),
+              child: const Text('重置状�?),
             ),
           ],
         ),
@@ -25152,7 +25152,7 @@ class _PrivacyInitializerState extends ConsumerState<PrivacyInitializer> {
         _isDialogShown = false;
       }
     } catch (e) {
-      print('�?Dialog check failed: $e');
+      print('�?Dialog check failed: $e');
     }
   }
 
@@ -25183,7 +25183,7 @@ class _PrivacyInitializerState extends ConsumerState<PrivacyInitializer> {
       },
     );
     
-    // 如果用户点击"不同�?，退出应�?
+    // 如果用户点击"不同�?，退出应�?
     if (result == false) {
       SystemNavigator.pop();
     }
@@ -25199,7 +25199,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../features/settings/presentation/widgets/privacy_policy_dialog.dart';
 
 /// 隐私政策检查器
-/// �?MaterialApp 内部使用，确保有 Navigator 可用
+/// �?MaterialApp 内部使用，确保有 Navigator 可用
 class PrivacyPolicyChecker extends StatefulWidget {
   final Widget child;
 
@@ -25224,7 +25224,7 @@ class _PrivacyPolicyCheckerState extends State<PrivacyPolicyChecker> {
       final prefs = await SharedPreferences.getInstance();
       final isAgreed = prefs.getBool('isPrivacyPolicyAgreed') ?? false;
 
-      debugPrint('🔐 隐私政策状�? isAgreed=$isAgreed');
+      debugPrint('🔐 隐私政策状�? isAgreed=$isAgreed');
 
       if (mounted) {
         setState(() {
@@ -25233,7 +25233,7 @@ class _PrivacyPolicyCheckerState extends State<PrivacyPolicyChecker> {
         });
       }
     } catch (e) {
-      debugPrint('�?隐私政策检查失�? $e');
+      debugPrint('�?隐私政策检查失�? $e');
       if (mounted) {
         setState(() {
           _isChecking = false;
@@ -25336,7 +25336,7 @@ class _ProductInfoDialog extends ConsumerWidget {
                 if (!snapshot.hasData) {
                   return _buildContent(null);
                 }
-                // 计算所有店铺的总库�?
+                // 计算所有店铺的总库�?
                 final totalQuantity = snapshot.data!.fold<int>(
                   0,
                   (sum, inventory) => sum + (inventory.quantity as int),
@@ -25356,7 +25356,7 @@ class _ProductInfoDialog extends ConsumerWidget {
         ),
         ElevatedButton(
           onPressed: () => Navigator.of(context).pop(ProductInfoAction.sale),
-          child: const Text('销�?),
+          child: const Text('销�?),
         ),
       ],
     );
@@ -25365,12 +25365,12 @@ class _ProductInfoDialog extends ConsumerWidget {
   Widget _buildContent(int? stockQuantity) {
     final product = payload.product;
 
-    // 判断是否为基本单位（conversionRate == 1�?
+    // 判断是否为基本单位（conversionRate == 1�?
     final isBaseUnit = payload.conversionRate == 1;
 
-    // 售价逻辑�?
-    // - 基本单位：使�?Product 表的 effectivePrice
-    // - 辅助单位：使�?UnitProduct 表的 sellingPriceInCents
+    // 售价逻辑�?
+    // - 基本单位：使�?Product 表的 effectivePrice
+    // - 辅助单位：使�?UnitProduct 表的 sellingPriceInCents
     int? sellingPriceInCents;
     if (isBaseUnit) {
       sellingPriceInCents = product.effectivePrice?.cents;
@@ -25378,7 +25378,7 @@ class _ProductInfoDialog extends ConsumerWidget {
       sellingPriceInCents = payload.sellingPriceInCents;
     }
 
-    // 计算采购价：优先使用 averageUnitPriceInCents * conversionRate，否则使�?wholesalePriceInCents
+    // 计算采购价：优先使用 averageUnitPriceInCents * conversionRate，否则使�?wholesalePriceInCents
     int? purchasePriceInCents;
     String priceSource = '';
     if (payload.averageUnitPriceInCents != null) {
@@ -25387,28 +25387,28 @@ class _ProductInfoDialog extends ConsumerWidget {
       priceSource = '(库存均价)';
     } else if (payload.wholesalePriceInCents != null) {
       purchasePriceInCents = payload.wholesalePriceInCents;
-      priceSource = '(批发�?';
+      priceSource = '(批发�?';
     }
 
     return Column(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('名称�?{product.name}'),
+        Text('名称�?{product.name}'),
         const SizedBox(height: 8),
-        Text('条码�?{payload.barcode}'),
+        Text('条码�?{payload.barcode}'),
         const SizedBox(height: 8),
-        Text('单位�?{payload.unitName}'),
+        Text('单位�?{payload.unitName}'),
         const SizedBox(height: 8),
         Text(
-          '售价�?{sellingPriceInCents != null ? '¥${(sellingPriceInCents / 100).toStringAsFixed(2)}' : '-'}',
+          '售价�?{sellingPriceInCents != null ? '¥${(sellingPriceInCents / 100).toStringAsFixed(2)}' : '-'}',
         ),
         const SizedBox(height: 8),
         Text(
           '采购价：${purchasePriceInCents != null ? '¥${(purchasePriceInCents / 100).toStringAsFixed(2)}$priceSource' : '-'}',
         ),
         const SizedBox(height: 8),
-        Text('库存�?{stockQuantity != null ? '$stockQuantity' : '-'}'),
+        Text('库存�?{stockQuantity != null ? '$stockQuantity' : '-'}'),
       ],
     );
   }
@@ -25418,27 +25418,27 @@ import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../services/scan_product_service.dart';
 
-/// 一个带底部导航栏的通用 Scaffold，用于配�?GoRouter �?StatefulShellRoute 使用�?
+/// 一个带底部导航栏的通用 Scaffold，用于配�?GoRouter �?StatefulShellRoute 使用�?
 class ScaffoldWithNavBar extends ConsumerWidget {
   const ScaffoldWithNavBar({super.key, required this.navigationShell});
 
   final StatefulNavigationShell navigationShell;
 
   void _onDestinationSelected(BuildContext context, int index) {
-    // 跳过中间的占位符（index 2�?
+    // 跳过中间的占位符（index 2�?
     if (index == 2) return;
 
-    // 调整索引：index 3, 4 对应实际的分�?2, 3
+    // 调整索引：index 3, 4 对应实际的分�?2, 3
     final branchIndex = index > 2 ? index - 1 : index;
 
-    // 切换分支；如果点击当前分支，则返回该分支的初始路�?
+    // 切换分支；如果点击当前分支，则返回该分支的初始路�?
     navigationShell.goBranch(
       branchIndex,
       initialLocation: branchIndex == navigationShell.currentIndex,
     );
   }
 
-  // 渐变方案（每�?Tab 一套）
+  // 渐变方案（每�?Tab 一套）
   static const _homeGradient = LinearGradient(
     colors: [Color(0xFFFF9966), Color(0xFFFF5E62)],
   );
@@ -25469,7 +25469,7 @@ class ScaffoldWithNavBar extends ConsumerWidget {
               height: 64,
             ),
             child: NavigationBar(
-              // 调整选中索引：分�?2, 3 对应显示索引 3, 4
+              // 调整选中索引：分�?2, 3 对应显示索引 3, 4
               selectedIndex: navigationShell.currentIndex >= 2
                   ? navigationShell.currentIndex + 1
                   : navigationShell.currentIndex,
@@ -25499,7 +25499,7 @@ class ScaffoldWithNavBar extends ConsumerWidget {
                   ),
                   label: '货品',
                 ),
-                // 占位符，�?FAB 留出空间
+                // 占位符，�?FAB 留出空间
                 NavigationDestination(icon: SizedBox(width: 64), label: ''),
                 NavigationDestination(
                   icon: _GradientIcon(
@@ -25510,7 +25510,7 @@ class ScaffoldWithNavBar extends ConsumerWidget {
                     icon: Icons.shopping_bag_rounded,
                     gradient: _salesGradient,
                   ),
-                  label: '销�?,
+                  label: '销�?,
                 ),
                 NavigationDestination(
                   icon: _GradientIcon(
@@ -25526,11 +25526,11 @@ class ScaffoldWithNavBar extends ConsumerWidget {
               ],
             ),
           ),
-          // �?FAB 精确定位到导航栏，底部对�?
+          // �?FAB 精确定位到导航栏，底部对�?
           Positioned(
             left: 0,
             right: 0,
-            bottom: 16, // 底部对齐，与导航图标底部在同一水平�?
+            bottom: 16, // 底部对齐，与导航图标底部在同一水平�?
             child: Center(
               child: Container(
                 width: 56,
@@ -25570,7 +25570,7 @@ class ScaffoldWithNavBar extends ConsumerWidget {
   }
 }
 
-// 未选中态：渐变着色图�?
+// 未选中态：渐变着色图�?
 class _GradientIcon extends StatelessWidget {
   const _GradientIcon({required this.icon, required this.gradient});
   final IconData icon;
@@ -25614,7 +25614,7 @@ import 'package:stocko_app/core/utils/snackbar_helper.dart';
 typedef OnBarcodeScanned = void Function(String barcode);
 typedef OnScanError = void Function(String error);
 
-/// 扫码配置�?
+/// 扫码配置�?
 class BarcodeScannerConfig {
   final String title;
   final String subtitle;
@@ -25638,14 +25638,14 @@ class BarcodeScannerConfig {
     this.enableCameraSwitch = true,
     this.enableScanSound = true,
     this.continuousMode = false,
-    this.continuousDelay = 1000, // 默认1秒延�?
+    this.continuousDelay = 1000, // 默认1秒延�?
     this.additionalActions,
     this.backgroundColor = Colors.black,
     this.foregroundColor = Colors.white,
   });
 }
 
-/// 通用条码扫描器组�?
+/// 通用条码扫描器组�?
 class UniversalBarcodeScanner extends StatefulWidget {
   final BarcodeScannerConfig config;
   final OnBarcodeScanned onBarcodeScanned;
@@ -25685,11 +25685,11 @@ class _UniversalBarcodeScannerState extends State<UniversalBarcodeScanner> {
       // 设置音频播放器的模式，允许与其他音频混合
       _audioPlayer.setPlayerMode(PlayerMode.lowLatency);
       if (kDebugMode) {
-        print('AudioPlayer 初始化完�?);
+        print('AudioPlayer 初始化完�?);
       }
     } catch (e) {
       if (kDebugMode) {
-        print('AudioPlayer 初始化失�? $e');
+        print('AudioPlayer 初始化失�? $e');
       }
     }
   }
@@ -25714,7 +25714,7 @@ class _UniversalBarcodeScannerState extends State<UniversalBarcodeScanner> {
       backgroundColor: widget.config.backgroundColor,
       body: Column(
         children: [
-          // 扫描器区�?
+          // 扫描器区�?
           Expanded(
             flex: 4,
             child: Container(
@@ -25778,7 +25778,7 @@ class _UniversalBarcodeScannerState extends State<UniversalBarcodeScanner> {
     return actions;
   }
 
-  /// 构建扫描器视�?
+  /// 构建扫描器视�?
   Widget _buildScannerView() {
     if (kIsWeb || const bool.fromEnvironment('flutter.test')) {
       return Container(
@@ -25805,7 +25805,7 @@ class _UniversalBarcodeScannerState extends State<UniversalBarcodeScanner> {
             });
             widget.onBarcodeScanned(code);
 
-            // 连续扫码模式下，延迟后重新启用扫�?
+            // 连续扫码模式下，延迟后重新启用扫�?
             if (widget.config.continuousMode) {
               Future.delayed(
                 Duration(milliseconds: widget.config.continuousDelay ?? 1000),
@@ -25855,7 +25855,7 @@ class _UniversalBarcodeScannerState extends State<UniversalBarcodeScanner> {
         CircularProgressIndicator(color: widget.config.foregroundColor),
         const SizedBox(height: 16),
         Text(
-          '正在处理�?..',
+          '正在处理�?..',
           style: TextStyle(color: widget.config.foregroundColor, fontSize: 16),
         ),
       ],
@@ -25941,18 +25941,18 @@ class _UniversalBarcodeScannerState extends State<UniversalBarcodeScanner> {
     );
   }
 
-  /// 显示手动输入对话�?
+  /// 显示手动输入对话�?
   void _showManualInputDialog() {
     final TextEditingController controller = TextEditingController();
 
-    // 定义确定按钮的点击逻辑，方便复�?
+    // 定义确定按钮的点击逻辑，方便复�?
     void onConfirm() {
       final code = controller.text.trim();
       if (code.isNotEmpty) {
         Navigator.of(context).pop();
         widget.onBarcodeScanned(code);
 
-        // 连续扫码模式下，延迟后重新启用扫�?
+        // 连续扫码模式下，延迟后重新启用扫�?
         if (widget.config.continuousMode) {
           Future.delayed(
             Duration(milliseconds: widget.config.continuousDelay ?? 1000),
@@ -25982,10 +25982,10 @@ class _UniversalBarcodeScannerState extends State<UniversalBarcodeScanner> {
             keyboardType: TextInputType.text,
             decoration: const InputDecoration(
               labelText: '条码',
-              hintText: '请输入条�?,
+              hintText: '请输入条�?,
               border: OutlineInputBorder(),
             ),
-            // 添加回车键监�?
+            // 添加回车键监�?
             onSubmitted: (value) => onConfirm(),
           ),
           actions: [
@@ -26008,17 +26008,17 @@ class _UniversalBarcodeScannerState extends State<UniversalBarcodeScanner> {
     );
   }
 
-  /// 从相册选择（占位符功能�?
+  /// 从相册选择（占位符功能�?
   void _pickFromGallery() {
-    final error = '该功能暂不可用，请使用相机扫�?;
+    final error = '该功能暂不可用，请使用相机扫�?;
     if (widget.onScanError != null) {
       widget.onScanError!(error);
     } else {
-      showAppSnackBar(context, message: '该功能暂不可用，请使用相机扫�?, isError: true);
+      showAppSnackBar(context, message: '该功能暂不可用，请使用相机扫�?, isError: true);
     }
   }
 
-  /// 重置扫描状�?
+  /// 重置扫描状�?
   void resetScanningState() {
     if (mounted) {
       setState(() {
@@ -26105,7 +26105,7 @@ class _ProductItemState extends ConsumerState<ProductItem> {
           });
         }
       } catch (e) {
-        print('�?获取单位信息失败: $e');
+        print('�?获取单位信息失败: $e');
         if (mounted) {
           setState(() {
             _unitLoaded = true;
@@ -26234,7 +26234,7 @@ import 'package:flutter/material.dart';
 import '../../../features/product/domain/model/product.dart';
 import 'product_item.dart';
 
-// 全局变量来管理活跃的商品�?
+// 全局变量来管理活跃的商品�?
 class ProductItemManager {
   static void Function()? _hideAllActions;
 
@@ -26314,7 +26314,7 @@ class _ProductListState extends State<ProductList> {
                         style: ElevatedButton.styleFrom(
                           padding: EdgeInsets.zero,
                         ),
-                        child: const Text('全�?),
+                        child: const Text('全�?),
                       ),
                       const SizedBox(width: 8),
                       ElevatedButton(
@@ -26386,7 +26386,7 @@ class _ProductRestoreDebugPageState
       if (mounted) {
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(const SnackBar(content: Text('没有测试日志可复�?)));
+        ).showSnackBar(const SnackBar(content: Text('没有测试日志可复�?)));
       }
       return;
     }
@@ -26397,7 +26397,7 @@ class _ProductRestoreDebugPageState
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: const Text('测试结果已复制到剪贴�?),
+          content: const Text('测试结果已复制到剪贴�?),
           backgroundColor: Colors.green,
           action: SnackBarAction(
             label: '查看',
@@ -26455,7 +26455,7 @@ class _ProductRestoreDebugPageState
     if (mounted) {
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(const SnackBar(content: Text('测试日志已清�?)));
+      ).showSnackBar(const SnackBar(content: Text('测试日志已清�?)));
     }
   }
 
@@ -26467,7 +26467,7 @@ class _ProductRestoreDebugPageState
       _logs.clear();
     });
 
-    _addLog('🧪 开始产品恢复功能测�?..');
+    _addLog('🧪 开始产品恢复功能测�?..');
 
     try {
       // 1. 验证备份文件
@@ -26479,9 +26479,9 @@ class _ProductRestoreDebugPageState
       // 3. 测试不同恢复模式
       await _testRestoreModes();
 
-      _addLog('�?产品恢复功能测试完成�?);
+      _addLog('�?产品恢复功能测试完成�?);
     } catch (e) {
-      _addLog('�?测试失败: $e');
+      _addLog('�?测试失败: $e');
     } finally {
       setState(() {
         _isRunning = false;
@@ -26493,7 +26493,7 @@ class _ProductRestoreDebugPageState
     _addLog('📋 步骤1: 验证备份文件');
 
     try {
-      // 首先尝试从应用目录查找备份文�?
+      // 首先尝试从应用目录查找备份文�?
       final appDir = await getApplicationDocumentsDirectory();
       final backupFile = File('${appDir.path}/product_test_backup.json');
 
@@ -26510,14 +26510,14 @@ class _ProductRestoreDebugPageState
         content = await rootBundle.loadString(
           'assets/data/product_test_backup.json',
         );
-        _addLog('�?从assets成功加载备份文件');
+        _addLog('�?从assets成功加载备份文件');
 
-        // 将assets文件复制到应用目录以供后续使�?
+        // 将assets文件复制到应用目录以供后续使�?
         await backupFile.writeAsString(content);
-        _addLog('�?备份文件已复制到应用目录');
-        _addLog('�?文件大小: ${await backupFile.length()} 字节');
+        _addLog('�?备份文件已复制到应用目录');
+        _addLog('�?文件大小: ${await backupFile.length()} 字节');
       } catch (e) {
-        // 如果assets也没有，创建一个测试用的备份文�?
+        // 如果assets也没有，创建一个测试用的备份文�?
         _addLog('⚠️ assets中也未找到备份文件，创建测试备份文件...');
         content = await _createTestBackupFile(backupFile);
       }
@@ -26525,15 +26525,15 @@ class _ProductRestoreDebugPageState
       final data = jsonDecode(content) as Map<String, dynamic>;
 
       final metadata = data['metadata'] as Map<String, dynamic>;
-      _addLog('�?备份ID: ${metadata['id']}');
-      _addLog('�?版本: ${metadata['version']}');
+      _addLog('�?备份ID: ${metadata['id']}');
+      _addLog('�?版本: ${metadata['version']}');
 
       // 验证产品数据
       final tables = data['tables'] as Map<String, dynamic>;
       final products = tables['product'] as List<dynamic>;
-      _addLog('�?产品记录�? ${products.length}');
+      _addLog('�?产品记录�? ${products.length}');
     } catch (e) {
-      _addLog('�?备份文件验证失败: $e');
+      _addLog('�?备份文件验证失败: $e');
       rethrow;
     }
   }
@@ -26544,14 +26544,14 @@ class _ProductRestoreDebugPageState
         {
           "id": 1,
           "name": "测试分类1",
-          "description": "测试用分�?,
+          "description": "测试用分�?,
           "created_at": DateTime.now().toIso8601String(),
           "updated_at": DateTime.now().toIso8601String(),
         },
         {
           "id": 2,
           "name": "测试分类2",
-          "description": "测试用分�?,
+          "description": "测试用分�?,
           "created_at": DateTime.now().toIso8601String(),
           "updated_at": DateTime.now().toIso8601String(),
         },
@@ -26559,15 +26559,15 @@ class _ProductRestoreDebugPageState
       "unit": [
         {
           "id": 1,
-          "name": "�?,
-          "symbol": "�?,
+          "name": "�?,
+          "symbol": "�?,
           "created_at": DateTime.now().toIso8601String(),
           "updated_at": DateTime.now().toIso8601String(),
         },
         {
           "id": 2,
-          "name": "�?,
-          "symbol": "�?,
+          "name": "�?,
+          "symbol": "�?,
           "created_at": DateTime.now().toIso8601String(),
           "updated_at": DateTime.now().toIso8601String(),
         },
@@ -26583,7 +26583,7 @@ class _ProductRestoreDebugPageState
           "base_unit_id": 1,
           "retail_price": 1500,
           "status": "active",
-          "remarks": "这是一个测试产�?,
+          "remarks": "这是一个测试产�?,
           "created_at": DateTime.now().toIso8601String(),
           "updated_at": DateTime.now().toIso8601String(),
         },
@@ -26597,7 +26597,7 @@ class _ProductRestoreDebugPageState
           "base_unit_id": 2,
           "retail_price": 2500,
           "status": "active",
-          "remarks": "这是另一个测试产�?,
+          "remarks": "这是另一个测试产�?,
           "created_at": DateTime.now().toIso8601String(),
           "updated_at": DateTime.now().toIso8601String(),
         },
@@ -26629,7 +26629,7 @@ class _ProductRestoreDebugPageState
 
     final content = jsonEncode(testBackupData);
     await backupFile.writeAsString(content);
-    _addLog('�?测试备份文件创建成功');
+    _addLog('�?测试备份文件创建成功');
     return content;
   }
 
@@ -26638,25 +26638,25 @@ class _ProductRestoreDebugPageState
 
     try {
       final restoreService = ref.read(restoreServiceProvider);
-      _addLog('�?恢复服务初始化成�?);
+      _addLog('�?恢复服务初始化成�?);
 
       // 获取备份文件路径
       final appDir = await getApplicationDocumentsDirectory();
       final backupFilePath = '${appDir.path}/product_test_backup.json';
 
       final metadata = await restoreService.validateBackupFile(backupFilePath);
-      _addLog('�?备份文件验证成功');
+      _addLog('�?备份文件验证成功');
       _addLog('- 备份ID: ${metadata.id}');
       _addLog('- 版本: ${metadata.version}');
-      _addLog('- 产品记录�? ${metadata.tableCounts['product'] ?? 0}');
+      _addLog('- 产品记录�? ${metadata.tableCounts['product'] ?? 0}');
 
       final isCompatible = await restoreService.checkCompatibility(
         backupFilePath,
       );
-      _addLog('�?兼容性检�? ${isCompatible ? '�?兼容' : '�?不兼�?}');
+      _addLog('�?兼容性检�? ${isCompatible ? '�?兼容' : '�?不兼�?}');
     } catch (e) {
       _addLog('⚠️ 恢复服务测试遇到问题: $e');
-      _addLog('📝 这可能是由于恢复服务需要完整的数据库环�?);
+      _addLog('📝 这可能是由于恢复服务需要完整的数据库环�?);
     }
   }
 
@@ -26683,8 +26683,8 @@ class _ProductRestoreDebugPageState
             mode: mode,
           );
 
-          _addLog('�?预览生成成功');
-          _addLog('- 兼容�? ${preview.isCompatible ? '�?兼容' : '�?不兼�?}');
+          _addLog('�?预览生成成功');
+          _addLog('- 兼容�? ${preview.isCompatible ? '�?兼容' : '�?不兼�?}');
           _addLog('- 记录统计: ${preview.recordCounts}');
           _addLog('- 预估冲突: ${preview.estimatedConflicts}');
         } catch (e) {
@@ -26693,7 +26693,7 @@ class _ProductRestoreDebugPageState
         }
       }
     } catch (e) {
-      _addLog('�?恢复模式测试失败: $e');
+      _addLog('�?恢复模式测试失败: $e');
     }
   }
 
@@ -26704,7 +26704,7 @@ class _ProductRestoreDebugPageState
       case RestoreMode.merge:
         return '合并模式';
       case RestoreMode.addOnly:
-        return '仅添加模�?;
+        return '仅添加模�?;
     }
   }
 
@@ -26757,10 +26757,10 @@ class _ProductRestoreDebugPageState
                                 ),
                               ),
                               SizedBox(width: 8),
-                              Text('测试运行�?..'),
+                              Text('测试运行�?..'),
                             ],
                           )
-                        : const Text('开始产品恢复测�?),
+                        : const Text('开始产品恢复测�?),
                   ),
                 ),
                 if (_logs.isNotEmpty) ...[
@@ -26825,11 +26825,11 @@ class _ProductRestoreDebugPageState
                         Color textColor = Colors.green;
 
                         // 根据日志内容设置不同颜色
-                        if (log.contains('�?) || log.contains('失败')) {
+                        if (log.contains('�?) || log.contains('失败')) {
                           textColor = Colors.red;
                         } else if (log.contains('⚠️') || log.contains('警告')) {
                           textColor = Colors.orange;
-                        } else if (log.contains('�?) || log.contains('成功')) {
+                        } else if (log.contains('�?) || log.contains('成功')) {
                           textColor = Colors.lightGreen;
                         } else if (log.contains('🧪') ||
                             log.contains('📋') ||
@@ -26872,7 +26872,7 @@ class _ProductRestoreDebugPageState
                 ),
               ),
               child: Text(
-                '�?${_logs.length} 条日�?�?${_isRunning ? '测试进行�?..' : '测试完成'}',
+                '�?${_logs.length} 条日�?�?${_isRunning ? '测试进行�?..' : '测试完成'}',
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
                   color: Theme.of(context).colorScheme.onSurfaceVariant,
                 ),
@@ -26921,7 +26921,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../data/repository/sales_analytics_repository.dart';
 import '../../domain/model/product_sales_ranking.dart';
 
-// 时间筛选模�?
+// 时间筛选模�?
 enum TimeFilterMode {
   daily('每天'),
   weekly('每周'),
@@ -26941,28 +26941,28 @@ class RankingRange {
 final rankingRangeProvider = StateProvider<RankingRange>((ref) {
   final now = DateTime.now();
   final endOpen = DateTime(now.year, now.month, now.day).add(const Duration(days: 1)); // 明日 00:00
-  final start = DateTime(2000, 1, 1); // 无限制：�?000年开始到现在
+  final start = DateTime(2000, 1, 1); // 无限制：�?000年开始到现在
   return RankingRange(start, endOpen);
 });
 
-// 时间筛选模�?Provider
+// 时间筛选模�?Provider
 final timeFilterModeProvider = StateProvider<TimeFilterMode>((ref) => TimeFilterMode.daily);
 
-// 选中的日�?Provider
+// 选中的日�?Provider
 final selectedDateProvider = StateProvider<DateTime>((ref) => DateTime.now());
 
 // 选中的周范围 Provider
 final selectedWeekRangeProvider = StateProvider<DateTimeRange?>((ref) => null);
 
-// 选中的月�?Provider
+// 选中的月�?Provider
 final selectedMonthProvider = StateProvider<DateTime>((ref) => DateTime.now());
 
-// 排序方式（销�?利润�?
+// 排序方式（销�?利润�?
 final rankingSortProvider = StateProvider<ProductRankingSort>((ref) => ProductRankingSort.byQtyDesc);
 
-// 排行�?Provider（Stream/Query on demand -> Future�?
+// 排行�?Provider（Stream/Query on demand -> Future�?
 // 内部：维护一个稳定的输出流（broadcast），当外部筛选或排序变化时，
-// 仅更新与仓库之间的订阅，确保消费者订阅不被打断（避免测试中复用同一单订�?Stream 时的事件丢失）�?
+// 仅更新与仓库之间的订阅，确保消费者订阅不被打断（避免测试中复用同一单订�?Stream 时的事件丢失）�?
 final _productSalesRankingStreamControllerProvider =
     Provider<StreamController<List<ProductSalesRanking>>>((ref) {
   final repo = ref.watch(salesAnalyticsRepositoryProvider);
@@ -26979,13 +26979,13 @@ final _productSalesRankingStreamControllerProvider =
       end: range.endOpen,
       sort: sort,
     );
-    // 若仓库返回的是同一个单订阅 Stream 实例（测试里可能复用同一�?controller.stream），
-    // 不要二次监听，以免抛�?“Stream has already been listened to”�?
+    // 若仓库返回的是同一个单订阅 Stream 实例（测试里可能复用同一�?controller.stream），
+    // 不要二次监听，以免抛�?“Stream has already been listened to”�?
     if (identical(lastSrc, src)) {
       return; // 保持原订阅，继续接收事件
     }
 
-    // 先尝试建立新订阅，成功后再取消旧订阅，避免对相同单订阅流的二次监�?
+    // 先尝试建立新订阅，成功后再取消旧订阅，避免对相同单订阅流的二次监�?
     StreamSubscription<List<ProductSalesRanking>>? newSub;
     try {
       newSub = src.listen(
@@ -26995,7 +26995,7 @@ final _productSalesRankingStreamControllerProvider =
         cancelOnError: false,
       );
     } catch (e) {
-      // 如果是单订阅流重复监听导致的异常，则保留原订阅，不切�?
+      // 如果是单订阅流重复监听导致的异常，则保留原订阅，不切�?
       final msg = e.toString();
       if (msg.contains('Stream has already been listened to') || e is StateError) {
         return;
@@ -27013,9 +27013,9 @@ final _productSalesRankingStreamControllerProvider =
   // 初次订阅
   resubscribe();
 
-  // 监听筛�?排序变化，重建与仓库的订�?
+  // 监听筛�?排序变化，重建与仓库的订�?
   ref.listen<RankingRange>(rankingRangeProvider, (prev, next) {
-    // 仅当发生实际变化时重�?
+    // 仅当发生实际变化时重�?
     if (prev?.start != next.start || prev?.endOpen != next.endOpen) {
       resubscribe();
     }
@@ -27050,9 +27050,9 @@ class SalesAnalyticsRepository {
   final AppDatabase _db;
   SalesAnalyticsRepository(this._db);
 
-  // 在某些测试场景下（使�?Mock �?stub 非空�?getter），直接访问 _db.<table>
+  // 在某些测试场景下（使�?Mock �?stub 非空�?getter），直接访问 _db.<table>
   // 会因返回 null 而触发运行时类型错误。这里通过 try/catch 安全收集表，
-  // 若获取失败则回退为不声明 readsFrom（返回空集合），以便单元测试能专注于行为而非具体表�?
+  // 若获取失败则回退为不声明 readsFrom（返回空集合），以便单元测试能专注于行为而非具体表�?
   Set<drift.TableInfo<dynamic, dynamic>> _safeReadsFromTables() {
     final set = <drift.TableInfo<dynamic, dynamic>>{};
     void addSafely(Object? Function() getter) {
@@ -27070,17 +27070,17 @@ class SalesAnalyticsRepository {
     return set;
   }
 
-  /// 获取指定时间范围内的商品销量排行榜（仅统计有销量的商品�?
+  /// 获取指定时间范围内的商品销量排行榜（仅统计有销量的商品�?
   /// - 时间范围基于 sales_transaction.created_at
-  /// - 仅统计状态不�?'cancelled' 的交�?
+  /// - 仅统计状态不�?'cancelled' 的交�?
   Future<List<ProductSalesRanking>> getProductSalesRanking({
     required DateTime start,
     required DateTime end,
     int? limit,
     ProductRankingSort sort = ProductRankingSort.byQtyDesc,
   }) async {
-    // 注意：SQLite 不支�?BETWEEN 的上界为闭区间时跨毫秒，这里采用 >= start AND < endNext
-    // 这里 end 作为包含当天的自然日，追�?1 天作为开区间上界
+    // 注意：SQLite 不支�?BETWEEN 的上界为闭区间时跨毫秒，这里采用 >= start AND < endNext
+    // 这里 end 作为包含当天的自然日，追�?1 天作为开区间上界
     final endOpen = end;
 
     final orderBy = switch (sort) {
@@ -27211,7 +27211,7 @@ class ProductSalesRanking {
   final int totalAmountInCents;
   // 新增：总利润（以分为单位）
   final int totalProfitInCents;
-  // 新增：在计算利润时是否存在无法找到采购成本的销售行�?0 表示存在�?
+  // 新增：在计算利润时是否存在无法找到采购成本的销售行�?0 表示存在�?
   final int missingCostCount;
 
   const ProductSalesRanking({
@@ -27233,19 +27233,19 @@ import 'package:stocko_app/core/database/database.dart';
 import '../../domain/services/i_database_statistics_service.dart';
 import '../../data/services/database_statistics_service.dart';
 
-/// 数据库统计服务提供�?
+/// 数据库统计服务提供�?
 final databaseStatisticsServiceProvider = Provider<IDatabaseStatisticsService>((ref) {
   final database = ref.watch(appDatabaseProvider);
   return DatabaseStatisticsService(database);
 });
 
-/// 所有表统计数据提供�?
+/// 所有表统计数据提供�?
 final allTableCountsProvider = FutureProvider<Map<String, int>>((ref) {
   final service = ref.watch(databaseStatisticsServiceProvider);
   return service.getAllTableCounts();
 });
 
-/// 数据库总记录数提供�?
+/// 数据库总记录数提供�?
 final totalRecordCountProvider = FutureProvider<int>((ref) {
   final service = ref.watch(databaseStatisticsServiceProvider);
   return service.getTotalRecordCount();
@@ -27258,12 +27258,12 @@ import '../services/backup_error_handler.dart';
 
 part 'backup_error_service_provider.g.dart';
 
-/// 备份错误服务提供�?
+/// 备份错误服务提供�?
 @Riverpod(keepAlive: true)
 BackupErrorService backupErrorService(Ref ref) {
   final service = BackupErrorService.instance;
 
-  // 确保服务在应用启动时初始�?
+  // 确保服务在应用启动时初始�?
   service.initialize();
 
   // 在应用关闭时清理服务
@@ -27274,14 +27274,14 @@ BackupErrorService backupErrorService(Ref ref) {
   return service;
 }
 
-/// 错误流提供�?
+/// 错误流提供�?
 @riverpod
 Stream<UserFriendlyError> backupErrorStream(Ref ref) {
   final errorService = ref.watch(backupErrorServiceProvider);
   return errorService.errorStream;
 }
 
-/// 错误统计提供�?
+/// 错误统计提供�?
 @riverpod
 Future<Map<String, dynamic>> backupErrorStats(
   Ref ref, {
@@ -27301,7 +27301,7 @@ part of 'backup_error_service_provider.dart';
 String _$backupErrorServiceHash() =>
     r'5a9d7922cab019eb3f0c8e263487a1e39a173d65';
 
-/// 备份错误服务提供�?///
+/// 备份错误服务提供�?///
 /// Copied from [backupErrorService].
 @ProviderFor(backupErrorService)
 final backupErrorServiceProvider = Provider<BackupErrorService>.internal(
@@ -27319,7 +27319,7 @@ final backupErrorServiceProvider = Provider<BackupErrorService>.internal(
 typedef BackupErrorServiceRef = ProviderRef<BackupErrorService>;
 String _$backupErrorStreamHash() => r'2dfacee7312f525a397ed28dbab616038beb1416';
 
-/// 错误流提供�?///
+/// 错误流提供�?///
 /// Copied from [backupErrorStream].
 @ProviderFor(backupErrorStream)
 final backupErrorStreamProvider =
@@ -27359,19 +27359,19 @@ class _SystemHash {
   }
 }
 
-/// 错误统计提供�?///
+/// 错误统计提供�?///
 /// Copied from [backupErrorStats].
 @ProviderFor(backupErrorStats)
 const backupErrorStatsProvider = BackupErrorStatsFamily();
 
-/// 错误统计提供�?///
+/// 错误统计提供�?///
 /// Copied from [backupErrorStats].
 class BackupErrorStatsFamily extends Family<AsyncValue<Map<String, dynamic>>> {
-  /// 错误统计提供�?  ///
+  /// 错误统计提供�?  ///
   /// Copied from [backupErrorStats].
   const BackupErrorStatsFamily();
 
-  /// 错误统计提供�?  ///
+  /// 错误统计提供�?  ///
   /// Copied from [backupErrorStats].
   BackupErrorStatsProvider call({Duration? period}) {
     return BackupErrorStatsProvider(period: period);
@@ -27399,11 +27399,11 @@ class BackupErrorStatsFamily extends Family<AsyncValue<Map<String, dynamic>>> {
   String? get name => r'backupErrorStatsProvider';
 }
 
-/// 错误统计提供�?///
+/// 错误统计提供�?///
 /// Copied from [backupErrorStats].
 class BackupErrorStatsProvider
     extends AutoDisposeFutureProvider<Map<String, dynamic>> {
-  /// 错误统计提供�?  ///
+  /// 错误统计提供�?  ///
   /// Copied from [backupErrorStats].
   BackupErrorStatsProvider({Duration? period})
     : this._internal(
@@ -27493,19 +27493,19 @@ import '../../../../core/database/database.dart';
 import '../../domain/services/i_backup_service.dart';
 import '../services/unified_backup_service.dart';
 
-/// 统一备份服务提供�?
+/// 统一备份服务提供�?
 final backupServiceProvider = Provider<IBackupService>((ref) {
   final database = ref.watch(appDatabaseProvider);
   return UnifiedBackupService(database);
 });
 
-/// 本地备份列表提供�?
+/// 本地备份列表提供�?
 final localBackupsProvider = FutureProvider((ref) async {
   final backupService = ref.watch(backupServiceProvider);
   return await backupService.getLocalBackups();
 });
 
-/// 备份大小估算提供�?
+/// 备份大小估算提供�?
 final backupSizeEstimateProvider = FutureProvider<int>((ref) async {
   final backupService = ref.watch(backupServiceProvider);
   return await backupService.estimateBackupSize();
@@ -27515,7 +27515,7 @@ import '../../../../core/database/database.dart';
 import '../repository/optimized_data_export_repository.dart';
 
 /// 数据导出仓储 Provider
-/// 提供 OptimizedDataExportRepository 的实�?
+/// 提供 OptimizedDataExportRepository 的实�?
 final dataExportRepositoryProvider = Provider<OptimizedDataExportRepository>((ref) {
   final database = ref.watch(appDatabaseProvider);
   return OptimizedDataExportRepository(database);
@@ -27527,7 +27527,7 @@ final tableCountsProvider = FutureProvider<Map<String, int>>((ref) async {
   return repository.getTableCounts();
 });
 
-/// 估算导出数据大小�?Provider
+/// 估算导出数据大小�?Provider
 final estimatedExportSizeProvider = FutureProvider<int>((ref) async {
   final repository = ref.watch(dataExportRepositoryProvider);
   return repository.estimateExportSize();
@@ -27595,7 +27595,7 @@ import '../services/optimized_restore_service.dart';
 import 'encryption_service_provider.dart';
 import 'validation_service_provider.dart';
 
-/// 恢复服务提供�?
+/// 恢复服务提供�?
 final restoreServiceProvider = Provider<IRestoreService>((ref) {
   final database = ref.watch(appDatabaseProvider);
   final encryptionService = ref.watch(encryptionServiceProvider);
@@ -27612,7 +27612,7 @@ import 'encryption_service_provider.dart';
 
 part 'validation_service_provider.g.dart';
 
-/// 验证服务提供�?
+/// 验证服务提供�?
 @riverpod
 IValidationService validationService(Ref ref) {
   final database = ref.watch(appDatabaseProvider);
@@ -27630,7 +27630,7 @@ part of 'validation_service_provider.dart';
 
 String _$validationServiceHash() => r'cefac6bbd4140f55251b1f57acdc047b6c1862cf';
 
-/// 验证服务提供�?///
+/// 验证服务提供�?///
 /// Copied from [validationService].
 @ProviderFor(validationService)
 final validationServiceProvider =
@@ -27657,7 +27657,7 @@ import '../../domain/models/restore_mode.dart';
 import '../../domain/common/backup_common.dart';
 import '../../domain/services/i_restore_service.dart';
 
-/// 数据导入仓储�?
+/// 数据导入仓储�?
 /// 负责将备份数据导入到数据库中
 class DataImportRepository {
   final AppDatabase _database;
@@ -27667,7 +27667,7 @@ class DataImportRepository {
   /// 导入所有表数据（增强版本，支持进度跟踪和错误处理）
   /// [tablesData] 包含所有表数据的Map，键为表名，值为记录列表
   /// [mode] 恢复模式
-  /// [selectedTables] 选择要恢复的表（null表示恢复所有表�?
+  /// [selectedTables] 选择要恢复的表（null表示恢复所有表�?
   /// [onProgress] 进度回调函数
   /// [cancelToken] 取消令牌
   /// 返回各表导入的记录数统计
@@ -27678,12 +27678,12 @@ class DataImportRepository {
     RestoreProgressCallback? onProgress,
     CancelToken? cancelToken,
   }) async {
-    print('══════════════════════════════════════════════════════════════�?);
+    print('══════════════════════════════════════════════════════════════�?);
     print('🚀 开始导入所有表数据');
     print('恢复模式: $mode');
-    print('总表�? ${tablesData.length}');
+    print('总表�? ${tablesData.length}');
     print('选择的表: ${selectedTables ?? "全部"}');
-    print('══════════════════════════════════════════════════════════════�?);
+    print('══════════════════════════════════════════════════════════════�?);
     final Map<String, int> importCounts = {};
     if (tablesData.isEmpty) {
       return importCounts;
@@ -27706,7 +27706,7 @@ class DataImportRepository {
       print('📊 计算总记录数: $totalRecords');
       print('📋 待处理表列表: $tablesToProcess');
 
-      // 使用数据库事务确保数据一致�?
+      // 使用数据库事务确保数据一致�?
       return await _database.transaction(() async {
         print('🔄 开始数据库事务');
         onProgress?.call('准备数据恢复...', 0, totalRecords);
@@ -27714,15 +27714,15 @@ class DataImportRepository {
 
         // 如果是完全替换模式，先清空相关表
         if (mode == RestoreMode.replace) {
-          print('🗑�?替换模式：开始清空现有数�?);
+          print('🗑�?替换模式：开始清空现有数�?);
           onProgress?.call('清空现有数据...', 0, totalRecords);
           await _clearTables(tablesToProcess);
-          print('�?现有数据清空完成');
+          print('�?现有数据清空完成');
         }
 
-        // 按照依赖关系顺序导入表数�?
+        // 按照依赖关系顺序导入表数�?
         final importOrder = _getTableImportOrder();
-        print('📋 表导入顺�? $importOrder');
+        print('📋 表导入顺�? $importOrder');
 
         for (final tableName in importOrder) {
           if (!tablesToProcess.contains(tableName)) {
@@ -27742,7 +27742,7 @@ class DataImportRepository {
             );
 
             onProgress?.call(
-              '恢复�?$tableName...',
+              '恢复�?$tableName...',
               processedRecords,
               totalRecords,
             );
@@ -27755,7 +27755,7 @@ class DataImportRepository {
               onProgress: (current, total) {
                 final globalProgress = processedRecords + current;
                 onProgress?.call(
-                  '恢复�?$tableName ($current/$total)',
+                  '恢复�?$tableName ($current/$total)',
                   globalProgress,
                   totalRecords,
                 );
@@ -27768,25 +27768,25 @@ class DataImportRepository {
             allConflicts.addAll(result.conflicts);
             processedRecords += records.length;
 
-            print('�?�?$tableName 处理完成');
-            print('成功导入: ${result.successCount} 条记�?);
-            print('失败记录: ${result.failureCount} �?);
-            print('冲突记录: ${result.conflicts.length} �?);
+            print('�?�?$tableName 处理完成');
+            print('成功导入: ${result.successCount} 条记�?);
+            print('失败记录: ${result.failureCount} �?);
+            print('冲突记录: ${result.conflicts.length} �?);
           }
         }
 
         // 如果有严重错误，回滚事务
         if (errors.length > totalRecords * 0.1) {
-          // 如果错误率超�?0%
-          print('�?错误率过高，准备回滚事务');
+          // 如果错误率超�?0%
+          print('�?错误率过高，准备回滚事务');
           print('总错误数: ${errors.length}');
           print('总记录数: $totalRecords');
           print(
-            '错误�? ${(errors.length / totalRecords * 100).toStringAsFixed(2)}%',
+            '错误�? ${(errors.length / totalRecords * 100).toStringAsFixed(2)}%',
           );
           throw BackupException(
             type: BackupErrorType.databaseError,
-            message: '恢复过程中错误过多，已回滚所有更改。错�? ${errors.take(5).join(', ')}',
+            message: '恢复过程中错误过多，已回滚所有更改。错�? ${errors.take(5).join(', ')}',
           );
         }
 
@@ -27819,13 +27819,13 @@ class DataImportRepository {
     return importAllTables(tablesData, mode, selectedTables: selectedTables);
   }
 
-  /// 导入指定表的数据（增强版本，支持进度跟踪�?
+  /// 导入指定表的数据（增强版本，支持进度跟踪�?
   /// [tableName] 表名
   /// [records] 要导入的记录列表
   /// [mode] 恢复模式
   /// [onProgress] 进度回调函数
   /// [cancelToken] 取消令牌
-  /// [batchSize] 批处理大小，默认100条记�?
+  /// [batchSize] 批处理大小，默认100条记�?
   Future<BatchResult> _importTableWithProgress(
     String tableName,
     List<Map<String, dynamic>> records,
@@ -27836,8 +27836,8 @@ class DataImportRepository {
   }) async {
     print('🔄 开始导入表: $tableName');
     print('记录总数: ${records.length}');
-    print('批处理大�? $batchSize');
-    print('预计批次�? ${(records.length / batchSize).ceil()}');
+    print('批处理大�? $batchSize');
+    print('预计批次�? ${(records.length / batchSize).ceil()}');
     try {
       int successCount = 0;
       final List<String> errors = [];
@@ -27866,7 +27866,7 @@ class DataImportRepository {
         conflicts.addAll(batchResult.conflicts);
 
         print(
-          '�?批次 $batchNumber 完成 - 成功: ${batchResult.successCount}, 失败: ${batchResult.failureCount}',
+          '�?批次 $batchNumber 完成 - 成功: ${batchResult.successCount}, 失败: ${batchResult.failureCount}',
         );
       }
 
@@ -27881,7 +27881,7 @@ class DataImportRepository {
     } catch (e) {
       throw BackupException(
         type: BackupErrorType.databaseError,
-        message: '导入�?$tableName 失败: ${e.toString()}',
+        message: '导入�?$tableName 失败: ${e.toString()}',
         originalError: e,
       );
     }
@@ -27898,15 +27898,15 @@ class DataImportRepository {
     List<Map<String, dynamic>> records,
     RestoreMode mode,
   ) async {
-    print('🔍 开始批量导�?- �? $tableName, 记录�? ${records.length}');
+    print('🔍 开始批量导�?- �? $tableName, 记录�? ${records.length}');
     try {
       int successCount = 0;
       final List<String> errors = [];
       final List<DataConflict> conflicts = [];
 
-      // 获取主键信息用于冲突检�?
+      // 获取主键信息用于冲突检�?
       final primaryKey = await _getPrimaryKeyColumn(tableName);
-      print('🔑 �?$tableName 的主�? ${primaryKey ?? "无主�?}');
+      print('🔑 �?$tableName 的主�? ${primaryKey ?? "无主�?}');
 
       for (int i = 0; i < records.length; i++) {
         final record = records[i];
@@ -27924,9 +27924,9 @@ class DataImportRepository {
 
           if (result['success'] == true) {
             successCount++;
-            print('�?记录 ${i + 1} 导入成功');
+            print('�?记录 ${i + 1} 导入成功');
           } else {
-            print('�?记录 ${i + 1} 导入失败: ${result['error']}');
+            print('�?记录 ${i + 1} 导入失败: ${result['error']}');
           }
 
           if (result['conflict'] != null) {
@@ -27949,7 +27949,7 @@ class DataImportRepository {
     } catch (e) {
       throw BackupException(
         type: BackupErrorType.databaseError,
-        message: '分批导入�?$tableName 失败: ${e.toString()}',
+        message: '分批导入�?$tableName 失败: ${e.toString()}',
         originalError: e,
       );
     }
@@ -27970,14 +27970,14 @@ class DataImportRepository {
     String? primaryKey,
   ) async {
     final primaryKeyValue = primaryKey != null ? record[primaryKey] : null;
-    print('🎯 导入记录到表 $tableName - 主键�? $primaryKeyValue - 模式: $mode');
+    print('🎯 导入记录到表 $tableName - 主键�? $primaryKeyValue - 模式: $mode');
     try {
       switch (mode) {
         case RestoreMode.replace:
-          // 完全替换模式：直接插入（表已清空�?
-          print('🔄 替换模式：直接插入记�?);
+          // 完全替换模式：直接插入（表已清空�?
+          print('🔄 替换模式：直接插入记�?);
           await _insertRecord(tableName, record);
-          print('�?替换模式：记录插入成�?);
+          print('�?替换模式：记录插入成�?);
           return {'success': true};
 
         case RestoreMode.merge:
@@ -27988,7 +27988,7 @@ class DataImportRepository {
             record,
             primaryKey,
           );
-          print('�?合并模式：处理完�?- 成功: ${result['success']}');
+          print('�?合并模式：处理完�?- 成功: ${result['success']}');
           return result;
 
         case RestoreMode.addOnly:
@@ -27999,7 +27999,7 @@ class DataImportRepository {
             record,
             primaryKey,
           );
-          print('�?仅添加模式：处理完成 - 成功: ${result['success']}');
+          print('�?仅添加模式：处理完成 - 成功: ${result['success']}');
           return result;
       }
     } catch (e) {
@@ -28016,11 +28016,11 @@ class DataImportRepository {
     String tableName,
     Map<String, dynamic> record,
   ) async {
-    print('══════════════════════════════════════════════════════════════�?);
-    print('🔥 执行数据库插入操�?);
+    print('══════════════════════════════════════════════════════════════�?);
+    print('🔥 执行数据库插入操�?);
     print('表名: $tableName');
     print('记录字段: ${record.keys.toList()}');
-    print('记录�? ${record.values.toList()}');
+    print('记录�? ${record.values.toList()}');
 
     // 获取表的实际列信息，过滤掉不存在的列
     final validColumns = await _getValidColumnsForTable(tableName, record);
@@ -28031,23 +28031,23 @@ class DataImportRepository {
 
     final query = 'INSERT INTO $tableName ($columns) VALUES ($placeholders)';
     print('SQL语句: $query');
-    print('参数�? $values');
+    print('参数�? $values');
 
     try {
-      print('�?开始执�?_database.customStatement()...');
+      print('�?开始执�?_database.customStatement()...');
       await _database.customStatement(query, values);
-      print('🎉 _database.customStatement() 执行成功�?);
-      print('�?记录已成功插入到�?$tableName');
+      print('🎉 _database.customStatement() 执行成功�?);
+      print('�?记录已成功插入到�?$tableName');
     } catch (e) {
-      print('💥 _database.customStatement() 执行失败�?);
+      print('💥 _database.customStatement() 执行失败�?);
       print('错误信息: ${e.toString()}');
       print('错误类型: ${e.runtimeType}');
       rethrow;
     }
-    print('══════════════════════════════════════════════════════════════�?);
+    print('══════════════════════════════════════════════════════════════�?);
   }
 
-  /// 更新或插入记录（UPSERT）增强版本，支持冲突检�?
+  /// 更新或插入记录（UPSERT）增强版本，支持冲突检�?
   Future<Map<String, dynamic>> _upsertRecordWithConflictDetection(
     String tableName,
     Map<String, dynamic> record,
@@ -28055,12 +28055,12 @@ class DataImportRepository {
   ) async {
     try {
       if (primaryKey == null || !record.containsKey(primaryKey)) {
-        // 没有主键信息，直接插�?
+        // 没有主键信息，直接插�?
         await _insertRecord(tableName, record);
         return {'success': true};
       }
 
-      // 检查记录是否存�?
+      // 检查记录是否存�?
       final existingRecord = await _getExistingRecord(
         tableName,
         primaryKey,
@@ -28068,7 +28068,7 @@ class DataImportRepository {
       );
 
       if (existingRecord != null) {
-        // 记录存在，检测冲�?
+        // 记录存在，检测冲�?
         final hasConflict = _detectDataConflict(existingRecord, record);
 
         DataConflict? conflict;
@@ -28105,12 +28105,12 @@ class DataImportRepository {
   ) async {
     try {
       if (primaryKey == null || !record.containsKey(primaryKey)) {
-        // 没有主键信息，尝试插�?
+        // 没有主键信息，尝试插�?
         await _insertRecord(tableName, record);
         return {'success': true};
       }
 
-      // 检查记录是否存�?
+      // 检查记录是否存�?
       final existingRecord = await _getExistingRecord(
         tableName,
         primaryKey,
@@ -28147,8 +28147,8 @@ class DataImportRepository {
     Map<String, dynamic> record,
     String primaryKey,
   ) async {
-    print('══════════════════════════════════════════════════════════════�?);
-    print('🔄 执行数据库更新操�?);
+    print('══════════════════════════════════════════════════════════════�?);
+    print('🔄 执行数据库更新操�?);
     print('表名: $tableName');
     print('主键: $primaryKey = ${record[primaryKey]}');
     print('更新字段: ${record.keys.where((key) => key != primaryKey).toList()}');
@@ -28170,23 +28170,23 @@ class DataImportRepository {
 
     final query = 'UPDATE $tableName SET $updateColumns WHERE $primaryKey = ?';
     print('SQL语句: $query');
-    print('参数�? $values');
+    print('参数�? $values');
 
     try {
-      print('�?开始执�?_database.customStatement()...');
+      print('�?开始执�?_database.customStatement()...');
       await _database.customStatement(query, values);
-      print('🎉 _database.customStatement() 执行成功�?);
-      print('�?记录已成功更新到�?$tableName');
+      print('🎉 _database.customStatement() 执行成功�?);
+      print('�?记录已成功更新到�?$tableName');
     } catch (e) {
-      print('💥 _database.customStatement() 执行失败�?);
+      print('💥 _database.customStatement() 执行失败�?);
       print('错误信息: ${e.toString()}');
       print('错误类型: ${e.runtimeType}');
       rethrow;
     }
-    print('══════════════════════════════════════════════════════════════�?);
+    print('══════════════════════════════════════════════════════════════�?);
   }
 
-  /// 检查记录是否存�?
+  /// 检查记录是否存�?
   Future<bool> _recordExists(
     String tableName,
     String primaryKey,
@@ -28200,7 +28200,7 @@ class DataImportRepository {
     return result != null;
   }
 
-  /// 获取现有记录的完整数�?
+  /// 获取现有记录的完整数�?
   Future<Map<String, dynamic>?> _getExistingRecord(
     String tableName,
     String primaryKey,
@@ -28218,8 +28218,8 @@ class DataImportRepository {
     }
   }
 
-  /// 检测数据冲�?
-  /// 比较现有记录和新记录，检查是否有实质性差�?
+  /// 检测数据冲�?
+  /// 比较现有记录和新记录，检查是否有实质性差�?
   bool _detectDataConflict(
     Map<String, dynamic> existingRecord,
     Map<String, dynamic> newRecord,
@@ -28230,12 +28230,12 @@ class DataImportRepository {
       final newValue = entry.value;
       final existingValue = existingRecord[key];
 
-      // 跳过null值比�?
+      // 跳过null值比�?
       if (newValue == null && existingValue == null) {
         continue;
       }
 
-      // 如果值不同，则存在冲�?
+      // 如果值不同，则存在冲�?
       if (newValue != existingValue) {
         return true;
       }
@@ -28265,45 +28265,45 @@ class DataImportRepository {
 
   /// 清空指定表的数据
   Future<void> _clearTables(List<String> tableNames) async {
-    print('══════════════════════════════════════════════════════════════�?);
-    print('🗑�?开始清空表数据');
-    print('需要清空的�? $tableNames');
+    print('══════════════════════════════════════════════════════════════�?);
+    print('🗑�?开始清空表数据');
+    print('需要清空的�? $tableNames');
 
     try {
-      // 按照反向依赖关系顺序清空表（避免外键约束问题�?
+      // 按照反向依赖关系顺序清空表（避免外键约束问题�?
       final clearOrder = _getTableImportOrder().reversed.toList();
       print('清空顺序: $clearOrder');
 
       for (final tableName in clearOrder) {
         if (tableNames.contains(tableName)) {
-          print('🔄 清空�? $tableName');
+          print('🔄 清空�? $tableName');
           final query = 'DELETE FROM $tableName';
           print('SQL语句: $query');
 
           try {
-            print('�?开始执�?_database.customStatement()...');
+            print('�?开始执�?_database.customStatement()...');
             await _database.customStatement(query, []);
-            print('🎉 _database.customStatement() 执行成功�?);
-            print('�?�?$tableName 已清�?);
+            print('🎉 _database.customStatement() 执行成功�?);
+            print('�?�?$tableName 已清�?);
           } catch (e) {
-            print('💥 清空�?$tableName 失败: ${e.toString()}');
+            print('💥 清空�?$tableName 失败: ${e.toString()}');
             rethrow;
           }
         }
       }
       print('🎉 所有表清空完成');
     } catch (e) {
-      print('💥 清空表数据异�? ${e.toString()}');
+      print('💥 清空表数据异�? ${e.toString()}');
       throw BackupException(
         type: BackupErrorType.databaseError,
-        message: '清空表数据失�? ${e.toString()}',
+        message: '清空表数据失�? ${e.toString()}',
         originalError: e,
       );
     }
-    print('══════════════════════════════════════════════════════════════�?);
+    print('══════════════════════════════════════════════════════════════�?);
   }
 
-  /// 获取表导入顺序（按照依赖关系�?
+  /// 获取表导入顺序（按照依赖关系�?
   List<String> _getTableImportOrder() {
     return [
       // 1. 基础数据表（无外键依赖）
@@ -28314,17 +28314,17 @@ class DataImportRepository {
       'customers',
       'locations',
 
-      // 2. 产品相关�?
+      // 2. 产品相关�?
       'product',
       'unit_product',
       'barcode',
       'product_batch',
 
-      // 3. 库存相关�?
+      // 3. 库存相关�?
       'stock',
       'inventory_transaction',
 
-      // 4. 业务单据�?
+      // 4. 业务单据�?
       'purchase_order',
       'purchase_order_item',
       'inbound_receipt',
@@ -28336,9 +28336,9 @@ class DataImportRepository {
     ];
   }
 
-  /// 验证导入数据的完整�?
-  /// [tablesData] 要验证的表数�?
-  /// 返回验证结果和错误信�?
+  /// 验证导入数据的完整�?
+  /// [tablesData] 要验证的表数�?
+  /// 返回验证结果和错误信�?
   Future<Map<String, dynamic>> validateImportData(
     Map<String, List<Map<String, dynamic>>> tablesData,
   ) async {
@@ -28356,7 +28356,7 @@ class DataImportRepository {
         // 检查表是否存在
         final tableExists = await _tableExists(tableName);
         if (!tableExists) {
-          warnings.add('�?$tableName 在当前数据库中不存在，将跳过');
+          warnings.add('�?$tableName 在当前数据库中不存在，将跳过');
           continue;
         }
 
@@ -28368,7 +28368,7 @@ class DataImportRepository {
             sampleRecord,
           );
           if (!validationResult['valid']) {
-            errors.add('�?$tableName 的记录结构无�? ${validationResult['error']}');
+            errors.add('�?$tableName 的记录结构无�? ${validationResult['error']}');
           }
         }
       }
@@ -28382,7 +28382,7 @@ class DataImportRepository {
     } catch (e) {
       return {
         'valid': false,
-        'errors': ['验证导入数据时发生错�? ${e.toString()}'],
+        'errors': ['验证导入数据时发生错�? ${e.toString()}'],
         'warnings': warnings,
         'totalRecords': totalRecords,
       };
@@ -28412,7 +28412,7 @@ class DataImportRepository {
     Map<String, dynamic> record,
   ) async {
     try {
-      // 获取表结构信�?
+      // 获取表结构信�?
       final query = 'PRAGMA table_info($tableName)';
       final result = await _database.customSelect(query).get();
 
@@ -28444,32 +28444,32 @@ class DataImportRepository {
     }
   }
 
-  /// 估算导入时间（秒�?
+  /// 估算导入时间（秒�?
   /// [recordCount] 记录总数
   /// [mode] 恢复模式
   Future<int> estimateImportTime(int recordCount, RestoreMode mode) async {
     try {
-      // 基于记录数量和恢复模式估算时�?
+      // 基于记录数量和恢复模式估算时�?
       // 这些数值基于经验，实际情况可能有所不同
 
       int baseTimePerRecord; // 毫秒
 
       switch (mode) {
         case RestoreMode.replace:
-          baseTimePerRecord = 2; // 替换模式最�?
+          baseTimePerRecord = 2; // 替换模式最�?
           break;
         case RestoreMode.merge:
           baseTimePerRecord = 5; // 合并模式需要检查和更新
           break;
         case RestoreMode.addOnly:
-          baseTimePerRecord = 3; // 仅添加模式需要检查存在�?
+          baseTimePerRecord = 3; // 仅添加模式需要检查存在�?
           break;
       }
 
       final totalTimeMs = recordCount * baseTimePerRecord;
       final totalTimeSeconds = (totalTimeMs / 1000).ceil();
 
-      // 最�?秒，最多不超过3600秒（1小时�?
+      // 最�?秒，最多不超过3600秒（1小时�?
       return totalTimeSeconds.clamp(1, 3600);
     } catch (e) {
       return 60; // 默认估算1分钟
@@ -28477,7 +28477,7 @@ class DataImportRepository {
   }
 
   /// 获取冲突记录数量估算
-  /// [tablesData] 表数�?
+  /// [tablesData] 表数�?
   /// [mode] 恢复模式
   Future<int> estimateConflicts(
     Map<String, List<Map<String, dynamic>>> tablesData,
@@ -28524,12 +28524,12 @@ class DataImportRepository {
 
       return conflictCount;
     } catch (e) {
-      return 0; // 估算失败时返�?
+      return 0; // 估算失败时返�?
     }
   }
 
-  /// 执行数据库健康检�?
-  /// 在恢复完成后验证数据完整�?
+  /// 执行数据库健康检�?
+  /// 在恢复完成后验证数据完整�?
   Future<Map<String, dynamic>> performHealthCheck(
     List<String> tablesToCheck,
   ) async {
@@ -28539,13 +28539,13 @@ class DataImportRepository {
 
       for (final tableName in tablesToCheck) {
         try {
-          // 检查表记录�?
+          // 检查表记录�?
           final countQuery = 'SELECT COUNT(*) as count FROM $tableName';
           final result = await _database.customSelect(countQuery).getSingle();
           final count = result.data['count'] as int;
           tableCounts[tableName] = count;
 
-          // 检查表结构完整�?
+          // 检查表结构完整�?
           final integrityQuery = 'PRAGMA integrity_check($tableName)';
           final integrityResult = await _database
               .customSelect(integrityQuery)
@@ -28554,11 +28554,11 @@ class DataImportRepository {
           for (final row in integrityResult) {
             final message = row.data.values.first as String;
             if (message != 'ok') {
-              issues.add('�?$tableName 完整性检查失�? $message');
+              issues.add('�?$tableName 完整性检查失�? $message');
             }
           }
         } catch (e) {
-          issues.add('检查表 $tableName 时发生错�? ${e.toString()}');
+          issues.add('检查表 $tableName 时发生错�? ${e.toString()}');
         }
       }
 
@@ -28571,12 +28571,12 @@ class DataImportRepository {
       return {
         'success': false,
         'tableCounts': <String, int>{},
-        'issues': ['健康检查失�? ${e.toString()}'],
+        'issues': ['健康检查失�? ${e.toString()}'],
       };
     }
   }
 
-  /// 创建恢复点（用于回滚�?
+  /// 创建恢复点（用于回滚�?
   /// 在开始恢复前创建数据快照
   Future<String?> createRestorePoint(List<String> tablesToBackup) async {
     try {
@@ -28584,8 +28584,8 @@ class DataImportRepository {
       final restorePointId = 'restore_point_$timestamp';
 
       // 这里可以实现创建临时备份表的逻辑
-      // 由于复杂性，暂时返回标识�?
-      // 实际实现中可以创建临时表或文件备�?
+      // 由于复杂性，暂时返回标识�?
+      // 实际实现中可以创建临时表或文件备�?
 
       return restorePointId;
     } catch (e) {
@@ -28607,16 +28607,16 @@ class DataImportRepository {
     }
   }
 
-  /// 获取表的有效列（过滤掉不存在的列�?
+  /// 获取表的有效列（过滤掉不存在的列�?
   /// [tableName] 表名
-  /// [record] 要插�?更新的记�?
-  /// 返回过滤后的有效列数�?
+  /// [record] 要插�?更新的记�?
+  /// 返回过滤后的有效列数�?
   Future<Map<String, dynamic>> _getValidColumnsForTable(
     String tableName,
     Map<String, dynamic> record,
   ) async {
     try {
-      // 获取表结构信�?
+      // 获取表结构信�?
       final query = 'PRAGMA table_info($tableName)';
       final result = await _database.customSelect(query).get();
 
@@ -28632,11 +28632,11 @@ class DataImportRepository {
         if (validColumnNames.contains(entry.key)) {
           validColumns[entry.key] = entry.value;
         } else {
-          print('⚠️ 跳过不存在的�? ${entry.key} (�? $tableName)');
+          print('⚠️ 跳过不存在的�? ${entry.key} (�? $tableName)');
         }
       }
 
-      print('📋 �?$tableName 有效�? ${validColumns.keys.toList()}');
+      print('📋 �?$tableName 有效�? ${validColumns.keys.toList()}');
       return validColumns;
     } catch (e) {
       print('💥 获取表结构失败，使用原始记录: ${e.toString()}');
@@ -28645,8 +28645,8 @@ class DataImportRepository {
     }
   }
 
-  /// 创建适当类型�?Variable 对象
-  /// 避免类型推断错误导致的解析异�?
+  /// 创建适当类型�?Variable 对象
+  /// 避免类型推断错误导致的解析异�?
   Variable _createVariable(dynamic value) {
     if (value == null) {
       return const Variable(null);
@@ -28659,7 +28659,7 @@ class DataImportRepository {
     } else if (value is DateTime) {
       return Variable.withDateTime(value);
     } else {
-      // 对于字符串和其他类型，使�?withString 确保正确处理
+      // 对于字符串和其他类型，使�?withString 确保正确处理
       return Variable.withString(value.toString());
     }
   }
@@ -28712,7 +28712,7 @@ class OptimizedDataExportRepository {
           tableData.addAll(batch);
           onProgress?.call(tableName, tableData.length, totalRecords);
 
-          // 定期检查内存使用情�?
+          // 定期检查内存使用情�?
           if (streamConfig.enableMemoryMonitoring &&
               tableData.length % 1000 == 0) {
             await _performanceService.recordMemoryUsage(operationId);
@@ -28767,13 +28767,13 @@ class OptimizedDataExportRepository {
     } catch (e) {
       throw BackupException(
         type: BackupErrorType.databaseError,
-        message: '流式导出�?$tableName 失败: ${e.toString()}',
+        message: '流式导出�?$tableName 失败: ${e.toString()}',
         originalError: e,
       );
     }
   }
 
-  /// 分批导出表数据（优化版本�?
+  /// 分批导出表数据（优化版本�?
   Future<List<Map<String, dynamic>>> _exportTableBatch(
     String tableName,
     int offset,
@@ -28798,13 +28798,13 @@ class OptimizedDataExportRepository {
     } catch (e) {
       throw BackupException(
         type: BackupErrorType.databaseError,
-        message: '分批导出�?$tableName 失败: ${e.toString()}',
+        message: '分批导出�?$tableName 失败: ${e.toString()}',
         originalError: e,
       );
     }
   }
 
-  /// 获取表记录数量统计（缓存版本�?
+  /// 获取表记录数量统计（缓存版本�?
   Future<Map<String, int>> getTableCounts() async {
     try {
       final Map<String, int> counts = {};
@@ -28825,7 +28825,7 @@ class OptimizedDataExportRepository {
     } catch (e) {
       throw BackupException(
         type: BackupErrorType.databaseError,
-        message: '获取表记录数量失�? ${e.toString()}',
+        message: '获取表记录数量失�? ${e.toString()}',
         originalError: e,
       );
     }
@@ -28841,13 +28841,13 @@ class OptimizedDataExportRepository {
     } catch (e) {
       throw BackupException(
         type: BackupErrorType.databaseError,
-        message: '获取�?$tableName 记录数量失败: ${e.toString()}',
+        message: '获取�?$tableName 记录数量失败: ${e.toString()}',
         originalError: e,
       );
     }
   }
 
-  /// 优化的JSON序列�?
+  /// 优化的JSON序列�?
   /// 支持流式序列化以减少内存使用
   Stream<String> streamSerializeToJson(
     Map<String, dynamic> data, {
@@ -28871,7 +28871,7 @@ class OptimizedDataExportRepository {
         final keyJson = jsonEncode(entry.key);
         yield prettyPrint ? '  $keyJson: ' : '$keyJson:';
 
-        // 序列化�?
+        // 序列化�?
         if (entry.value is List && (entry.value as List).length > chunkSize) {
           // 大列表分块序列化
           yield* _streamSerializeList(entry.value as List, prettyPrint);
@@ -28882,7 +28882,7 @@ class OptimizedDataExportRepository {
 
         processedEntries++;
 
-        // 定期让出控制�?
+        // 定期让出控制�?
         if (processedEntries % 100 == 0) {
           await Future.delayed(const Duration(microseconds: 1));
         }
@@ -28892,13 +28892,13 @@ class OptimizedDataExportRepository {
     } catch (e) {
       throw BackupException(
         type: BackupErrorType.serializationError,
-        message: '流式JSON序列化失�? ${e.toString()}',
+        message: '流式JSON序列化失�? ${e.toString()}',
         originalError: e,
       );
     }
   }
 
-  /// 流式序列化列�?
+  /// 流式序列化列�?
   Stream<String> _streamSerializeList(List list, bool prettyPrint) async* {
     yield '[';
 
@@ -28913,7 +28913,7 @@ class OptimizedDataExportRepository {
 
       yield jsonEncode(list[i]);
 
-      // 定期让出控制�?
+      // 定期让出控制�?
       if (i % 100 == 0) {
         await Future.delayed(const Duration(microseconds: 1));
       }
@@ -28937,7 +28937,7 @@ class OptimizedDataExportRepository {
     } catch (e) {
       throw BackupException(
         type: BackupErrorType.validationError,
-        message: '生成流式校验和失�? ${e.toString()}',
+        message: '生成流式校验和失�? ${e.toString()}',
         originalError: e,
       );
     }
@@ -28954,17 +28954,17 @@ class OptimizedDataExportRepository {
       'customers',
       'locations',
 
-      // 产品相关�?
+      // 产品相关�?
       'product',
       'unit_product',
       'barcode',
       'product_batch',
 
-      // 库存相关�?
+      // 库存相关�?
       'stock',
       'inventory_transaction',
 
-      // 业务单据�?
+      // 业务单据�?
       'purchase_order',
       'purchase_order_item',
       'inbound_receipt',
@@ -28976,7 +28976,7 @@ class OptimizedDataExportRepository {
     ];
   }
 
-  /// 获取所有表�?
+  /// 获取所有表�?
   Future<List<String>> getAllTableNames() async {
     try {
       const query = '''
@@ -28988,7 +28988,7 @@ class OptimizedDataExportRepository {
 
       return result.map((row) => row.data['name'] as String).toList();
     } catch (e) {
-      // 在测试环境中返回空列表而不是抛出异常（向后兼容�?
+      // 在测试环境中返回空列表而不是抛出异常（向后兼容�?
       return <String>[];
     }
   }
@@ -28999,10 +28999,10 @@ class OptimizedDataExportRepository {
       final tableCounts = await getTableCounts();
       int estimatedSize = 0;
 
-      // 基于表类型的更精确估�?
+      // 基于表类型的更精确估�?
       const tableEstimates = {
-        'product': 800, // 产品表记录较�?
-        'sales_transaction': 600, // 销售记录中�?
+        'product': 800, // 产品表记录较�?
+        'sales_transaction': 600, // 销售记录中�?
         'inventory_transaction': 400, // 库存记录较小
         'category': 200, // 分类记录很小
         'unit': 150, // 单位记录很小
@@ -29029,14 +29029,14 @@ class OptimizedDataExportRepository {
     }
   }
 
-  /// 获取数据库架构版�?
+  /// 获取数据库架构版�?
   Future<int> getDatabaseSchemaVersion() async {
     try {
       return _database.schemaVersion;
     } catch (e) {
       throw BackupException(
         type: BackupErrorType.databaseError,
-        message: '获取数据库架构版本失�? ${e.toString()}',
+        message: '获取数据库架构版本失�? ${e.toString()}',
         originalError: e,
       );
     }
@@ -29048,7 +29048,7 @@ class OptimizedDataExportRepository {
     try {
       final Map<String, List<Map<String, dynamic>>> allTablesData = {};
 
-      // 按照依赖关系顺序导出表数�?
+      // 按照依赖关系顺序导出表数�?
       for (final tableName in _getTableExportOrder()) {
         final tableData = <Map<String, dynamic>>[];
         await for (final batch in _streamExportTable(
@@ -29071,7 +29071,7 @@ class OptimizedDataExportRepository {
   }
 
   /// 序列化数据为JSON格式（向后兼容）
-  /// [data] 要序列化的数�?
+  /// [data] 要序列化的数�?
   /// [prettyPrint] 是否格式化输出，默认false
   String serializeToJson(
     Map<String, dynamic> data, {
@@ -29087,7 +29087,7 @@ class OptimizedDataExportRepository {
     } catch (e) {
       throw BackupException(
         type: BackupErrorType.serializationError,
-        message: 'JSON序列化失�? ${e.toString()}',
+        message: 'JSON序列化失�? ${e.toString()}',
         originalError: e,
       );
     }
@@ -29095,7 +29095,7 @@ class OptimizedDataExportRepository {
 
   /// 生成数据完整性校验和
   /// [data] 要校验的数据
-  /// 返回SHA-256校验�?
+  /// 返回SHA-256校验�?
   String generateChecksum(String data) {
     try {
       final bytes = utf8.encode(data);
@@ -29104,13 +29104,13 @@ class OptimizedDataExportRepository {
     } catch (e) {
       throw BackupException(
         type: BackupErrorType.validationError,
-        message: '生成校验和失�? ${e.toString()}',
+        message: '生成校验和失�? ${e.toString()}',
         originalError: e,
       );
     }
   }
 
-  /// 验证数据完整�?
+  /// 验证数据完整�?
   /// [data] 原始数据
   /// [expectedChecksum] 期望的校验和
   /// 返回验证结果
@@ -29121,7 +29121,7 @@ class OptimizedDataExportRepository {
     } catch (e) {
       throw BackupException(
         type: BackupErrorType.validationError,
-        message: '验证校验和失�? ${e.toString()}',
+        message: '验证校验和失�? ${e.toString()}',
         originalError: e,
       );
     }
@@ -29149,20 +29149,20 @@ class OptimizedDataExportRepository {
     }
   }
 
-  /// 测试数据库连�?
+  /// 测试数据库连�?
   Future<void> testConnection() async {
     try {
       await _database.customSelect('SELECT 1').getSingle();
     } catch (e) {
       throw BackupException(
         type: BackupErrorType.databaseError,
-        message: '数据库连接测试失�? ${e.toString()}',
+        message: '数据库连接测试失�? ${e.toString()}',
         originalError: e,
       );
     }
   }
 
-  /// 检查数据库完整�?
+  /// 检查数据库完整�?
   Future<bool> checkDatabaseIntegrity() async {
     try {
       final result = await _database
@@ -29177,7 +29177,7 @@ class OptimizedDataExportRepository {
   /// 检查是否有长时间运行的事务
   Future<bool> checkLongRunningTransactions() async {
     try {
-      // SQLite没有直接的方法检查长时间运行的事�?
+      // SQLite没有直接的方法检查长时间运行的事�?
       // 这里返回false表示没有长时间运行的事务
       return false;
     } catch (e) {
@@ -29185,7 +29185,7 @@ class OptimizedDataExportRepository {
     }
   }
 
-  /// 检查数据库是否被锁�?
+  /// 检查数据库是否被锁�?
   Future<bool> isDatabaseLocked() async {
     try {
       await _database.customSelect('SELECT 1').getSingle();
@@ -29206,7 +29206,7 @@ class OptimizedDataExportRepository {
     }
   }
 
-  /// 分批导出表数据（公开方法�?
+  /// 分批导出表数据（公开方法�?
   Future<List<Map<String, dynamic>>> exportTableBatch(
     String tableName, {
     required int offset,
@@ -29225,7 +29225,7 @@ import '../../domain/services/i_backup_service.dart';
 import '../../domain/models/backup_options.dart' as backup_models;
 import 'backup_notification_service.dart';
 
-/// 自动备份调度�?
+/// 自动备份调度�?
 class AutoBackupScheduler {
   static const String _settingsKey = 'auto_backup_settings';
 
@@ -29249,7 +29249,7 @@ class AutoBackupScheduler {
     _currentSettings = settings;
     await _saveSettings();
 
-    // 重新启动调度�?
+    // 重新启动调度�?
     await _startScheduler();
 
     // 如果启用了自动备份，计算下次备份时间
@@ -29261,7 +29261,7 @@ class AutoBackupScheduler {
     }
   }
 
-  /// 启动调度�?
+  /// 启动调度�?
   Future<void> _startScheduler() async {
     // 停止现有的调度器
     _schedulerTimer?.cancel();
@@ -29270,12 +29270,12 @@ class AutoBackupScheduler {
       return;
     }
 
-    // 每分钟检查一次是否需要执行备�?
+    // 每分钟检查一次是否需要执行备�?
     _schedulerTimer = Timer.periodic(const Duration(minutes: 1), (timer) {
       _checkAndExecuteBackup();
     });
 
-    // 立即检查一�?
+    // 立即检查一�?
     await _checkAndExecuteBackup();
   }
 
@@ -29287,14 +29287,14 @@ class AutoBackupScheduler {
 
     final now = DateTime.now();
 
-    // 检查是否到了备份时�?
+    // 检查是否到了备份时�?
     if (_currentSettings.nextBackupTime != null &&
         now.isAfter(_currentSettings.nextBackupTime!)) {
-      // 检查设备条�?
+      // 检查设备条�?
       if (await _checkDeviceConditions()) {
         await _executeAutoBackup();
       } else {
-        // 如果设备条件不满足，延迟30分钟后再检�?
+        // 如果设备条件不满足，延迟30分钟后再检�?
         final delayedTime = now.add(const Duration(minutes: 30));
         _currentSettings = _currentSettings.copyWith(
           nextBackupTime: delayedTime,
@@ -29304,13 +29304,13 @@ class AutoBackupScheduler {
     }
   }
 
-  /// 检查设备条件（WiFi、充电状态等�?
+  /// 检查设备条件（WiFi、充电状态等�?
   Future<bool> _checkDeviceConditions() async {
-    // 这里可以添加更复杂的设备条件检�?
+    // 这里可以添加更复杂的设备条件检�?
     // 目前简化处理，总是返回true
     // 在实际应用中，可以检查：
-    // - 网络连接状态（WiFi�?
-    // - 电池充电状�?
+    // - 网络连接状态（WiFi�?
+    // - 电池充电状�?
     // - 存储空间
     return true;
   }
@@ -29318,7 +29318,7 @@ class AutoBackupScheduler {
   /// 执行自动备份
   Future<void> _executeAutoBackup() async {
     try {
-      debugPrint('开始执行自动备�?..');
+      debugPrint('开始执行自动备�?..');
 
       // 创建备份选项
       final backupOptions = backup_models.BackupOptions(
@@ -29341,7 +29341,7 @@ class AutoBackupScheduler {
       if (result.success) {
         debugPrint('自动备份成功: ${result.filePath}');
 
-        // 更新最后备份时�?
+        // 更新最后备份时�?
         final now = DateTime.now();
         final nextBackupTime = _calculateNextBackupTime(
           _currentSettings.frequency,
@@ -29362,7 +29362,7 @@ class AutoBackupScheduler {
         debugPrint('自动备份失败: ${result.errorMessage}');
         await _sendBackupNotification(false, '自动备份失败: ${result.errorMessage}');
 
-        // 备份失败，延�?小时后重�?
+        // 备份失败，延�?小时后重�?
         final retryTime = DateTime.now().add(const Duration(hours: 1));
         _currentSettings = _currentSettings.copyWith(nextBackupTime: retryTime);
         await _saveSettings();
@@ -29371,7 +29371,7 @@ class AutoBackupScheduler {
       debugPrint('自动备份异常: $e');
       await _sendBackupNotification(false, '自动备份异常: $e');
 
-      // 异常情况，延�?小时后重�?
+      // 异常情况，延�?小时后重�?
       final retryTime = DateTime.now().add(const Duration(hours: 2));
       _currentSettings = _currentSettings.copyWith(nextBackupTime: retryTime);
       await _saveSettings();
@@ -29384,7 +29384,7 @@ class AutoBackupScheduler {
 
     switch (frequency) {
       case BackupFrequency.daily:
-        // 每天凌晨2点执�?
+        // 每天凌晨2点执�?
         var nextBackup = DateTime(now.year, now.month, now.day, 2, 0);
         if (nextBackup.isBefore(now)) {
           nextBackup = nextBackup.add(const Duration(days: 1));
@@ -29392,7 +29392,7 @@ class AutoBackupScheduler {
         return nextBackup;
 
       case BackupFrequency.weekly:
-        // 每周日凌�?点执�?
+        // 每周日凌�?点执�?
         var nextBackup = DateTime(now.year, now.month, now.day, 2, 0);
         final daysUntilSunday = (7 - now.weekday) % 7;
         if (daysUntilSunday == 0 && nextBackup.isBefore(now)) {
@@ -29404,10 +29404,10 @@ class AutoBackupScheduler {
         return nextBackup;
 
       case BackupFrequency.monthly:
-        // 每月1号凌�?点执�?
+        // 每月1号凌�?点执�?
         var nextBackup = DateTime(now.year, now.month, 1, 2, 0);
         if (nextBackup.isBefore(now)) {
-          // 下个�?�?
+          // 下个�?�?
           if (now.month == 12) {
             nextBackup = DateTime(now.year + 1, 1, 1, 2, 0);
           } else {
@@ -29418,12 +29418,12 @@ class AutoBackupScheduler {
     }
   }
 
-  /// 清理过期的备份文�?
+  /// 清理过期的备份文�?
   Future<void> _cleanupOldBackups() async {
     try {
       final backups = await _backupService.getLocalBackups();
 
-      // 过滤出自动备份文件（文件名包含auto_backup�?
+      // 过滤出自动备份文件（文件名包含auto_backup�?
       final autoBackups = backups
           .where((backup) => backup.fileName.contains('auto_backup'))
           .toList();
@@ -29431,7 +29431,7 @@ class AutoBackupScheduler {
       // 按创建时间排序，最新的在前
       autoBackups.sort((a, b) => b.createdAt.compareTo(a.createdAt));
 
-      // 如果超过最大保留数量，删除多余的备�?
+      // 如果超过最大保留数量，删除多余的备�?
       if (autoBackups.length > _currentSettings.maxBackupCount) {
         final backupsToDelete = autoBackups.skip(
           _currentSettings.maxBackupCount,
@@ -29447,7 +29447,7 @@ class AutoBackupScheduler {
         }
       }
     } catch (e) {
-      debugPrint('清理过期备份时发生错�? $e');
+      debugPrint('清理过期备份时发生错�? $e');
     }
   }
 
@@ -29469,7 +29469,7 @@ class AutoBackupScheduler {
   /// 手动触发备份
   Future<BackupResult> triggerManualBackup() async {
     if (!_currentSettings.enabled) {
-      return BackupResult.failure('自动备份未启�?);
+      return BackupResult.failure('自动备份未启�?);
     }
 
     final backupOptions = backup_models.BackupOptions(
@@ -29478,7 +29478,7 @@ class AutoBackupScheduler {
       encrypt: _currentSettings.backupOptions?.encrypt ?? false,
       password: _currentSettings.backupOptions?.password,
       compress: _currentSettings.backupOptions?.compress ?? false,
-      description: '手动触发的自动备�?- ${DateTime.now().toIso8601String()}',
+      description: '手动触发的自动备�?- ${DateTime.now().toIso8601String()}',
     );
 
     final result = await _backupService.createBackup(options: backupOptions);
@@ -29496,14 +29496,14 @@ class AutoBackupScheduler {
     return result;
   }
 
-  /// 获取下次备份时间的描�?
+  /// 获取下次备份时间的描�?
   String getNextBackupDescription() {
     if (!_currentSettings.enabled) {
-      return '自动备份已禁�?;
+      return '自动备份已禁�?;
     }
 
     if (_currentSettings.nextBackupTime == null) {
-      return '计算�?..';
+      return '计算�?..';
     }
 
     final now = DateTime.now();
@@ -29517,9 +29517,9 @@ class AutoBackupScheduler {
     if (difference.inDays > 0) {
       return '${difference.inDays}天后';
     } else if (difference.inHours > 0) {
-      return '${difference.inHours}小时�?;
+      return '${difference.inHours}小时�?;
     } else {
-      return '${difference.inMinutes}分钟�?;
+      return '${difference.inMinutes}分钟�?;
     }
   }
 
@@ -29550,7 +29550,7 @@ class AutoBackupScheduler {
     }
   }
 
-  /// 停止调度�?
+  /// 停止调度�?
   void dispose() {
     _schedulerTimer?.cancel();
   }
@@ -29599,27 +29599,27 @@ class BackupDiagnosticService {
 
   BackupDiagnosticService(this._database);
 
-  /// 执行完整的备份系统诊�?
+  /// 执行完整的备份系统诊�?
   Future<BackupDiagnosticResult> runFullDiagnostic() async {
     final issues = <String>[];
     final warnings = <String>[];
     
     try {
-      await _logger.info('BackupDiagnostic', '开始执行备份系统诊�?);
+      await _logger.info('BackupDiagnostic', '开始执行备份系统诊�?);
       
-      // 1. 检查数据库状�?
+      // 1. 检查数据库状�?
       final databaseInfo = await _checkDatabaseHealth(issues, warnings);
       
-      // 2. 检查存储状�?
+      // 2. 检查存储状�?
       final storageInfo = await _checkStorageHealth(issues, warnings);
       
-      // 3. 检查系统状�?
+      // 3. 检查系统状�?
       final systemInfo = await _checkSystemHealth(issues, warnings);
       
-      // 4. 检查备份目�?
+      // 4. 检查备份目�?
       await _checkBackupDirectory(issues, warnings);
       
-      // 5. 检查权�?
+      // 5. 检查权�?
       await _checkPermissions(issues, warnings);
       
       final isHealthy = issues.isEmpty;
@@ -29642,20 +29642,20 @@ class BackupDiagnosticService {
       return result;
       
     } catch (e) {
-      await _logger.error('BackupDiagnostic', '诊断过程中发生错�?, error: e);
+      await _logger.error('BackupDiagnostic', '诊断过程中发生错�?, error: e);
       
       return BackupDiagnosticResult(
         isHealthy: false,
-        issues: ['诊断过程中发生错�? ${e.toString()}'],
+        issues: ['诊断过程中发生错�? ${e.toString()}'],
         warnings: warnings,
         systemInfo: {'error': '无法获取系统信息'},
-        databaseInfo: {'error': '无法获取数据库信�?},
+        databaseInfo: {'error': '无法获取数据库信�?},
         storageInfo: {'error': '无法获取存储信息'},
       );
     }
   }
 
-  /// 检查数据库健康状�?
+  /// 检查数据库健康状�?
   Future<Map<String, dynamic>> _checkDatabaseHealth(
     List<String> issues,
     List<String> warnings,
@@ -29666,7 +29666,7 @@ class BackupDiagnosticService {
       // 检查数据库连接
       final repository = OptimizedDataExportRepository(_database);
       
-      // 获取表数量统�?
+      // 获取表数量统�?
       final tableCounts = await repository.getTableCounts();
       info['tableCounts'] = tableCounts;
       info['totalRecords'] = tableCounts.values.fold<int>(0, (sum, count) => sum + count);
@@ -29677,11 +29677,11 @@ class BackupDiagnosticService {
       
       // 检查数据库文件大小
       try {
-        // 尝试获取数据库路径信�?
+        // 尝试获取数据库路径信�?
         info['databaseSizeCheck'] = 'attempted';
-        warnings.add('数据库文件大小检查暂时跳�?);
+        warnings.add('数据库文件大小检查暂时跳�?);
       } catch (e) {
-        warnings.add('无法获取数据库文件大�? ${e.toString()}');
+        warnings.add('无法获取数据库文件大�? ${e.toString()}');
       }
       
       // 尝试执行简单查询测试数据库响应
@@ -29689,7 +29689,7 @@ class BackupDiagnosticService {
         await repository.getAllTableNames();
         info['connectionStatus'] = 'healthy';
       } catch (e) {
-        issues.add('数据库连接测试失�? ${e.toString()}');
+        issues.add('数据库连接测试失�? ${e.toString()}');
         info['connectionStatus'] = 'failed';
       }
       
@@ -29705,14 +29705,14 @@ class BackupDiagnosticService {
       }
       
     } catch (e) {
-      issues.add('数据库健康检查失�? ${e.toString()}');
+      issues.add('数据库健康检查失�? ${e.toString()}');
       info['error'] = e.toString();
     }
     
     return info;
   }
 
-  /// 检查存储健康状�?
+  /// 检查存储健康状�?
   Future<Map<String, dynamic>> _checkStorageHealth(
     List<String> issues,
     List<String> warnings,
@@ -29726,7 +29726,7 @@ class BackupDiagnosticService {
       
       // 检查目录是否可访问
       if (!await appDir.exists()) {
-        issues.add('应用文档目录不存�? ${appDir.path}');
+        issues.add('应用文档目录不存�? ${appDir.path}');
         return info;
       }
       
@@ -29752,22 +29752,22 @@ class BackupDiagnosticService {
       
       // 估算可用空间（简化版本）
       try {
-        // 这里可以添加更精确的磁盘空间检�?
+        // 这里可以添加更精确的磁盘空间检�?
         info['spaceCheckStatus'] = 'basic_check_only';
         warnings.add('无法精确检查可用存储空间，请确保设备有足够空间');
       } catch (e) {
-        warnings.add('存储空间检查失�? ${e.toString()}');
+        warnings.add('存储空间检查失�? ${e.toString()}');
       }
       
     } catch (e) {
-      issues.add('存储健康检查失�? ${e.toString()}');
+      issues.add('存储健康检查失�? ${e.toString()}');
       info['error'] = e.toString();
     }
     
     return info;
   }
 
-  /// 检查系统健康状�?
+  /// 检查系统健康状�?
   Future<Map<String, dynamic>> _checkSystemHealth(
     List<String> issues,
     List<String> warnings,
@@ -29781,7 +29781,7 @@ class BackupDiagnosticService {
       
       // 检查内存使用情况（基础检查）
       try {
-        // 创建一个小的测试对象来检查内存分�?
+        // 创建一个小的测试对象来检查内存分�?
         final testData = List.generate(1000, (i) => 'test_$i');
         testData.clear();
         info['memoryTest'] = 'passed';
@@ -29790,20 +29790,20 @@ class BackupDiagnosticService {
         info['memoryTest'] = 'failed';
       }
       
-      // 检查当前时�?
+      // 检查当前时�?
       final now = DateTime.now();
       info['currentTime'] = now.toIso8601String();
       info['timezone'] = now.timeZoneName;
       
     } catch (e) {
-      warnings.add('系统健康检查失�? ${e.toString()}');
+      warnings.add('系统健康检查失�? ${e.toString()}');
       info['error'] = e.toString();
     }
     
     return info;
   }
 
-  /// 检查备份目�?
+  /// 检查备份目�?
   Future<void> _checkBackupDirectory(
     List<String> issues,
     List<String> warnings,
@@ -29815,14 +29815,14 @@ class BackupDiagnosticService {
       if (!await backupDir.exists()) {
         try {
           await backupDir.create(recursive: true);
-          warnings.add('备份目录不存在，已自动创�?);
+          warnings.add('备份目录不存在，已自动创�?);
         } catch (e) {
           issues.add('无法创建备份目录: ${e.toString()}');
           return;
         }
       }
       
-      // 检查备份目录中的文�?
+      // 检查备份目录中的文�?
       try {
         final files = await backupDir.list().toList();
         final backupFiles = files
@@ -29830,26 +29830,26 @@ class BackupDiagnosticService {
             .length;
         
         if (backupFiles == 0) {
-          warnings.add('备份目录中没有找到备份文�?);
+          warnings.add('备份目录中没有找到备份文�?);
         } else {
-          warnings.add('找到 $backupFiles 个备份文�?);
+          warnings.add('找到 $backupFiles 个备份文�?);
         }
       } catch (e) {
         warnings.add('无法读取备份目录内容: ${e.toString()}');
       }
       
     } catch (e) {
-      issues.add('备份目录检查失�? ${e.toString()}');
+      issues.add('备份目录检查失�? ${e.toString()}');
     }
   }
 
-  /// 检查权�?
+  /// 检查权�?
   Future<void> _checkPermissions(
     List<String> issues,
     List<String> warnings,
   ) async {
     try {
-      // 检查基本文件操作权�?
+      // 检查基本文件操作权�?
       final tempDir = Directory.systemTemp;
       final testFile = File(path.join(tempDir.path, 'backup_permission_test.tmp'));
       
@@ -29871,7 +29871,7 @@ class BackupDiagnosticService {
       }
       
     } catch (e) {
-      warnings.add('权限检查失�? ${e.toString()}');
+      warnings.add('权限检查失�? ${e.toString()}');
     }
   }
 
@@ -29885,7 +29885,7 @@ class BackupDiagnosticService {
       final repository = OptimizedDataExportRepository(_database);
       await repository.getAllTableNames();
       
-      // 快速存储权限测�?
+      // 快速存储权限测�?
       final appDir = await getApplicationDocumentsDirectory();
       final testFile = File(path.join(appDir.path, 'quick_test.tmp'));
       await testFile.writeAsString('test');
@@ -29901,7 +29901,7 @@ class BackupDiagnosticService {
       );
       
     } catch (e) {
-      issues.add('快速诊断发现问�? ${e.toString()}');
+      issues.add('快速诊断发现问�? ${e.toString()}');
       
       return BackupDiagnosticResult(
         isHealthy: false,
@@ -29920,11 +29920,11 @@ class BackupDiagnosticService {
     
     buffer.writeln('=== 备份系统诊断报告 ===');
     buffer.writeln('生成时间: ${DateTime.now()}');
-    buffer.writeln('系统状�? ${result.isHealthy ? "正常" : "异常"}');
+    buffer.writeln('系统状�? ${result.isHealthy ? "正常" : "异常"}');
     buffer.writeln();
     
     if (result.issues.isNotEmpty) {
-      buffer.writeln('发现的问�?');
+      buffer.writeln('发现的问�?');
       for (int i = 0; i < result.issues.length; i++) {
         buffer.writeln('${i + 1}. ${result.issues[i]}');
       }
@@ -29945,7 +29945,7 @@ class BackupDiagnosticService {
     });
     buffer.writeln();
     
-    buffer.writeln('数据库信�?');
+    buffer.writeln('数据库信�?');
     result.databaseInfo.forEach((key, value) {
       buffer.writeln('  $key: $value');
     });
@@ -29982,7 +29982,7 @@ class ErrorRecoverySuggestion {
   });
 }
 
-/// 用户友好的错误信�?
+/// 用户友好的错误信�?
 class UserFriendlyError {
   final String title;
   final String message;
@@ -30037,11 +30037,11 @@ class RetryConfig {
   );
 }
 
-/// 备份错误处理�?
+/// 备份错误处理�?
 class BackupErrorHandler {
   static final BackupLogger _logger = BackupLogger.instance;
 
-  /// 将异常转换为用户友好的错误信�?
+  /// 将异常转换为用户友好的错误信�?
   static UserFriendlyError handleError(Object error, {
     String? operation,
     Map<String, dynamic>? context,
@@ -30066,7 +30066,7 @@ class BackupErrorHandler {
       case BackupErrorType.fileSystemError:
         return UserFriendlyError(
           title: '文件操作失败',
-          message: '无法访问或操作备份文件，请检查存储权限和可用空间�?,
+          message: '无法访问或操作备份文件，请检查存储权限和可用空间�?,
           technicalDetails: error.message,
           suggestion: const ErrorRecoverySuggestion(
             title: '解决建议',
@@ -30075,7 +30075,7 @@ class BackupErrorHandler {
               '检查应用是否有存储权限',
               '确保设备有足够的可用存储空间',
               '尝试选择其他存储位置',
-              '重启应用后重�?,
+              '重启应用后重�?,
             ],
             canRetry: true,
           ),
@@ -30084,15 +30084,15 @@ class BackupErrorHandler {
 
       case BackupErrorType.databaseError:
         return UserFriendlyError(
-          title: '数据库操作失�?,
-          message: '读取或写入数据库时发生错误，可能是数据库文件损坏或被占用�?,
+          title: '数据库操作失�?,
+          message: '读取或写入数据库时发生错误，可能是数据库文件损坏或被占用�?,
           technicalDetails: error.message,
           suggestion: const ErrorRecoverySuggestion(
             title: '解决建议',
             description: '请尝试以下解决方案：',
             steps: [
               '关闭其他可能使用数据库的功能',
-              '重启应用后重�?,
+              '重启应用后重�?,
               '如果问题持续，可能需要修复数据库',
             ],
             canRetry: true,
@@ -30103,13 +30103,13 @@ class BackupErrorHandler {
       case BackupErrorType.serializationError:
         return UserFriendlyError(
           title: '数据格式错误',
-          message: '备份文件格式不正确或已损坏，无法正确解析数据�?,
+          message: '备份文件格式不正确或已损坏，无法正确解析数据�?,
           technicalDetails: error.message,
           suggestion: const ErrorRecoverySuggestion(
             title: '解决建议',
             description: '请尝试以下解决方案：',
             steps: [
-              '检查备份文件是否完�?,
+              '检查备份文件是否完�?,
               '尝试使用其他备份文件',
               '重新创建备份文件',
             ],
@@ -30121,14 +30121,14 @@ class BackupErrorHandler {
       case BackupErrorType.encryptionError:
         return UserFriendlyError(
           title: '加密操作失败',
-          message: '加密或解密备份文件时发生错误，请检查密码是否正确�?,
+          message: '加密或解密备份文件时发生错误，请检查密码是否正确�?,
           technicalDetails: error.message,
           suggestion: const ErrorRecoverySuggestion(
             title: '解决建议',
             description: '请尝试以下解决方案：',
             steps: [
-              '确认输入的密码正�?,
-              '检查备份文件是否确实加�?,
+              '确认输入的密码正�?,
+              '检查备份文件是否确实加�?,
               '尝试使用原始密码重新操作',
             ],
             canRetry: true,
@@ -30139,13 +30139,13 @@ class BackupErrorHandler {
       case BackupErrorType.validationError:
         return UserFriendlyError(
           title: '数据验证失败',
-          message: '备份文件数据完整性验证失败，文件可能已损坏或被篡改�?,
+          message: '备份文件数据完整性验证失败，文件可能已损坏或被篡改�?,
           technicalDetails: error.message,
           suggestion: const ErrorRecoverySuggestion(
             title: '解决建议',
             description: '请尝试以下解决方案：',
             steps: [
-              '检查备份文件是否完整下�?,
+              '检查备份文件是否完整下�?,
               '尝试使用其他备份文件',
               '重新创建备份文件',
               '检查存储设备是否有问题',
@@ -30158,14 +30158,14 @@ class BackupErrorHandler {
       case BackupErrorType.insufficientSpace:
         return UserFriendlyError(
           title: '存储空间不足',
-          message: '设备存储空间不足，无法完成备份操作�?,
+          message: '设备存储空间不足，无法完成备份操作�?,
           technicalDetails: error.message,
           suggestion: const ErrorRecoverySuggestion(
             title: '解决建议',
             description: '请尝试以下解决方案：',
             steps: [
               '清理设备存储空间',
-              '删除不需要的文件或应�?,
+              '删除不需要的文件或应�?,
               '选择其他存储位置',
               '使用外部存储设备',
             ],
@@ -30176,8 +30176,8 @@ class BackupErrorHandler {
 
       case BackupErrorType.permissionDenied:
         return UserFriendlyError(
-          title: '权限被拒�?,
-          message: '应用没有足够的权限访问所需的文件或目录�?,
+          title: '权限被拒�?,
+          message: '应用没有足够的权限访问所需的文件或目录�?,
           technicalDetails: error.message,
           suggestion: const ErrorRecoverySuggestion(
             title: '解决建议',
@@ -30185,7 +30185,7 @@ class BackupErrorHandler {
             steps: [
               '在系统设置中授予应用存储权限',
               '选择应用有权限访问的目录',
-              '重启应用后重�?,
+              '重启应用后重�?,
             ],
             canRetry: true,
           ),
@@ -30194,15 +30194,15 @@ class BackupErrorHandler {
 
       case BackupErrorType.fileNotFound:
         return UserFriendlyError(
-          title: '文件未找�?,
-          message: '指定的备份文件不存在或已被删除�?,
+          title: '文件未找�?,
+          message: '指定的备份文件不存在或已被删除�?,
           technicalDetails: error.message,
           suggestion: const ErrorRecoverySuggestion(
             title: '解决建议',
             description: '请尝试以下解决方案：',
             steps: [
-              '检查文件路径是否正�?,
-              '确认文件未被移动或删�?,
+              '检查文件路径是否正�?,
+              '确认文件未被移动或删�?,
               '选择其他备份文件',
             ],
             canRetry: false,
@@ -30213,15 +30213,15 @@ class BackupErrorHandler {
       case BackupErrorType.unsupportedFormat:
         return UserFriendlyError(
           title: '不支持的文件格式',
-          message: '备份文件格式不受支持，可能是旧版本或损坏的文件�?,
+          message: '备份文件格式不受支持，可能是旧版本或损坏的文件�?,
           technicalDetails: error.message,
           suggestion: const ErrorRecoverySuggestion(
             title: '解决建议',
             description: '请尝试以下解决方案：',
             steps: [
-              '使用较新版本的备份文�?,
-              '检查文件是否完�?,
-              '联系技术支持获取帮�?,
+              '使用较新版本的备份文�?,
+              '检查文件是否完�?,
+              '联系技术支持获取帮�?,
             ],
             canRetry: false,
           ),
@@ -30231,14 +30231,14 @@ class BackupErrorHandler {
       case BackupErrorType.incorrectPassword:
         return UserFriendlyError(
           title: '密码错误',
-          message: '输入的密码不正确，无法解密备份文件�?,
+          message: '输入的密码不正确，无法解密备份文件�?,
           technicalDetails: error.message,
           suggestion: const ErrorRecoverySuggestion(
             title: '解决建议',
             description: '请尝试以下解决方案：',
             steps: [
-              '确认输入的密码正�?,
-              '检查大小写和特殊字�?,
+              '确认输入的密码正�?,
+              '检查大小写和特殊字�?,
               '尝试使用创建备份时的原始密码',
             ],
             canRetry: true,
@@ -30248,8 +30248,8 @@ class BackupErrorHandler {
 
       case BackupErrorType.operationCancelled:
         return UserFriendlyError(
-          title: '操作已取�?,
-          message: '备份或恢复操作已被用户取消�?,
+          title: '操作已取�?,
+          message: '备份或恢复操作已被用户取消�?,
           technicalDetails: error.message,
           canRetry: true,
         );
@@ -30257,14 +30257,14 @@ class BackupErrorHandler {
       case BackupErrorType.networkError:
         return UserFriendlyError(
           title: '网络连接错误',
-          message: '网络连接不稳定或已断开，无法完成操作�?,
+          message: '网络连接不稳定或已断开，无法完成操作�?,
           technicalDetails: error.message,
           suggestion: const ErrorRecoverySuggestion(
             title: '解决建议',
             description: '请尝试以下解决方案：',
             steps: [
-              '检查网络连接是否正�?,
-              '尝试切换到其他网�?,
+              '检查网络连接是否正�?,
+              '尝试切换到其他网�?,
               '稍后重试操作',
             ],
             canRetry: true,
@@ -30275,7 +30275,7 @@ class BackupErrorHandler {
       case BackupErrorType.compressionError:
         return UserFriendlyError(
           title: '压缩操作失败',
-          message: '备份文件压缩或解压过程中发生错误，请重试或选择不压缩的备份方式�?,
+          message: '备份文件压缩或解压过程中发生错误，请重试或选择不压缩的备份方式�?,
           technicalDetails: error.message,
           suggestion: const ErrorRecoverySuggestion(
             title: '解决建议',
@@ -30283,8 +30283,8 @@ class BackupErrorHandler {
             steps: [
               '重试备份操作',
               '选择不压缩的备份选项',
-              '检查设备存储空间是否充�?,
-              '确保备份文件未损�?,
+              '检查设备存储空间是否充�?,
+              '确保备份文件未损�?,
             ],
             canRetry: true,
           ),
@@ -30294,14 +30294,14 @@ class BackupErrorHandler {
       case BackupErrorType.unknown:
         return UserFriendlyError(
           title: '未知错误',
-          message: '发生了未知错误，请稍后重试或联系技术支持�?,
+          message: '发生了未知错误，请稍后重试或联系技术支持�?,
           technicalDetails: error.message,
           suggestion: const ErrorRecoverySuggestion(
             title: '解决建议',
             description: '请尝试以下解决方案：',
             steps: [
-              '重启应用后重�?,
-              '检查设备是否正常工�?,
+              '重启应用后重�?,
+              '检查设备是否正常工�?,
               '联系技术支持并提供错误详情',
             ],
             canRetry: true,
@@ -30315,15 +30315,15 @@ class BackupErrorHandler {
   static UserFriendlyError _handleFileSystemException(FileSystemException error) {
     return UserFriendlyError(
       title: '文件操作失败',
-      message: '无法访问或操作文件，请检查文件路径和权限�?,
+      message: '无法访问或操作文件，请检查文件路径和权限�?,
       technicalDetails: error.toString(),
       suggestion: const ErrorRecoverySuggestion(
         title: '解决建议',
         description: '请尝试以下解决方案：',
         steps: [
-          '检查文件路径是否正�?,
+          '检查文件路径是否正�?,
           '确认应用有足够的权限',
-          '检查存储设备是否正�?,
+          '检查存储设备是否正�?,
         ],
         canRetry: true,
       ),
@@ -30335,13 +30335,13 @@ class BackupErrorHandler {
   static UserFriendlyError _handleFormatException(FormatException error) {
     return UserFriendlyError(
       title: '数据格式错误',
-      message: '文件格式不正确或数据已损坏�?,
+      message: '文件格式不正确或数据已损坏�?,
       technicalDetails: error.toString(),
       suggestion: const ErrorRecoverySuggestion(
         title: '解决建议',
         description: '请尝试以下解决方案：',
         steps: [
-          '检查文件是否完�?,
+          '检查文件是否完�?,
           '尝试使用其他备份文件',
           '重新创建备份文件',
         ],
@@ -30356,13 +30356,13 @@ class BackupErrorHandler {
     // 尝试从错误信息中提取更具体的信息
     final errorMessage = error.toString().toLowerCase();
     
-    // 检查是否是数据库相关错�?
+    // 检查是否是数据库相关错�?
     if (errorMessage.contains('database') || 
         errorMessage.contains('sqlite') || 
         errorMessage.contains('sql')) {
       return UserFriendlyError(
-        title: '数据库操作失�?,
-        message: '数据库访问出现问题，可能是数据库文件损坏或被占用�?,
+        title: '数据库操作失�?,
+        message: '数据库访问出现问题，可能是数据库文件损坏或被占用�?,
         technicalDetails: error.toString(),
         suggestion: const ErrorRecoverySuggestion(
           title: '解决建议',
@@ -30370,8 +30370,8 @@ class BackupErrorHandler {
           steps: [
             '关闭应用后重新打开',
             '确保没有其他应用在使用数据库',
-            '检查设备存储空间是否充�?,
-            '如果问题持续，可能需要重新安装应�?,
+            '检查设备存储空间是否充�?,
+            '如果问题持续，可能需要重新安装应�?,
           ],
           canRetry: true,
         ),
@@ -30386,7 +30386,7 @@ class BackupErrorHandler {
         errorMessage.contains('permission')) {
       return UserFriendlyError(
         title: '文件操作失败',
-        message: '无法访问或创建备份文件，请检查存储权限和可用空间�?,
+        message: '无法访问或创建备份文件，请检查存储权限和可用空间�?,
         technicalDetails: error.toString(),
         suggestion: const ErrorRecoverySuggestion(
           title: '解决建议',
@@ -30395,7 +30395,7 @@ class BackupErrorHandler {
             '检查应用是否有存储权限',
             '确保设备有足够的可用存储空间',
             '尝试选择其他存储位置',
-            '重启应用后重�?,
+            '重启应用后重�?,
           ],
           canRetry: true,
         ),
@@ -30409,13 +30409,13 @@ class BackupErrorHandler {
         errorMessage.contains('heap')) {
       return UserFriendlyError(
         title: '内存不足',
-        message: '设备内存不足，无法完成备份操作�?,
+        message: '设备内存不足，无法完成备份操作�?,
         technicalDetails: error.toString(),
         suggestion: const ErrorRecoverySuggestion(
           title: '解决建议',
           description: '请尝试以下解决方案：',
           steps: [
-            '关闭其他正在运行的应�?,
+            '关闭其他正在运行的应�?,
             '重启设备释放内存',
             '尝试分批备份数据',
             '清理设备缓存',
@@ -30432,14 +30432,14 @@ class BackupErrorHandler {
         errorMessage.contains('timeout')) {
       return UserFriendlyError(
         title: '网络连接问题',
-        message: '网络连接不稳定，影响了备份操作�?,
+        message: '网络连接不稳定，影响了备份操作�?,
         technicalDetails: error.toString(),
         suggestion: const ErrorRecoverySuggestion(
           title: '解决建议',
           description: '请尝试以下解决方案：',
           steps: [
-            '检查网络连接是否正�?,
-            '尝试切换到其他网�?,
+            '检查网络连接是否正�?,
+            '尝试切换到其他网�?,
             '稍后重试操作',
             '使用本地备份功能',
           ],
@@ -30460,7 +30460,7 @@ class BackupErrorHandler {
         steps: [
           '稍后重试操作',
           '重启应用',
-          '检查设备状�?,
+          '检查设备状�?,
           '联系技术支持并提供错误详情',
         ],
         canRetry: true,
@@ -30475,7 +30475,7 @@ class BackupErrorHandler {
     final lines = errorMessage.split('\n');
     if (lines.isNotEmpty) {
       final firstLine = lines.first.trim();
-      // 如果第一行包含有用信息，返回�?
+      // 如果第一行包含有用信息，返回�?
       if (firstLine.isNotEmpty && !firstLine.startsWith('#')) {
         return firstLine.length > 100 
             ? '${firstLine.substring(0, 100)}...' 
@@ -30484,7 +30484,7 @@ class BackupErrorHandler {
     }
     
     // 如果无法提取有用信息，返回通用描述
-    return '请查看技术详情了解更多信�?;
+    return '请查看技术详情了解更多信�?;
   }
 
   /// 记录错误日志
@@ -30534,7 +30534,7 @@ class BackupErrorHandler {
       attempt++;
       
       try {
-        await _logger.debug(opName, '开始执行操�?(尝试 $attempt/${config.maxAttempts})', 
+        await _logger.debug(opName, '开始执行操�?(尝试 $attempt/${config.maxAttempts})', 
             details: context);
         
         final result = await operation();
@@ -30545,10 +30545,10 @@ class BackupErrorHandler {
         
         return result;
       } catch (error) {
-        await _logger.warning(opName, '�?$attempt 次尝试失�? ${error.toString()}',
+        await _logger.warning(opName, '�?$attempt 次尝试失�? ${error.toString()}',
             details: {'attempt': attempt, 'maxAttempts': config.maxAttempts});
 
-        // 检查是否应该重�?
+        // 检查是否应该重�?
         final shouldRetry = config.shouldRetry?.call(error) ?? _shouldRetryByDefault(error);
         
         if (attempt >= config.maxAttempts || !shouldRetry) {
@@ -30557,9 +30557,9 @@ class BackupErrorHandler {
           rethrow;
         }
 
-        // 等待后重�?
+        // 等待后重�?
         if (attempt < config.maxAttempts) {
-          await _logger.debug(opName, '等待 ${delay.inMilliseconds}ms 后重�?);
+          await _logger.debug(opName, '等待 ${delay.inMilliseconds}ms 后重�?);
           await Future.delayed(delay);
           
           // 计算下次延迟时间
@@ -30605,10 +30605,10 @@ class BackupErrorHandler {
       return false;
     }
     
-    return true; // 默认可重�?
+    return true; // 默认可重�?
   }
 
-  /// 获取错误的严重程�?
+  /// 获取错误的严重程�?
   static LogLevel getErrorSeverity(Object error) {
     if (error is BackupException) {
       switch (error.type) {
@@ -30650,12 +30650,12 @@ class BackupErrorService {
   final BackupResourceManager _resourceManager = BackupResourceManager.instance;
   bool _initialized = false;
 
-  /// 错误事件�?
+  /// 错误事件�?
   Stream<UserFriendlyError> get errorStream => _errorStreamController.stream;
   final StreamController<UserFriendlyError> _errorStreamController = 
       StreamController<UserFriendlyError>.broadcast();
 
-  /// 初始化错误服�?
+  /// 初始化错误服�?
   Future<void> initialize() async {
     if (_initialized) return;
     
@@ -30669,7 +30669,7 @@ class BackupErrorService {
       }
       
       _initialized = true;
-      await _logger.info('ErrorService', '错误处理服务初始化完�?);
+      await _logger.info('ErrorService', '错误处理服务初始化完�?);
     } catch (e) {
       debugPrint('Failed to initialize BackupErrorService: $e');
       rethrow;
@@ -30699,7 +30699,7 @@ class BackupErrorService {
         context: context,
       );
       
-      // 发送错误事�?
+      // 发送错误事�?
       _errorStreamController.add(userFriendlyError);
       
       return userFriendlyError;
@@ -30709,13 +30709,13 @@ class BackupErrorService {
       
       return const UserFriendlyError(
         title: '系统错误',
-        message: '处理错误时发生了意外问题，请重启应用后重试�?,
+        message: '处理错误时发生了意外问题，请重启应用后重试�?,
         canRetry: false,
       );
     }
   }
 
-  /// 带重试机制执行操�?
+  /// 带重试机制执行操�?
   Future<T> executeWithRetry<T>(
     Future<T> Function() operation, {
     RetryConfig? config,
@@ -30741,7 +30741,7 @@ class BackupErrorService {
         shouldCleanupResources: shouldCleanupOnFailure,
       );
       
-      // 重新抛出原始错误，但已经记录和处理过�?
+      // 重新抛出原始错误，但已经记录和处理过�?
       throw BackupException(
         type: BackupErrorType.unknown,
         message: userFriendlyError.message,
@@ -30772,26 +30772,26 @@ class BackupErrorService {
     }
   }
 
-  /// 创建操作上下�?
+  /// 创建操作上下�?
   Future<String> createOperationContext(String operation, {
     Map<String, dynamic>? metadata,
   }) async {
     try {
       final operationId = 'op_${DateTime.now().millisecondsSinceEpoch}';
       
-      await _logger.info(operation, '开始操�?, details: {
+      await _logger.info(operation, '开始操�?, details: {
         'operationId': operationId,
         if (metadata != null) ...metadata,
       });
       
       return operationId;
     } catch (e) {
-      await _logger.error('ErrorService', '创建操作上下文失�?, error: e);
+      await _logger.error('ErrorService', '创建操作上下文失�?, error: e);
       return 'unknown_operation';
     }
   }
 
-  /// 完成操作上下�?
+  /// 完成操作上下�?
   Future<void> completeOperationContext(
     String operationId,
     String operation, {
@@ -30815,7 +30815,7 @@ class BackupErrorService {
       // 清理操作相关资源
       await _cleanupOperationResources(operation);
     } catch (e) {
-      await _logger.error('ErrorService', '完成操作上下文失�?, error: e);
+      await _logger.error('ErrorService', '完成操作上下文失�?, error: e);
     }
   }
 
@@ -30893,15 +30893,15 @@ class BackupErrorService {
   /// 清理错误服务
   Future<void> cleanup() async {
     try {
-      await _logger.info('ErrorService', '开始清理错误服�?);
+      await _logger.info('ErrorService', '开始清理错误服�?);
       
       // 清理资源
       await _resourceManager.dispose();
       
-      // 清理旧日�?
+      // 清理旧日�?
       await _logger.cleanupOldLogs();
       
-      // 关闭�?
+      // 关闭�?
       await _errorStreamController.close();
       
       _initialized = false;
@@ -30965,7 +30965,7 @@ class BackupErrorService {
       },
     );
     
-    // 调用默认的错误处�?
+    // 调用默认的错误处�?
     FlutterError.presentError(details);
   }
 }
@@ -30977,19 +30977,19 @@ import 'backup_notification_service.dart';
 import 'unified_backup_service.dart';
 import '../../../../core/database/database.dart';
 
-/// 备份功能初始化服�?
+/// 备份功能初始化服�?
 class BackupInitializationService {
   static AutoBackupScheduler? _scheduler;
   static bool _isInitialized = false;
 
-  /// 初始化备份功�?
+  /// 初始化备份功�?
   static Future<void> initialize(AppDatabase database) async {
     if (_isInitialized) {
       return;
     }
 
     try {
-      debugPrint('正在初始化备份功�?..');
+      debugPrint('正在初始化备份功�?..');
 
       // 初始化通知服务
       await BackupNotificationService.initialize();
@@ -30997,23 +30997,23 @@ class BackupInitializationService {
       // 创建备份服务
       final backupService = UnifiedBackupService(database);
 
-      // 创建并初始化自动备份调度�?
+      // 创建并初始化自动备份调度�?
       _scheduler = AutoBackupScheduler(backupService);
       await _scheduler!.initialize();
 
       _isInitialized = true;
-      debugPrint('备份功能初始化完�?);
+      debugPrint('备份功能初始化完�?);
 
     } catch (e, stackTrace) {
-      debugPrint('备份功能初始化失�? $e');
+      debugPrint('备份功能初始化失�? $e');
       debugPrint('堆栈跟踪: $stackTrace');
     }
   }
 
-  /// 获取自动备份调度器实�?
+  /// 获取自动备份调度器实�?
   static AutoBackupScheduler? get scheduler => _scheduler;
 
-  /// 检查是否已初始�?
+  /// 检查是否已初始�?
   static bool get isInitialized => _isInitialized;
 
   /// 清理资源
@@ -31021,11 +31021,11 @@ class BackupInitializationService {
     _scheduler?.dispose();
     _scheduler = null;
     _isInitialized = false;
-    debugPrint('备份功能已清�?);
+    debugPrint('备份功能已清�?);
   }
 }
 
-/// 备份初始化提供�?
+/// 备份初始化提供�?
 final backupInitializationProvider = Provider<BackupInitializationService>((ref) {
   return BackupInitializationService();
 });
@@ -31086,7 +31086,7 @@ class LogEntry {
       );
 }
 
-/// 备份操作日志记录�?
+/// 备份操作日志记录�?
 class BackupLogger {
   static BackupLogger? _instance;
   static BackupLogger get instance => _instance ??= BackupLogger._();
@@ -31116,7 +31116,7 @@ class BackupLogger {
       
       _initialized = true;
       
-      // 记录初始化日�?
+      // 记录初始化日�?
       await info('BackupLogger', '日志记录器初始化完成');
     } catch (e) {
       // 如果无法初始化文件日志，至少保持内存日志可用
@@ -31131,7 +31131,7 @@ class BackupLogger {
     await _log(LogLevel.debug, operation, message, details: details);
   }
 
-  /// 记录一般信�?
+  /// 记录一般信�?
   Future<void> info(String operation, String message, {
     Map<String, dynamic>? details,
   }) async {
@@ -31212,7 +31212,7 @@ class BackupLogger {
       stackTrace: stackTrace,
     );
 
-    // 添加到内存日�?
+    // 添加到内存日�?
     _memoryLogs.add(entry);
     
     // 保持内存日志数量限制
@@ -31279,7 +31279,7 @@ class BackupLogger {
     return logs;
   }
 
-  /// 清理旧日志文�?
+  /// 清理旧日志文�?
   Future<void> cleanupOldLogs({int keepDays = 30}) async {
     try {
       final appDir = await getApplicationDocumentsDirectory();
@@ -31302,7 +31302,7 @@ class BackupLogger {
         }
       }
     } catch (e) {
-      await error('BackupLogger', '清理旧日志文件失�?, error: e);
+      await error('BackupLogger', '清理旧日志文件失�?, error: e);
     }
   }
 
@@ -31335,7 +31335,7 @@ class BackupLogger {
           // 这里可以解析日志文件内容，但为了简化，我们主要使用内存日志
           await file.readAsString();
         } catch (e) {
-          // 忽略无法读取的日志文�?
+          // 忽略无法读取的日志文�?
         }
       }
       
@@ -31375,7 +31375,7 @@ import 'package:fluttertoast/fluttertoast.dart';
 /// 备份通知服务
 /// 目前使用Toast显示通知，未来可以集成flutter_local_notifications
 class BackupNotificationService {
-  // 预留的通知渠道配置，未来集成flutter_local_notifications时使�?
+  // 预留的通知渠道配置，未来集成flutter_local_notifications时使�?
   // static const String _channelId = 'backup_notifications';
   // static const String _channelName = '备份通知';
   // static const String _channelDescription = '自动备份相关的通知';
@@ -31402,7 +31402,7 @@ class BackupNotificationService {
       );
     }
     
-    // 这里可以添加本地通知的实�?
+    // 这里可以添加本地通知的实�?
     // await _showLocalNotification(
     //   title: title,
     //   body: message,
@@ -31425,7 +31425,7 @@ class BackupNotificationService {
       );
     }
     
-    // 这里可以添加本地通知的实�?
+    // 这里可以添加本地通知的实�?
     // await _showLocalNotification(
     //   title: title,
     //   body: message,
@@ -31439,7 +31439,7 @@ class BackupNotificationService {
   }) async {
     debugPrint('备份提醒通知: $message');
     
-    // 这里可以添加本地通知的实�?
+    // 这里可以添加本地通知的实�?
     // await _showLocalNotification(
     //   title: '备份提醒',
     //   body: message,
@@ -31451,7 +31451,7 @@ class BackupNotificationService {
   static Future<void> cancelAllNotifications() async {
     debugPrint('取消所有备份通知');
     
-    // 这里可以添加取消本地通知的实�?
+    // 这里可以添加取消本地通知的实�?
     // await _flutterLocalNotificationsPlugin.cancelAll();
   }
 
@@ -31459,7 +31459,7 @@ class BackupNotificationService {
   static Future<void> cancelNotification(int notificationId) async {
     debugPrint('取消通知: $notificationId');
     
-    // 这里可以添加取消特定本地通知的实�?
+    // 这里可以添加取消特定本地通知的实�?
     // await _flutterLocalNotificationsPlugin.cancel(notificationId);
   }
 
@@ -31533,7 +31533,7 @@ class BackupRepairService {
     final remainingIssues = <String>[];
     
     try {
-      await _logger.info('BackupRepair', '开始自动修复备份系�?);
+      await _logger.info('BackupRepair', '开始自动修复备份系�?);
       
       // 1. 运行诊断
       final diagnostic = await _diagnosticService.runFullDiagnostic();
@@ -31553,10 +31553,10 @@ class BackupRepairService {
       // 3. 修复权限问题
       await _fixPermissions(fixedIssues, remainingIssues);
       
-      // 4. 清理损坏的备份文�?
+      // 4. 清理损坏的备份文�?
       await _cleanupCorruptedBackups(fixedIssues, remainingIssues);
       
-      // 5. 修复数据库连接问�?
+      // 5. 修复数据库连接问�?
       await _fixDatabaseIssues(fixedIssues, remainingIssues);
       
       // 6. 清理临时文件
@@ -31564,8 +31564,8 @@ class BackupRepairService {
       
       final success = remainingIssues.isEmpty;
       final message = success 
-          ? '修复完成，共解决 ${fixedIssues.length} 个问�?
-          : '部分修复完成，还�?${remainingIssues.length} 个问题需要手动处�?;
+          ? '修复完成，共解决 ${fixedIssues.length} 个问�?
+          : '部分修复完成，还�?${remainingIssues.length} 个问题需要手动处�?;
       
       await _logger.info('BackupRepair', '自动修复完成', details: {
         'success': success,
@@ -31581,13 +31581,13 @@ class BackupRepairService {
       );
       
     } catch (e) {
-      await _logger.error('BackupRepair', '自动修复过程中发生错�?, error: e);
+      await _logger.error('BackupRepair', '自动修复过程中发生错�?, error: e);
       
       return BackupRepairResult(
         success: false,
         fixedIssues: fixedIssues,
-        remainingIssues: ['修复过程中发生错�? ${e.toString()}'],
-        message: '修复失败，请联系技术支�?,
+        remainingIssues: ['修复过程中发生错�? ${e.toString()}'],
+        message: '修复失败，请联系技术支�?,
       );
     }
   }
@@ -31606,7 +31606,7 @@ class BackupRepairService {
         fixedIssues.add('创建了缺失的备份目录');
       }
       
-      // 检查目录权�?
+      // 检查目录权�?
       try {
         final testFile = File(path.join(backupDir.path, 'test_permission.tmp'));
         await testFile.writeAsString('test');
@@ -31636,7 +31636,7 @@ class BackupRepairService {
       
       if (content == 'permission repair test') {
         await testFile.delete();
-        fixedIssues.add('验证了基本文件操作权�?);
+        fixedIssues.add('验证了基本文件操作权�?);
       } else {
         remainingIssues.add('文件读写权限异常');
       }
@@ -31646,7 +31646,7 @@ class BackupRepairService {
     }
   }
 
-  /// 清理损坏的备份文�?
+  /// 清理损坏的备份文�?
   Future<void> _cleanupCorruptedBackups(
     List<String> fixedIssues,
     List<String> remainingIssues,
@@ -31669,7 +31669,7 @@ class BackupRepairService {
       
       for (final file in files) {
         try {
-          // 尝试读取和解析文�?
+          // 尝试读取和解析文�?
           final content = await file.readAsString();
           if (content.trim().isEmpty) {
             await file.delete();
@@ -31692,13 +31692,13 @@ class BackupRepairService {
             await file.delete();
             corruptedCount++;
           } catch (deleteError) {
-            remainingIssues.add('无法删除损坏的备份文�? ${file.path}');
+            remainingIssues.add('无法删除损坏的备份文�? ${file.path}');
           }
         }
       }
       
       if (corruptedCount > 0) {
-        fixedIssues.add('清理�?$corruptedCount 个损坏的备份文件');
+        fixedIssues.add('清理�?$corruptedCount 个损坏的备份文件');
       }
       
     } catch (e) {
@@ -31706,23 +31706,23 @@ class BackupRepairService {
     }
   }
 
-  /// 修复数据库连接问�?
+  /// 修复数据库连接问�?
   Future<void> _fixDatabaseIssues(
     List<String> fixedIssues,
     List<String> remainingIssues,
   ) async {
     try {
-      // 尝试执行简单的数据库查�?
+      // 尝试执行简单的数据库查�?
       final result = await _database.customSelect('SELECT 1 as test').get();
       
       if (result.isNotEmpty && result.first.data['test'] == 1) {
         fixedIssues.add('验证了数据库连接正常');
       } else {
-        remainingIssues.add('数据库查询返回异常结�?);
+        remainingIssues.add('数据库查询返回异常结�?);
       }
       
     } catch (e) {
-      remainingIssues.add('数据库连接问�? ${e.toString()}');
+      remainingIssues.add('数据库连接问�? ${e.toString()}');
     }
   }
 
@@ -31750,17 +31750,17 @@ class BackupRepairService {
           await file.delete();
           cleanedCount++;
         } catch (e) {
-          // 忽略无法删除的临时文�?
+          // 忽略无法删除的临时文�?
         }
       }
       
       if (cleanedCount > 0) {
-        fixedIssues.add('清理�?$cleanedCount 个临时文�?);
+        fixedIssues.add('清理�?$cleanedCount 个临时文�?);
       }
       
     } catch (e) {
       // 临时文件清理失败不是严重问题
-      await _logger.warning('BackupRepair', '清理临时文件时发生警�?, 
+      await _logger.warning('BackupRepair', '清理临时文件时发生警�?, 
           details: {'error': e.toString()});
     }
   }
@@ -31771,36 +31771,36 @@ class BackupRepairService {
     final remainingIssues = <String>[];
     
     try {
-      await _logger.info('BackupRepair', '开始重置备份系�?);
+      await _logger.info('BackupRepair', '开始重置备份系�?);
       
-      // 1. 清理所有备份文�?
+      // 1. 清理所有备份文�?
       try {
         final appDir = await getApplicationDocumentsDirectory();
         final backupDir = Directory(path.join(appDir.path, 'backups'));
         
         if (await backupDir.exists()) {
           await backupDir.delete(recursive: true);
-          fixedIssues.add('删除了旧的备份目�?);
+          fixedIssues.add('删除了旧的备份目�?);
         }
         
         // 重新创建备份目录
         await backupDir.create(recursive: true);
-        fixedIssues.add('重新创建了备份目�?);
+        fixedIssues.add('重新创建了备份目�?);
         
       } catch (e) {
         remainingIssues.add('重置备份目录失败: ${e.toString()}');
       }
       
-      // 2. 清理所有临时文�?
+      // 2. 清理所有临时文�?
       await _cleanupTemporaryFiles(fixedIssues, remainingIssues);
       
-      // 3. 验证数据库连�?
+      // 3. 验证数据库连�?
       await _fixDatabaseIssues(fixedIssues, remainingIssues);
       
       final success = remainingIssues.isEmpty;
       final message = success 
           ? '备份系统重置完成'
-          : '备份系统重置部分完成，还有问题需要处�?;
+          : '备份系统重置部分完成，还有问题需要处�?;
       
       await _logger.info('BackupRepair', '备份系统重置完成', details: {
         'success': success,
@@ -31821,8 +31821,8 @@ class BackupRepairService {
       return BackupRepairResult(
         success: false,
         fixedIssues: fixedIssues,
-        remainingIssues: ['重置过程中发生错�? ${e.toString()}'],
-        message: '重置失败，请联系技术支�?,
+        remainingIssues: ['重置过程中发生错�? ${e.toString()}'],
+        message: '重置失败，请联系技术支�?,
       );
     }
   }
@@ -31890,7 +31890,7 @@ class ResourceInfo {
       );
 }
 
-/// 备份资源管理�?
+/// 备份资源管理�?
 class BackupResourceManager {
   static BackupResourceManager? _instance;
   static BackupResourceManager get instance => _instance ??= BackupResourceManager._();
@@ -31910,7 +31910,7 @@ class BackupResourceManager {
     try {
       await _logger.info('ResourceManager', '初始化资源管理器');
       
-      // 清理遗留的临时文�?
+      // 清理遗留的临时文�?
       await _cleanupOrphanedResources();
       
       // 启动定期清理任务
@@ -31997,7 +31997,7 @@ class BackupResourceManager {
     }
   }
 
-  /// 创建锁文�?
+  /// 创建锁文�?
   Future<File> createLockFile({
     required String operation,
     Map<String, dynamic>? metadata,
@@ -32015,7 +32015,7 @@ class BackupResourceManager {
       final lockFileName = '${operation}_${DateTime.now().millisecondsSinceEpoch}.lock';
       final lockFile = File(path.join(locksDir.path, lockFileName));
       
-      // 写入锁文件信�?
+      // 写入锁文件信�?
       final lockInfo = {
         'operation': operation,
         'createdAt': DateTime.now().toIso8601String(),
@@ -32038,12 +32038,12 @@ class BackupResourceManager {
       _trackedResources[resourceId] = resourceInfo;
       _activeOperations.add(operation);
       
-      await _logger.debug('ResourceManager', '创建锁文�? ${lockFile.path}', 
+      await _logger.debug('ResourceManager', '创建锁文�? ${lockFile.path}', 
           details: {'resourceId': resourceId, 'operation': operation});
       
       return lockFile;
     } catch (e) {
-      await _logger.error('ResourceManager', '创建锁文件失�?, error: e);
+      await _logger.error('ResourceManager', '创建锁文件失�?, error: e);
       rethrow;
     }
   }
@@ -32072,7 +32072,7 @@ class BackupResourceManager {
     }
   }
 
-  /// 释放操作相关的所有资�?
+  /// 释放操作相关的所有资�?
   Future<void> releaseOperationResources(String operation) async {
     try {
       final operationResources = _trackedResources.values
@@ -32114,7 +32114,7 @@ class BackupResourceManager {
     }
   }
 
-  /// 强制清理所有资�?
+  /// 强制清理所有资�?
   Future<void> forceCleanupAllResources() async {
     try {
       final allResources = _trackedResources.values.toList();
@@ -32125,14 +32125,14 @@ class BackupResourceManager {
       
       _activeOperations.clear();
       
-      await _logger.info('ResourceManager', '强制清理所有资源完�?, 
+      await _logger.info('ResourceManager', '强制清理所有资源完�?, 
           details: {'cleanedCount': allResources.length});
     } catch (e) {
-      await _logger.error('ResourceManager', '强制清理所有资源失�?, error: e);
+      await _logger.error('ResourceManager', '强制清理所有资源失�?, error: e);
     }
   }
 
-  /// 检查操作是否正在进�?
+  /// 检查操作是否正在进�?
   bool isOperationActive(String operation) {
     return _activeOperations.contains(operation);
   }
@@ -32168,7 +32168,7 @@ class BackupResourceManager {
       _cleanupTimer?.cancel();
       await forceCleanupAllResources();
       _initialized = false;
-      await _logger.info('ResourceManager', '资源管理器已销�?);
+      await _logger.info('ResourceManager', '资源管理器已销�?);
     } catch (e) {
       await _logger.error('ResourceManager', '销毁资源管理器失败', error: e);
     }
@@ -32186,7 +32186,7 @@ class BackupResourceManager {
     return 'res_${DateTime.now().millisecondsSinceEpoch}_${_trackedResources.length}';
   }
 
-  /// 生成文件�?
+  /// 生成文件�?
   String _generateFileName({String? prefix, String? suffix}) {
     final timestamp = DateTime.now().millisecondsSinceEpoch;
     final prefixPart = prefix != null ? '${prefix}_' : 'backup_';
@@ -32228,7 +32228,7 @@ class BackupResourceManager {
         await _cleanupDirectoryOrphans(tempDir, 'backup_', const Duration(hours: 24));
       }
       
-      // 清理锁文件目�?
+      // 清理锁文件目�?
       final appDir = await getApplicationDocumentsDirectory();
       final locksDir = Directory(path.join(appDir.path, 'locks'));
       if (await locksDir.exists()) {
@@ -32378,7 +32378,7 @@ class CompressionService implements ICompressionService {
       if (!await inputFile.exists()) {
         throw BackupException(
           type: BackupErrorType.fileSystemError,
-          message: '输入文件不存�? $inputPath',
+          message: '输入文件不存�? $inputPath',
         );
       }
 
@@ -32437,7 +32437,7 @@ class CompressionService implements ICompressionService {
       if (!await inputFile.exists()) {
         throw BackupException(
           type: BackupErrorType.fileSystemError,
-          message: '压缩文件不存�? $inputPath',
+          message: '压缩文件不存�? $inputPath',
         );
       }
 
@@ -32481,7 +32481,7 @@ class CompressionService implements ICompressionService {
         return false;
       }
 
-      // 读取文件头部字节来检测压缩格�?
+      // 读取文件头部字节来检测压缩格�?
       final bytes = await file.openRead(0, 4).first;
       
       if (bytes.length >= 2) {
@@ -32511,7 +32511,7 @@ class CompressionService implements ICompressionService {
     }
   }
 
-  /// 压缩字符串数�?
+  /// 压缩字符串数�?
   Future<CompressionResult> compressString(
     String data, {
     int level = 6,
@@ -32520,14 +32520,14 @@ class CompressionService implements ICompressionService {
     return await compressData(bytes, level: level);
   }
 
-  /// 解压字符串数�?
+  /// 解压字符串数�?
   Future<String> decompressString(List<int> compressedData) async {
     final decompressedBytes = await decompressData(compressedData);
     return String.fromCharCodes(decompressedBytes);
   }
 
-  /// 获取最佳压缩级别建�?
-  /// 根据数据大小和性能要求返回建议的压缩级�?
+  /// 获取最佳压缩级别建�?
+  /// 根据数据大小和性能要求返回建议的压缩级�?
   int getRecommendedCompressionLevel({
     required int dataSize,
     required bool prioritizeSpeed,
@@ -32537,7 +32537,7 @@ class CompressionService implements ICompressionService {
       return prioritizeSpeed ? 3 : 6;
     }
     
-    // 中等文件�?MB - 10MB）：平衡压缩率和速度
+    // 中等文件�?MB - 10MB）：平衡压缩率和速度
     if (dataSize < 10 * 1024 * 1024) {
       return prioritizeSpeed ? 2 : 4;
     }
@@ -32547,10 +32547,10 @@ class CompressionService implements ICompressionService {
   }
 
   /// 估算压缩后的大小
-  /// 基于数据类型和内容特征估算压缩效�?
+  /// 基于数据类型和内容特征估算压缩效�?
   int estimateCompressedSize(List<int> data) {
-    // 简单的启发式估�?
-    // JSON文本通常可以压缩到原大小�?0-50%
+    // 简单的启发式估�?
+    // JSON文本通常可以压缩到原大小�?0-50%
     // 这里使用保守估算40%
     return (data.length * 0.4).round();
   }
@@ -32572,7 +32572,7 @@ class CompressionService implements ICompressionService {
         name: 'CompressionService',
       );
 
-      // 添加每个文件到归�?
+      // 添加每个文件到归�?
       for (final inputPath in inputPaths) {
         final file = File(inputPath);
         if (await file.exists()) {
@@ -32627,7 +32627,7 @@ class CompressionService implements ICompressionService {
 import '../../../../core/database/database.dart';
 import '../../domain/services/i_database_statistics_service.dart';
 
-/// 数据库统计服务实�?
+/// 数据库统计服务实�?
 class DatabaseStatisticsService implements IDatabaseStatisticsService {
   final AppDatabase _database;
 
@@ -32637,7 +32637,7 @@ class DatabaseStatisticsService implements IDatabaseStatisticsService {
   Future<Map<String, int>> getAllTableCounts() async {
     final Map<String, int> counts = {};
     
-    // 定义所有需要统计的�?
+    // 定义所有需要统计的�?
     final tables = [
       'product',
       'category', 
@@ -32702,13 +32702,13 @@ class EncryptionExample {
       // Encrypt the JSON data
       final encryptedData = await _encryptionService.encryptData(jsonData, password);
       
-      print('�?Backup data encrypted successfully');
+      print('�?Backup data encrypted successfully');
       print('Original size: ${jsonData.length} bytes');
       print('Encrypted size: ${encryptedData.length} bytes');
       
       return encryptedData;
     } catch (e) {
-      print('�?Failed to encrypt backup data: $e');
+      print('�?Failed to encrypt backup data: $e');
       rethrow;
     }
   }
@@ -32722,12 +32722,12 @@ class EncryptionExample {
       // Parse JSON back to Map
       final backupData = jsonDecode(jsonData) as Map<String, dynamic>;
       
-      print('�?Backup data decrypted successfully');
+      print('�?Backup data decrypted successfully');
       print('Restored ${backupData['data']?.keys.length ?? 0} data tables');
       
       return backupData;
     } catch (e) {
-      print('�?Failed to decrypt backup data: $e');
+      print('�?Failed to decrypt backup data: $e');
       rethrow;
     }
   }
@@ -32738,14 +32738,14 @@ class EncryptionExample {
       final isValid = await _encryptionService.validatePassword(encryptedData, password);
       
       if (isValid) {
-        print('�?Password is valid');
+        print('�?Password is valid');
       } else {
-        print('�?Invalid password');
+        print('�?Invalid password');
       }
       
       return isValid;
     } catch (e) {
-      print('�?Password validation failed: $e');
+      print('�?Password validation failed: $e');
       return false;
     }
   }
@@ -32763,7 +32763,7 @@ class EncryptionExample {
       // Generate HMAC for integrity verification
       final hmac = _encryptionService.generateHmac(encryptedData, integrityKey);
       
-      print('�?Secure backup created with integrity verification');
+      print('�?Secure backup created with integrity verification');
       print('HMAC: ${hmac.substring(0, 16)}...');
       
       return {
@@ -32771,7 +32771,7 @@ class EncryptionExample {
         'hmac': hmac,
       };
     } catch (e) {
-      print('�?Failed to create secure backup: $e');
+      print('�?Failed to create secure backup: $e');
       rethrow;
     }
   }
@@ -32791,16 +32791,16 @@ class EncryptionExample {
         throw Exception('Backup data integrity verification failed - data may be corrupted');
       }
       
-      print('�?Backup integrity verified');
+      print('�?Backup integrity verified');
       
       // Decrypt the backup data
       final backupData = await decryptBackupData(encryptedData, password);
       
-      print('�?Secure backup restored successfully');
+      print('�?Secure backup restored successfully');
       
       return backupData;
     } catch (e) {
-      print('�?Failed to restore secure backup: $e');
+      print('�?Failed to restore secure backup: $e');
       rethrow;
     }
   }
@@ -32809,7 +32809,7 @@ class EncryptionExample {
   String generateBackupPassword([int length = 32]) {
     final password = _encryptionService.generateSecurePassword(length);
     
-    print('�?Generated secure password (length: $length)');
+    print('�?Generated secure password (length: $length)');
     print('Password preview: ${password.substring(0, 8)}...');
     
     return password;
@@ -32871,14 +32871,14 @@ class EncryptionExample {
       final restoredProductCount = restoredProducts.length;
       
       if (originalProductCount == restoredProductCount) {
-        print('�?Backup and restore completed successfully!');
-        print('Products: $originalProductCount �?$restoredProductCount');
+        print('�?Backup and restore completed successfully!');
+        print('Products: $originalProductCount �?$restoredProductCount');
       } else {
-        print('�?Data mismatch detected!');
+        print('�?Data mismatch detected!');
       }
 
     } catch (e) {
-      print('�?Demo failed: $e');
+      print('�?Demo failed: $e');
     }
     
     print('\n${'=' * 50}');
@@ -33245,12 +33245,12 @@ class OptimizedRestoreService implements IRestoreService {
         if (criticalIssues.isNotEmpty) {
           throw BackupException(
             type: BackupErrorType.validationError,
-            message: '备份文件版本不兼�? $criticalIssues',
+            message: '备份文件版本不兼�? $criticalIssues',
           );
         }
       }
 
-      // 暂时注释掉数据完整性验证功�?
+      // 暂时注释掉数据完整性验证功�?
       // final integrityResult = await _validationService.validateDataIntegrity(
       //   backupData.tables,
       //   backupData.metadata,
@@ -33259,7 +33259,7 @@ class OptimizedRestoreService implements IRestoreService {
       // if (!integrityResult.checksumValid) {
       //   throw BackupException(
       //     type: BackupErrorType.validationError,
-      //     message: '备份文件数据完整性验证失败，文件可能已损�?,
+      //     message: '备份文件数据完整性验证失败，文件可能已损�?,
       //   );
       // }
 
@@ -33310,7 +33310,7 @@ class OptimizedRestoreService implements IRestoreService {
       //   compatibilityWarnings.add(warning.message);
       // }
 
-      // 暂时注释掉数据验证功�?
+      // 暂时注释掉数据验证功�?
       // final validationResult = await _dataImportRepository.validateImportData(
       //   backupData.tables,
       // );
@@ -33326,7 +33326,7 @@ class OptimizedRestoreService implements IRestoreService {
         mode,
       );
 
-      // 创建默认的验证结果以保持代码兼容�?
+      // 创建默认的验证结果以保持代码兼容�?
       final validationResult = {
         'totalRecords': updatedMetadata.tableCounts.values.fold<int>(
           0,
@@ -33341,7 +33341,7 @@ class OptimizedRestoreService implements IRestoreService {
         mode,
       );
 
-      // 获取当前数据库统�?
+      // 获取当前数据库统�?
       final currentDatabaseCounts = await _databaseStatisticsService
           .getAllTableCounts();
 
@@ -33376,20 +33376,20 @@ class OptimizedRestoreService implements IRestoreService {
   }) async {
     final startTime = DateTime.now();
 
-    print('══════════════════════════════════════════════════════════════�?);
-    print('🚀 开始备份恢复流�?);
+    print('══════════════════════════════════════════════════════════════�?);
+    print('🚀 开始备份恢复流�?);
     print('文件路径: $filePath');
     print('恢复模式: $mode');
-    print('是否有密�? ${password != null}');
+    print('是否有密�? ${password != null}');
     print('选择的表: ${selectedTables ?? "全部"}');
-    print('开始时�? ${startTime.toIso8601String()}');
-    print('══════════════════════════════════════════════════════════════�?);
+    print('开始时�? ${startTime.toIso8601String()}');
+    print('══════════════════════════════════════════════════════════════�?);
 
     try {
       onProgress?.call('验证备份文件...', 0, 100);
       cancelToken?.throwIfCancelled();
 
-      // 暂时注释掉备份文件验证功�?
+      // 暂时注释掉备份文件验证功�?
       // await validateBackupFile(filePath, password: password);
 
       onProgress?.call('读取备份数据...', 10, 100);
@@ -33397,10 +33397,10 @@ class OptimizedRestoreService implements IRestoreService {
 
       final backupData = await _readBackupData(filePath, password: password);
 
-      onProgress?.call('验证数据完整�?..', 20, 100);
+      onProgress?.call('验证数据完整�?..', 20, 100);
       cancelToken?.throwIfCancelled();
 
-      // 暂时注释掉数据完整性验证功�?
+      // 暂时注释掉数据完整性验证功�?
       // final validationResult = await _dataImportRepository.validateImportData(
       //   backupData.tables,
       // );
@@ -33413,7 +33413,7 @@ class OptimizedRestoreService implements IRestoreService {
       //   );
       // }
 
-      // 创建一个默认的验证结果以保持代码兼容�?
+      // 创建一个默认的验证结果以保持代码兼容�?
       final validationResult = {
         'valid': true,
         'totalRecords': 0,
@@ -33421,13 +33421,13 @@ class OptimizedRestoreService implements IRestoreService {
         'errors': <String>[],
       };
 
-      onProgress?.call('开始恢复数�?..', 30, 100);
+      onProgress?.call('开始恢复数�?..', 30, 100);
       cancelToken?.throwIfCancelled();
 
       print('───────────────────────────────────────────────────────────────');
-      print('📊 开始调用数据导入仓�?);
-      print('备份表数�? ${backupData.tables.length}');
-      print('备份表名�? ${backupData.tables.keys.toList()}');
+      print('📊 开始调用数据导入仓�?);
+      print('备份表数�? ${backupData.tables.length}');
+      print('备份表名�? ${backupData.tables.keys.toList()}');
       print('───────────────────────────────────────────────────────────────');
 
       final importCounts = await _dataImportRepository.importAllTables(
@@ -33449,12 +33449,12 @@ class OptimizedRestoreService implements IRestoreService {
       onProgress?.call('验证恢复结果...', 90, 100);
       cancelToken?.throwIfCancelled();
 
-      // 暂时注释掉恢复结果健康检查功�?
+      // 暂时注释掉恢复结果健康检查功�?
       // final healthCheck = await _dataImportRepository.performHealthCheck(
       //   selectedTables ?? backupData.tables.keys.toList(),
       // );
 
-      // 创建一个默认的健康检查结果以保持代码兼容�?
+      // 创建一个默认的健康检查结果以保持代码兼容�?
       final healthCheck = {'healthy': true, 'issues': <String>[]};
 
       final totalRecordsRestored = importCounts.values.fold<int>(
@@ -33471,18 +33471,18 @@ class OptimizedRestoreService implements IRestoreService {
         warnings.addAll(healthCheck['issues'] as List<String>);
       }
 
-      print('══════════════════════════════════════════════════════════════�?);
-      print('🎉 备份恢复流程成功完成�?);
+      print('══════════════════════════════════════════════════════════════�?);
+      print('🎉 备份恢复流程成功完成�?);
       print('总恢复记录数: $totalRecordsRestored');
-      print('各表记录�? $importCounts');
-      print('开始时�? ${startTime.toIso8601String()}');
+      print('各表记录�? $importCounts');
+      print('开始时�? ${startTime.toIso8601String()}');
       print('结束时间: ${endTime.toIso8601String()}');
       print('耗时: ${endTime.difference(startTime).inMilliseconds}ms');
       print('警告数量: ${warnings.length}');
       if (warnings.isNotEmpty) {
         print('警告信息: $warnings');
       }
-      print('══════════════════════════════════════════════════════════════�?);
+      print('══════════════════════════════════════════════════════════════�?);
 
       return RestoreResult(
         success: true,
@@ -33494,31 +33494,31 @@ class OptimizedRestoreService implements IRestoreService {
       );
     } on RestoreCancelledException {
       final endTime = DateTime.now();
-      print('══════════════════════════════════════════════════════════════�?);
-      print('⚠️ 备份恢复流程被取�?);
-      print('开始时�? ${startTime.toIso8601String()}');
+      print('══════════════════════════════════════════════════════════════�?);
+      print('⚠️ 备份恢复流程被取�?);
+      print('开始时�? ${startTime.toIso8601String()}');
       print('取消时间: ${endTime.toIso8601String()}');
-      print('已运行时�? ${endTime.difference(startTime).inMilliseconds}ms');
-      print('══════════════════════════════════════════════════════════════�?);
+      print('已运行时�? ${endTime.difference(startTime).inMilliseconds}ms');
+      print('══════════════════════════════════════════════════════════════�?);
       return RestoreResult(
         success: false,
         totalRecordsRestored: 0,
         tableRecordCounts: {},
         startTime: startTime,
         endTime: endTime,
-        errorMessage: '恢复操作已取�?,
+        errorMessage: '恢复操作已取�?,
       );
     } on BackupException catch (e) {
       final endTime = DateTime.now();
-      print('══════════════════════════════════════════════════════════════�?);
-      print('�?备份恢复流程失败 - BackupException');
+      print('══════════════════════════════════════════════════════════════�?);
+      print('�?备份恢复流程失败 - BackupException');
       print('错误类型: ${e.type}');
       print('错误信息: ${e.message}');
       print('原始错误: ${e.originalError}');
-      print('开始时�? ${startTime.toIso8601String()}');
+      print('开始时�? ${startTime.toIso8601String()}');
       print('失败时间: ${endTime.toIso8601String()}');
       print('运行时间: ${endTime.difference(startTime).inMilliseconds}ms');
-      print('══════════════════════════════════════════════════════════════�?);
+      print('══════════════════════════════════════════════════════════════�?);
       return RestoreResult(
         success: false,
         totalRecordsRestored: 0,
@@ -33529,14 +33529,14 @@ class OptimizedRestoreService implements IRestoreService {
       );
     } catch (e) {
       final endTime = DateTime.now();
-      print('══════════════════════════════════════════════════════════════�?);
+      print('══════════════════════════════════════════════════════════════�?);
       print('💥 备份恢复流程失败 - 未知异常');
       print('错误类型: ${e.runtimeType}');
       print('错误信息: ${e.toString()}');
-      print('开始时�? ${startTime.toIso8601String()}');
+      print('开始时�? ${startTime.toIso8601String()}');
       print('失败时间: ${endTime.toIso8601String()}');
       print('运行时间: ${endTime.difference(startTime).inMilliseconds}ms');
-      print('══════════════════════════════════════════════════════════════�?);
+      print('══════════════════════════════════════════════════════════════�?);
       return RestoreResult(
         success: false,
         totalRecordsRestored: 0,
@@ -33710,16 +33710,16 @@ class PerformanceService implements IPerformanceService {
 
     final currentMemory = await getCurrentMemoryUsage();
     
-    // 更新峰值内�?
+    // 更新峰值内�?
     if (currentMemory.currentBytes > operation.peakMemory.currentBytes) {
       operation.peakMemory = currentMemory;
     }
 
-    // 添加到历史记�?
+    // 添加到历史记�?
     final history = _memoryHistory[operationId] ?? [];
     history.add(currentMemory);
     
-    // 保持最�?00个记�?
+    // 保持最�?00个记�?
     if (history.length > 100) {
       history.removeAt(0);
     }
@@ -33771,7 +33771,7 @@ class PerformanceService implements IPerformanceService {
   @override
   Future<MemoryUsage> getCurrentMemoryUsage() async {
     try {
-      // 获取当前进程的内存信�?
+      // 获取当前进程的内存信�?
       final info = ProcessInfo.currentRss;
       final timestamp = DateTime.now();
       
@@ -33782,20 +33782,20 @@ class PerformanceService implements IPerformanceService {
       try {
         // 获取垃圾回收统计信息（简化版本）
         // 在实际应用中可以使用更复杂的内存监控
-        gcCount = 0; // 暂时设为0，避免API兼容性问�?
+        gcCount = 0; // 暂时设为0，避免API兼容性问�?
       } catch (e) {
-        // 忽略获取GC统计信息的错�?
+        // 忽略获取GC统计信息的错�?
       }
 
       return MemoryUsage(
         currentBytes: info,
-        peakBytes: info, // ProcessInfo.currentRss 已经是峰�?
+        peakBytes: info, // ProcessInfo.currentRss 已经是峰�?
         timestamp: timestamp,
         availableBytes: availableMemory,
         gcCount: gcCount,
       );
     } catch (e) {
-      // 如果无法获取内存信息，返回默认�?
+      // 如果无法获取内存信息，返回默认�?
       return MemoryUsage(
         currentBytes: 0,
         peakBytes: 0,
@@ -33811,7 +33811,7 @@ class PerformanceService implements IPerformanceService {
     try {
       final currentMemory = await getCurrentMemoryUsage();
       
-      // 如果内存使用超过100MB，建议进行垃圾回�?
+      // 如果内存使用超过100MB，建议进行垃圾回�?
       const memoryThreshold = 100 * 1024 * 1024; // 100MB
       
       return currentMemory.currentBytes > memoryThreshold;
@@ -33826,12 +33826,12 @@ class PerformanceService implements IPerformanceService {
       // 强制垃圾回收
       developer.log('Triggering garbage collection', name: 'PerformanceService');
       
-      // 在Dart中，我们不能直接强制GC，但可以尝试一些方�?
+      // 在Dart中，我们不能直接强制GC，但可以尝试一些方�?
       // 创建一些临时对象然后释放，可能会触发GC
       final temp = List.generate(1000, (i) => List.filled(100, i));
       temp.clear();
       
-      // 等待一小段时间让GC有机会运�?
+      // 等待一小段时间让GC有机会运�?
       await Future.delayed(const Duration(milliseconds: 10));
       
     } catch (e) {
@@ -33855,13 +33855,13 @@ class PerformanceService implements IPerformanceService {
 
     // 耗时建议
     if (metrics.durationSeconds > 300) { // 5分钟
-      recommendations.add('操作耗时较长，建议考虑分批处理或后台执�?);
+      recommendations.add('操作耗时较长，建议考虑分批处理或后台执�?);
     }
 
     // 内存增长建议
     final memoryGrowth = metrics.additionalMetrics?['memoryGrowthMB'] as double? ?? 0;
     if (memoryGrowth > 50) {
-      recommendations.add('内存增长较多，可能存在内存泄漏，建议检查资源释�?);
+      recommendations.add('内存增长较多，可能存在内存泄漏，建议检查资源释�?);
     }
 
     // 垃圾回收建议
@@ -33877,24 +33877,24 @@ class PerformanceService implements IPerformanceService {
     return recommendations;
   }
 
-  /// 获取操作的内存使用历�?
+  /// 获取操作的内存使用历�?
   List<MemoryUsage> getMemoryHistory(String operationId) {
     return _memoryHistory[operationId] ?? [];
   }
 
-  /// 获取所有活跃操�?
+  /// 获取所有活跃操�?
   List<String> getActiveOperations() {
     return _activeOperations.keys.toList();
   }
 
-  /// 清理所有监控数�?
+  /// 清理所有监控数�?
   void clearAll() {
     _activeOperations.clear();
     _memoryHistory.clear();
   }
 }
 
-/// 内部操作指标�?
+/// 内部操作指标�?
 class _OperationMetrics {
   final String operationId;
   final DateTime startTime;
@@ -33967,7 +33967,7 @@ class StreamProcessingService implements IStreamProcessingService {
       );
 
       while (hasMoreData) {
-        // 检查内存使用情�?
+        // 检查内存使用情�?
         if (config.enableMemoryMonitoring) {
           await _checkMemoryUsage(operationId, config);
         }
@@ -33985,17 +33985,17 @@ class StreamProcessingService implements IStreamProcessingService {
         await _performanceService.updateProgress(operationId, processedRecords);
         onProgress?.call(processedRecords, totalCount);
 
-        // 调用批处理回�?
+        // 调用批处理回�?
         onBatch?.call(batch);
 
         // 返回批次数据
         yield batch;
 
-        // 检查是否还有更多数�?
+        // 检查是否还有更多数�?
         hasMoreData = batch.length == config.batchSize;
         offset += config.batchSize;
 
-        // 如果启用了内存监控，在处理大批次后可能需要暂�?
+        // 如果启用了内存监控，在处理大批次后可能需要暂�?
         if (config.enableMemoryMonitoring && processedRecords % (config.batchSize * 10) == 0) {
           await Future.delayed(const Duration(milliseconds: 10));
         }
@@ -34017,7 +34017,7 @@ class StreamProcessingService implements IStreamProcessingService {
       
       throw BackupException(
         type: BackupErrorType.databaseError,
-        message: '流式导出�?$tableName 失败: ${e.toString()}',
+        message: '流式导出�?$tableName 失败: ${e.toString()}',
         originalError: e,
       );
     }
@@ -34041,13 +34041,13 @@ class StreamProcessingService implements IStreamProcessingService {
         name: 'StreamProcessingService',
       );
 
-      // 开始性能监控（总数未知，使�?�?
+      // 开始性能监控（总数未知，使�?�?
       await _performanceService.startMonitoring(operationId, 0);
 
       await for (final batch in dataStream) {
         if (batch.isEmpty) continue;
 
-        // 检查内存使用情�?
+        // 检查内存使用情�?
         if (config.enableMemoryMonitoring) {
           await _checkMemoryUsage(operationId, config);
         }
@@ -34060,7 +34060,7 @@ class StreamProcessingService implements IStreamProcessingService {
 
         // 更新进度
         await _performanceService.updateProgress(operationId, totalProcessed);
-        onProgress?.call(totalProcessed, totalProcessed); // 总数未知，使用已处理�?
+        onProgress?.call(totalProcessed, totalProcessed); // 总数未知，使用已处理�?
 
         // 定期暂停以避免阻塞UI
         if (batchCount % 10 == 0) {
@@ -34086,7 +34086,7 @@ class StreamProcessingService implements IStreamProcessingService {
       
       throw BackupException(
         type: BackupErrorType.databaseError,
-        message: '流式导入�?$tableName 失败: ${e.toString()}',
+        message: '流式导入�?$tableName 失败: ${e.toString()}',
         originalError: e,
       );
     }
@@ -34110,7 +34110,7 @@ class StreamProcessingService implements IStreamProcessingService {
       int processedEntries = 0;
 
       for (final entry in data.entries) {
-        // 检查内存使用情�?
+        // 检查内存使用情�?
         if (config.enableMemoryMonitoring && processedEntries % 100 == 0) {
           await _checkMemoryUsage(operationId, config);
         }
@@ -34124,7 +34124,7 @@ class StreamProcessingService implements IStreamProcessingService {
         final keyJson = jsonEncode(entry.key);
         yield '  $keyJson: ';
 
-        // 序列化�?
+        // 序列化�?
         if (entry.value is List) {
           yield* _streamSerializeList(entry.value as List, config);
         } else if (entry.value is Map) {
@@ -34151,7 +34151,7 @@ class StreamProcessingService implements IStreamProcessingService {
     } catch (e) {
       throw BackupException(
         type: BackupErrorType.serializationError,
-        message: '流式JSON序列化失�? ${e.toString()}',
+        message: '流式JSON序列化失�? ${e.toString()}',
         originalError: e,
       );
     }
@@ -34176,7 +34176,7 @@ class StreamProcessingService implements IStreamProcessingService {
         buffer.write(chunk);
         chunkCount++;
 
-        // 检查内存使用情�?
+        // 检查内存使用情�?
         if (config.enableMemoryMonitoring && chunkCount % 100 == 0) {
           await _checkMemoryUsage(operationId, config);
         }
@@ -34205,7 +34205,7 @@ class StreamProcessingService implements IStreamProcessingService {
     }
   }
 
-  /// 流式序列化列�?
+  /// 流式序列化列�?
   Stream<String> _streamSerializeList(
     List list,
     StreamProcessingConfig config,
@@ -34234,7 +34234,7 @@ class StreamProcessingService implements IStreamProcessingService {
     yield '\n  ]';
   }
 
-  /// 流式序列化映�?
+  /// 流式序列化映�?
   Stream<String> _streamSerializeMap(
     Map<String, dynamic> map,
     StreamProcessingConfig config, {
@@ -34265,13 +34265,13 @@ class StreamProcessingService implements IStreamProcessingService {
     } catch (e) {
       throw BackupException(
         type: BackupErrorType.databaseError,
-        message: '获取�?$tableName 记录数失�? ${e.toString()}',
+        message: '获取�?$tableName 记录数失�? ${e.toString()}',
         originalError: e,
       );
     }
   }
 
-  /// 分批导出表数�?
+  /// 分批导出表数�?
   Future<List<Map<String, dynamic>>> _exportTableBatch(
     String tableName,
     int offset,
@@ -34284,13 +34284,13 @@ class StreamProcessingService implements IStreamProcessingService {
     } catch (e) {
       throw BackupException(
         type: BackupErrorType.databaseError,
-        message: '分批导出�?$tableName 失败: ${e.toString()}',
+        message: '分批导出�?$tableName 失败: ${e.toString()}',
         originalError: e,
       );
     }
   }
 
-  /// 分批导入表数�?
+  /// 分批导入表数�?
   Future<void> _importTableBatch(
     String tableName,
     List<Map<String, dynamic>> records,
@@ -34309,13 +34309,13 @@ class StreamProcessingService implements IStreamProcessingService {
     } catch (e) {
       throw BackupException(
         type: BackupErrorType.databaseError,
-        message: '分批导入�?$tableName 失败: ${e.toString()}',
+        message: '分批导入�?$tableName 失败: ${e.toString()}',
         originalError: e,
       );
     }
   }
 
-  /// 检查内存使用情�?
+  /// 检查内存使用情�?
   Future<void> _checkMemoryUsage(
     String operationId,
     StreamProcessingConfig config,
@@ -34332,7 +34332,7 @@ class StreamProcessingService implements IStreamProcessingService {
         await _performanceService.triggerGC();
       }
 
-      // 检查是否超过最大内存限�?
+      // 检查是否超过最大内存限�?
       final currentMemory = await _performanceService.getCurrentMemoryUsage();
       if (currentMemory.currentBytes > config.maxMemoryUsage) {
         developer.log(
@@ -34340,7 +34340,7 @@ class StreamProcessingService implements IStreamProcessingService {
           name: 'StreamProcessingService',
         );
         
-        // 强制垃圾回收并等�?
+        // 强制垃圾回收并等�?
         await _performanceService.triggerGC();
         await Future.delayed(const Duration(milliseconds: 100));
       }
@@ -34378,8 +34378,8 @@ import 'backup_resource_manager.dart';
 ///
 /// 主要特性：
 /// - 流式处理和内存优化（来自优化版）
-/// - 压缩支持和性能监控（来自优化版�?
-/// - 强化的错误处理和恢复机制（来自增强版�?
+/// - 压缩支持和性能监控（来自优化版�?
+/// - 强化的错误处理和恢复机制（来自增强版�?
 /// - 数据库健康检查和预检查（来自增强版）
 /// - 资源管理和清理（来自增强版）
 class UnifiedBackupService implements IBackupService {
@@ -34414,18 +34414,18 @@ class UnifiedBackupService implements IBackupService {
     try {
       final backupOptions = options ?? const BackupOptions();
 
-      // 检查取消状�?
+      // 检查取消状�?
       cancelToken?.throwIfCancelled();
 
       // 步骤1: 预检查和准备（增强版特性）
-      onProgress?.call('执行预检�?..', 0, 100);
+      onProgress?.call('执行预检�?..', 0, 100);
       await _performPreflightChecks();
 
       final backupId = _generateBackupId(backupOptions.customName);
       final backupDir = await _getBackupDirectory();
       final backupFilePath = path.join(backupDir.path, '$backupId.json');
 
-      // 创建临时文件（增强版资源管理�?
+      // 创建临时文件（增强版资源管理�?
       tempFile = await _resourceManager.createTemporaryFile(
         prefix: 'unified_backup_temp',
         suffix: 'json',
@@ -34434,7 +34434,7 @@ class UnifiedBackupService implements IBackupService {
       );
 
       // 步骤2: 数据库健康检查（增强版特性）
-      onProgress?.call('检查数据库健康状�?..', 5, 100);
+      onProgress?.call('检查数据库健康状�?..', 5, 100);
       cancelToken?.throwIfCancelled();
       await _performDatabaseHealthCheck();
 
@@ -34450,7 +34450,7 @@ class UnifiedBackupService implements IBackupService {
       await _performanceService.startMonitoring(operationId, totalRecords);
 
       // 步骤4: 流式数据导出（融合两者优势）
-      onProgress?.call('开始智能流式数据导�?..', 15, 100);
+      onProgress?.call('开始智能流式数据导�?..', 15, 100);
       cancelToken?.throwIfCancelled();
 
       final streamConfig = StreamProcessingConfig(
@@ -34468,8 +34468,8 @@ class UnifiedBackupService implements IBackupService {
         cancelToken: cancelToken,
       );
 
-      // 步骤5: 创建元数�?
-      onProgress?.call('生成备份元数�?..', 80, 100);
+      // 步骤5: 创建元数�?
+      onProgress?.call('生成备份元数�?..', 80, 100);
       cancelToken?.throwIfCancelled();
 
       final metadata = await _createBackupMetadata(
@@ -34505,7 +34505,7 @@ class UnifiedBackupService implements IBackupService {
         throw BackupException.validation('备份文件验证失败');
       }
 
-      // 步骤9: 移动到最终位�?
+      // 步骤9: 移动到最终位�?
       await tempFile.copy(backupFilePath);
 
       // 完成性能监控
@@ -34536,9 +34536,9 @@ class UnifiedBackupService implements IBackupService {
         operationId,
         'UnifiedCreateBackup',
         success: false,
-        message: '备份操作已取�?,
+        message: '备份操作已取�?,
       );
-      return BackupResult.failure('备份操作已取�?);
+      return BackupResult.failure('备份操作已取�?);
     } catch (e) {
       final errorContext = await _buildErrorContext(e, tempFile);
 
@@ -34559,12 +34559,12 @@ class UnifiedBackupService implements IBackupService {
         _buildDetailedErrorMessage(userError.message, errorContext),
       );
     } finally {
-      // 清理临时文件和资�?
+      // 清理临时文件和资�?
       await _cleanupTempFile(tempFile);
     }
   }
 
-  /// 统一的流式导�?- 融合两者优�?
+  /// 统一的流式导�?- 融合两者优�?
   Future<Map<String, List<Map<String, dynamic>>>>
   _performUnifiedStreamingExport(
     StreamProcessingConfig config, {
@@ -34579,7 +34579,7 @@ class UnifiedBackupService implements IBackupService {
     for (final tableName in tableNames) {
       cancelToken?.throwIfCancelled();
 
-      // 使用增强版的重试机制导出表数�?
+      // 使用增强版的重试机制导出表数�?
       final tableData = await _exportTableWithRetryAndStreaming(
         tableName,
         config,
@@ -34600,7 +34600,7 @@ class UnifiedBackupService implements IBackupService {
     return allTablesData;
   }
 
-  /// 带重试机制的流式表导�?
+  /// 带重试机制的流式表导�?
   Future<List<Map<String, dynamic>>> _exportTableWithRetryAndStreaming(
     String tableName,
     StreamProcessingConfig config,
@@ -34620,7 +34620,7 @@ class UnifiedBackupService implements IBackupService {
           cancelToken?.throwIfCancelled();
           tableData.addAll(batch);
 
-          // 短暂暂停以避免过度占用资�?
+          // 短暂暂停以避免过度占用资�?
           if (tableData.length % (config.batchSize * 5) == 0) {
             await Future.delayed(Duration(milliseconds: 50));
           }
@@ -34631,19 +34631,19 @@ class UnifiedBackupService implements IBackupService {
         retryCount++;
         if (retryCount >= _maxRetries) {
           throw BackupException.database(
-            '�?$tableName 导出失败，已重试 $_maxRetries �? ${e.toString()}',
+            '�?$tableName 导出失败，已重试 $_maxRetries �? ${e.toString()}',
           );
         }
 
-        // 等待后重�?
+        // 等待后重�?
         await Future.delayed(_retryDelay);
       }
     }
 
-    throw BackupException.database('�?$tableName 导出失败，已达到最大重试次�?);
+    throw BackupException.database('�?$tableName 导出失败，已达到最大重试次�?);
   }
 
-  /// 统一的保存备份文�?- 融合两者优�?
+  /// 统一的保存备份文�?- 融合两者优�?
   Future<void> _unifiedSaveBackupFile(
     BackupData backupData,
     String filePath,
@@ -34658,7 +34658,7 @@ class UnifiedBackupService implements IBackupService {
       final updatedMetadata = backupData.metadata.copyWith(checksum: checksum);
       final updatedBackupData = backupData.copyWith(metadata: updatedMetadata);
 
-      // 使用优化版的流式JSON序列�?
+      // 使用优化版的流式JSON序列�?
       final jsonStream = _streamProcessingService.streamJsonSerialize(
         updatedBackupData.toJson(),
         streamConfig,
@@ -34701,11 +34701,11 @@ class UnifiedBackupService implements IBackupService {
 
     // 如果压缩效果好，使用压缩文件
     if (stats.compressionRatio > 0.2) {
-      // 压缩率超�?0%
+      // 压缩率超�?0%
       await file.delete();
       await File(compressedPath).rename(file.path);
     } else {
-      // 压缩效果不好，删除压缩文�?
+      // 压缩效果不好，删除压缩文�?
       await File(compressedPath).delete();
     }
   }
@@ -34713,45 +34713,45 @@ class UnifiedBackupService implements IBackupService {
   /// 执行预检查（增强版特性）
   Future<void> _performPreflightChecks() async {
     try {
-      // 检查存储空�?
+      // 检查存储空�?
       await _checkStorageSpace();
 
       // 检查数据库基本连接
       await _dataExportRepository.testConnection();
 
-      // 检查备份目录权�?
+      // 检查备份目录权�?
       final backupDir = await _getBackupDirectory();
       await _testDirectoryPermissions(backupDir);
     } catch (e) {
-      throw BackupException.fileSystem('预检查失�? ${e.toString()}');
+      throw BackupException.fileSystem('预检查失�? ${e.toString()}');
     }
   }
 
   /// 执行数据库健康检查（增强版特性）
   Future<void> _performDatabaseHealthCheck() async {
     try {
-      // 检查数据库完整�?
+      // 检查数据库完整�?
       final integrityCheck = await _dataExportRepository
           .checkDatabaseIntegrity();
       if (!integrityCheck) {
-        throw BackupException.database('数据库完整性检查失�?);
+        throw BackupException.database('数据库完整性检查失�?);
       }
 
       // 检查是否有长时间运行的事务
       final hasLongRunningTransactions = await _dataExportRepository
           .checkLongRunningTransactions();
       if (hasLongRunningTransactions) {
-        // 等待事务完成或超�?
+        // 等待事务完成或超�?
         await Future.delayed(Duration(seconds: 5));
       }
 
-      // 检查数据库锁定状�?
+      // 检查数据库锁定状�?
       final isLocked = await _dataExportRepository.isDatabaseLocked();
       if (isLocked) {
         throw BackupException.database('数据库当前被锁定，请稍后重试');
       }
     } catch (e) {
-      throw BackupException.database('数据库健康检查失�? ${e.toString()}');
+      throw BackupException.database('数据库健康检查失�? ${e.toString()}');
     }
   }
 
@@ -34760,7 +34760,7 @@ class UnifiedBackupService implements IBackupService {
     try {
       return await _dataExportRepository.getTableCounts();
     } catch (e) {
-      // 如果无法获取精确统计，返回估算�?
+      // 如果无法获取精确统计，返回估算�?
       final tables = await _dataExportRepository.getAllTableNames();
       final estimatedCounts = <String, int>{};
 
@@ -34769,7 +34769,7 @@ class UnifiedBackupService implements IBackupService {
           final count = await _dataExportRepository.getTableRowCount(table);
           estimatedCounts[table] = count;
         } catch (e) {
-          estimatedCounts[table] = 0; // 默认�?
+          estimatedCounts[table] = 0; // 默认�?
         }
       }
 
@@ -34844,11 +34844,11 @@ class UnifiedBackupService implements IBackupService {
 
       if (estimatedSize > reservedSpace) {
         throw BackupException.insufficientSpace(
-          '估计需�?${(estimatedSize / 1024 / 1024).toStringAsFixed(1)}MB 空间，但可用空间不足',
+          '估计需�?${(estimatedSize / 1024 / 1024).toStringAsFixed(1)}MB 空间，但可用空间不足',
         );
       }
     } catch (e) {
-      // 继续执行但记录警�?
+      // 继续执行但记录警�?
     }
   }
 
@@ -34910,7 +34910,7 @@ class UnifiedBackupService implements IBackupService {
     try {
       final externalDir = await getExternalStorageDirectory();
       if (externalDir != null) {
-        // 尝试导航到公�?Download 目录
+        // 尝试导航到公�?Download 目录
         final publicPath = '/storage/emulated/0/Download/StockoBackups';
         final backupDir = Directory(publicPath);
         
@@ -34947,7 +34947,7 @@ class UnifiedBackupService implements IBackupService {
       // 继续尝试其他方案
     }
 
-    // 方案4: 回退到应用文档目�?
+    // 方案4: 回退到应用文档目�?
     try {
       final appDir = await getApplicationDocumentsDirectory();
       final backupDir = Directory(path.join(appDir.path, 'backups'));
@@ -34961,7 +34961,7 @@ class UnifiedBackupService implements IBackupService {
       // 最后的备用方案
     }
     
-    // 方案5: 最后回退到临时目�?
+    // 方案5: 最后回退到临时目�?
     final tempDir = Directory.systemTemp;
     final backupDir = Directory(path.join(tempDir.path, 'unified_backups'));
 
@@ -34972,7 +34972,7 @@ class UnifiedBackupService implements IBackupService {
     return backupDir;
   }
 
-  /// 创建备份元数�?
+  /// 创建备份元数�?
   Future<BackupMetadata> _createBackupMetadata(
     String backupId,
     Map<String, int> tableCounts,
@@ -34987,7 +34987,7 @@ class UnifiedBackupService implements IBackupService {
       fileName: '$backupId.json',
       createdAt: now,
       fileSize: 0,
-      version: '3.0.0', // 统一版本�?
+      version: '3.0.0', // 统一版本�?
       tableCounts: tableCounts,
       checksum: '',
       isEncrypted: options.encrypt,
@@ -35001,7 +35001,7 @@ class UnifiedBackupService implements IBackupService {
   Future<Map<String, dynamic>?> _getAppSettings() async {
     return {
       'backupVersion': '3.0.0',
-      'createdBy': 'Unified 铺得�?App',
+      'createdBy': 'Unified 铺得�?App',
       'serviceType': 'UnifiedBackupService',
       'features': {
         'streamProcessing': true,
@@ -35014,7 +35014,7 @@ class UnifiedBackupService implements IBackupService {
     };
   }
 
-  // 实现接口的其他方�?
+  // 实现接口的其他方�?
   @override
   Future<List<BackupMetadata>> getLocalBackups() async {
     try {
@@ -35079,7 +35079,7 @@ class UnifiedBackupService implements IBackupService {
 
       String content;
       if (isCompressed) {
-        // 解压并读�?
+        // 解压并读�?
         final tempPath = '$filePath.tmp';
         await _compressionService.decompressFile(filePath, tempPath);
         content = await File(tempPath).readAsString();
@@ -35171,13 +35171,13 @@ import '../../domain/services/i_validation_service.dart';
 import '../../domain/services/i_encryption_service.dart';
 import '../repository/optimized_data_export_repository.dart';
 
-/// 数据验证服务实现�?
+/// 数据验证服务实现�?
 class ValidationService implements IValidationService {
   final AppDatabase _database;
   final IEncryptionService _encryptionService;
   final OptimizedDataExportRepository _dataExportRepository;
 
-  // 支持的备份格式版�?
+  // 支持的备份格式版�?
   static const List<String> _supportedBackupVersions = ['1.0.0', '2.0.0'];
   
   // 支持的数据库架构版本范围
@@ -35197,7 +35197,7 @@ class ValidationService implements IValidationService {
     try {
       final file = File(filePath);
       
-      // 检查文件是否存�?
+      // 检查文件是否存�?
       if (!await file.exists()) {
         return ValidationResult(
           isValid: false,
@@ -35206,15 +35206,15 @@ class ValidationService implements IValidationService {
           errors: [
             ValidationError(
               code: 'FILE_NOT_FOUND',
-              message: '备份文件不存�?,
+              message: '备份文件不存�?,
               severity: ErrorSeverity.critical,
             ),
           ],
-          repairSuggestions: ['请检查文件路径是否正�?, '确认文件未被删除或移�?],
+          repairSuggestions: ['请检查文件路径是否正�?, '确认文件未被删除或移�?],
         );
       }
 
-      // 检查文件大�?
+      // 检查文件大�?
       final fileSize = await file.length();
       if (fileSize == 0) {
         return ValidationResult(
@@ -35228,7 +35228,7 @@ class ValidationService implements IValidationService {
               severity: ErrorSeverity.critical,
             ),
           ],
-          repairSuggestions: ['文件可能已损坏，请使用其他备份文�?],
+          repairSuggestions: ['文件可能已损坏，请使用其他备份文�?],
         );
       }
 
@@ -35248,7 +35248,7 @@ class ValidationService implements IValidationService {
               severity: ErrorSeverity.critical,
             ),
           ],
-          repairSuggestions: ['检查文件权�?, '确认文件未被其他程序占用'],
+          repairSuggestions: ['检查文件权�?, '确认文件未被其他程序占用'],
         );
       }
 
@@ -35264,7 +35264,7 @@ class ValidationService implements IValidationService {
             errors: [
               ValidationError(
                 code: 'DECRYPTION_FAILED',
-                message: '解密失败，请检查密码是否正�?,
+                message: '解密失败，请检查密码是否正�?,
                 severity: ErrorSeverity.critical,
               ),
             ],
@@ -35289,7 +35289,7 @@ class ValidationService implements IValidationService {
               severity: ErrorSeverity.critical,
             ),
           ],
-          repairSuggestions: ['文件可能已损�?, '尝试使用文本编辑器检查JSON格式'],
+          repairSuggestions: ['文件可能已损�?, '尝试使用文本编辑器检查JSON格式'],
         );
       }
 
@@ -35324,35 +35324,35 @@ class ValidationService implements IValidationService {
           target: filePath,
           errors: structureErrors,
           warnings: structureWarnings,
-          repairSuggestions: ['文件结构不完整，可能需要重新创建备�?],
+          repairSuggestions: ['文件结构不完整，可能需要重新创建备�?],
         );
       }
 
-      // 验证元数据格�?
+      // 验证元数据格�?
       try {
         BackupMetadata.fromJson(jsonData['metadata'] as Map<String, dynamic>);
       } catch (e) {
         structureErrors.add(
           ValidationError(
             code: 'INVALID_METADATA_FORMAT',
-            message: '元数据格式无�? ${e.toString()}',
+            message: '元数据格式无�? ${e.toString()}',
             severity: ErrorSeverity.high,
           ),
         );
       }
 
-      // 验证表数据格�?
+      // 验证表数据格�?
       final tablesData = jsonData['tables'];
       if (tablesData is! Map<String, dynamic>) {
         structureErrors.add(
           ValidationError(
             code: 'INVALID_TABLES_FORMAT',
-            message: 'tables字段格式无效，应为对象类�?,
+            message: 'tables字段格式无效，应为对象类�?,
             severity: ErrorSeverity.high,
           ),
         );
       } else {
-        // 检查每个表的数据格�?
+        // 检查每个表的数据格�?
         for (final entry in tablesData.entries) {
           final tableName = entry.key;
           final tableData = entry.value;
@@ -35361,7 +35361,7 @@ class ValidationService implements IValidationService {
             structureErrors.add(
               ValidationError(
                 code: 'INVALID_TABLE_DATA_FORMAT',
-                message: '�?$tableName 的数据格式无效，应为数组类型',
+                message: '�?$tableName 的数据格式无效，应为数组类型',
                 severity: ErrorSeverity.medium,
                 location: tableName,
               ),
@@ -35373,7 +35373,7 @@ class ValidationService implements IValidationService {
       final repairSuggestions = <String>[];
       if (structureErrors.isNotEmpty) {
         repairSuggestions.addAll([
-          '检查备份文件是否完�?,
+          '检查备份文件是否完�?,
           '尝试使用其他备份文件',
           '如果是手动编辑的文件，请检查JSON格式',
         ]);
@@ -35401,11 +35401,11 @@ class ValidationService implements IValidationService {
         errors: [
           ValidationError(
             code: 'VALIDATION_ERROR',
-            message: '验证过程中发生错�? ${e.toString()}',
+            message: '验证过程中发生错�? ${e.toString()}',
             severity: ErrorSeverity.critical,
           ),
         ],
-        repairSuggestions: ['请联系技术支�?],
+        repairSuggestions: ['请联系技术支�?],
       );
     }
   }
@@ -35424,7 +35424,7 @@ class ValidationService implements IValidationService {
       const currentAppVersion = '1.0.0+1'; // 可以从package info获取
       const currentBackupFormatVersion = '1.0.0';
 
-      // 检查备份格式版本兼容�?
+      // 检查备份格式版本兼容�?
       bool backupFormatCompatible = _supportedBackupVersions.contains(metadata.version);
       if (!backupFormatCompatible) {
         issues.add(
@@ -35437,7 +35437,7 @@ class ValidationService implements IValidationService {
         );
       }
 
-      // 检查数据库架构版本兼容�?
+      // 检查数据库架构版本兼容�?
       bool schemaVersionCompatible = true;
       if (metadata.schemaVersion != null) {
         final backupSchemaVersion = metadata.schemaVersion!;
@@ -35447,9 +35447,9 @@ class ValidationService implements IValidationService {
           issues.add(
             CompatibilityIssue(
               type: CompatibilityIssueType.schemaVersionIncompatible,
-              description: '备份的数据库架构版本 $backupSchemaVersion 过旧，不受支�?,
+              description: '备份的数据库架构版本 $backupSchemaVersion 过旧，不受支�?,
               severity: CompatibilityIssueSeverity.critical,
-              suggestedSolution: '请升级备份文件或使用更新的备�?,
+              suggestedSolution: '请升级备份文件或使用更新的备�?,
             ),
           );
         } else if (backupSchemaVersion > _maxSupportedSchemaVersion) {
@@ -35459,33 +35459,33 @@ class ValidationService implements IValidationService {
               type: CompatibilityIssueType.schemaVersionIncompatible,
               description: '备份的数据库架构版本 $backupSchemaVersion 过新，当前应用不支持',
               severity: CompatibilityIssueSeverity.critical,
-              suggestedSolution: '请升级应用到最新版�?,
+              suggestedSolution: '请升级应用到最新版�?,
             ),
           );
-          upgradeRecommendations.add('升级应用到最新版本以支持新的数据库架�?);
+          upgradeRecommendations.add('升级应用到最新版本以支持新的数据库架�?);
         } else if (backupSchemaVersion > currentSchemaVersion) {
           warnings.add(
             CompatibilityWarning(
               type: CompatibilityWarningType.versionGapLarge,
-              description: '备份的架构版�?$backupSchemaVersion 比当前版�?$currentSchemaVersion �?,
+              description: '备份的架构版�?$backupSchemaVersion 比当前版�?$currentSchemaVersion �?,
             ),
           );
-          upgradeRecommendations.add('建议升级应用以获得最佳兼容�?);
+          upgradeRecommendations.add('建议升级应用以获得最佳兼容�?);
         } else if (currentSchemaVersion - backupSchemaVersion > 10) {
           warnings.add(
             CompatibilityWarning(
               type: CompatibilityWarningType.versionGapLarge,
-              description: '备份的架构版�?$backupSchemaVersion 与当前版�?$currentSchemaVersion 差距较大',
+              description: '备份的架构版�?$backupSchemaVersion 与当前版�?$currentSchemaVersion 差距较大',
             ),
           );
         }
       }
 
-      // 检查应用版本兼容�?
+      // 检查应用版本兼容�?
       bool appVersionCompatible = true;
       if (metadata.appVersion != null) {
         // 这里可以添加更复杂的版本比较逻辑
-        // 目前简单地检查主版本�?
+        // 目前简单地检查主版本�?
         final backupAppVersion = metadata.appVersion!;
         final currentMajorVersion = currentAppVersion.split('.')[0];
         final backupMajorVersion = backupAppVersion.split('.')[0];
@@ -35495,9 +35495,9 @@ class ValidationService implements IValidationService {
           issues.add(
             CompatibilityIssue(
               type: CompatibilityIssueType.appVersionIncompatible,
-              description: '备份的应用版�?$backupAppVersion 与当前版�?$currentAppVersion 主版本不匹配',
+              description: '备份的应用版�?$backupAppVersion 与当前版�?$currentAppVersion 主版本不匹配',
               severity: CompatibilityIssueSeverity.warning,
-              suggestedSolution: '可以尝试恢复，但可能存在兼容性问�?,
+              suggestedSolution: '可以尝试恢复，但可能存在兼容性问�?,
             ),
           );
         }
@@ -35515,10 +35515,10 @@ class ValidationService implements IValidationService {
           issues.add(
             CompatibilityIssue(
               type: CompatibilityIssueType.unknownTable,
-              description: '�?$tableName 在当前数据库中不存在',
+              description: '�?$tableName 在当前数据库中不存在',
               severity: CompatibilityIssueSeverity.warning,
               affectedComponent: tableName,
-              suggestedSolution: '该表的数据将被跳�?,
+              suggestedSolution: '该表的数据将被跳�?,
             ),
           );
         }
@@ -35556,7 +35556,7 @@ class ValidationService implements IValidationService {
     } catch (e) {
       throw BackupException(
         type: BackupErrorType.validationError,
-        message: '版本兼容性检查失�? ${e.toString()}',
+        message: '版本兼容性检查失�? ${e.toString()}',
         originalError: e,
       );
     }
@@ -35579,7 +35579,7 @@ class ValidationService implements IValidationService {
       final tableRecordCounts = <String, int>{};
       final tableValidRecordCounts = <String, int>{};
 
-      // 验证校验�?
+      // 验证校验�?
       final tablesJson = jsonEncode(tablesData);
       final actualChecksum = _dataExportRepository.generateChecksum(tablesJson);
       final checksumValid = actualChecksum == metadata.checksum;
@@ -35602,7 +35602,7 @@ class ValidationService implements IValidationService {
         );
       }
 
-      // 验证每个表的数据完整�?
+      // 验证每个表的数据完整�?
       for (final entry in tablesData.entries) {
         final tableName = entry.key;
         final records = entry.value;
@@ -35610,7 +35610,7 @@ class ValidationService implements IValidationService {
         tableRecordCounts[tableName] = records.length;
         totalRecords += records.length;
 
-        // 验证表数据完整�?
+        // 验证表数据完整�?
         final tableResult = await _validateTableIntegrity(tableName, records);
         tableIntegrityResults[tableName] = tableResult.isValid;
         detailedResults.add(tableResult);
@@ -35622,7 +35622,7 @@ class ValidationService implements IValidationService {
           tableValidRecordCounts[tableName] = 0;
         }
 
-        // 检查重复记�?
+        // 检查重复记�?
         final duplicates = await _findDuplicateRecords(tableName, records);
         duplicateRecords.addAll(duplicates);
       }
@@ -35687,7 +35687,7 @@ class ValidationService implements IValidationService {
     } catch (e) {
       throw BackupException(
         type: BackupErrorType.validationError,
-        message: '数据完整性验证失�? ${e.toString()}',
+        message: '数据完整性验证失�? ${e.toString()}',
         originalError: e,
       );
     }
@@ -35705,7 +35705,7 @@ class ValidationService implements IValidationService {
 
       final file = File(filePath);
       
-      // 基本文件检�?
+      // 基本文件检�?
       if (!await file.exists()) {
         return ValidationResult(
           isValid: false,
@@ -35714,11 +35714,11 @@ class ValidationService implements IValidationService {
           errors: [
             ValidationError(
               code: 'FILE_NOT_FOUND',
-              message: '文件不存�?,
+              message: '文件不存�?,
               severity: ErrorSeverity.critical,
             ),
           ],
-          repairSuggestions: ['检查文件路�?, '确认文件未被删除'],
+          repairSuggestions: ['检查文件路�?, '确认文件未被删除'],
         );
       }
 
@@ -35731,10 +35731,10 @@ class ValidationService implements IValidationService {
             severity: ErrorSeverity.critical,
           ),
         );
-        repairSuggestions.add('文件已损坏，请使用其他备�?);
+        repairSuggestions.add('文件已损坏，请使用其他备�?);
       }
 
-      // 读取文件并检查格�?
+      // 读取文件并检查格�?
       String content;
       try {
         content = await file.readAsString();
@@ -35746,7 +35746,7 @@ class ValidationService implements IValidationService {
             severity: ErrorSeverity.critical,
           ),
         );
-        repairSuggestions.addAll(['检查文件权�?, '确认文件未被占用']);
+        repairSuggestions.addAll(['检查文件权�?, '确认文件未被占用']);
         
         return ValidationResult(
           isValid: false,
@@ -35757,7 +35757,7 @@ class ValidationService implements IValidationService {
         );
       }
 
-      // 如果文件加密，尝试解�?
+      // 如果文件加密，尝试解�?
       if (password != null) {
         try {
           content = await _encryptionService.decryptData(content, password);
@@ -35765,15 +35765,15 @@ class ValidationService implements IValidationService {
           errors.add(
             ValidationError(
               code: 'DECRYPTION_FAILED',
-              message: '解密失败，可能是密码错误或文件损�?,
+              message: '解密失败，可能是密码错误或文件损�?,
               severity: ErrorSeverity.high,
             ),
           );
-          repairSuggestions.addAll(['确认密码正确', '检查文件完整�?]);
+          repairSuggestions.addAll(['确认密码正确', '检查文件完整�?]);
         }
       }
 
-      // JSON格式检�?
+      // JSON格式检�?
       Map<String, dynamic> jsonData;
       try {
         jsonData = jsonDecode(content) as Map<String, dynamic>;
@@ -35786,7 +35786,7 @@ class ValidationService implements IValidationService {
           ),
         );
         repairSuggestions.addAll([
-          '文件JSON结构已损�?,
+          '文件JSON结构已损�?,
           '尝试使用文本编辑器修复JSON格式',
           '使用其他备份文件',
         ]);
@@ -35800,11 +35800,11 @@ class ValidationService implements IValidationService {
         );
       }
 
-      // 结构完整性检�?
+      // 结构完整性检�?
       final structureIssues = await _checkStructuralIntegrity(jsonData);
       errors.addAll(structureIssues);
 
-      // 数据完整性检查（如果有元数据�?
+      // 数据完整性检查（如果有元数据�?
       if (jsonData.containsKey('metadata') && jsonData.containsKey('tables')) {
         try {
           final metadata = BackupMetadata.fromJson(
@@ -35812,7 +35812,7 @@ class ValidationService implements IValidationService {
           );
           final tablesData = jsonData['tables'] as Map<String, dynamic>;
           
-          // 校验和验�?
+          // 校验和验�?
           final tablesJson = jsonEncode(tablesData);
           final actualChecksum = _dataExportRepository.generateChecksum(tablesJson);
           
@@ -35840,7 +35840,7 @@ class ValidationService implements IValidationService {
                   warnings.add(
                     ValidationWarning(
                       code: 'RECORD_COUNT_MISMATCH',
-                      message: '�?$tableName 记录数不匹配：期�?$expectedCount，实�?$actualCount',
+                      message: '�?$tableName 记录数不匹配：期�?$expectedCount，实�?$actualCount',
                       location: tableName,
                     ),
                   );
@@ -35852,7 +35852,7 @@ class ValidationService implements IValidationService {
           errors.add(
             ValidationError(
               code: 'METADATA_CORRUPTION',
-              message: '元数据损�? ${e.toString()}',
+              message: '元数据损�? ${e.toString()}',
               severity: ErrorSeverity.high,
             ),
           );
@@ -35889,11 +35889,11 @@ class ValidationService implements IValidationService {
         errors: [
           ValidationError(
             code: 'CORRUPTION_CHECK_FAILED',
-            message: '损坏检测失�? ${e.toString()}',
+            message: '损坏检测失�? ${e.toString()}',
             severity: ErrorSeverity.critical,
           ),
         ],
-        repairSuggestions: ['请联系技术支�?],
+        repairSuggestions: ['请联系技术支�?],
       );
     }
   }
@@ -35928,7 +35928,7 @@ class ValidationService implements IValidationService {
       // 2. 读取备份数据
       final backupData = await _readBackupData(filePath, password: password);
 
-      // 3. 版本兼容性检�?
+      // 3. 版本兼容性检�?
       final compatibilityResult = await checkVersionCompatibility(backupData.metadata);
       if (!compatibilityResult.isCompatible) {
         for (final issue in compatibilityResult.issues) {
@@ -35954,7 +35954,7 @@ class ValidationService implements IValidationService {
         repairSuggestions.addAll(compatibilityResult.upgradeRecommendations);
       }
 
-      // 4. 数据完整性验�?
+      // 4. 数据完整性验�?
       final integrityResult = await validateDataIntegrity(
         backupData.tables,
         backupData.metadata,
@@ -35964,7 +35964,7 @@ class ValidationService implements IValidationService {
         errors.add(
           ValidationError(
             code: 'DATA_INTEGRITY_ERROR',
-            message: '数据完整性验证失�?,
+            message: '数据完整性验证失�?,
             severity: ErrorSeverity.high,
             details: {
               'checksumValid': integrityResult.checksumValid,
@@ -35974,7 +35974,7 @@ class ValidationService implements IValidationService {
             },
           ),
         );
-        repairSuggestions.add('数据完整性受损，恢复可能不完�?);
+        repairSuggestions.add('数据完整性受损，恢复可能不完�?);
       }
 
       // 5. 选定表的验证
@@ -35984,13 +35984,13 @@ class ValidationService implements IValidationService {
             errors.add(
               ValidationError(
                 code: 'SELECTED_TABLE_NOT_FOUND',
-                message: '选定的表 $tableName 在备份中不存�?,
+                message: '选定的表 $tableName 在备份中不存�?,
                 severity: ErrorSeverity.medium,
                 location: tableName,
               ),
             );
           } else {
-            // 验证表结�?
+            // 验证表结�?
             final tableData = backupData.tables[tableName]!;
             if (tableData.isNotEmpty) {
               final structureResult = await validateTableStructure(
@@ -36006,14 +36006,14 @@ class ValidationService implements IValidationService {
         }
       }
 
-      // 6. 存储空间检�?
+      // 6. 存储空间检�?
       final estimatedSize = backupData.metadata.fileSize;
       // 这里可以添加磁盘空间检查逻辑
       if (estimatedSize > 1024 * 1024 * 1024) { // 1GB
         warnings.add(
           ValidationWarning(
             code: 'LARGE_RESTORE_SIZE',
-            message: '恢复数据量较大，可能需要较长时�?,
+            message: '恢复数据量较大，可能需要较长时�?,
             details: {'estimatedSize': estimatedSize},
           ),
         );
@@ -36047,11 +36047,11 @@ class ValidationService implements IValidationService {
         errors: [
           ValidationError(
             code: 'PRE_RESTORE_CHECK_FAILED',
-            message: '恢复前检查失�? ${e.toString()}',
+            message: '恢复前检查失�? ${e.toString()}',
             severity: ErrorSeverity.critical,
           ),
         ],
-        repairSuggestions: ['请检查备份文件完整�?],
+        repairSuggestions: ['请检查备份文件完整�?],
       );
     }
   }
@@ -36075,20 +36075,20 @@ class ValidationService implements IValidationService {
           errors: [
             ValidationError(
               code: 'TABLE_NOT_EXISTS',
-              message: '�?$tableName 在当前数据库中不存在',
+              message: '�?$tableName 在当前数据库中不存在',
               severity: ErrorSeverity.high,
               location: tableName,
             ),
           ],
-          repairSuggestions: ['该表的数据将被跳�?, '检查数据库架构是否匹配'],
+          repairSuggestions: ['该表的数据将被跳�?, '检查数据库架构是否匹配'],
         );
       }
 
-      // 获取当前表结�?
+      // 获取当前表结�?
       final currentTableInfo = await _getTableInfo(tableName);
       final currentColumns = currentTableInfo.map((col) => col['name'] as String).toSet();
 
-      // 检查备份数据中的字�?
+      // 检查备份数据中的字�?
       final backupColumns = backupTableData.keys.toSet();
 
       // 检查缺失的必需字段
@@ -36109,19 +36109,19 @@ class ValidationService implements IValidationService {
         );
       }
 
-      // 检查未知字�?
+      // 检查未知字�?
       final unknownColumns = backupColumns.difference(currentColumns);
       for (final column in unknownColumns) {
         warnings.add(
           ValidationWarning(
             code: 'UNKNOWN_COLUMN',
-            message: '未知字段: $column，将被忽�?,
+            message: '未知字段: $column，将被忽�?,
             location: '$tableName.$column',
           ),
         );
       }
 
-      // 检查字段类型兼容�?
+      // 检查字段类型兼容�?
       for (final column in backupColumns.intersection(currentColumns)) {
         final currentColumnInfo = currentTableInfo.firstWhere(
           (col) => col['name'] == column,
@@ -36133,7 +36133,7 @@ class ValidationService implements IValidationService {
           errors.add(
             ValidationError(
               code: 'TYPE_INCOMPATIBLE',
-              message: '字段 $column 类型不兼容：期望 $currentType，实�?${backupValue.runtimeType}',
+              message: '字段 $column 类型不兼容：期望 $currentType，实�?${backupValue.runtimeType}',
               severity: ErrorSeverity.medium,
               location: '$tableName.$column',
             ),
@@ -36145,7 +36145,7 @@ class ValidationService implements IValidationService {
       if (errors.isNotEmpty) {
         repairSuggestions.addAll([
           '检查数据库架构版本',
-          '考虑升级数据库架�?,
+          '考虑升级数据库架�?,
           '手动处理不兼容的字段',
         ]);
       }
@@ -36173,7 +36173,7 @@ class ValidationService implements IValidationService {
         errors: [
           ValidationError(
             code: 'TABLE_STRUCTURE_CHECK_FAILED',
-            message: '表结构验证失�? ${e.toString()}',
+            message: '表结构验证失�? ${e.toString()}',
             severity: ErrorSeverity.critical,
           ),
         ],
@@ -36199,7 +36199,7 @@ class ValidationService implements IValidationService {
         );
       }
 
-      // 获取表结构信�?
+      // 获取表结构信�?
       final tableInfo = await _getTableInfo(tableName);
       final columnTypes = <String, String>{};
       
@@ -36207,7 +36207,7 @@ class ValidationService implements IValidationService {
         columnTypes[col['name'] as String] = col['type'] as String;
       }
 
-      // 验证每条记录的数据类�?
+      // 验证每条记录的数据类�?
       for (int i = 0; i < records.length; i++) {
         final record = records[i];
         
@@ -36222,7 +36222,7 @@ class ValidationService implements IValidationService {
             errors.add(
               ValidationError(
                 code: 'DATA_TYPE_MISMATCH',
-                message: '记录 ${i + 1} 字段 $columnName 类型不匹配：期望 $expectedType，实�?${value.runtimeType}',
+                message: '记录 ${i + 1} 字段 $columnName 类型不匹配：期望 $expectedType，实�?${value.runtimeType}',
                 severity: ErrorSeverity.medium,
                 location: '$tableName.$columnName[${i + 1}]',
                 details: {
@@ -36244,7 +36244,7 @@ class ValidationService implements IValidationService {
         errors: errors,
         warnings: warnings,
         repairSuggestions: errors.isNotEmpty 
-            ? ['检查数据类型转�?, '清理无效数据', '更新表结构定�?]
+            ? ['检查数据类型转�?, '清理无效数据', '更新表结构定�?]
             : [],
         details: {
           'recordCount': records.length,
@@ -36265,7 +36265,7 @@ class ValidationService implements IValidationService {
             severity: ErrorSeverity.critical,
           ),
         ],
-        repairSuggestions: ['请检查表结构和数据格�?],
+        repairSuggestions: ['请检查表结构和数据格�?],
       );
     }
   } 
@@ -36287,7 +36287,7 @@ class ValidationService implements IValidationService {
         final targetKeyField = relationship['targetKeyField'] as String;
 
         if (!tablesData.containsKey(sourceTable) || !tablesData.containsKey(targetTable)) {
-          continue; // 跳过不存在的�?
+          continue; // 跳过不存在的�?
         }
 
         final sourceRecords = tablesData[sourceTable]!;
@@ -36302,7 +36302,7 @@ class ValidationService implements IValidationService {
           }
         }
 
-        // 检查源表中的外键引�?
+        // 检查源表中的外键引�?
         int missingCount = 0;
         for (final record in sourceRecords) {
           final foreignKeyValue = record[foreignKeyField];
@@ -36315,14 +36315,14 @@ class ValidationService implements IValidationService {
           errors.add(
             ValidationError(
               code: 'MISSING_FOREIGN_KEY',
-              message: '�?$sourceTable 中有 $missingCount 条记录的外键 $foreignKeyField 在目标表 $targetTable 中不存在',
+              message: '�?$sourceTable 中有 $missingCount 条记录的外键 $foreignKeyField 在目标表 $targetTable 中不存在',
               severity: ErrorSeverity.high,
               location: '$sourceTable.$foreignKeyField',
               details: {
                 'sourceTable': sourceTable,
                 'targetTable': targetTable,
                 'foreignKeyField': foreignKeyField,
-                'missingValue': null, // 这里可以记录具体的缺失�?
+                'missingValue': null, // 这里可以记录具体的缺失�?
                 'affectedRecordCount': missingCount,
               },
             ),
@@ -36337,7 +36337,7 @@ class ValidationService implements IValidationService {
         errors: errors,
         warnings: warnings,
         repairSuggestions: errors.isNotEmpty 
-            ? ['检查数据导入顺�?, '修复缺失的关联记�?, '考虑禁用外键约束检�?]
+            ? ['检查数据导入顺�?, '修复缺失的关联记�?, '考虑禁用外键约束检�?]
             : [],
         details: {
           'checkedRelationships': foreignKeyRelationships.length,
@@ -36357,7 +36357,7 @@ class ValidationService implements IValidationService {
             severity: ErrorSeverity.critical,
           ),
         ],
-        repairSuggestions: ['请检查数据库架构和外键定�?],
+        repairSuggestions: ['请检查数据库架构和外键定�?],
       );
     }
   }
@@ -36379,7 +36379,7 @@ class ValidationService implements IValidationService {
         );
       }
 
-      // 获取表约束信�?
+      // 获取表约束信�?
       final constraints = await _getTableConstraints(tableName);
 
       for (int i = 0; i < records.length; i++) {
@@ -36393,7 +36393,7 @@ class ValidationService implements IValidationService {
               errors.add(
                 ValidationError(
                   code: 'NOT_NULL_VIOLATION',
-                  message: '记录 ${i + 1} 违反NOT NULL约束：字�?$columnName 不能为空',
+                  message: '记录 ${i + 1} 违反NOT NULL约束：字�?$columnName 不能为空',
                   severity: ErrorSeverity.high,
                   location: '$tableName.$columnName[${i + 1}]',
                   details: {
@@ -36412,7 +36412,7 @@ class ValidationService implements IValidationService {
             final value = record[columnName];
             
             if (value != null) {
-              // 检查在当前记录集中是否有重�?
+              // 检查在当前记录集中是否有重�?
               final duplicateCount = records
                   .where((r) => r[columnName] == value)
                   .length;
@@ -36421,7 +36421,7 @@ class ValidationService implements IValidationService {
                 warnings.add(
                   ValidationWarning(
                     code: 'UNIQUE_VIOLATION',
-                    message: '字段 $columnName 的�?$value 在多条记录中重复',
+                    message: '字段 $columnName 的�?$value 在多条记录中重复',
                     location: '$tableName.$columnName',
                     details: {
                       'constraintType': 'UNIQUE',
@@ -36435,7 +36435,7 @@ class ValidationService implements IValidationService {
             }
           }
 
-          // 检查CHECK约束（如果有定义�?
+          // 检查CHECK约束（如果有定义�?
           if (constraint['type'] == 'CHECK') {
             final checkExpression = constraint['expression'] as String?;
             if (checkExpression != null) {
@@ -36444,7 +36444,7 @@ class ValidationService implements IValidationService {
               warnings.add(
                 ValidationWarning(
                   code: 'CHECK_CONSTRAINT_FOUND',
-                  message: '�?$tableName 有CHECK约束，请手动验证: $checkExpression',
+                  message: '�?$tableName 有CHECK约束，请手动验证: $checkExpression',
                   location: tableName,
                 ),
               );
@@ -36460,7 +36460,7 @@ class ValidationService implements IValidationService {
         errors: errors,
         warnings: warnings,
         repairSuggestions: errors.isNotEmpty 
-            ? ['修复约束违反的数�?, '检查数据完整�?, '考虑临时禁用约束']
+            ? ['修复约束违反的数�?, '检查数据完整�?, '考虑临时禁用约束']
             : [],
         details: {
           'recordCount': records.length,
@@ -36493,7 +36493,7 @@ class ValidationService implements IValidationService {
     final suggestions = <String>[];
     final errorCodes = <String>{};
 
-    // 收集所有错误代�?
+    // 收集所有错误代�?
     for (final result in validationResults) {
       for (final error in result.errors) {
         errorCodes.add(error.code);
@@ -36502,7 +36502,7 @@ class ValidationService implements IValidationService {
 
     // 基于错误类型生成建议
     if (errorCodes.contains('FILE_NOT_FOUND')) {
-      suggestions.add('检查备份文件路径是否正�?);
+      suggestions.add('检查备份文件路径是否正�?);
     }
 
     if (errorCodes.contains('JSON_CORRUPTION') || errorCodes.contains('CHECKSUM_MISMATCH')) {
@@ -36514,16 +36514,16 @@ class ValidationService implements IValidationService {
 
     if (errorCodes.contains('COMPATIBILITY_ERROR')) {
       suggestions.addAll([
-        '升级应用到最新版�?,
-        '检查备份文件版本兼容�?,
+        '升级应用到最新版�?,
+        '检查备份文件版本兼容�?,
         '考虑使用版本转换工具',
       ]);
     }
 
     if (errorCodes.contains('TABLE_NOT_EXISTS')) {
       suggestions.addAll([
-        '更新数据库架�?,
-        '跳过不存在的�?,
+        '更新数据库架�?,
+        '跳过不存在的�?,
         '手动创建缺失的表结构',
       ]);
     }
@@ -36532,24 +36532,24 @@ class ValidationService implements IValidationService {
       suggestions.addAll([
         '调整数据导入顺序',
         '临时禁用外键约束',
-        '修复缺失的关联数�?,
+        '修复缺失的关联数�?,
       ]);
     }
 
     if (errorCodes.contains('DATA_TYPE_MISMATCH')) {
       suggestions.addAll([
-        '检查数据类型转换规�?,
+        '检查数据类型转换规�?,
         '清理不兼容的数据',
-        '更新表结构定�?,
+        '更新表结构定�?,
       ]);
     }
 
     // 通用建议
     if (suggestions.isEmpty && errorCodes.isNotEmpty) {
       suggestions.addAll([
-        '检查备份文件完整�?,
-        '确认数据库架构版本匹�?,
-        '联系技术支持获取帮�?,
+        '检查备份文件完整�?,
+        '确认数据库架构版本匹�?,
+        '联系技术支持获取帮�?,
       ]);
     }
 
@@ -36582,7 +36582,7 @@ class ValidationService implements IValidationService {
     }
   }
 
-  /// 验证表完整�?
+  /// 验证表完整�?
   Future<ValidationResult> _validateTableIntegrity(
     String tableName,
     List<Map<String, dynamic>> records,
@@ -36591,7 +36591,7 @@ class ValidationService implements IValidationService {
     final warnings = <ValidationWarning>[];
 
     try {
-      // 检查记录格式一致�?
+      // 检查记录格式一致�?
       if (records.isNotEmpty) {
         final firstRecordKeys = records.first.keys.toSet();
         
@@ -36602,7 +36602,7 @@ class ValidationService implements IValidationService {
             warnings.add(
               ValidationWarning(
                 code: 'INCONSISTENT_RECORD_FORMAT',
-                message: '记录 ${i + 1} 的字段结构与第一条记录不一�?,
+                message: '记录 ${i + 1} 的字段结构与第一条记录不一�?,
                 location: '$tableName[${i + 1}]',
               ),
             );
@@ -36644,7 +36644,7 @@ class ValidationService implements IValidationService {
         errors: [
           ValidationError(
             code: 'TABLE_INTEGRITY_CHECK_FAILED',
-            message: '表完整性检查失�? ${e.toString()}',
+            message: '表完整性检查失�? ${e.toString()}',
             severity: ErrorSeverity.critical,
           ),
         ],
@@ -36664,7 +36664,7 @@ class ValidationService implements IValidationService {
       final primaryKey = await _getPrimaryKeyColumn(tableName);
       if (primaryKey == null) return duplicates;
 
-      // 按主键分组查找重�?
+      // 按主键分组查找重�?
       final keyGroups = <dynamic, List<Map<String, dynamic>>>{};
       
       for (final record in records) {
@@ -36736,7 +36736,7 @@ class ValidationService implements IValidationService {
                 tableName: sourceTable,
                 primaryKeyField: primaryKey ?? 'id',
                 primaryKeyValue: record[primaryKey] ?? 'unknown',
-                reason: '外键 $foreignKeyField �?$foreignKeyValue 在目标表 $targetTable 中不存在',
+                reason: '外键 $foreignKeyField �?$foreignKeyValue 在目标表 $targetTable 中不存在',
                 recordData: record,
               ),
             );
@@ -36750,7 +36750,7 @@ class ValidationService implements IValidationService {
     }
   }
 
-  /// 检查结构完整�?
+  /// 检查结构完整�?
   Future<List<ValidationError>> _checkStructuralIntegrity(
     Map<String, dynamic> jsonData,
   ) async {
@@ -36839,24 +36839,24 @@ class ValidationService implements IValidationService {
 
     if (errorCodes.contains('CHECKSUM_MISMATCH')) {
       suggestions.addAll([
-        '文件数据已被修改或损�?,
-        '尝试从原始来源重新获取备�?,
+        '文件数据已被修改或损�?,
+        '尝试从原始来源重新获取备�?,
         '如果是网络传输问题，重新下载文件',
       ]);
     }
 
     if (errorCodes.contains('METADATA_CORRUPTION')) {
       suggestions.addAll([
-        '尝试手动重建元数�?,
+        '尝试手动重建元数�?,
         '使用备份文件修复工具',
-        '联系技术支持获取专业帮�?,
+        '联系技术支持获取专业帮�?,
       ]);
     }
 
     return suggestions;
   }
 
-  /// 生成恢复前修复建�?
+  /// 生成恢复前修复建�?
   List<String> _generatePreRestoreRepairSuggestions(
     List<ValidationError> errors,
     List<ValidationWarning> warnings,
@@ -36865,22 +36865,22 @@ class ValidationService implements IValidationService {
 
     if (errors.isNotEmpty) {
       suggestions.addAll([
-        '修复所有错误后再进行恢�?,
+        '修复所有错误后再进行恢�?,
         '考虑使用部分恢复模式跳过有问题的数据',
       ]);
     }
 
     if (warnings.isNotEmpty) {
       suggestions.addAll([
-        '注意警告信息，可能影响恢复质�?,
-        '建议在测试环境中先进行恢复验�?,
+        '注意警告信息，可能影响恢复质�?,
+        '建议在测试环境中先进行恢复验�?,
       ]);
     }
 
     return suggestions;
   }
 
-  /// 计算兼容性分�?
+  /// 计算兼容性分�?
   double _calculateCompatibilityScore(CompatibilityCheckResult result) {
     if (result.isCompatible) return 1.0;
 
@@ -36925,7 +36925,7 @@ class ValidationService implements IValidationService {
     }
   }
 
-  /// 获取表结构信�?
+  /// 获取表结构信�?
   Future<List<Map<String, dynamic>>> _getTableInfo(String tableName) async {
     try {
       final query = 'PRAGMA table_info($tableName)';
@@ -36954,7 +36954,7 @@ class ValidationService implements IValidationService {
     }
   }
 
-  /// 检查数据类型兼容�?
+  /// 检查数据类型兼容�?
   bool _isTypeCompatible(String expectedType, dynamic value) {
     final type = expectedType.toUpperCase();
     
@@ -36979,14 +36979,14 @@ class ValidationService implements IValidationService {
       case 'TIMESTAMP':
         return value is String || value is int;
       default:
-        return true; // 未知类型，假设兼�?
+        return true; // 未知类型，假设兼�?
     }
   }
 
   /// 获取外键关系定义
   Future<List<Map<String, dynamic>>> _getForeignKeyRelationships() async {
     // 这里返回应用中定义的外键关系
-    // 实际实现中应该从数据库架构或配置文件中读�?
+    // 实际实现中应该从数据库架构或配置文件中读�?
     return [
       {
         'sourceTable': 'product',
@@ -37033,7 +37033,7 @@ class ValidationService implements IValidationService {
     ];
   }
 
-  /// 获取表约束信�?
+  /// 获取表约束信�?
   Future<List<Map<String, dynamic>>> _getTableConstraints(String tableName) async {
     final constraints = <Map<String, dynamic>>[];
     
@@ -37083,7 +37083,7 @@ import 'package:share_plus/share_plus.dart';
 import '../../domain/models/backup_exception.dart';
 import '../../domain/models/backup_metadata.dart';
 
-/// 备份文件管理�?
+/// 备份文件管理�?
 /// 处理备份文件的本地存储、分享和管理操作
 class BackupFileManager {
   /// 获取备份目录
@@ -37146,7 +37146,7 @@ class BackupFileManager {
       // 继续尝试其他方案
     }
 
-    // 方案4: 回退到应用文档目录（原来的逻辑�?
+    // 方案4: 回退到应用文档目录（原来的逻辑�?
     try {
       final appDir = await getApplicationDocumentsDirectory();
       final backupDir = Directory(path.join(appDir.path, 'backups'));
@@ -37160,7 +37160,7 @@ class BackupFileManager {
       // 最后的备用方案
     }
     
-    // 方案5: 最后回退到临时目�?
+    // 方案5: 最后回退到临时目�?
     final tempDir = Directory.systemTemp;
     final backupDir = Directory(path.join(tempDir.path, 'unified_backups'));
 
@@ -37177,13 +37177,13 @@ class BackupFileManager {
     return path.join(backupDir.path, '$backupId.json');
   }
 
-  /// 检查备份文件是否存�?
+  /// 检查备份文件是否存�?
   static Future<bool> backupFileExists(String backupId) async {
     final filePath = await getBackupFilePath(backupId);
     return File(filePath).exists();
   }
 
-  /// 重命名备份文�?
+  /// 重命名备份文�?
   static Future<bool> renameBackupFile(String oldBackupId, String newBackupId) async {
     try {
       final oldFilePath = await getBackupFilePath(oldBackupId);
@@ -37202,18 +37202,18 @@ class BackupFileManager {
       await oldFile.rename(newFilePath);
       return true;
     } catch (e) {
-      throw BackupException.fileSystem('重命名备份文件失�? ${e.toString()}');
+      throw BackupException.fileSystem('重命名备份文件失�? ${e.toString()}');
     }
   }
 
-  /// 复制备份文件到指定路�?
+  /// 复制备份文件到指定路�?
   static Future<void> copyBackupFile(String backupId, String destinationPath) async {
     try {
       final sourceFilePath = await getBackupFilePath(backupId);
       final sourceFile = File(sourceFilePath);
       
       if (!await sourceFile.exists()) {
-        throw BackupException.fileSystem('备份文件不存�? $backupId');
+        throw BackupException.fileSystem('备份文件不存�? $backupId');
       }
       
       await sourceFile.copy(destinationPath);
@@ -37230,7 +37230,7 @@ class BackupFileManager {
       final file = File(filePath);
       
       if (!await file.exists()) {
-        throw BackupException.fileSystem('备份文件不存�? ${metadata.id}');
+        throw BackupException.fileSystem('备份文件不存�? ${metadata.id}');
       }
       
       return filePath;
@@ -37272,7 +37272,7 @@ class BackupFileManager {
     }
   }
 
-  /// 清理所有备份文件（慎用�?
+  /// 清理所有备份文件（慎用�?
   static Future<void> clearAllBackups() async {
     try {
       final backupDir = await getBackupDirectory();
@@ -37289,7 +37289,7 @@ class BackupFileManager {
     }
   }
 
-  /// 获取备份目录总大�?
+  /// 获取备份目录总大�?
   static Future<int> getBackupDirectorySize() async {
     try {
       final backupDir = await getBackupDirectory();
@@ -37309,7 +37309,7 @@ class BackupFileManager {
     }
   }
 
-  /// 验证备份文件�?
+  /// 验证备份文件�?
   static bool isValidBackupFileName(String fileName) {
     // 检查文件名是否包含非法字符
     final invalidChars = RegExp(r'[<>:"/\\|?*]');
@@ -37325,7 +37325,7 @@ class BackupFileManager {
     return true;
   }
 
-  /// 格式化文件大小显�?
+  /// 格式化文件大小显�?
   static String formatFileSize(int bytes) {
     if (bytes < 1024) {
       return '$bytes B';
@@ -37340,7 +37340,7 @@ class BackupFileManager {
 
   /// 生成安全的文件名
   static String generateSafeFileName(String originalName) {
-    // 移除或替换非法字�?
+    // 移除或替换非法字�?
     String safeName = originalName.replaceAll(RegExp(r'[<>:"/\\|?*]'), '_');
     
     // 限制长度
@@ -37348,7 +37348,7 @@ class BackupFileManager {
       safeName = safeName.substring(0, 200);
     }
     
-    // 确保不为�?
+    // 确保不为�?
     if (safeName.isEmpty) {
       safeName = 'backup';
     }
@@ -37356,28 +37356,28 @@ class BackupFileManager {
     return safeName;
   }
 
-  /// 检查可用存储空�?
+  /// 检查可用存储空�?
   /// 返回可用空间大小（字节）
   static Future<int> getAvailableStorageSpace() async {
     try {
       final backupDir = await getBackupDirectory();
       await backupDir.stat();
       
-      // 在不同平台上获取可用空间的方法可能不�?
+      // 在不同平台上获取可用空间的方法可能不�?
       // 这里提供一个基本实现，实际应用中可能需要使用平台特定的API
       
       // 对于Android/iOS，可以使用disk_space插件
-      // 这里先返回一个估算�?
-      return 1024 * 1024 * 1024; // 1GB 作为默认�?
+      // 这里先返回一个估算�?
+      return 1024 * 1024 * 1024; // 1GB 作为默认�?
     } catch (e) {
-      // 如果无法获取存储空间信息，返�?
+      // 如果无法获取存储空间信息，返�?
       return 0;
     }
   }
 
-  /// 检查是否有足够的存储空�?
+  /// 检查是否有足够的存储空�?
   /// [requiredSize] 需要的空间大小（字节）
-  /// [reserveSpace] 预留空间大小（字节），默�?00MB
+  /// [reserveSpace] 预留空间大小（字节），默�?00MB
   static Future<bool> hasEnoughStorageSpace(
     int requiredSize, {
     int reserveSpace = 100 * 1024 * 1024, // 100MB
@@ -37386,12 +37386,12 @@ class BackupFileManager {
       final availableSpace = await getAvailableStorageSpace();
       return availableSpace >= (requiredSize + reserveSpace);
     } catch (e) {
-      // 如果无法检查存储空间，假设有足够空�?
+      // 如果无法检查存储空间，假设有足够空�?
       return true;
     }
   }
 
-  /// 验证备份文件完整�?
+  /// 验证备份文件完整�?
   /// 检查文件是否存在且可读
   static Future<bool> validateBackupFileIntegrity(String backupId) async {
     try {
@@ -37402,7 +37402,7 @@ class BackupFileManager {
         return false;
       }
       
-      // 尝试读取文件的前几个字节来验证文件是否损�?
+      // 尝试读取文件的前几个字节来验证文件是否损�?
       final bytes = await file.openRead(0, 100).toList();
       return bytes.isNotEmpty;
     } catch (e) {
@@ -37418,7 +37418,7 @@ class BackupFileManager {
       final file = File(filePath);
       
       if (!await file.exists()) {
-        throw BackupException.fileSystem('备份文件不存�? ${metadata.id}');
+        throw BackupException.fileSystem('备份文件不存�? ${metadata.id}');
       }
       
       // 使用share_plus插件分享文件
@@ -37434,7 +37434,7 @@ class BackupFileManager {
     }
   }
 
-  /// 导出备份文件到指定目�?
+  /// 导出备份文件到指定目�?
   /// [backupId] 备份文件ID
   /// [destinationDir] 目标目录路径
   /// [newFileName] 新文件名（可选）
@@ -37448,7 +37448,7 @@ class BackupFileManager {
       final sourceFile = File(sourceFilePath);
       
       if (!await sourceFile.exists()) {
-        throw BackupException.fileSystem('备份文件不存�? $backupId');
+        throw BackupException.fileSystem('备份文件不存�? $backupId');
       }
       
       // 确保目标目录存在
@@ -37464,7 +37464,7 @@ class BackupFileManager {
       // 检查目标文件是否已存在
       final destFile = File(destinationPath);
       if (await destFile.exists()) {
-        throw BackupException.fileSystem('目标文件已存�? $fileName');
+        throw BackupException.fileSystem('目标文件已存�? $fileName');
       }
       
       // 复制文件
@@ -37476,7 +37476,7 @@ class BackupFileManager {
     }
   }
 
-  /// 获取备份文件列表（按修改时间排序�?
+  /// 获取备份文件列表（按修改时间排序�?
   static Future<List<FileSystemEntity>> getBackupFilesList({
     bool sortByModifiedTime = true,
   }) async {
@@ -37493,7 +37493,7 @@ class BackupFileManager {
           .toList();
       
       if (sortByModifiedTime) {
-        // 按修改时间排序（最新的在前�?
+        // 按修改时间排序（最新的在前�?
         files.sort((a, b) {
           final aStat = a.statSync();
           final bStat = b.statSync();
@@ -37507,9 +37507,9 @@ class BackupFileManager {
     }
   }
 
-  /// 清理过期的备份文�?
-  /// [maxAge] 最大保留天�?
-  /// [maxCount] 最大保留文件数�?
+  /// 清理过期的备份文�?
+  /// [maxAge] 最大保留天�?
+  /// [maxCount] 最大保留文件数�?
   static Future<int> cleanupOldBackups({
     int? maxAge,
     int? maxCount,
@@ -37522,7 +37522,7 @@ class BackupFileManager {
         final file = files[i] as File;
         bool shouldDelete = false;
         
-        // 检查文件年�?
+        // 检查文件年�?
         if (maxAge != null) {
           final stat = await file.stat();
           final age = DateTime.now().difference(stat.modified).inDays;
@@ -37531,7 +37531,7 @@ class BackupFileManager {
           }
         }
         
-        // 检查文件数量限�?
+        // 检查文件数量限�?
         if (maxCount != null && i >= maxCount) {
           shouldDelete = true;
         }
@@ -37577,7 +37577,7 @@ class BackupFileManager {
     }
   }
 
-  /// 创建备份文件的临时副�?
+  /// 创建备份文件的临时副�?
   /// 用于在操作过程中保护原始文件
   static Future<String> createTemporaryBackup(String backupId) async {
     try {
@@ -37585,7 +37585,7 @@ class BackupFileManager {
       final sourceFile = File(sourceFilePath);
       
       if (!await sourceFile.exists()) {
-        throw BackupException.fileSystem('备份文件不存�? $backupId');
+        throw BackupException.fileSystem('备份文件不存�? $backupId');
       }
       
       // 创建临时文件路径
@@ -37615,13 +37615,13 @@ class BackupFileManager {
           try {
             await entity.delete();
           } catch (e) {
-            // 忽略删除失败的临时文�?
+            // 忽略删除失败的临时文�?
             continue;
           }
         }
       }
     } catch (e) {
-      // 忽略清理临时文件的错�?
+      // 忽略清理临时文件的错�?
     }
   }
 }
@@ -37631,7 +37631,7 @@ import 'dart:typed_data';
 import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as path;
 
-/// 文件访问辅助工具�?
+/// 文件访问辅助工具�?
 class FileAccessHelper {
   /// 检查文件是否可访问
   static Future<bool> isFileAccessible(String filePath) async {
@@ -37679,7 +37679,7 @@ class FileAccessHelper {
     }
   }
 
-  /// 获取文件的可读路径（用于显示�?
+  /// 获取文件的可读路径（用于显示�?
   static String getDisplayPath(String filePath) {
     try {
       // 如果是临时文件，只显示文件名
@@ -37687,7 +37687,7 @@ class FileAccessHelper {
         return path.basename(filePath);
       }
       
-      // 如果路径太长，截断显�?
+      // 如果路径太长，截断显�?
       if (filePath.length > 50) {
         final fileName = path.basename(filePath);
         final dirName = path.basename(path.dirname(filePath));
@@ -37706,12 +37706,12 @@ class FileAccessHelper {
     return ['.json', '.backup'].contains(extension);
   }
 
-  /// 获取建议的备份文件位�?
+  /// 获取建议的备份文件位�?
   static Future<List<String>> getSuggestedBackupLocations() async {
     final suggestions = <String>[];
     
     try {
-      // 下载文件�?
+      // 下载文件�?
       final downloadsDir = await getDownloadsDirectory();
       if (downloadsDir != null) {
         suggestions.add(downloadsDir.path);
@@ -37721,7 +37721,7 @@ class FileAccessHelper {
     }
     
     try {
-      // 文档文件�?
+      // 文档文件�?
       final documentsDir = await getApplicationDocumentsDirectory();
       suggestions.add(documentsDir.path);
     } catch (e) {
@@ -37754,7 +37754,7 @@ class FileAccessHelper {
       try {
         targetDir = await getDownloadsDirectory();
       } catch (e) {
-        // 如果获取下载文件夹失败，使用文档文件�?
+        // 如果获取下载文件夹失败，使用文档文件�?
         targetDir = await getApplicationDocumentsDirectory();
       }
 
@@ -37769,31 +37769,31 @@ class FileAccessHelper {
     }
   }
 
-  /// 获取用户友好的访问指�?
+  /// 获取用户友好的访问指�?
   static String getAccessGuide() {
     return '''
 如果无法访问备份文件，请按以下步骤操作：
 
-1. 将备份文件复制到以下任一位置�?
-   �?下载文件�?(Downloads)
-   �?文档文件�?(Documents)
-   �?SD卡根目录
+1. 将备份文件复制到以下任一位置�?
+   �?下载文件�?(Downloads)
+   �?文档文件�?(Documents)
+   �?SD卡根目录
 
-2. 或者使用文件管理器�?
-   �?找到备份文件位置
-   �?长按文件选择"复制"
-   �?导航到下载或文档文件�?
-   �?粘贴文件
+2. 或者使用文件管理器�?
+   �?找到备份文件位置
+   �?长按文件选择"复制"
+   �?导航到下载或文档文件�?
+   �?粘贴文件
 
 3. 然后重新在应用中选择文件
 ''';
   }
 }
-/// 取消令牌，用于取消长时间运行的操�?
+/// 取消令牌，用于取消长时间运行的操�?
 class CancelToken {
   bool _isCancelled = false;
 
-  /// 是否已取�?
+  /// 是否已取�?
   bool get isCancelled => _isCancelled;
 
   /// 取消操作
@@ -37801,7 +37801,7 @@ class CancelToken {
     _isCancelled = true;
   }
 
-  /// 检查是否已取消，如果已取消则抛出异�?
+  /// 检查是否已取消，如果已取消则抛出异�?
   void throwIfCancelled() {
     if (_isCancelled) {
       throw const BackupCancelledException();
@@ -37813,7 +37813,7 @@ class CancelToken {
 class BackupCancelledException implements Exception {
   final String message;
 
-  const BackupCancelledException([this.message = '备份操作已取�?]);
+  const BackupCancelledException([this.message = '备份操作已取�?]);
 
   @override
   String toString() => 'BackupCancelledException: $message';
@@ -37823,7 +37823,7 @@ class BackupCancelledException implements Exception {
 class RestoreCancelledException implements Exception {
   final String message;
 
-  const RestoreCancelledException([this.message = '恢复操作已取�?]);
+  const RestoreCancelledException([this.message = '恢复操作已取�?]);
 
   @override
   String toString() => 'RestoreCancelledException: $message';
@@ -37860,7 +37860,7 @@ enum ConflictResolution {
   merge,
 }
 
-/// 批处理结�?
+/// 批处理结�?
 class BatchResult {
   final int successCount;
   final int failureCount;
@@ -37901,7 +37901,7 @@ abstract class AutoBackupSettings with _$AutoBackupSettings {
     @Default(false) bool enabled,
     /// 备份频率
     @Default(BackupFrequency.weekly) BackupFrequency frequency,
-    /// 最大保留备份文件数�?
+    /// 最大保留备份文件数�?
     @Default(5) int maxBackupCount,
     /// 上次自动备份时间
     DateTime? lastBackupTime,
@@ -37909,7 +37909,7 @@ abstract class AutoBackupSettings with _$AutoBackupSettings {
     DateTime? nextBackupTime,
     /// 是否在WiFi下才备份
     @Default(true) bool wifiOnly,
-    /// 是否在充电时才备�?
+    /// 是否在充电时才备�?
     @Default(false) bool chargingOnly,
     /// 自动备份的备份选项
     AutoBackupOptions? backupOptions,
@@ -37919,7 +37919,7 @@ abstract class AutoBackupSettings with _$AutoBackupSettings {
       _$AutoBackupSettingsFromJson(json);
 }
 
-/// 自动备份的备份选项（简化版�?
+/// 自动备份的备份选项（简化版�?
 @freezed
 abstract class AutoBackupOptions with _$AutoBackupOptions {
   const factory AutoBackupOptions({
@@ -37956,10 +37956,10 @@ mixin _$AutoBackupSettings {
 
 /// 是否启用自动备份
  bool get enabled;/// 备份频率
- BackupFrequency get frequency;/// 最大保留备份文件数�? int get maxBackupCount;/// 上次自动备份时间
+ BackupFrequency get frequency;/// 最大保留备份文件数�? int get maxBackupCount;/// 上次自动备份时间
  DateTime? get lastBackupTime;/// 下次计划备份时间
  DateTime? get nextBackupTime;/// 是否在WiFi下才备份
- bool get wifiOnly;/// 是否在充电时才备�? bool get chargingOnly;/// 自动备份的备份选项
+ bool get wifiOnly;/// 是否在充电时才备�? bool get chargingOnly;/// 自动备份的备份选项
  AutoBackupOptions? get backupOptions;
 /// Create a copy of AutoBackupSettings
 /// with the given fields replaced by the non-null parameter values.
@@ -38050,14 +38050,14 @@ class _AutoBackupSettings implements AutoBackupSettings {
 @override@JsonKey() final  bool enabled;
 /// 备份频率
 @override@JsonKey() final  BackupFrequency frequency;
-/// 最大保留备份文件数�?@override@JsonKey() final  int maxBackupCount;
+/// 最大保留备份文件数�?@override@JsonKey() final  int maxBackupCount;
 /// 上次自动备份时间
 @override final  DateTime? lastBackupTime;
 /// 下次计划备份时间
 @override final  DateTime? nextBackupTime;
 /// 是否在WiFi下才备份
 @override@JsonKey() final  bool wifiOnly;
-/// 是否在充电时才备�?@override@JsonKey() final  bool chargingOnly;
+/// 是否在充电时才备�?@override@JsonKey() final  bool chargingOnly;
 /// 自动备份的备份选项
 @override final  AutoBackupOptions? backupOptions;
 
@@ -38360,11 +38360,11 @@ import 'backup_metadata.dart';
 part 'backup_data.freezed.dart';
 part 'backup_data.g.dart';
 
-/// 完整的备份数据结�?
+/// 完整的备份数据结�?
 @freezed
 abstract class BackupData with _$BackupData {
   const factory BackupData({
-    /// 备份元数�?
+    /// 备份元数�?
     required BackupMetadata metadata,
     /// 各表的数据，键为表名，值为记录列表
     required Map<String, List<Map<String, dynamic>>> tables,
@@ -38393,7 +38393,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$BackupData {
 
-/// 备份元数�? BackupMetadata get metadata;/// 各表的数据，键为表名，值为记录列表
+/// 备份元数�? BackupMetadata get metadata;/// 各表的数据，键为表名，值为记录列表
  Map<String, List<Map<String, dynamic>>> get tables;/// 应用设置数据（可选）
  Map<String, dynamic>? get settings;
 /// Create a copy of BackupData
@@ -38473,7 +38473,7 @@ class _BackupData implements BackupData {
   const _BackupData({required this.metadata, required final  Map<String, List<Map<String, dynamic>>> tables, final  Map<String, dynamic>? settings}): _tables = tables,_settings = settings;
   factory _BackupData.fromJson(Map<String, dynamic> json) => _$BackupDataFromJson(json);
 
-/// 备份元数�?@override final  BackupMetadata metadata;
+/// 备份元数�?@override final  BackupMetadata metadata;
 /// 各表的数据，键为表名，值为记录列表
  final  Map<String, List<Map<String, dynamic>>> _tables;
 /// 各表的数据，键为表名，值为记录列表
@@ -38592,39 +38592,39 @@ Map<String, dynamic> _$BackupDataToJson(_BackupData instance) =>
       'tables': instance.tables,
       'settings': instance.settings,
     };
-/// 备份和恢复操作中可能出现的错误类�?
+/// 备份和恢复操作中可能出现的错误类�?
 enum BackupErrorType {
-  /// 文件系统相关错误（读写权限、磁盘空间等�?
+  /// 文件系统相关错误（读写权限、磁盘空间等�?
   fileSystemError,
   
-  /// 数据库操作错�?
+  /// 数据库操作错�?
   databaseError,
   
-  /// 数据序列�?反序列化错误
+  /// 数据序列�?反序列化错误
   serializationError,
   
   /// 数据加密/解密错误
   encryptionError,
   
-  /// 数据验证错误（格式、完整性等�?
+  /// 数据验证错误（格式、完整性等�?
   validationError,
   
   /// 磁盘空间不足
   insufficientSpace,
   
-  /// 权限被拒�?
+  /// 权限被拒�?
   permissionDenied,
   
   /// 文件不存在或无法访问
   fileNotFound,
   
-  /// 备份文件格式不支�?
+  /// 备份文件格式不支�?
   unsupportedFormat,
   
   /// 密码错误
   incorrectPassword,
   
-  /// 操作被用户取�?
+  /// 操作被用户取�?
   operationCancelled,
   
   /// 网络相关错误
@@ -38655,7 +38655,7 @@ abstract class BackupException with _$BackupException implements Exception {
     StackTrace? stackTrace,
     /// 错误代码（可选）
     String? errorCode,
-    /// 额外的错误详�?
+    /// 额外的错误详�?
     Map<String, dynamic>? details,
   }) = _BackupException;
 
@@ -38672,7 +38672,7 @@ abstract class BackupException with _$BackupException implements Exception {
         stackTrace: stackTrace,
       );
 
-  /// 创建数据库错�?
+  /// 创建数据库错�?
   factory BackupException.database(
     String message, {
     Object? originalError,
@@ -38685,7 +38685,7 @@ abstract class BackupException with _$BackupException implements Exception {
         stackTrace: stackTrace,
       );
 
-  /// 创建序列化错�?
+  /// 创建序列化错�?
   factory BackupException.serialization(
     String message, {
     Object? originalError,
@@ -38772,7 +38772,7 @@ mixin _$BackupException {
  String get message;/// 原始错误对象
  Object? get originalError;/// 堆栈跟踪
  StackTrace? get stackTrace;/// 错误代码（可选）
- String? get errorCode;/// 额外的错误详�? Map<String, dynamic>? get details;
+ String? get errorCode;/// 额外的错误详�? Map<String, dynamic>? get details;
 /// Create a copy of BackupException
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -38851,8 +38851,8 @@ class _BackupException implements BackupException {
 @override final  StackTrace? stackTrace;
 /// 错误代码（可选）
 @override final  String? errorCode;
-/// 额外的错误详�? final  Map<String, dynamic>? _details;
-/// 额外的错误详�?@override Map<String, dynamic>? get details {
+/// 额外的错误详�? final  Map<String, dynamic>? _details;
+/// 额外的错误详�?@override Map<String, dynamic>? get details {
   final value = _details;
   if (value == null) return null;
   if (_details is EqualUnmodifiableMapView) return _details;
@@ -38932,9 +38932,9 @@ part 'backup_metadata.g.dart';
 @freezed
 abstract class BackupMetadata with _$BackupMetadata {
   const factory BackupMetadata({
-    /// 备份文件的唯一标识�?
+    /// 备份文件的唯一标识�?
     required String id,
-    /// 备份文件�?
+    /// 备份文件�?
     required String fileName,
     /// 创建时间
     required DateTime createdAt,
@@ -38942,9 +38942,9 @@ abstract class BackupMetadata with _$BackupMetadata {
     required int fileSize,
     /// 备份格式版本
     required String version,
-    /// 各表的记录数量统�?
+    /// 各表的记录数量统�?
     required Map<String, int> tableCounts,
-    /// 数据校验�?
+    /// 数据校验�?
     required String checksum,
     /// 是否加密
     @Default(false) bool isEncrypted,
@@ -38952,7 +38952,7 @@ abstract class BackupMetadata with _$BackupMetadata {
     String? description,
     /// 应用版本
     String? appVersion,
-    /// 数据库架构版�?
+    /// 数据库架构版�?
     int? schemaVersion,
   }) = _BackupMetadata;
 
@@ -38977,13 +38977,13 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$BackupMetadata {
 
-/// 备份文件的唯一标识�? String get id;/// 备份文件�? String get fileName;/// 创建时间
+/// 备份文件的唯一标识�? String get id;/// 备份文件�? String get fileName;/// 创建时间
  DateTime get createdAt;/// 文件大小（字节）
  int get fileSize;/// 备份格式版本
- String get version;/// 各表的记录数量统�? Map<String, int> get tableCounts;/// 数据校验�? String get checksum;/// 是否加密
+ String get version;/// 各表的记录数量统�? Map<String, int> get tableCounts;/// 数据校验�? String get checksum;/// 是否加密
  bool get isEncrypted;/// 备份描述
  String? get description;/// 应用版本
- String? get appVersion;/// 数据库架构版�? int? get schemaVersion;
+ String? get appVersion;/// 数据库架构版�? int? get schemaVersion;
 /// Create a copy of BackupMetadata
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -39060,29 +39060,29 @@ class _BackupMetadata implements BackupMetadata {
   const _BackupMetadata({required this.id, required this.fileName, required this.createdAt, required this.fileSize, required this.version, required final  Map<String, int> tableCounts, required this.checksum, this.isEncrypted = false, this.description, this.appVersion, this.schemaVersion}): _tableCounts = tableCounts;
   factory _BackupMetadata.fromJson(Map<String, dynamic> json) => _$BackupMetadataFromJson(json);
 
-/// 备份文件的唯一标识�?@override final  String id;
-/// 备份文件�?@override final  String fileName;
+/// 备份文件的唯一标识�?@override final  String id;
+/// 备份文件�?@override final  String fileName;
 /// 创建时间
 @override final  DateTime createdAt;
 /// 文件大小（字节）
 @override final  int fileSize;
 /// 备份格式版本
 @override final  String version;
-/// 各表的记录数量统�? final  Map<String, int> _tableCounts;
-/// 各表的记录数量统�?@override Map<String, int> get tableCounts {
+/// 各表的记录数量统�? final  Map<String, int> _tableCounts;
+/// 各表的记录数量统�?@override Map<String, int> get tableCounts {
   if (_tableCounts is EqualUnmodifiableMapView) return _tableCounts;
   // ignore: implicit_dynamic_type
   return EqualUnmodifiableMapView(_tableCounts);
 }
 
-/// 数据校验�?@override final  String checksum;
+/// 数据校验�?@override final  String checksum;
 /// 是否加密
 @override@JsonKey() final  bool isEncrypted;
 /// 备份描述
 @override final  String? description;
 /// 应用版本
 @override final  String? appVersion;
-/// 数据库架构版�?@override final  int? schemaVersion;
+/// 数据库架构版�?@override final  int? schemaVersion;
 
 /// Create a copy of BackupMetadata
 /// with the given fields replaced by the non-null parameter values.
@@ -39201,7 +39201,7 @@ part 'backup_options.g.dart';
 @freezed
 abstract class BackupOptions with _$BackupOptions {
   const factory BackupOptions({
-    /// 自定义备份名�?
+    /// 自定义备份名�?
     String? customName,
     /// 是否包含图片文件
     @Default(false) bool includeImages,
@@ -39209,7 +39209,7 @@ abstract class BackupOptions with _$BackupOptions {
     @Default(false) bool encrypt,
     /// 加密密码
     String? password,
-    /// 要包含的表名列表（为空则包含所有表�?
+    /// 要包含的表名列表（为空则包含所有表�?
     List<String>? includeTables,
     /// 要排除的表名列表
     @Default([]) List<String> excludeTables,
@@ -39240,10 +39240,10 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$BackupOptions {
 
-/// 自定义备份名�? String? get customName;/// 是否包含图片文件
+/// 自定义备份名�? String? get customName;/// 是否包含图片文件
  bool get includeImages;/// 是否加密备份
  bool get encrypt;/// 加密密码
- String? get password;/// 要包含的表名列表（为空则包含所有表�? List<String>? get includeTables;/// 要排除的表名列表
+ String? get password;/// 要包含的表名列表（为空则包含所有表�? List<String>? get includeTables;/// 要排除的表名列表
  List<String> get excludeTables;/// 是否压缩备份文件
  bool get compress;/// 备份描述
  String? get description;
@@ -39320,15 +39320,15 @@ class _BackupOptions implements BackupOptions {
   const _BackupOptions({this.customName, this.includeImages = false, this.encrypt = false, this.password, final  List<String>? includeTables, final  List<String> excludeTables = const [], this.compress = false, this.description}): _includeTables = includeTables,_excludeTables = excludeTables;
   factory _BackupOptions.fromJson(Map<String, dynamic> json) => _$BackupOptionsFromJson(json);
 
-/// 自定义备份名�?@override final  String? customName;
+/// 自定义备份名�?@override final  String? customName;
 /// 是否包含图片文件
 @override@JsonKey() final  bool includeImages;
 /// 是否加密备份
 @override@JsonKey() final  bool encrypt;
 /// 加密密码
 @override final  String? password;
-/// 要包含的表名列表（为空则包含所有表�? final  List<String>? _includeTables;
-/// 要包含的表名列表（为空则包含所有表�?@override List<String>? get includeTables {
+/// 要包含的表名列表（为空则包含所有表�? final  List<String>? _includeTables;
+/// 要包含的表名列表（为空则包含所有表�?@override List<String>? get includeTables {
   final value = _includeTables;
   if (value == null) return null;
   if (_includeTables is EqualUnmodifiableListView) return _includeTables;
@@ -39461,7 +39461,7 @@ import 'backup_metadata.dart';
 part 'backup_result.freezed.dart';
 part 'backup_result.g.dart';
 
-/// 备份操作的结�?
+/// 备份操作的结�?
 @freezed
 abstract class BackupResult with _$BackupResult {
   const factory BackupResult({
@@ -39469,11 +39469,11 @@ abstract class BackupResult with _$BackupResult {
     required bool success,
     /// 备份文件路径
     String? filePath,
-    /// 备份元数�?
+    /// 备份元数�?
     BackupMetadata? metadata,
     /// 错误信息（如果失败）
     String? errorMessage,
-    /// 操作开始时�?
+    /// 操作开始时�?
     required DateTime startTime,
     /// 操作结束时间
     required DateTime endTime,
@@ -39504,8 +39504,8 @@ mixin _$BackupResult {
 
 /// 操作是否成功
  bool get success;/// 备份文件路径
- String? get filePath;/// 备份元数�? BackupMetadata? get metadata;/// 错误信息（如果失败）
- String? get errorMessage;/// 操作开始时�? DateTime get startTime;/// 操作结束时间
+ String? get filePath;/// 备份元数�? BackupMetadata? get metadata;/// 错误信息（如果失败）
+ String? get errorMessage;/// 操作开始时�? DateTime get startTime;/// 操作结束时间
  DateTime get endTime;/// 备份的总记录数
  int get totalRecordsBackedUp;
 /// Create a copy of BackupResult
@@ -39596,10 +39596,10 @@ class _BackupResult implements BackupResult {
 @override final  bool success;
 /// 备份文件路径
 @override final  String? filePath;
-/// 备份元数�?@override final  BackupMetadata? metadata;
+/// 备份元数�?@override final  BackupMetadata? metadata;
 /// 错误信息（如果失败）
 @override final  String? errorMessage;
-/// 操作开始时�?@override final  DateTime startTime;
+/// 操作开始时�?@override final  DateTime startTime;
 /// 操作结束时间
 @override final  DateTime endTime;
 /// 备份的总记录数
@@ -39716,11 +39716,11 @@ Map<String, dynamic> _$BackupResultToJson(_BackupResult instance) =>
       'endTime': instance.endTime.toIso8601String(),
       'totalRecordsBackedUp': instance.totalRecordsBackedUp,
     };
-/// 取消令牌，用于取消长时间运行的操�?
+/// 取消令牌，用于取消长时间运行的操�?
 class CancelToken {
   bool _isCancelled = false;
 
-  /// 检查是否已被取�?
+  /// 检查是否已被取�?
   bool get isCancelled => _isCancelled;
 
   /// 取消操作
@@ -39736,7 +39736,7 @@ class CancelToken {
   }
 }
 
-/// 备份操作被取消异�?
+/// 备份操作被取消异�?
 class BackupCancelledException implements Exception {
   final String message;
   
@@ -39750,27 +39750,27 @@ import 'package:freezed_annotation/freezed_annotation.dart';
 part 'compatibility_check_result.freezed.dart';
 part 'compatibility_check_result.g.dart';
 
-/// 兼容性检查结�?
+/// 兼容性检查结�?
 @freezed
 abstract class CompatibilityCheckResult with _$CompatibilityCheckResult {
   const factory CompatibilityCheckResult({
-    /// 整体兼容�?
+    /// 整体兼容�?
     required bool isCompatible,
-    /// 应用版本兼容�?
+    /// 应用版本兼容�?
     required bool appVersionCompatible,
-    /// 数据库架构版本兼容�?
+    /// 数据库架构版本兼容�?
     required bool schemaVersionCompatible,
-    /// 备份格式版本兼容�?
+    /// 备份格式版本兼容�?
     required bool backupFormatCompatible,
-    /// 表结构兼容�?
+    /// 表结构兼容�?
     required Map<String, bool> tableCompatibility,
-    /// 兼容性问题列�?
+    /// 兼容性问题列�?
     @Default([]) List<CompatibilityIssue> issues,
-    /// 兼容性警告列�?
+    /// 兼容性警告列�?
     @Default([]) List<CompatibilityWarning> warnings,
     /// 升级建议
     @Default([]) List<String> upgradeRecommendations,
-    /// 兼容性详�?
+    /// 兼容性详�?
     required CompatibilityDetails details,
   }) = _CompatibilityCheckResult;
 
@@ -39778,7 +39778,7 @@ abstract class CompatibilityCheckResult with _$CompatibilityCheckResult {
       _$CompatibilityCheckResultFromJson(json);
 }
 
-/// 兼容性问�?
+/// 兼容性问�?
 @freezed
 abstract class CompatibilityIssue with _$CompatibilityIssue {
   const factory CompatibilityIssue({
@@ -39790,7 +39790,7 @@ abstract class CompatibilityIssue with _$CompatibilityIssue {
     required CompatibilityIssueSeverity severity,
     /// 受影响的组件（表名、字段名等）
     String? affectedComponent,
-    /// 建议的解决方�?
+    /// 建议的解决方�?
     String? suggestedSolution,
     /// 问题详情
     Map<String, dynamic>? details,
@@ -39800,7 +39800,7 @@ abstract class CompatibilityIssue with _$CompatibilityIssue {
       _$CompatibilityIssueFromJson(json);
 }
 
-/// 兼容性警�?
+/// 兼容性警�?
 @freezed
 abstract class CompatibilityWarning with _$CompatibilityWarning {
   const factory CompatibilityWarning({
@@ -39818,7 +39818,7 @@ abstract class CompatibilityWarning with _$CompatibilityWarning {
       _$CompatibilityWarningFromJson(json);
 }
 
-/// 兼容性详�?
+/// 兼容性详�?
 @freezed
 abstract class CompatibilityDetails with _$CompatibilityDetails {
   const factory CompatibilityDetails({
@@ -39826,19 +39826,19 @@ abstract class CompatibilityDetails with _$CompatibilityDetails {
     required String currentAppVersion,
     /// 备份应用版本
     required String backupAppVersion,
-    /// 当前数据库架构版�?
+    /// 当前数据库架构版�?
     required int currentSchemaVersion,
-    /// 备份数据库架构版�?
+    /// 备份数据库架构版�?
     required int backupSchemaVersion,
     /// 当前备份格式版本
     required String currentBackupFormatVersion,
     /// 备份文件格式版本
     required String backupFormatVersion,
-    /// 支持的最小架构版�?
+    /// 支持的最小架构版�?
     required int minSupportedSchemaVersion,
-    /// 支持的最大架构版�?
+    /// 支持的最大架构版�?
     required int maxSupportedSchemaVersion,
-    /// 支持的备份格式版本列�?
+    /// 支持的备份格式版本列�?
     required List<String> supportedBackupFormatVersions,
   }) = _CompatibilityDetails;
 
@@ -39846,45 +39846,45 @@ abstract class CompatibilityDetails with _$CompatibilityDetails {
       _$CompatibilityDetailsFromJson(json);
 }
 
-/// 兼容性问题类�?
+/// 兼容性问题类�?
 enum CompatibilityIssueType {
-  /// 应用版本不兼�?
+  /// 应用版本不兼�?
   appVersionIncompatible,
   /// 数据库架构版本不兼容
   schemaVersionIncompatible,
-  /// 备份格式版本不兼�?
+  /// 备份格式版本不兼�?
   backupFormatIncompatible,
   /// 表结构不兼容
   tableStructureIncompatible,
-  /// 字段类型不兼�?
+  /// 字段类型不兼�?
   fieldTypeIncompatible,
   /// 缺失必需字段
   missingRequiredField,
-  /// 未知�?
+  /// 未知�?
   unknownTable,
   /// 未知字段
   unknownField,
 }
 
-/// 兼容性问题严重程�?
+/// 兼容性问题严重程�?
 enum CompatibilityIssueSeverity {
-  /// 信息性问题，不影响恢�?
+  /// 信息性问题，不影响恢�?
   info,
   /// 警告级问题，可能影响部分功能
   warning,
   /// 错误级问题，影响恢复质量
   error,
-  /// 致命问题，无法恢�?
+  /// 致命问题，无法恢�?
   critical,
 }
 
-/// 兼容性警告类�?
+/// 兼容性警告类�?
 enum CompatibilityWarningType {
   /// 版本差异较大
   versionGapLarge,
   /// 表结构有变化
   tableStructureChanged,
-  /// 字段已废�?
+  /// 字段已废�?
   fieldDeprecated,
   /// 新增字段
   newFieldAdded,
@@ -39911,8 +39911,8 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$CompatibilityCheckResult {
 
-/// 整体兼容�? bool get isCompatible;/// 应用版本兼容�? bool get appVersionCompatible;/// 数据库架构版本兼容�? bool get schemaVersionCompatible;/// 备份格式版本兼容�? bool get backupFormatCompatible;/// 表结构兼容�? Map<String, bool> get tableCompatibility;/// 兼容性问题列�? List<CompatibilityIssue> get issues;/// 兼容性警告列�? List<CompatibilityWarning> get warnings;/// 升级建议
- List<String> get upgradeRecommendations;/// 兼容性详�? CompatibilityDetails get details;
+/// 整体兼容�? bool get isCompatible;/// 应用版本兼容�? bool get appVersionCompatible;/// 数据库架构版本兼容�? bool get schemaVersionCompatible;/// 备份格式版本兼容�? bool get backupFormatCompatible;/// 表结构兼容�? Map<String, bool> get tableCompatibility;/// 兼容性问题列�? List<CompatibilityIssue> get issues;/// 兼容性警告列�? List<CompatibilityWarning> get warnings;/// 升级建议
+ List<String> get upgradeRecommendations;/// 兼容性详�? CompatibilityDetails get details;
 /// Create a copy of CompatibilityCheckResult
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -39996,26 +39996,26 @@ class _CompatibilityCheckResult implements CompatibilityCheckResult {
   const _CompatibilityCheckResult({required this.isCompatible, required this.appVersionCompatible, required this.schemaVersionCompatible, required this.backupFormatCompatible, required final  Map<String, bool> tableCompatibility, final  List<CompatibilityIssue> issues = const [], final  List<CompatibilityWarning> warnings = const [], final  List<String> upgradeRecommendations = const [], required this.details}): _tableCompatibility = tableCompatibility,_issues = issues,_warnings = warnings,_upgradeRecommendations = upgradeRecommendations;
   factory _CompatibilityCheckResult.fromJson(Map<String, dynamic> json) => _$CompatibilityCheckResultFromJson(json);
 
-/// 整体兼容�?@override final  bool isCompatible;
-/// 应用版本兼容�?@override final  bool appVersionCompatible;
-/// 数据库架构版本兼容�?@override final  bool schemaVersionCompatible;
-/// 备份格式版本兼容�?@override final  bool backupFormatCompatible;
-/// 表结构兼容�? final  Map<String, bool> _tableCompatibility;
-/// 表结构兼容�?@override Map<String, bool> get tableCompatibility {
+/// 整体兼容�?@override final  bool isCompatible;
+/// 应用版本兼容�?@override final  bool appVersionCompatible;
+/// 数据库架构版本兼容�?@override final  bool schemaVersionCompatible;
+/// 备份格式版本兼容�?@override final  bool backupFormatCompatible;
+/// 表结构兼容�? final  Map<String, bool> _tableCompatibility;
+/// 表结构兼容�?@override Map<String, bool> get tableCompatibility {
   if (_tableCompatibility is EqualUnmodifiableMapView) return _tableCompatibility;
   // ignore: implicit_dynamic_type
   return EqualUnmodifiableMapView(_tableCompatibility);
 }
 
-/// 兼容性问题列�? final  List<CompatibilityIssue> _issues;
-/// 兼容性问题列�?@override@JsonKey() List<CompatibilityIssue> get issues {
+/// 兼容性问题列�? final  List<CompatibilityIssue> _issues;
+/// 兼容性问题列�?@override@JsonKey() List<CompatibilityIssue> get issues {
   if (_issues is EqualUnmodifiableListView) return _issues;
   // ignore: implicit_dynamic_type
   return EqualUnmodifiableListView(_issues);
 }
 
-/// 兼容性警告列�? final  List<CompatibilityWarning> _warnings;
-/// 兼容性警告列�?@override@JsonKey() List<CompatibilityWarning> get warnings {
+/// 兼容性警告列�? final  List<CompatibilityWarning> _warnings;
+/// 兼容性警告列�?@override@JsonKey() List<CompatibilityWarning> get warnings {
   if (_warnings is EqualUnmodifiableListView) return _warnings;
   // ignore: implicit_dynamic_type
   return EqualUnmodifiableListView(_warnings);
@@ -40030,7 +40030,7 @@ class _CompatibilityCheckResult implements CompatibilityCheckResult {
   return EqualUnmodifiableListView(_upgradeRecommendations);
 }
 
-/// 兼容性详�?@override final  CompatibilityDetails details;
+/// 兼容性详�?@override final  CompatibilityDetails details;
 
 /// Create a copy of CompatibilityCheckResult
 /// with the given fields replaced by the non-null parameter values.
@@ -40117,7 +40117,7 @@ mixin _$CompatibilityIssue {
  CompatibilityIssueType get type;/// 问题描述
  String get description;/// 问题严重程度
  CompatibilityIssueSeverity get severity;/// 受影响的组件（表名、字段名等）
- String? get affectedComponent;/// 建议的解决方�? String? get suggestedSolution;/// 问题详情
+ String? get affectedComponent;/// 建议的解决方�? String? get suggestedSolution;/// 问题详情
  Map<String, dynamic>? get details;
 /// Create a copy of CompatibilityIssue
 /// with the given fields replaced by the non-null parameter values.
@@ -40198,7 +40198,7 @@ class _CompatibilityIssue implements CompatibilityIssue {
 @override final  CompatibilityIssueSeverity severity;
 /// 受影响的组件（表名、字段名等）
 @override final  String? affectedComponent;
-/// 建议的解决方�?@override final  String? suggestedSolution;
+/// 建议的解决方�?@override final  String? suggestedSolution;
 /// 问题详情
  final  Map<String, dynamic>? _details;
 /// 问题详情
@@ -40441,9 +40441,9 @@ mixin _$CompatibilityDetails {
 
 /// 当前应用版本
  String get currentAppVersion;/// 备份应用版本
- String get backupAppVersion;/// 当前数据库架构版�? int get currentSchemaVersion;/// 备份数据库架构版�? int get backupSchemaVersion;/// 当前备份格式版本
+ String get backupAppVersion;/// 当前数据库架构版�? int get currentSchemaVersion;/// 备份数据库架构版�? int get backupSchemaVersion;/// 当前备份格式版本
  String get currentBackupFormatVersion;/// 备份文件格式版本
- String get backupFormatVersion;/// 支持的最小架构版�? int get minSupportedSchemaVersion;/// 支持的最大架构版�? int get maxSupportedSchemaVersion;/// 支持的备份格式版本列�? List<String> get supportedBackupFormatVersions;
+ String get backupFormatVersion;/// 支持的最小架构版�? int get minSupportedSchemaVersion;/// 支持的最大架构版�? int get maxSupportedSchemaVersion;/// 支持的备份格式版本列�? List<String> get supportedBackupFormatVersions;
 /// Create a copy of CompatibilityDetails
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -40522,16 +40522,16 @@ class _CompatibilityDetails implements CompatibilityDetails {
 @override final  String currentAppVersion;
 /// 备份应用版本
 @override final  String backupAppVersion;
-/// 当前数据库架构版�?@override final  int currentSchemaVersion;
-/// 备份数据库架构版�?@override final  int backupSchemaVersion;
+/// 当前数据库架构版�?@override final  int currentSchemaVersion;
+/// 备份数据库架构版�?@override final  int backupSchemaVersion;
 /// 当前备份格式版本
 @override final  String currentBackupFormatVersion;
 /// 备份文件格式版本
 @override final  String backupFormatVersion;
-/// 支持的最小架构版�?@override final  int minSupportedSchemaVersion;
-/// 支持的最大架构版�?@override final  int maxSupportedSchemaVersion;
-/// 支持的备份格式版本列�? final  List<String> _supportedBackupFormatVersions;
-/// 支持的备份格式版本列�?@override List<String> get supportedBackupFormatVersions {
+/// 支持的最小架构版�?@override final  int minSupportedSchemaVersion;
+/// 支持的最大架构版�?@override final  int maxSupportedSchemaVersion;
+/// 支持的备份格式版本列�? final  List<String> _supportedBackupFormatVersions;
+/// 支持的备份格式版本列�?@override List<String> get supportedBackupFormatVersions {
   if (_supportedBackupFormatVersions is EqualUnmodifiableListView) return _supportedBackupFormatVersions;
   // ignore: implicit_dynamic_type
   return EqualUnmodifiableListView(_supportedBackupFormatVersions);
@@ -40762,27 +40762,27 @@ import 'validation_result.dart';
 part 'integrity_check_result.freezed.dart';
 part 'integrity_check_result.g.dart';
 
-/// 完整性检查结�?
+/// 完整性检查结�?
 @freezed
 abstract class IntegrityCheckResult with _$IntegrityCheckResult {
   const factory IntegrityCheckResult({
     /// 整体完整性是否通过
     required bool isIntegrityValid,
-    /// 校验和验证结�?
+    /// 校验和验证结�?
     required bool checksumValid,
-    /// 数据关系完整性结�?
+    /// 数据关系完整性结�?
     required bool relationshipIntegrityValid,
-    /// 表数据完整性结�?
+    /// 表数据完整性结�?
     required Map<String, bool> tableIntegrityResults,
-    /// 缺失的关联记�?
+    /// 缺失的关联记�?
     @Default([]) List<MissingRelationship> missingRelationships,
-    /// 孤立记录（没有关联的记录�?
+    /// 孤立记录（没有关联的记录�?
     @Default([]) List<OrphanedRecord> orphanedRecords,
     /// 重复记录
     @Default([]) List<DuplicateRecord> duplicateRecords,
     /// 数据统计信息
     required IntegrityStatistics statistics,
-    /// 详细的验证结�?
+    /// 详细的验证结�?
     @Default([]) List<ValidationResult> detailedResults,
   }) = _IntegrityCheckResult;
 
@@ -40790,17 +40790,17 @@ abstract class IntegrityCheckResult with _$IntegrityCheckResult {
       _$IntegrityCheckResultFromJson(json);
 }
 
-/// 缺失的关联记�?
+/// 缺失的关联记�?
 @freezed
 abstract class MissingRelationship with _$MissingRelationship {
   const factory MissingRelationship({
-    /// 源表�?
+    /// 源表�?
     required String sourceTable,
     /// 目标表名
     required String targetTable,
-    /// 外键字段�?
+    /// 外键字段�?
     required String foreignKeyField,
-    /// 缺失的外键�?
+    /// 缺失的外键�?
     required dynamic missingValue,
     /// 受影响的记录数量
     required int affectedRecordCount,
@@ -40816,11 +40816,11 @@ abstract class OrphanedRecord with _$OrphanedRecord {
   const factory OrphanedRecord({
     /// 表名
     required String tableName,
-    /// 主键字段�?
+    /// 主键字段�?
     required String primaryKeyField,
-    /// 主键�?
+    /// 主键�?
     required dynamic primaryKeyValue,
-    /// 孤立的原�?
+    /// 孤立的原�?
     required String reason,
     /// 记录数据
     Map<String, dynamic>? recordData,
@@ -40836,13 +40836,13 @@ abstract class DuplicateRecord with _$DuplicateRecord {
   const factory DuplicateRecord({
     /// 表名
     required String tableName,
-    /// 重复的字段组�?
+    /// 重复的字段组�?
     required List<String> duplicateFields,
-    /// 重复的�?
+    /// 重复的�?
     required Map<String, dynamic> duplicateValues,
-    /// 重复记录的数�?
+    /// 重复记录的数�?
     required int duplicateCount,
-    /// 重复记录的主键列�?
+    /// 重复记录的主键列�?
     @Default([]) List<dynamic> duplicatePrimaryKeys,
   }) = _DuplicateRecord;
 
@@ -40850,21 +40850,21 @@ abstract class DuplicateRecord with _$DuplicateRecord {
       _$DuplicateRecordFromJson(json);
 }
 
-/// 完整性统计信�?
+/// 完整性统计信�?
 @freezed
 abstract class IntegrityStatistics with _$IntegrityStatistics {
   const factory IntegrityStatistics({
     /// 总记录数
     required int totalRecords,
-    /// 有效记录�?
+    /// 有效记录�?
     required int validRecords,
-    /// 无效记录�?
+    /// 无效记录�?
     required int invalidRecords,
-    /// 缺失关联记录�?
+    /// 缺失关联记录�?
     required int missingRelationshipCount,
-    /// 孤立记录�?
+    /// 孤立记录�?
     required int orphanedRecordCount,
-    /// 重复记录�?
+    /// 重复记录�?
     required int duplicateRecordCount,
     /// 各表记录统计
     required Map<String, int> tableRecordCounts,
@@ -40894,9 +40894,9 @@ T _$identity<T>(T value) => value;
 mixin _$IntegrityCheckResult {
 
 /// 整体完整性是否通过
- bool get isIntegrityValid;/// 校验和验证结�? bool get checksumValid;/// 数据关系完整性结�? bool get relationshipIntegrityValid;/// 表数据完整性结�? Map<String, bool> get tableIntegrityResults;/// 缺失的关联记�? List<MissingRelationship> get missingRelationships;/// 孤立记录（没有关联的记录�? List<OrphanedRecord> get orphanedRecords;/// 重复记录
+ bool get isIntegrityValid;/// 校验和验证结�? bool get checksumValid;/// 数据关系完整性结�? bool get relationshipIntegrityValid;/// 表数据完整性结�? Map<String, bool> get tableIntegrityResults;/// 缺失的关联记�? List<MissingRelationship> get missingRelationships;/// 孤立记录（没有关联的记录�? List<OrphanedRecord> get orphanedRecords;/// 重复记录
  List<DuplicateRecord> get duplicateRecords;/// 数据统计信息
- IntegrityStatistics get statistics;/// 详细的验证结�? List<ValidationResult> get detailedResults;
+ IntegrityStatistics get statistics;/// 详细的验证结�? List<ValidationResult> get detailedResults;
 /// Create a copy of IntegrityCheckResult
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -40982,24 +40982,24 @@ class _IntegrityCheckResult implements IntegrityCheckResult {
 
 /// 整体完整性是否通过
 @override final  bool isIntegrityValid;
-/// 校验和验证结�?@override final  bool checksumValid;
-/// 数据关系完整性结�?@override final  bool relationshipIntegrityValid;
-/// 表数据完整性结�? final  Map<String, bool> _tableIntegrityResults;
-/// 表数据完整性结�?@override Map<String, bool> get tableIntegrityResults {
+/// 校验和验证结�?@override final  bool checksumValid;
+/// 数据关系完整性结�?@override final  bool relationshipIntegrityValid;
+/// 表数据完整性结�? final  Map<String, bool> _tableIntegrityResults;
+/// 表数据完整性结�?@override Map<String, bool> get tableIntegrityResults {
   if (_tableIntegrityResults is EqualUnmodifiableMapView) return _tableIntegrityResults;
   // ignore: implicit_dynamic_type
   return EqualUnmodifiableMapView(_tableIntegrityResults);
 }
 
-/// 缺失的关联记�? final  List<MissingRelationship> _missingRelationships;
-/// 缺失的关联记�?@override@JsonKey() List<MissingRelationship> get missingRelationships {
+/// 缺失的关联记�? final  List<MissingRelationship> _missingRelationships;
+/// 缺失的关联记�?@override@JsonKey() List<MissingRelationship> get missingRelationships {
   if (_missingRelationships is EqualUnmodifiableListView) return _missingRelationships;
   // ignore: implicit_dynamic_type
   return EqualUnmodifiableListView(_missingRelationships);
 }
 
-/// 孤立记录（没有关联的记录�? final  List<OrphanedRecord> _orphanedRecords;
-/// 孤立记录（没有关联的记录�?@override@JsonKey() List<OrphanedRecord> get orphanedRecords {
+/// 孤立记录（没有关联的记录�? final  List<OrphanedRecord> _orphanedRecords;
+/// 孤立记录（没有关联的记录�?@override@JsonKey() List<OrphanedRecord> get orphanedRecords {
   if (_orphanedRecords is EqualUnmodifiableListView) return _orphanedRecords;
   // ignore: implicit_dynamic_type
   return EqualUnmodifiableListView(_orphanedRecords);
@@ -41016,8 +41016,8 @@ class _IntegrityCheckResult implements IntegrityCheckResult {
 
 /// 数据统计信息
 @override final  IntegrityStatistics statistics;
-/// 详细的验证结�? final  List<ValidationResult> _detailedResults;
-/// 详细的验证结�?@override@JsonKey() List<ValidationResult> get detailedResults {
+/// 详细的验证结�? final  List<ValidationResult> _detailedResults;
+/// 详细的验证结�?@override@JsonKey() List<ValidationResult> get detailedResults {
   if (_detailedResults is EqualUnmodifiableListView) return _detailedResults;
   // ignore: implicit_dynamic_type
   return EqualUnmodifiableListView(_detailedResults);
@@ -41105,8 +41105,8 @@ $IntegrityStatisticsCopyWith<$Res> get statistics {
 /// @nodoc
 mixin _$MissingRelationship {
 
-/// 源表�? String get sourceTable;/// 目标表名
- String get targetTable;/// 外键字段�? String get foreignKeyField;/// 缺失的外键�? dynamic get missingValue;/// 受影响的记录数量
+/// 源表�? String get sourceTable;/// 目标表名
+ String get targetTable;/// 外键字段�? String get foreignKeyField;/// 缺失的外键�? dynamic get missingValue;/// 受影响的记录数量
  int get affectedRecordCount;
 /// Create a copy of MissingRelationship
 /// with the given fields replaced by the non-null parameter values.
@@ -41178,11 +41178,11 @@ class _MissingRelationship implements MissingRelationship {
   const _MissingRelationship({required this.sourceTable, required this.targetTable, required this.foreignKeyField, required this.missingValue, required this.affectedRecordCount});
   factory _MissingRelationship.fromJson(Map<String, dynamic> json) => _$MissingRelationshipFromJson(json);
 
-/// 源表�?@override final  String sourceTable;
+/// 源表�?@override final  String sourceTable;
 /// 目标表名
 @override final  String targetTable;
-/// 外键字段�?@override final  String foreignKeyField;
-/// 缺失的外键�?@override final  dynamic missingValue;
+/// 外键字段�?@override final  String foreignKeyField;
+/// 缺失的外键�?@override final  dynamic missingValue;
 /// 受影响的记录数量
 @override final  int affectedRecordCount;
 
@@ -41255,7 +41255,7 @@ as int,
 mixin _$OrphanedRecord {
 
 /// 表名
- String get tableName;/// 主键字段�? String get primaryKeyField;/// 主键�? dynamic get primaryKeyValue;/// 孤立的原�? String get reason;/// 记录数据
+ String get tableName;/// 主键字段�? String get primaryKeyField;/// 主键�? dynamic get primaryKeyValue;/// 孤立的原�? String get reason;/// 记录数据
  Map<String, dynamic>? get recordData;
 /// Create a copy of OrphanedRecord
 /// with the given fields replaced by the non-null parameter values.
@@ -41329,9 +41329,9 @@ class _OrphanedRecord implements OrphanedRecord {
 
 /// 表名
 @override final  String tableName;
-/// 主键字段�?@override final  String primaryKeyField;
-/// 主键�?@override final  dynamic primaryKeyValue;
-/// 孤立的原�?@override final  String reason;
+/// 主键字段�?@override final  String primaryKeyField;
+/// 主键�?@override final  dynamic primaryKeyValue;
+/// 孤立的原�?@override final  String reason;
 /// 记录数据
  final  Map<String, dynamic>? _recordData;
 /// 记录数据
@@ -41413,7 +41413,7 @@ as Map<String, dynamic>?,
 mixin _$DuplicateRecord {
 
 /// 表名
- String get tableName;/// 重复的字段组�? List<String> get duplicateFields;/// 重复的�? Map<String, dynamic> get duplicateValues;/// 重复记录的数�? int get duplicateCount;/// 重复记录的主键列�? List<dynamic> get duplicatePrimaryKeys;
+ String get tableName;/// 重复的字段组�? List<String> get duplicateFields;/// 重复的�? Map<String, dynamic> get duplicateValues;/// 重复记录的数�? int get duplicateCount;/// 重复记录的主键列�? List<dynamic> get duplicatePrimaryKeys;
 /// Create a copy of DuplicateRecord
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -41486,23 +41486,23 @@ class _DuplicateRecord implements DuplicateRecord {
 
 /// 表名
 @override final  String tableName;
-/// 重复的字段组�? final  List<String> _duplicateFields;
-/// 重复的字段组�?@override List<String> get duplicateFields {
+/// 重复的字段组�? final  List<String> _duplicateFields;
+/// 重复的字段组�?@override List<String> get duplicateFields {
   if (_duplicateFields is EqualUnmodifiableListView) return _duplicateFields;
   // ignore: implicit_dynamic_type
   return EqualUnmodifiableListView(_duplicateFields);
 }
 
-/// 重复的�? final  Map<String, dynamic> _duplicateValues;
-/// 重复的�?@override Map<String, dynamic> get duplicateValues {
+/// 重复的�? final  Map<String, dynamic> _duplicateValues;
+/// 重复的�?@override Map<String, dynamic> get duplicateValues {
   if (_duplicateValues is EqualUnmodifiableMapView) return _duplicateValues;
   // ignore: implicit_dynamic_type
   return EqualUnmodifiableMapView(_duplicateValues);
 }
 
-/// 重复记录的数�?@override final  int duplicateCount;
-/// 重复记录的主键列�? final  List<dynamic> _duplicatePrimaryKeys;
-/// 重复记录的主键列�?@override@JsonKey() List<dynamic> get duplicatePrimaryKeys {
+/// 重复记录的数�?@override final  int duplicateCount;
+/// 重复记录的主键列�? final  List<dynamic> _duplicatePrimaryKeys;
+/// 重复记录的主键列�?@override@JsonKey() List<dynamic> get duplicatePrimaryKeys {
   if (_duplicatePrimaryKeys is EqualUnmodifiableListView) return _duplicatePrimaryKeys;
   // ignore: implicit_dynamic_type
   return EqualUnmodifiableListView(_duplicatePrimaryKeys);
@@ -41578,7 +41578,7 @@ as List<dynamic>,
 mixin _$IntegrityStatistics {
 
 /// 总记录数
- int get totalRecords;/// 有效记录�? int get validRecords;/// 无效记录�? int get invalidRecords;/// 缺失关联记录�? int get missingRelationshipCount;/// 孤立记录�? int get orphanedRecordCount;/// 重复记录�? int get duplicateRecordCount;/// 各表记录统计
+ int get totalRecords;/// 有效记录�? int get validRecords;/// 无效记录�? int get invalidRecords;/// 缺失关联记录�? int get missingRelationshipCount;/// 孤立记录�? int get orphanedRecordCount;/// 重复记录�? int get duplicateRecordCount;/// 各表记录统计
  Map<String, int> get tableRecordCounts;/// 各表有效记录统计
  Map<String, int> get tableValidRecordCounts;
 /// Create a copy of IntegrityStatistics
@@ -41656,11 +41656,11 @@ class _IntegrityStatistics implements IntegrityStatistics {
 
 /// 总记录数
 @override final  int totalRecords;
-/// 有效记录�?@override final  int validRecords;
-/// 无效记录�?@override final  int invalidRecords;
-/// 缺失关联记录�?@override final  int missingRelationshipCount;
-/// 孤立记录�?@override final  int orphanedRecordCount;
-/// 重复记录�?@override final  int duplicateRecordCount;
+/// 有效记录�?@override final  int validRecords;
+/// 无效记录�?@override final  int invalidRecords;
+/// 缺失关联记录�?@override final  int missingRelationshipCount;
+/// 孤立记录�?@override final  int orphanedRecordCount;
+/// 重复记录�?@override final  int duplicateRecordCount;
 /// 各表记录统计
  final  Map<String, int> _tableRecordCounts;
 /// 各表记录统计
@@ -41889,7 +41889,7 @@ Map<String, dynamic> _$IntegrityStatisticsToJson(
   'tableRecordCounts': instance.tableRecordCounts,
   'tableValidRecordCounts': instance.tableValidRecordCounts,
 };
-// 备份功能相关的数据模型导出文�?
+// 备份功能相关的数据模型导出文�?
 
 export 'backup_data.dart';
 export 'backup_error_type.dart';
@@ -41959,16 +41959,16 @@ class PerformanceMetrics {
   /// 计算总耗时（毫秒）
   int get durationMs => endTime.difference(startTime).inMilliseconds;
 
-  /// 计算总耗时（秒�?
+  /// 计算总耗时（秒�?
   double get durationSeconds => durationMs / 1000.0;
 
-  /// 计算内存使用量（MB�?
+  /// 计算内存使用量（MB�?
   double get memoryUsageMB => memoryUsageBytes / (1024 * 1024);
 
-  /// 计算峰值内存使用量（MB�?
+  /// 计算峰值内存使用量（MB�?
   double get peakMemoryUsageMB => peakMemoryUsageBytes / (1024 * 1024);
 
-  /// 计算完成百分�?
+  /// 计算完成百分�?
   double get completionPercentage => 
       totalRecords > 0 ? (processedRecords / totalRecords) * 100 : 0;
 }
@@ -42054,13 +42054,13 @@ class MemoryUsage {
     };
   }
 
-  /// 当前内存使用量（MB�?
+  /// 当前内存使用量（MB�?
   double get currentMB => currentBytes / (1024 * 1024);
 
-  /// 峰值内存使用量（MB�?
+  /// 峰值内存使用量（MB�?
   double get peakMB => peakBytes / (1024 * 1024);
 
-  /// 可用内存（MB�?
+  /// 可用内存（MB�?
   double get availableMB => availableBytes / (1024 * 1024);
 }
 
@@ -42100,10 +42100,10 @@ class CompressionStats {
     };
   }
 
-  /// 压缩节省的空间（字节�?
+  /// 压缩节省的空间（字节�?
   int get spaceSaved => originalSize - compressedSize;
 
-  /// 压缩节省的空间（MB�?
+  /// 压缩节省的空间（MB�?
   double get spaceSavedMB => spaceSaved / (1024 * 1024);
 
   /// 压缩效率（每秒处理的字节数）
@@ -42120,7 +42120,7 @@ enum RestoreMode {
   /// 合并数据（保留现有数据，添加新数据）
   merge,
   
-  /// 仅添加不存在的数�?
+  /// 仅添加不存在的数�?
   addOnly,
 }
 import 'package:freezed_annotation/freezed_annotation.dart';
@@ -42133,19 +42133,19 @@ part 'restore_preview.g.dart';
 @freezed
 abstract class RestorePreview with _$RestorePreview {
   const factory RestorePreview({
-    /// 备份文件元数�?
+    /// 备份文件元数�?
     required BackupMetadata metadata,
     /// 各表将要恢复的记录数
     required Map<String, int> recordCounts,
-    /// 当前数据库各表的记录�?
+    /// 当前数据库各表的记录�?
     @Default({}) Map<String, int> currentDatabaseCounts,
-    /// 预计的数据冲突数�?
+    /// 预计的数据冲突数�?
     @Default(0) int estimatedConflicts,
-    /// 兼容性检查结�?
+    /// 兼容性检查结�?
     required bool isCompatible,
-    /// 兼容性警告信�?
+    /// 兼容性警告信�?
     @Default([]) List<String> compatibilityWarnings,
-    /// 预计恢复时间（秒�?
+    /// 预计恢复时间（秒�?
     int? estimatedDurationSeconds,
   }) = _RestorePreview;
 
@@ -42170,8 +42170,8 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$RestorePreview {
 
-/// 备份文件元数�? BackupMetadata get metadata;/// 各表将要恢复的记录数
- Map<String, int> get recordCounts;/// 当前数据库各表的记录�? Map<String, int> get currentDatabaseCounts;/// 预计的数据冲突数�? int get estimatedConflicts;/// 兼容性检查结�? bool get isCompatible;/// 兼容性警告信�? List<String> get compatibilityWarnings;/// 预计恢复时间（秒�? int? get estimatedDurationSeconds;
+/// 备份文件元数�? BackupMetadata get metadata;/// 各表将要恢复的记录数
+ Map<String, int> get recordCounts;/// 当前数据库各表的记录�? Map<String, int> get currentDatabaseCounts;/// 预计的数据冲突数�? int get estimatedConflicts;/// 兼容性检查结�? bool get isCompatible;/// 兼容性警告信�? List<String> get compatibilityWarnings;/// 预计恢复时间（秒�? int? get estimatedDurationSeconds;
 /// Create a copy of RestorePreview
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -42253,7 +42253,7 @@ class _RestorePreview implements RestorePreview {
   const _RestorePreview({required this.metadata, required final  Map<String, int> recordCounts, final  Map<String, int> currentDatabaseCounts = const {}, this.estimatedConflicts = 0, required this.isCompatible, final  List<String> compatibilityWarnings = const [], this.estimatedDurationSeconds}): _recordCounts = recordCounts,_currentDatabaseCounts = currentDatabaseCounts,_compatibilityWarnings = compatibilityWarnings;
   factory _RestorePreview.fromJson(Map<String, dynamic> json) => _$RestorePreviewFromJson(json);
 
-/// 备份文件元数�?@override final  BackupMetadata metadata;
+/// 备份文件元数�?@override final  BackupMetadata metadata;
 /// 各表将要恢复的记录数
  final  Map<String, int> _recordCounts;
 /// 各表将要恢复的记录数
@@ -42263,23 +42263,23 @@ class _RestorePreview implements RestorePreview {
   return EqualUnmodifiableMapView(_recordCounts);
 }
 
-/// 当前数据库各表的记录�? final  Map<String, int> _currentDatabaseCounts;
-/// 当前数据库各表的记录�?@override@JsonKey() Map<String, int> get currentDatabaseCounts {
+/// 当前数据库各表的记录�? final  Map<String, int> _currentDatabaseCounts;
+/// 当前数据库各表的记录�?@override@JsonKey() Map<String, int> get currentDatabaseCounts {
   if (_currentDatabaseCounts is EqualUnmodifiableMapView) return _currentDatabaseCounts;
   // ignore: implicit_dynamic_type
   return EqualUnmodifiableMapView(_currentDatabaseCounts);
 }
 
-/// 预计的数据冲突数�?@override@JsonKey() final  int estimatedConflicts;
-/// 兼容性检查结�?@override final  bool isCompatible;
-/// 兼容性警告信�? final  List<String> _compatibilityWarnings;
-/// 兼容性警告信�?@override@JsonKey() List<String> get compatibilityWarnings {
+/// 预计的数据冲突数�?@override@JsonKey() final  int estimatedConflicts;
+/// 兼容性检查结�?@override final  bool isCompatible;
+/// 兼容性警告信�? final  List<String> _compatibilityWarnings;
+/// 兼容性警告信�?@override@JsonKey() List<String> get compatibilityWarnings {
   if (_compatibilityWarnings is EqualUnmodifiableListView) return _compatibilityWarnings;
   // ignore: implicit_dynamic_type
   return EqualUnmodifiableListView(_compatibilityWarnings);
 }
 
-/// 预计恢复时间（秒�?@override final  int? estimatedDurationSeconds;
+/// 预计恢复时间（秒�?@override final  int? estimatedDurationSeconds;
 
 /// Create a copy of RestorePreview
 /// with the given fields replaced by the non-null parameter values.
@@ -42400,7 +42400,7 @@ import 'package:freezed_annotation/freezed_annotation.dart';
 part 'restore_result.freezed.dart';
 part 'restore_result.g.dart';
 
-/// 数据恢复操作的结�?
+/// 数据恢复操作的结�?
 @freezed
 abstract class RestoreResult with _$RestoreResult {
   const factory RestoreResult({
@@ -42410,7 +42410,7 @@ abstract class RestoreResult with _$RestoreResult {
     required int totalRecordsRestored,
     /// 各表恢复的记录数统计
     required Map<String, int> tableRecordCounts,
-    /// 操作开始时�?
+    /// 操作开始时�?
     required DateTime startTime,
     /// 操作结束时间
     required DateTime endTime,
@@ -42418,7 +42418,7 @@ abstract class RestoreResult with _$RestoreResult {
     String? errorMessage,
     /// 警告信息列表
     @Default([]) List<String> warnings,
-    /// 跳过的记录数（由于冲突或验证失败�?
+    /// 跳过的记录数（由于冲突或验证失败�?
     @Default(0) int skippedRecords,
   }) = _RestoreResult;
 
@@ -42446,10 +42446,10 @@ mixin _$RestoreResult {
 /// 操作是否成功
  bool get success;/// 恢复的总记录数
  int get totalRecordsRestored;/// 各表恢复的记录数统计
- Map<String, int> get tableRecordCounts;/// 操作开始时�? DateTime get startTime;/// 操作结束时间
+ Map<String, int> get tableRecordCounts;/// 操作开始时�? DateTime get startTime;/// 操作结束时间
  DateTime get endTime;/// 错误信息（如果失败）
  String? get errorMessage;/// 警告信息列表
- List<String> get warnings;/// 跳过的记录数（由于冲突或验证失败�? int get skippedRecords;
+ List<String> get warnings;/// 跳过的记录数（由于冲突或验证失败�? int get skippedRecords;
 /// Create a copy of RestoreResult
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -42536,7 +42536,7 @@ class _RestoreResult implements RestoreResult {
   return EqualUnmodifiableMapView(_tableRecordCounts);
 }
 
-/// 操作开始时�?@override final  DateTime startTime;
+/// 操作开始时�?@override final  DateTime startTime;
 /// 操作结束时间
 @override final  DateTime endTime;
 /// 错误信息（如果失败）
@@ -42550,7 +42550,7 @@ class _RestoreResult implements RestoreResult {
   return EqualUnmodifiableListView(_warnings);
 }
 
-/// 跳过的记录数（由于冲突或验证失败�?@override@JsonKey() final  int skippedRecords;
+/// 跳过的记录数（由于冲突或验证失败�?@override@JsonKey() final  int skippedRecords;
 
 /// Create a copy of RestoreResult
 /// with the given fields replaced by the non-null parameter values.
@@ -42667,7 +42667,7 @@ abstract class ValidationResult with _$ValidationResult {
     required bool isValid,
     /// 验证类型
     required ValidationType type,
-    /// 验证的目标（文件路径、表名等�?
+    /// 验证的目标（文件路径、表名等�?
     required String target,
     /// 错误信息列表
     @Default([]) List<ValidationError> errors,
@@ -42687,15 +42687,15 @@ abstract class ValidationResult with _$ValidationResult {
 enum ValidationType {
   /// 文件格式验证
   fileFormat,
-  /// 版本兼容性验�?
+  /// 版本兼容性验�?
   versionCompatibility,
-  /// 数据完整性验�?
+  /// 数据完整性验�?
   dataIntegrity,
-  /// 文件损坏检�?
+  /// 文件损坏检�?
   fileCorruption,
-  /// 恢复前预检�?
+  /// 恢复前预检�?
   preRestoreCheck,
-  /// 表结构验�?
+  /// 表结构验�?
   tableStructure,
   /// 数据类型验证
   dataTypes,
@@ -42747,11 +42747,11 @@ abstract class ValidationWarning with _$ValidationWarning {
 enum ErrorSeverity {
   /// 低级错误，不影响恢复
   low,
-  /// 中级错误，可能影响部分数�?
+  /// 中级错误，可能影响部分数�?
   medium,
-  /// 高级错误，严重影响恢�?
+  /// 高级错误，严重影响恢�?
   high,
-  /// 致命错误，无法恢�?
+  /// 致命错误，无法恢�?
   critical,
 }
 // dart format width=80
@@ -42774,7 +42774,7 @@ mixin _$ValidationResult {
 
 /// 验证是否通过
  bool get isValid;/// 验证类型
- ValidationType get type;/// 验证的目标（文件路径、表名等�? String get target;/// 错误信息列表
+ ValidationType get type;/// 验证的目标（文件路径、表名等�? String get target;/// 错误信息列表
  List<ValidationError> get errors;/// 警告信息列表
  List<ValidationWarning> get warnings;/// 修复建议列表
  List<String> get repairSuggestions;/// 验证详情
@@ -42855,7 +42855,7 @@ class _ValidationResult implements ValidationResult {
 @override final  bool isValid;
 /// 验证类型
 @override final  ValidationType type;
-/// 验证的目标（文件路径、表名等�?@override final  String target;
+/// 验证的目标（文件路径、表名等�?@override final  String target;
 /// 错误信息列表
  final  List<ValidationError> _errors;
 /// 错误信息列表
@@ -43427,7 +43427,7 @@ abstract class IBackupService {
   /// 创建备份
   /// [options] 备份选项配置
   /// [onProgress] 进度回调函数
-  /// [cancelToken] 取消令牌，用于取消备份操�?
+  /// [cancelToken] 取消令牌，用于取消备份操�?
   Future<BackupResult> createBackup({
     BackupOptions? options,
     BackupProgressCallback? onProgress,
@@ -43453,13 +43453,13 @@ abstract class IBackupService {
   Future<int> estimateBackupSize();
 }
 
-/// 数据库统计服务接�?
-/// 提供当前数据库表的统计信�?
+/// 数据库统计服务接�?
+/// 提供当前数据库表的统计信�?
 abstract class IDatabaseStatisticsService {
   /// 获取所有表的记录数统计
   Future<Map<String, int>> getAllTableCounts();
   
-  /// 获取指定表的记录�?
+  /// 获取指定表的记录�?
   Future<int> getTableCount(String tableName);
   
   /// 获取数据库总记录数
@@ -43521,27 +43521,27 @@ import '../models/performance_metrics.dart';
 /// 性能监控服务接口
 abstract class IPerformanceService {
   /// 开始性能监控
-  /// [operationId] 操作标识�?
+  /// [operationId] 操作标识�?
   /// [totalRecords] 预期处理的总记录数
   Future<void> startMonitoring(String operationId, int totalRecords);
 
   /// 更新处理进度
-  /// [operationId] 操作标识�?
-  /// [processedRecords] 已处理的记录�?
+  /// [operationId] 操作标识�?
+  /// [processedRecords] 已处理的记录�?
   Future<void> updateProgress(String operationId, int processedRecords);
 
   /// 记录内存使用情况
-  /// [operationId] 操作标识�?
+  /// [operationId] 操作标识�?
   Future<void> recordMemoryUsage(String operationId);
 
   /// 结束性能监控
-  /// [operationId] 操作标识�?
+  /// [operationId] 操作标识�?
   Future<PerformanceMetrics> endMonitoring(String operationId);
 
   /// 获取当前内存使用情况
   Future<MemoryUsage> getCurrentMemoryUsage();
 
-  /// 检查是否需要进行垃圾回�?
+  /// 检查是否需要进行垃圾回�?
   Future<bool> shouldTriggerGC();
 
   /// 触发垃圾回收
@@ -43557,7 +43557,7 @@ abstract class IStreamProcessingService {
   /// 流式导出数据
   /// [tableName] 表名
   /// [config] 流式处理配置
-  /// [onBatch] 批处理回�?
+  /// [onBatch] 批处理回�?
   /// [onProgress] 进度回调
   Stream<List<Map<String, dynamic>>> streamExportTable(
     String tableName,
@@ -43568,7 +43568,7 @@ abstract class IStreamProcessingService {
 
   /// 流式导入数据
   /// [tableName] 表名
-  /// [dataStream] 数据�?
+  /// [dataStream] 数据�?
   /// [config] 流式处理配置
   /// [onProgress] 进度回调
   Future<int> streamImportTable(
@@ -43578,8 +43578,8 @@ abstract class IStreamProcessingService {
     void Function(int processed, int total)? onProgress,
   });
 
-  /// 流式JSON序列�?
-  /// [data] 要序列化的数�?
+  /// 流式JSON序列�?
+  /// [data] 要序列化的数�?
   /// [config] 流式处理配置
   Stream<String> streamJsonSerialize(
     Map<String, dynamic> data,
@@ -43587,7 +43587,7 @@ abstract class IStreamProcessingService {
   );
 
   /// 流式JSON反序列化
-  /// [jsonStream] JSON数据�?
+  /// [jsonStream] JSON数据�?
   /// [config] 流式处理配置
   Future<Map<String, dynamic>> streamJsonDeserialize(
     Stream<String> jsonStream,
@@ -43603,7 +43603,7 @@ abstract class ICompressionService {
   Future<CompressionResult> compressData(List<int> data, {int level = 6});
 
   /// 解压数据
-  /// [compressedData] 压缩的数�?
+  /// [compressedData] 压缩的数�?
   Future<List<int>> decompressData(List<int> compressedData);
 
   /// 压缩文件
@@ -43644,8 +43644,8 @@ import '../common/backup_common.dart';
 
 /// 恢复进度回调函数类型
 /// [message] 当前操作描述
-/// [current] 当前进度�?
-/// [total] 总进度�?
+/// [current] 当前进度�?
+/// [total] 总进度�?
 typedef RestoreProgressCallback = void Function(String message, int current, int total);
 
 
@@ -43654,7 +43654,7 @@ typedef RestoreProgressCallback = void Function(String message, int current, int
 abstract class IRestoreService {
   /// 验证备份文件并获取元数据
   /// [filePath] 备份文件路径
-  /// [password] 解密密码（如果备份文件已加密�?
+  /// [password] 解密密码（如果备份文件已加密�?
   /// 返回备份文件的元数据信息
   Future<BackupMetadata> validateBackupFile(
     String filePath, {
@@ -43663,7 +43663,7 @@ abstract class IRestoreService {
 
   /// 预览恢复操作
   /// [filePath] 备份文件路径
-  /// [password] 解密密码（如果备份文件已加密�?
+  /// [password] 解密密码（如果备份文件已加密�?
   /// 返回恢复预览信息，包含将要恢复的数据统计
   Future<RestorePreview> previewRestore(
     String filePath, {
@@ -43671,11 +43671,11 @@ abstract class IRestoreService {
     String? password,
   });
 
-  /// 从备份文件恢复数�?
+  /// 从备份文件恢复数�?
   /// [filePath] 备份文件路径
-  /// [mode] 恢复模式（完全替�?合并数据�?
-  /// [password] 解密密码（如果备份文件已加密�?
-  /// [selectedTables] 选择要恢复的表（null表示恢复所有表�?
+  /// [mode] 恢复模式（完全替�?合并数据�?
+  /// [password] 解密密码（如果备份文件已加密�?
+  /// [selectedTables] 选择要恢复的表（null表示恢复所有表�?
   /// [onProgress] 进度回调函数
   /// [cancelToken] 取消令牌
   /// 返回恢复操作结果
@@ -43688,10 +43688,10 @@ abstract class IRestoreService {
     CancelToken? cancelToken,
   });
 
-  /// 检查备份文件兼容�?
+  /// 检查备份文件兼容�?
   /// [filePath] 备份文件路径
-  /// [password] 解密密码（如果备份文件已加密�?
-  /// 返回兼容性检查结�?
+  /// [password] 解密密码（如果备份文件已加密�?
+  /// 返回兼容性检查结�?
   Future<bool> checkCompatibility(
     String filePath, {
     String? password,
@@ -43700,8 +43700,8 @@ abstract class IRestoreService {
   /// 估算恢复时间
   /// [filePath] 备份文件路径
   /// [mode] 恢复模式
-  /// [selectedTables] 选择要恢复的�?
-  /// 返回预计恢复时间（秒�?
+  /// [selectedTables] 选择要恢复的�?
+  /// 返回预计恢复时间（秒�?
   Future<int> estimateRestoreTime(
     String filePath,
     RestoreMode mode, {
@@ -43714,63 +43714,63 @@ import '../models/integrity_check_result.dart';
 import '../models/compatibility_check_result.dart';
 
 /// 数据验证服务接口
-/// 负责备份文件的格式验证、完整性检查和兼容性验�?
+/// 负责备份文件的格式验证、完整性检查和兼容性验�?
 abstract class IValidationService {
   /// 验证备份文件格式
   /// [filePath] 备份文件路径
-  /// [password] 解密密码（如果文件已加密�?
+  /// [password] 解密密码（如果文件已加密�?
   /// 返回格式验证结果
   Future<ValidationResult> validateBackupFormat(
     String filePath, {
     String? password,
   });
 
-  /// 检查版本兼容�?
-  /// [metadata] 备份文件元数�?
-  /// 返回兼容性检查结�?
+  /// 检查版本兼容�?
+  /// [metadata] 备份文件元数�?
+  /// 返回兼容性检查结�?
   Future<CompatibilityCheckResult> checkVersionCompatibility(
     BackupMetadata metadata,
   );
 
-  /// 验证数据关系完整�?
-  /// [tablesData] 表数�?
-  /// [metadata] 备份元数�?
-  /// 返回完整性检查结�?
+  /// 验证数据关系完整�?
+  /// [tablesData] 表数�?
+  /// [metadata] 备份元数�?
+  /// 返回完整性检查结�?
   Future<IntegrityCheckResult> validateDataIntegrity(
     Map<String, List<Map<String, dynamic>>> tablesData,
     BackupMetadata metadata,
   );
 
-  /// 检测备份文件损�?
+  /// 检测备份文件损�?
   /// [filePath] 备份文件路径
-  /// [password] 解密密码（如果文件已加密�?
+  /// [password] 解密密码（如果文件已加密�?
   /// 返回损坏检测结果和修复建议
   Future<ValidationResult> detectFileCorruption(
     String filePath, {
     String? password,
   });
 
-  /// 恢复前数据预检�?
+  /// 恢复前数据预检�?
   /// [filePath] 备份文件路径
-  /// [selectedTables] 选择要恢复的�?
-  /// [password] 解密密码（如果文件已加密�?
-  /// 返回预检查结�?
+  /// [selectedTables] 选择要恢复的�?
+  /// [password] 解密密码（如果文件已加密�?
+  /// 返回预检查结�?
   Future<ValidationResult> preRestoreValidation(
     String filePath, {
     List<String>? selectedTables,
     String? password,
   });
 
-  /// 验证表结构兼容�?
+  /// 验证表结构兼容�?
   /// [tableName] 表名
-  /// [backupTableData] 备份中的表数据样�?
-  /// 返回表结构兼容性结�?
+  /// [backupTableData] 备份中的表数据样�?
+  /// 返回表结构兼容性结�?
   Future<ValidationResult> validateTableStructure(
     String tableName,
     Map<String, dynamic> backupTableData,
   );
 
-  /// 验证数据类型兼容�?
+  /// 验证数据类型兼容�?
   /// [tableName] 表名
   /// [records] 记录列表
   /// 返回数据类型验证结果
@@ -43802,7 +43802,7 @@ abstract class IValidationService {
     List<ValidationResult> validationResults,
   );
 }
-// 备份功能相关的服务接口导出文�?
+// 备份功能相关的服务接口导出文�?
 
 export 'i_backup_service.dart';
 export 'i_encryption_service.dart';
@@ -43823,7 +43823,7 @@ class UnifiedBackupIntegration {
     return ref.read(backupServiceProvider) as UnifiedBackupService;
   }
   
-  /// 创建备份的完整流�?
+  /// 创建备份的完整流�?
   static Future<void> createBackupWithErrorHandling({
     required BuildContext context,
     required WidgetRef ref,
@@ -43834,7 +43834,7 @@ class UnifiedBackupIntegration {
     final backupService = getService(ref);
     final cancelToken = CancelToken();
     
-    // 显示进度对话�?
+    // 显示进度对话�?
     final progressKey = GlobalKey<_BackupProgressDialogState>();
     showDialog(
       context: context,
@@ -43859,7 +43859,7 @@ class UnifiedBackupIntegration {
         cancelToken: cancelToken,
       );
       
-      // 关闭进度对话�?
+      // 关闭进度对话�?
       if (context.mounted) {
         Navigator.of(context).pop();
       }
@@ -43879,13 +43879,13 @@ class UnifiedBackupIntegration {
     } catch (e) {
       if (context.mounted) {
         Navigator.of(context).pop();
-        _showErrorDialog(context, '备份过程中发生异�? ${e.toString()}');
+        _showErrorDialog(context, '备份过程中发生异�? ${e.toString()}');
       }
       onError?.call(e.toString());
     }
   }
   
-  /// 使用 Consumer Widget 的集成示�?
+  /// 使用 Consumer Widget 的集成示�?
   static Widget buildBackupButton({
     required String label,
     BackupOptions? options,
@@ -43923,7 +43923,7 @@ class UnifiedBackupIntegration {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('备份文件已保存到�?),
+            Text('备份文件已保存到�?),
             const SizedBox(height: 8),
             Container(
               padding: const EdgeInsets.all(8),
@@ -43938,12 +43938,12 @@ class UnifiedBackupIntegration {
             ),
             if (metadata != null) ...[
               const SizedBox(height: 16),
-              Text('备份信息�?),
+              Text('备份信息�?),
               const SizedBox(height: 4),
-              Text('文件大小�?{(metadata.fileSize / 1024 / 1024).toStringAsFixed(2)} MB'),
-              Text('创建时间�?{metadata.createdAt.toString().split('.')[0]}'),
+              Text('文件大小�?{(metadata.fileSize / 1024 / 1024).toStringAsFixed(2)} MB'),
+              Text('创建时间�?{metadata.createdAt.toString().split('.')[0]}'),
               if (metadata.description?.isNotEmpty == true)
-                Text('描述�?{metadata.description}'),
+                Text('描述�?{metadata.description}'),
             ],
           ],
         ),
@@ -44004,7 +44004,7 @@ class UnifiedBackupIntegration {
   }
 }
 
-/// 备份进度对话�?
+/// 备份进度对话�?
 class BackupProgressDialog extends StatefulWidget {
   final VoidCallback? onCancel;
   
@@ -44033,7 +44033,7 @@ class _BackupProgressDialogState extends State<BackupProgressDialog> {
   @override
   Widget build(BuildContext context) {
     return PopScope(
-      canPop: false, // 禁止返回键关�?
+      canPop: false, // 禁止返回键关�?
       child: AlertDialog(
         title: const Row(
           children: [
@@ -44113,12 +44113,12 @@ class UnifiedBackupUsageExample extends ConsumerWidget {
               label: '创建基本备份',
               onSuccess: () {
                 ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('备份创建成功�?)),
+                  const SnackBar(content: Text('备份创建成功�?)),
                 );
               },
               onError: (error) {
                 ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text('备份失败�?error')),
+                  SnackBar(content: Text('备份失败�?error')),
                 );
               },
             ),
@@ -44134,22 +44134,22 @@ class UnifiedBackupUsageExample extends ConsumerWidget {
               ),
               onSuccess: () {
                 ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('带描述的备份创建成功�?)),
+                  const SnackBar(content: Text('带描述的备份创建成功�?)),
                 );
               },
               onError: (error) {
                 ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text('备份失败�?error')),
+                  SnackBar(content: Text('备份失败�?error')),
                 );
               },
             ),
             
             const SizedBox(height: 12),
             
-            // 自定义备份按�?
+            // 自定义备份按�?
             ElevatedButton(
               onPressed: () => _createCustomBackup(context, ref),
-              child: const Text('创建自定义备�?),
+              child: const Text('创建自定义备�?),
             ),
             
             const SizedBox(height: 24),
@@ -44166,13 +44166,13 @@ class UnifiedBackupUsageExample extends ConsumerWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('�?流式数据处理，减少内存占�?),
-                    Text('�?增强的错误处理和重试机制'),
-                    Text('�?详细的进度显�?),
-                    Text('�?数据库健康检�?),
-                    Text('�?可取消的备份操作'),
-                    Text('�?智能压缩和性能监控'),
-                    Text('�?统一的资源管�?),
+                    Text('�?流式数据处理，减少内存占�?),
+                    Text('�?增强的错误处理和重试机制'),
+                    Text('�?详细的进度显�?),
+                    Text('�?数据库健康检�?),
+                    Text('�?可取消的备份操作'),
+                    Text('�?智能压缩和性能监控'),
+                    Text('�?统一的资源管�?),
                   ],
                 ),
               ),
@@ -44184,7 +44184,7 @@ class UnifiedBackupUsageExample extends ConsumerWidget {
   }
   
   void _createCustomBackup(BuildContext context, WidgetRef ref) {
-    // 显示自定义选项对话�?
+    // 显示自定义选项对话�?
     showDialog(
       context: context,
       builder: (context) => _CustomBackupDialog(ref: ref),
@@ -44232,7 +44232,7 @@ class _CustomBackupDialogState extends State<_CustomBackupDialog> {
             controller: _descriptionController,
             decoration: const InputDecoration(
               labelText: '备份描述',
-              hintText: '例如：每日自动备�?,
+              hintText: '例如：每日自动备�?,
             ),
             maxLines: 2,
           ),
@@ -44282,7 +44282,7 @@ class _CustomBackupDialogState extends State<_CustomBackupDialog> {
       },
       onError: (error) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('备份失败�?error')),
+          SnackBar(content: Text('备份失败�?error')),
         );
       },
     );
@@ -44297,7 +44297,7 @@ import '../../../../core/database/database.dart';
 
 part 'auto_backup_controller.g.dart';
 
-/// 自动备份调度器提供�?
+/// 自动备份调度器提供�?
 @riverpod
 AutoBackupScheduler autoBackupScheduler(AutoBackupSchedulerRef ref) {
   final database = ref.watch(appDatabaseProvider);
@@ -44305,7 +44305,7 @@ AutoBackupScheduler autoBackupScheduler(AutoBackupSchedulerRef ref) {
   return AutoBackupScheduler(backupService);
 }
 
-/// 自动备份设置状�?
+/// 自动备份设置状�?
 @riverpod
 class AutoBackupController extends _$AutoBackupController {
   AutoBackupScheduler? _scheduler;
@@ -44345,7 +44345,7 @@ class AutoBackupController extends _$AutoBackupController {
     await updateSettings(newSettings);
   }
 
-  /// 设置最大备份数�?
+  /// 设置最大备份数�?
   Future<void> setMaxBackupCount(int count) async {
     final currentSettings = await future;
     final newSettings = currentSettings.copyWith(maxBackupCount: count);
@@ -44376,13 +44376,13 @@ class AutoBackupController extends _$AutoBackupController {
   /// 手动触发备份
   Future<String> triggerManualBackup() async {
     if (_scheduler == null) {
-      return '调度器未初始�?;
+      return '调度器未初始�?;
     }
     
     try {
       final result = await _scheduler!.triggerManualBackup();
       if (result.success) {
-        // 刷新状�?
+        // 刷新状�?
         ref.invalidateSelf();
         return '手动备份成功';
       } else {
@@ -44399,7 +44399,7 @@ class AutoBackupController extends _$AutoBackupController {
   }
 }
 
-/// 自动备份状态提供�?
+/// 自动备份状态提供�?
 @riverpod
 class AutoBackupStatus extends _$AutoBackupStatus {
   @override
@@ -44410,12 +44410,12 @@ class AutoBackupStatus extends _$AutoBackupStatus {
         final scheduler = ref.read(autoBackupSchedulerProvider);
         return scheduler.getNextBackupDescription();
       },
-      loading: () => '加载�?..',
-      error: (_, __) => '获取状态失�?,
+      loading: () => '加载�?..',
+      error: (_, __) => '获取状态失�?,
     );
   }
 
-  /// 刷新状�?
+  /// 刷新状�?
   void refresh() {
     ref.invalidateSelf();
   }
@@ -44431,7 +44431,7 @@ part of 'auto_backup_controller.dart';
 String _$autoBackupSchedulerHash() =>
     r'0e8a9368882ed245d22a2f9597e1832449dcc88a';
 
-/// 自动备份调度器提供�?///
+/// 自动备份调度器提供�?///
 /// Copied from [autoBackupScheduler].
 @ProviderFor(autoBackupScheduler)
 final autoBackupSchedulerProvider =
@@ -44451,7 +44451,7 @@ typedef AutoBackupSchedulerRef = AutoDisposeProviderRef<AutoBackupScheduler>;
 String _$autoBackupControllerHash() =>
     r'baed946ff19f18e4953443ddeb4785faf6be61e6';
 
-/// 自动备份设置状�?///
+/// 自动备份设置状�?///
 /// Copied from [AutoBackupController].
 @ProviderFor(AutoBackupController)
 final autoBackupControllerProvider =
@@ -44471,7 +44471,7 @@ final autoBackupControllerProvider =
 typedef _$AutoBackupController = AutoDisposeAsyncNotifier<AutoBackupSettings>;
 String _$autoBackupStatusHash() => r'0d9f0d633c4f5467dd4ba52510ef79bff8f3ae71';
 
-/// 自动备份状态提供�?///
+/// 自动备份状态提供�?///
 /// Copied from [AutoBackupStatus].
 @ProviderFor(AutoBackupStatus)
 final autoBackupStatusProvider =
@@ -44501,7 +44501,7 @@ import '../widgets/backup_progress_dialog.dart';
 
 part 'backup_controller.freezed.dart';
 
-/// 备份控制器状�?
+/// 备份控制器状�?
 @freezed
 abstract class BackupState with _$BackupState {
   const factory BackupState({
@@ -44514,7 +44514,7 @@ abstract class BackupState with _$BackupState {
     /// 备份进度信息
     BackupProgressInfo? progressInfo,
 
-    /// 备份结果元数�?
+    /// 备份结果元数�?
     BackupMetadata? resultMetadata,
 
     /// 备份文件路径
@@ -44522,14 +44522,14 @@ abstract class BackupState with _$BackupState {
   }) = _BackupState;
 }
 
-/// 备份控制�?
+/// 备份控制�?
 class BackupController extends StateNotifier<BackupState> {
   final IBackupService _backupService;
   CancelToken? _cancelToken;
 
   BackupController(this._backupService) : super(const BackupState());
 
-  /// 开始备�?
+  /// 开始备�?
   Future<void> startBackup({
     BackupOptions? options,
   }) async {
@@ -44540,7 +44540,7 @@ class BackupController extends StateNotifier<BackupState> {
         isBackingUp: true,
         errorMessage: null,
         progressInfo: const BackupProgressInfo(
-          message: '准备开始备�?..',
+          message: '准备开始备�?..',
           current: 0,
           total: 100,
         ),
@@ -44637,7 +44637,7 @@ class BackupController extends StateNotifier<BackupState> {
     await startBackup(options: options);
   }
 
-  /// 重置状�?
+  /// 重置状�?
   void reset() {
     _cancelToken?.cancel();
     state = const BackupState();
@@ -44664,7 +44664,7 @@ class BackupController extends StateNotifier<BackupState> {
   }
 }
 
-/// 备份控制器提供�?
+/// 备份控制器提供�?
 final backupControllerProvider =
     StateNotifierProvider<BackupController, BackupState>((ref) {
       final backupService = ref.watch(backupServiceProvider);
@@ -44690,7 +44690,7 @@ mixin _$BackupState {
 /// 是否正在备份
  bool get isBackingUp;/// 错误信息
  String? get errorMessage;/// 备份进度信息
- BackupProgressInfo? get progressInfo;/// 备份结果元数�? BackupMetadata? get resultMetadata;/// 备份文件路径
+ BackupProgressInfo? get progressInfo;/// 备份结果元数�? BackupMetadata? get resultMetadata;/// 备份文件路径
  String? get resultFilePath;
 /// Create a copy of BackupState
 /// with the given fields replaced by the non-null parameter values.
@@ -44778,7 +44778,7 @@ class _BackupState implements BackupState {
 @override final  String? errorMessage;
 /// 备份进度信息
 @override final  BackupProgressInfo? progressInfo;
-/// 备份结果元数�?@override final  BackupMetadata? resultMetadata;
+/// 备份结果元数�?@override final  BackupMetadata? resultMetadata;
 /// 备份文件路径
 @override final  String? resultFilePath;
 
@@ -44865,7 +44865,7 @@ import '../../data/providers/backup_service_provider.dart';
 
 part 'backup_management_controller.freezed.dart';
 
-/// 备份管理状�?
+/// 备份管理状�?
 @freezed
 abstract class BackupManagementState with _$BackupManagementState {
   const factory BackupManagementState({
@@ -44875,7 +44875,7 @@ abstract class BackupManagementState with _$BackupManagementState {
   }) = _BackupManagementState;
 }
 
-/// 备份管理控制�?
+/// 备份管理控制�?
 class BackupManagementController extends StateNotifier<BackupManagementState> {
   final IBackupService _backupService;
 
@@ -44918,16 +44918,16 @@ class BackupManagementController extends StateNotifier<BackupManagementState> {
     }
   }
 
-  /// 重命名备�?
+  /// 重命名备�?
   Future<void> renameBackup(String backupId, String newName) async {
     try {
-      // 找到要重命名的备�?
+      // 找到要重命名的备�?
       final backupIndex = state.backups.indexWhere((backup) => backup.id == backupId);
       if (backupIndex == -1) {
         throw Exception('找不到指定的备份文件');
       }
 
-      // 创建新的备份元数�?
+      // 创建新的备份元数�?
       final oldBackup = state.backups[backupIndex];
       final updatedBackup = oldBackup.copyWith(fileName: newName);
 
@@ -44960,20 +44960,20 @@ class BackupManagementController extends StateNotifier<BackupManagementState> {
   }
 }
 
-/// 备份管理控制器提供�?
+/// 备份管理控制器提供�?
 final backupManagementControllerProvider = 
     StateNotifierProvider<BackupManagementController, BackupManagementState>((ref) {
   final backupService = ref.watch(backupServiceProvider);
   return BackupManagementController(backupService);
 });
 
-/// 备份数量提供�?
+/// 备份数量提供�?
 final backupCountProvider = Provider<int>((ref) {
   final state = ref.watch(backupManagementControllerProvider);
   return state.backups.length;
 });
 
-/// 总备份大小提供�?
+/// 总备份大小提供�?
 final totalBackupSizeProvider = Provider<int>((ref) {
   final state = ref.watch(backupManagementControllerProvider);
   return state.backups.fold(0, (sum, backup) => sum + backup.fileSize);
@@ -45147,7 +45147,7 @@ import '../../data/utils/file_access_helper.dart';
 
 part 'restore_controller.freezed.dart';
 
-/// 恢复控制器状�?
+/// 恢复控制器状�?
 @freezed
 abstract class RestoreState with _$RestoreState {
   const factory RestoreState({
@@ -45155,19 +45155,19 @@ abstract class RestoreState with _$RestoreState {
     @Default(false) bool isLoading,
     /// 错误信息
     String? errorMessage,
-    /// 选中的备份文件路�?
+    /// 选中的备份文件路�?
     String? selectedFilePath,
-    /// 备份文件元数�?
+    /// 备份文件元数�?
     BackupMetadata? backupMetadata,
     /// 恢复预览信息
     RestorePreview? restorePreview,
-    /// 选择的恢复模�?
+    /// 选择的恢复模�?
     @Default(RestoreMode.merge) RestoreMode restoreMode,
-    /// 是否需要密�?
+    /// 是否需要密�?
     @Default(false) bool requiresPassword,
-    /// 输入的密�?
+    /// 输入的密�?
     String? password,
-    /// 选择的表（null表示全部�?
+    /// 选择的表（null表示全部�?
     List<String>? selectedTables,
     /// 恢复进度信息
     RestoreProgressInfo? progressInfo,
@@ -45188,7 +45188,7 @@ abstract class RestoreProgressInfo with _$RestoreProgressInfo {
   }) = _RestoreProgressInfo;
 }
 
-/// 恢复控制�?
+/// 恢复控制�?
 class RestoreController extends StateNotifier<RestoreState> {
   final IRestoreService _restoreService;
   CancelToken? _cancelToken;
@@ -45222,7 +45222,7 @@ class RestoreController extends StateNotifier<RestoreState> {
               errorMessage: '原文件路径无法访问，已自动复制到临时位置进行处理',
             );
           } else {
-            throw Exception('无法访问选择的文件。请将备份文件复制到下载或文档文件夹后重新选择�?);
+            throw Exception('无法访问选择的文件。请将备份文件复制到下载或文档文件夹后重新选择�?);
           }
         }
         
@@ -45266,7 +45266,7 @@ class RestoreController extends StateNotifier<RestoreState> {
     } catch (e) {
       final errorMessage = e.toString();
       
-      // 检查是否是加密错误，需要密�?
+      // 检查是否是加密错误，需要密�?
       if (errorMessage.contains('解密') || errorMessage.contains('密码')) {
         state = state.copyWith(
           requiresPassword: true,
@@ -45282,7 +45282,7 @@ class RestoreController extends StateNotifier<RestoreState> {
     }
   }
 
-  /// 输入密码并验�?
+  /// 输入密码并验�?
   Future<void> validateWithPassword(String password) async {
     if (state.selectedFilePath == null) return;
 
@@ -45311,7 +45311,7 @@ class RestoreController extends StateNotifier<RestoreState> {
   void setRestoreMode(RestoreMode mode) {
     state = state.copyWith(restoreMode: mode);
     
-    // 如果已经选择了文件，重新生成预览以反映新的模�?
+    // 如果已经选择了文件，重新生成预览以反映新的模�?
     if (state.selectedFilePath != null && state.backupMetadata != null) {
       _generatePreview(state.selectedFilePath!, password: state.password);
     }
@@ -45322,7 +45322,7 @@ class RestoreController extends StateNotifier<RestoreState> {
     state = state.copyWith(selectedTables: tables);
   }
 
-  /// 开始恢�?
+  /// 开始恢�?
   Future<void> startRestore() async {
     if (state.selectedFilePath == null) return;
 
@@ -45331,7 +45331,7 @@ class RestoreController extends StateNotifier<RestoreState> {
       
       state = state.copyWith(
         progressInfo: const RestoreProgressInfo(
-          message: '准备开始恢�?..',
+          message: '准备开始恢�?..',
           current: 0,
           total: 100,
         ),
@@ -45390,7 +45390,7 @@ class RestoreController extends StateNotifier<RestoreState> {
     );
   }
 
-  /// 重置状�?
+  /// 重置状�?
   void reset() {
     _cancelToken?.cancel();
     state = const RestoreState();
@@ -45404,7 +45404,7 @@ class RestoreController extends StateNotifier<RestoreState> {
 
 }
 
-/// 恢复控制器提供�?
+/// 恢复控制器提供�?
 final restoreControllerProvider = StateNotifierProvider<RestoreController, RestoreState>((ref) {
   final restoreService = ref.watch(restoreServiceProvider);
   return RestoreController(restoreService);
@@ -45428,8 +45428,8 @@ mixin _$RestoreState {
 
 /// 是否正在加载
  bool get isLoading;/// 错误信息
- String? get errorMessage;/// 选中的备份文件路�? String? get selectedFilePath;/// 备份文件元数�? BackupMetadata? get backupMetadata;/// 恢复预览信息
- RestorePreview? get restorePreview;/// 选择的恢复模�? RestoreMode get restoreMode;/// 是否需要密�? bool get requiresPassword;/// 输入的密�? String? get password;/// 选择的表（null表示全部�? List<String>? get selectedTables;/// 恢复进度信息
+ String? get errorMessage;/// 选中的备份文件路�? String? get selectedFilePath;/// 备份文件元数�? BackupMetadata? get backupMetadata;/// 恢复预览信息
+ RestorePreview? get restorePreview;/// 选择的恢复模�? RestoreMode get restoreMode;/// 是否需要密�? bool get requiresPassword;/// 输入的密�? String? get password;/// 选择的表（null表示全部�? List<String>? get selectedTables;/// 恢复进度信息
  RestoreProgressInfo? get progressInfo;/// 恢复结果
  RestoreResult? get restoreResult;
 /// Create a copy of RestoreState
@@ -45558,15 +45558,15 @@ class _RestoreState implements RestoreState {
 @override@JsonKey() final  bool isLoading;
 /// 错误信息
 @override final  String? errorMessage;
-/// 选中的备份文件路�?@override final  String? selectedFilePath;
-/// 备份文件元数�?@override final  BackupMetadata? backupMetadata;
+/// 选中的备份文件路�?@override final  String? selectedFilePath;
+/// 备份文件元数�?@override final  BackupMetadata? backupMetadata;
 /// 恢复预览信息
 @override final  RestorePreview? restorePreview;
-/// 选择的恢复模�?@override@JsonKey() final  RestoreMode restoreMode;
-/// 是否需要密�?@override@JsonKey() final  bool requiresPassword;
-/// 输入的密�?@override final  String? password;
-/// 选择的表（null表示全部�? final  List<String>? _selectedTables;
-/// 选择的表（null表示全部�?@override List<String>? get selectedTables {
+/// 选择的恢复模�?@override@JsonKey() final  RestoreMode restoreMode;
+/// 是否需要密�?@override@JsonKey() final  bool requiresPassword;
+/// 输入的密�?@override final  String? password;
+/// 选择的表（null表示全部�? final  List<String>? _selectedTables;
+/// 选择的表（null表示全部�?@override List<String>? get selectedTables {
   final value = _selectedTables;
   if (value == null) return null;
   if (_selectedTables is EqualUnmodifiableListView) return _selectedTables;
@@ -45858,7 +45858,7 @@ class _ErrorHandlingIntegrationExampleState
   void initState() {
     super.initState();
     
-    // 监听错误�?
+    // 监听错误�?
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _listenToErrors();
     });
@@ -45881,7 +45881,7 @@ class _ErrorHandlingIntegrationExampleState
         },
         loading: () {},
         error: (error, stackTrace) {
-          // 处理监听错误流时的错�?
+          // 处理监听错误流时的错�?
           debugPrint('Error listening to error stream: $error');
         },
       );
@@ -45889,7 +45889,7 @@ class _ErrorHandlingIntegrationExampleState
   }
 
   bool _shouldShowAsDialog(UserFriendlyError error) {
-    // 根据错误类型决定是否显示对话�?
+    // 根据错误类型决定是否显示对话�?
     return error.suggestion != null || 
            error.technicalDetails != null ||
            error.title.contains('严重') ||
@@ -45915,7 +45915,7 @@ class _ErrorHandlingIntegrationExampleState
 
   void _retryLastOperation() {
     // 这里应该重试最后失败的操作
-    // 具体实现取决于应用的状态管�?
+    // 具体实现取决于应用的状态管�?
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text('正在重试操作...')),
     );
@@ -45972,7 +45972,7 @@ class _ErrorHandlingIntegrationExampleState
                 ),
                 ElevatedButton(
                   onPressed: _simulateDatabaseError,
-                  child: const Text('模拟数据库错�?),
+                  child: const Text('模拟数据库错�?),
                 ),
                 ElevatedButton(
                   onPressed: _simulateValidationError,
@@ -46001,7 +46001,7 @@ class _ErrorHandlingIntegrationExampleState
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  '错误统计 (最�?${stats['period']} �?',
+                  '错误统计 (最�?${stats['period']} �?',
                   style: Theme.of(context).textTheme.titleMedium,
                 ),
                 const SizedBox(height: 8),
@@ -46010,7 +46010,7 @@ class _ErrorHandlingIntegrationExampleState
                 
                 if (stats['errorsByType'] != null) ...[
                   Text(
-                    '按类型分�?',
+                    '按类型分�?',
                     style: Theme.of(context).textTheme.titleSmall,
                   ),
                   const SizedBox(height: 8),
@@ -46026,7 +46026,7 @@ class _ErrorHandlingIntegrationExampleState
                 
                 if (stats['errorsByOperation'] != null) ...[
                   Text(
-                    '按操作分�?',
+                    '按操作分�?',
                     style: Theme.of(context).textTheme.titleSmall,
                   ),
                   const SizedBox(height: 8),
@@ -46056,12 +46056,12 @@ class _ErrorHandlingIntegrationExampleState
                   ),
                   const SizedBox(height: 8),
                   Text('总资源数: ${stats['resourceStats']['totalResources']}'),
-                  Text('活跃操作�? ${stats['resourceStats']['activeOperations']}'),
+                  Text('活跃操作�? ${stats['resourceStats']['activeOperations']}'),
                   
                   if (stats['resourceStats']['resourcesByType'] != null) ...[
                     const SizedBox(height: 8),
                     Text(
-                      '按类型分�?',
+                      '按类型分�?',
                       style: Theme.of(context).textTheme.titleSmall,
                     ),
                     ...(stats['resourceStats']['resourcesByType'] as Map<String, dynamic>)
@@ -46116,7 +46116,7 @@ class _ErrorHandlingIntegrationExampleState
     
     try {
       await errorService.executeWithRetry(
-        () => throw Exception('模拟的文件系统错�?),
+        () => throw Exception('模拟的文件系统错�?),
         operationName: 'SimulateFileSystemError',
         context: {'test': true},
       );
@@ -46144,7 +46144,7 @@ class _ErrorHandlingIntegrationExampleState
     
     try {
       await errorService.executeWithRetry(
-        () => throw FormatException('模拟的验证错�?),
+        () => throw FormatException('模拟的验证错�?),
         operationName: 'SimulateValidationError',
         context: {'test': true},
       );
@@ -46193,17 +46193,17 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../widgets/backup_button.dart';
 
-/// 示例：如何将备份功能集成到设置页�?
+/// 示例：如何将备份功能集成到设置页�?
 /// 
 /// 在现有的 _DataManagementSection 中添加以下代码：
 /// 
 /// ```dart
-/// // �?_DataManagementSection �?build 方法中添加：
+/// // �?_DataManagementSection �?build 方法中添加：
 /// const QuickBackupButton(),
 /// const Divider(),
 /// ```
 /// 
-/// 或者创建一个专门的备份管理部分�?
+/// 或者创建一个专门的备份管理部分�?
 class BackupManagementSection extends ConsumerWidget {
   const BackupManagementSection({super.key});
 
@@ -46228,7 +46228,7 @@ class BackupManagementSection extends ConsumerWidget {
           subtitle: const Text('查看、删除或分享已创建的备份'),
           trailing: const Icon(Icons.arrow_forward_ios),
           onTap: () {
-            // TODO: 导航到备份管理页�?
+            // TODO: 导航到备份管理页�?
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(content: Text('备份管理功能即将推出')),
             );
@@ -46239,16 +46239,16 @@ class BackupManagementSection extends ConsumerWidget {
   }
 }
 
-/// 使用示例�?
+/// 使用示例�?
 /// 
-/// �?SettingsScreen 中使用：
+/// �?SettingsScreen 中使用：
 /// ```dart
 /// ListView(
 ///   children: [
-///     // ... 其他设置�?
+///     // ... 其他设置�?
 ///     const Divider(),
 ///     const BackupManagementSection(),
-///     // ... 其他设置�?
+///     // ... 其他设置�?
 ///   ],
 /// )
 /// ```
@@ -46322,16 +46322,16 @@ class AutoBackupSettingsScreen extends ConsumerWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // 自动备份开�?
+          // 自动备份开�?
           AutoBackupSettingsCard(
             title: '启用自动备份',
-            subtitle: settings.enabled ? '自动备份已启�? : '自动备份已禁�?,
+            subtitle: settings.enabled ? '自动备份已启�? : '自动备份已禁�?,
             trailing: Switch(
               value: settings.enabled,
               onChanged: (value) async {
                 await ref.read(autoBackupControllerProvider.notifier).toggleAutoBackup(value);
                 Fluttertoast.showToast(
-                  msg: value ? '自动备份已启�? : '自动备份已禁�?,
+                  msg: value ? '自动备份已启�? : '自动备份已禁�?,
                 );
               },
             ),
@@ -46339,7 +46339,7 @@ class AutoBackupSettingsScreen extends ConsumerWidget {
 
           const SizedBox(height: 16),
 
-          // 状态信�?
+          // 状态信�?
           if (settings.enabled) ...[
             Card(
               child: Padding(
@@ -46355,7 +46355,7 @@ class AutoBackupSettingsScreen extends ConsumerWidget {
                         ),
                         const SizedBox(width: 8),
                         Text(
-                          '备份状�?,
+                          '备份状�?,
                           style: Theme.of(context).textTheme.titleMedium,
                         ),
                       ],
@@ -46389,7 +46389,7 @@ class AutoBackupSettingsScreen extends ConsumerWidget {
               currentFrequency: settings.frequency,
               onFrequencyChanged: (frequency) async {
                 await ref.read(autoBackupControllerProvider.notifier).setBackupFrequency(frequency);
-                Fluttertoast.showToast(msg: '备份频率已更�?);
+                Fluttertoast.showToast(msg: '备份频率已更�?);
               },
             ),
             const SizedBox(height: 16),
@@ -46398,14 +46398,14 @@ class AutoBackupSettingsScreen extends ConsumerWidget {
           // 备份数量设置
           if (settings.enabled) ...[
             AutoBackupSettingsCard(
-              title: '最大备份数�?,
-              subtitle: '保留最�?${settings.maxBackupCount} 个自动备份文�?,
+              title: '最大备份数�?,
+              subtitle: '保留最�?${settings.maxBackupCount} 个自动备份文�?,
               trailing: DropdownButton<int>(
                 value: settings.maxBackupCount,
                 items: [3, 5, 10, 15, 20].map((count) {
                   return DropdownMenuItem(
                     value: count,
-                    child: Text('$count �?),
+                    child: Text('$count �?),
                   );
                 }).toList(),
                 onChanged: (value) async {
@@ -46442,7 +46442,7 @@ class AutoBackupSettingsScreen extends ConsumerWidget {
                     ),
                     const SizedBox(height: 12),
                     SwitchListTile(
-                      title: const Text('仅在WiFi下备�?),
+                      title: const Text('仅在WiFi下备�?),
                       subtitle: const Text('避免使用移动数据'),
                       value: settings.wifiOnly,
                       onChanged: (value) async {
@@ -46453,13 +46453,13 @@ class AutoBackupSettingsScreen extends ConsumerWidget {
                       },
                     ),
                     SwitchListTile(
-                      title: const Text('仅在充电时备�?),
-                      subtitle: const Text('避免消耗电池电�?),
+                      title: const Text('仅在充电时备�?),
+                      subtitle: const Text('避免消耗电池电�?),
                       value: settings.chargingOnly,
                       onChanged: (value) async {
                         await ref.read(autoBackupControllerProvider.notifier).setChargingOnly(value);
                         Fluttertoast.showToast(
-                          msg: value ? '已启用充电限�? : '已禁用充电限�?,
+                          msg: value ? '已启用充电限�? : '已禁用充电限�?,
                         );
                       },
                     ),
@@ -46476,7 +46476,7 @@ class AutoBackupSettingsScreen extends ConsumerWidget {
               options: settings.backupOptions ?? const AutoBackupOptions(),
               onOptionsChanged: (options) async {
                 await ref.read(autoBackupControllerProvider.notifier).setBackupOptions(options);
-                Fluttertoast.showToast(msg: '备份选项已更�?);
+                Fluttertoast.showToast(msg: '备份选项已更�?);
               },
             ),
             const SizedBox(height: 16),
@@ -46538,9 +46538,9 @@ class AutoBackupSettingsScreen extends ConsumerWidget {
     if (difference.inDays > 0) {
       return '${difference.inDays}天前';
     } else if (difference.inHours > 0) {
-      return '${difference.inHours}小时�?;
+      return '${difference.inHours}小时�?;
     } else if (difference.inMinutes > 0) {
-      return '${difference.inMinutes}分钟�?;
+      return '${difference.inMinutes}分钟�?;
     } else {
       return '刚刚';
     }
@@ -46575,7 +46575,7 @@ class _BackupManagementScreenState extends ConsumerState<BackupManagementScreen>
   @override
   void initState() {
     super.initState();
-    // 页面加载时刷新备份列�?
+    // 页面加载时刷新备份列�?
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref.read(backupManagementControllerProvider.notifier).refreshBackups();
     });
@@ -46691,7 +46691,7 @@ class _BackupManagementScreenState extends ConsumerState<BackupManagementScreen>
             ),
             const SizedBox(height: 8),
             Text(
-              '点击下方按钮创建您的第一个备�?,
+              '点击下方按钮创建您的第一个备�?,
               style: Theme.of(context).textTheme.bodyMedium,
             ),
           ],
@@ -46770,7 +46770,7 @@ class _BackupManagementScreenState extends ConsumerState<BackupManagementScreen>
                         value: 'rename',
                         child: ListTile(
                           leading: Icon(Icons.edit),
-                          title: Text('重命�?),
+                          title: Text('重命�?),
                           contentPadding: EdgeInsets.zero,
                         ),
                       ),
@@ -46807,14 +46807,14 @@ class _BackupManagementScreenState extends ConsumerState<BackupManagementScreen>
                   _buildInfoChip(
                     context,
                     Icons.dataset,
-                    '$totalRecords 条记�?,
+                    '$totalRecords 条记�?,
                   ),
                   if (backup.isEncrypted) ...[
                     const SizedBox(width: 8),
                     _buildInfoChip(
                       context,
                       Icons.security,
-                      '已加�?,
+                      '已加�?,
                       color: Theme.of(context).colorScheme.secondary,
                     ),
                   ],
@@ -46894,13 +46894,13 @@ class _BackupManagementScreenState extends ConsumerState<BackupManagementScreen>
 
   Future<void> _createBackup(BackupOptions options) async {
     try {
-      // 开始备�?- 进度对话框将�?ProgressManager 自动显示
+      // 开始备�?- 进度对话框将�?ProgressManager 自动显示
       await ref.read(backupControllerProvider.notifier).startBackup(options: options);
       
       // 刷新备份列表
       await ref.read(backupManagementControllerProvider.notifier).refreshBackups();
     } catch (e) {
-      // 错误处理�?ProgressManager 处理
+      // 错误处理�?ProgressManager 处理
       ToastService.error('备份创建失败: $e');
     }
   }
@@ -46928,7 +46928,7 @@ class _BackupManagementScreenState extends ConsumerState<BackupManagementScreen>
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('重命名备�?),
+        title: const Text('重命名备�?),
         content: TextField(
           controller: controller,
           decoration: const InputDecoration(
@@ -46946,7 +46946,7 @@ class _BackupManagementScreenState extends ConsumerState<BackupManagementScreen>
             onPressed: () async {
               final newName = controller.text.trim();
               if (newName.isEmpty) {
-                ToastService.error('文件名不能为�?);
+                ToastService.error('文件名不能为�?);
                 return;
               }
               
@@ -46955,9 +46955,9 @@ class _BackupManagementScreenState extends ConsumerState<BackupManagementScreen>
               try {
                 await ref.read(backupManagementControllerProvider.notifier)
                     .renameBackup(backup.id, newName);
-                ToastService.success('重命名成�?);
+                ToastService.success('重命名成�?);
               } catch (e) {
-                ToastService.error('重命名失�? $e');
+                ToastService.error('重命名失�? $e');
               }
             },
             child: const Text('确定'),
@@ -46981,7 +46981,7 @@ class _BackupManagementScreenState extends ConsumerState<BackupManagementScreen>
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('删除备份'),
-        content: Text('确定要删除备份文�?"${backup.fileName}" 吗？\n\n此操作不可撤销�?),
+        content: Text('确定要删除备份文�?"${backup.fileName}" 吗？\n\n此操作不可撤销�?),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
@@ -46994,7 +46994,7 @@ class _BackupManagementScreenState extends ConsumerState<BackupManagementScreen>
               try {
                 await ref.read(backupManagementControllerProvider.notifier)
                     .deleteBackup(backup.id);
-                ToastService.success('备份已删�?);
+                ToastService.success('备份已删�?);
               } catch (e) {
                 ToastService.error('删除失败: $e');
               }
@@ -47040,7 +47040,7 @@ class _RestoreScreenState extends ConsumerState<RestoreScreen> {
   @override
   void initState() {
     super.initState();
-    // 重置状�?
+    // 重置状�?
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref.read(restoreControllerProvider.notifier).reset();
     });
@@ -47089,7 +47089,7 @@ class _RestoreScreenState extends ConsumerState<RestoreScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // 文件选择�?
+          // 文件选择�?
           RestoreFileSelector(
             selectedFilePath: state.selectedFilePath,
             onSelectFile: () {
@@ -47180,7 +47180,7 @@ class _RestoreScreenState extends ConsumerState<RestoreScreen> {
                 ),
                 const SizedBox(width: 12),
                 Text(
-                  '需要密�?,
+                  '需要密�?,
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
                     color: Theme.of(context).colorScheme.onSecondaryContainer,
                     fontWeight: FontWeight.w600,
@@ -47190,7 +47190,7 @@ class _RestoreScreenState extends ConsumerState<RestoreScreen> {
             ),
             const SizedBox(height: 8),
             Text(
-              '此备份文件已加密，请输入密码以继�?,
+              '此备份文件已加密，请输入密码以继�?,
               style: TextStyle(
                 color: Theme.of(context).colorScheme.onSecondaryContainer,
               ),
@@ -47230,7 +47230,7 @@ class _RestoreScreenState extends ConsumerState<RestoreScreen> {
                       ),
                       const SizedBox(width: 8),
                       Text(
-                        '兼容性警�?,
+                        '兼容性警�?,
                         style: Theme.of(context).textTheme.titleMedium?.copyWith(
                           color: Theme.of(context).colorScheme.onErrorContainer,
                           fontWeight: FontWeight.w600,
@@ -47240,7 +47240,7 @@ class _RestoreScreenState extends ConsumerState<RestoreScreen> {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    '此备份文件与当前应用版本可能不完全兼容，恢复过程中可能出现问题�?,
+                    '此备份文件与当前应用版本可能不完全兼容，恢复过程中可能出现问题�?,
                     style: TextStyle(
                       color: Theme.of(context).colorScheme.onErrorContainer,
                     ),
@@ -47249,7 +47249,7 @@ class _RestoreScreenState extends ConsumerState<RestoreScreen> {
                     const SizedBox(height: 8),
                     ...preview.compatibilityWarnings.map((warning) => 
                       Text(
-                        '�?$warning',
+                        '�?$warning',
                         style: TextStyle(
                           color: Theme.of(context).colorScheme.onErrorContainer,
                           fontSize: 12,
@@ -47267,7 +47267,7 @@ class _RestoreScreenState extends ConsumerState<RestoreScreen> {
         ElevatedButton.icon(
           onPressed: () => _showRestoreConfirmation(context, state),
           icon: const Icon(Icons.restore),
-          label: Text('开始恢�?($totalRecords 条记�?'),
+          label: Text('开始恢�?($totalRecords 条记�?'),
           style: ElevatedButton.styleFrom(
             padding: const EdgeInsets.symmetric(vertical: 16),
             backgroundColor: preview.isCompatible 
@@ -47279,7 +47279,7 @@ class _RestoreScreenState extends ConsumerState<RestoreScreen> {
     );
   }
 
-  // 移除手动状态处理，�?ProgressManager 统一管理
+  // 移除手动状态处理，�?ProgressManager 统一管理
 
   void _showPasswordDialog(BuildContext context) {
     showDialog(
@@ -47306,7 +47306,7 @@ class _RestoreScreenState extends ConsumerState<RestoreScreen> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('即将恢复 $totalRecords 条记录到数据库中�?),
+            Text('即将恢复 $totalRecords 条记录到数据库中�?),
             const SizedBox(height: 8),
             Text('恢复模式: ${_getRestoreModeText(state.restoreMode)}'),
             const SizedBox(height: 16),
@@ -47339,7 +47339,7 @@ class _RestoreScreenState extends ConsumerState<RestoreScreen> {
               ),
               const SizedBox(height: 16),
             ],
-            const Text('此操作无法撤销，请确认是否继续�?),
+            const Text('此操作无法撤销，请确认是否继续�?),
           ],
         ),
         actions: [
@@ -47458,7 +47458,7 @@ class BackupButton extends ConsumerWidget {
           : const SizedBox.shrink(),
       label: Text(
         backupState.isBackingUp 
-            ? '备份�?..' 
+            ? '备份�?..' 
             : (buttonText ?? '创建备份'),
       ),
     );
@@ -47468,19 +47468,19 @@ class BackupButton extends ConsumerWidget {
     // 创建备份选项
     final options = BackupOptions(
       customName: customName,
-      includeImages: false, // 暂时不包含图�?
-      encrypt: false, // 暂时不加�?
-      description: '手动创建的备�?,
+      includeImages: false, // 暂时不包含图�?
+      encrypt: false, // 暂时不加�?
+      description: '手动创建的备�?,
     );
 
-    // 开始备�?- 进度对话框将�?ProgressManager 自动显示
+    // 开始备�?- 进度对话框将�?ProgressManager 自动显示
     await ref.read(backupControllerProvider.notifier).startBackup(
       options: options,
     );
   }
 }
 
-/// 快速备份按钮（用于设置页面�?
+/// 快速备份按钮（用于设置页面�?
 class QuickBackupButton extends ConsumerWidget {
   const QuickBackupButton({super.key});
 
@@ -47500,7 +47500,7 @@ class QuickBackupButton extends ConsumerWidget {
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('创建备份'),
-        content: const Text('确定要创建数据备份吗？这将导出所有产品、库存和交易数据�?),
+        content: const Text('确定要创建数据备份吗？这将导出所有产品、库存和交易数据�?),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
@@ -47511,7 +47511,7 @@ class QuickBackupButton extends ConsumerWidget {
               Navigator.of(context).pop();
               _startQuickBackup(context, ref);
             },
-            child: const Text('开始备�?),
+            child: const Text('开始备�?),
           ),
         ],
       ),
@@ -47520,10 +47520,10 @@ class QuickBackupButton extends ConsumerWidget {
 
   Future<void> _startQuickBackup(BuildContext context, WidgetRef ref) async {
     final options = BackupOptions(
-      description: '快速备�?- ${DateTime.now().toLocal().toString().split('.')[0]}',
+      description: '快速备�?- ${DateTime.now().toLocal().toString().split('.')[0]}',
     );
 
-    // 开始备�?- 进度对话框将�?ProgressManager 自动显示
+    // 开始备�?- 进度对话框将�?ProgressManager 自动显示
     await ref.read(backupControllerProvider.notifier).startBackup(
       options: options,
     );
@@ -47534,7 +47534,7 @@ import 'package:intl/intl.dart';
 
 import '../../domain/models/backup_metadata.dart';
 
-/// 备份详情对话�?
+/// 备份详情对话�?
 class BackupDetailsDialog extends StatelessWidget {
   final BackupMetadata backup;
 
@@ -47579,14 +47579,14 @@ class BackupDetailsDialog extends StatelessWidget {
                 context,
                 '基本信息',
                 [
-                  _buildDetailRow(context, '文件�?, backup.fileName),
+                  _buildDetailRow(context, '文件�?, backup.fileName),
                   _buildDetailRow(context, '创建时间', dateFormat.format(backup.createdAt)),
                   _buildDetailRow(context, '文件大小', fileSizeText),
                   _buildDetailRow(context, '备份版本', backup.version),
                   if (backup.appVersion != null)
                     _buildDetailRow(context, '应用版本', backup.appVersion!),
                   if (backup.schemaVersion != null)
-                    _buildDetailRow(context, '数据库版�?, backup.schemaVersion.toString()),
+                    _buildDetailRow(context, '数据库版�?, backup.schemaVersion.toString()),
                 ],
               ),
 
@@ -47599,13 +47599,13 @@ class BackupDetailsDialog extends StatelessWidget {
                 [
                   _buildDetailRow(
                     context, 
-                    '加密状�?, 
-                    backup.isEncrypted ? '已加�? : '未加�?,
+                    '加密状�?, 
+                    backup.isEncrypted ? '已加�? : '未加�?,
                     valueColor: backup.isEncrypted 
                         ? Theme.of(context).colorScheme.secondary
                         : Theme.of(context).colorScheme.onSurfaceVariant,
                   ),
-                  _buildDetailRow(context, '校验�?, backup.checksum),
+                  _buildDetailRow(context, '校验�?, backup.checksum),
                 ],
               ),
 
@@ -47622,7 +47622,7 @@ class BackupDetailsDialog extends StatelessWidget {
                     _buildDetailRow(
                       context,
                       _getTableDisplayName(entry.key),
-                      '${entry.value} �?,
+                      '${entry.value} �?,
                       indent: true,
                     ),
                   ),
@@ -47735,13 +47735,13 @@ class BackupDetailsDialog extends StatelessWidget {
       case 'inventory':
         return '库存';
       case 'sales':
-        return '销�?;
+        return '销�?;
       case 'purchases':
         return '采购';
       case 'customers':
         return '客户';
       case 'suppliers':
-        return '供应�?;
+        return '供应�?;
       case 'categories':
         return '分类';
       case 'users':
@@ -47760,7 +47760,7 @@ import '../../../../core/database/database.dart';
 import '../../data/services/backup_diagnostic_service.dart';
 import '../../data/services/backup_repair_service.dart';
 
-/// 备份诊断对话�?
+/// 备份诊断对话�?
 class BackupDiagnosticDialog extends ConsumerStatefulWidget {
   const BackupDiagnosticDialog({super.key});
 
@@ -47786,7 +47786,7 @@ class _BackupDiagnosticDialogState
     _diagnosticService = BackupDiagnosticService(database);
     _repairService = BackupRepairService(database);
 
-    // 自动运行快速诊�?
+    // 自动运行快速诊�?
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _runQuickDiagnostic();
     });
@@ -47867,7 +47867,7 @@ class _BackupDiagnosticDialogState
           _repairResult = result;
         });
 
-        // 修复后重新运行诊�?
+        // 修复后重新运行诊�?
         if (result.success) {
           await _runQuickDiagnostic();
         }
@@ -47888,7 +47888,7 @@ class _BackupDiagnosticDialogState
   }
 
   Future<void> _resetBackupSystem() async {
-    // 确认对话�?
+    // 确认对话�?
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
@@ -47921,7 +47921,7 @@ class _BackupDiagnosticDialogState
           _repairResult = result;
         });
 
-        // 重置后重新运行诊�?
+        // 重置后重新运行诊�?
         await _runQuickDiagnostic();
       }
     } catch (e) {
@@ -47949,7 +47949,7 @@ class _BackupDiagnosticDialogState
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // 标题�?
+            // 标题�?
             Row(
               children: [
                 const Icon(Icons.healing, color: Colors.blue),
@@ -47980,7 +47980,7 @@ class _BackupDiagnosticDialogState
                           child: CircularProgressIndicator(strokeWidth: 2),
                         )
                       : const Icon(Icons.speed),
-                  label: const Text('快速诊�?),
+                  label: const Text('快速诊�?),
                 ),
                 ElevatedButton.icon(
                   onPressed: _isRunningDiagnostic ? null : _runFullDiagnostic,
@@ -48040,14 +48040,14 @@ class _BackupDiagnosticDialogState
                       const SizedBox(height: 16),
                     ],
 
-                    // 加载状�?
+                    // 加载状�?
                     if (_isRunningDiagnostic || _isRunningRepair) ...[
                       const Center(
                         child: Column(
                           children: [
                             CircularProgressIndicator(),
                             SizedBox(height: 8),
-                            Text('正在处理�?..'),
+                            Text('正在处理�?..'),
                           ],
                         ),
                       ),
@@ -48090,7 +48090,7 @@ class _BackupDiagnosticDialogState
             // 问题列表
             if (result.issues.isNotEmpty) ...[
               const Text(
-                '发现的问�?',
+                '发现的问�?',
                 style: TextStyle(
                   fontWeight: FontWeight.bold,
                   color: Colors.red,
@@ -48260,7 +48260,7 @@ import '../../domain/models/backup_error_type.dart';
 import '../../data/services/backup_error_handler.dart';
 import 'enhanced_error_dialog.dart';
 
-/// 备份错误测试对话�?- 用于测试不同类型的错误显�?
+/// 备份错误测试对话�?- 用于测试不同类型的错误显�?
 class BackupErrorTestDialog extends StatelessWidget {
   const BackupErrorTestDialog({super.key});
 
@@ -48282,22 +48282,22 @@ class BackupErrorTestDialog extends StatelessWidget {
             _buildErrorTestButton(
               context,
               '存储空间不足',
-              BackupException.insufficientSpace('设备存储空间不足，需要至�?00MB可用空间'),
+              BackupException.insufficientSpace('设备存储空间不足，需要至�?00MB可用空间'),
             ),
             _buildErrorTestButton(
               context,
-              '权限被拒�?,
-              BackupException.permissionDenied('应用没有存储权限，无法创建备份文�?),
+              '权限被拒�?,
+              BackupException.permissionDenied('应用没有存储权限，无法创建备份文�?),
             ),
             _buildErrorTestButton(
               context,
-              '数据库错�?,
-              BackupException.database('数据库连接失败，可能被其他进程占�?),
+              '数据库错�?,
+              BackupException.database('数据库连接失败，可能被其他进程占�?),
             ),
             _buildErrorTestButton(
               context,
               '文件系统错误',
-              BackupException.fileSystem('无法访问备份目录，请检查存储设备状�?),
+              BackupException.fileSystem('无法访问备份目录，请检查存储设备状�?),
             ),
             _buildErrorTestButton(
               context,
@@ -48310,14 +48310,14 @@ class BackupErrorTestDialog extends StatelessWidget {
             _buildErrorTestButton(
               context,
               '加密错误',
-              BackupException.encryption('备份文件加密失败，请检查密码设�?),
+              BackupException.encryption('备份文件加密失败，请检查密码设�?),
             ),
             _buildErrorTestButton(
               context,
               '压缩错误',
               BackupException(
                 type: BackupErrorType.compressionError,
-                message: '备份文件压缩失败，可能是文件过大或存储空间不�?,
+                message: '备份文件压缩失败，可能是文件过大或存储空间不�?,
               ),
             ),
             _buildErrorTestButton(
@@ -48325,7 +48325,7 @@ class BackupErrorTestDialog extends StatelessWidget {
               '未知错误',
               BackupException(
                 type: BackupErrorType.unknown,
-                message: '发生了未知错误，请稍后重试或联系技术支�?,
+                message: '发生了未知错误，请稍后重试或联系技术支�?,
               ),
             ),
           ],
@@ -48356,7 +48356,7 @@ class BackupErrorTestDialog extends StatelessWidget {
   }
 
   void _showTestError(BuildContext context, BackupException exception) {
-    Navigator.of(context).pop(); // 关闭测试对话�?
+    Navigator.of(context).pop(); // 关闭测试对话�?
     
     final userError = BackupErrorHandler.handleError(exception);
     
@@ -48405,7 +48405,7 @@ class BackupErrorWidget extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisSize: MainAxisSize.min,
           children: [
-            // 错误标题和图�?
+            // 错误标题和图�?
             Row(
               children: [
                 Icon(
@@ -48440,7 +48440,7 @@ class BackupErrorWidget extends StatelessWidget {
               style: Theme.of(context).textTheme.bodyMedium,
             ),
             
-            // 技术详情（可展开�?
+            // 技术详情（可展开�?
             if (showTechnicalDetails && error.technicalDetails != null) ...[
               const SizedBox(height: 16),
               _TechnicalDetailsSection(
@@ -48513,7 +48513,7 @@ class _TechnicalDetailsSectionState extends State<_TechnicalDetailsSection> {
               ),
               const SizedBox(width: 4),
               Text(
-                '技术详�?,
+                '技术详�?,
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
                   color: Theme.of(context).colorScheme.onSurfaceVariant,
                   fontWeight: FontWeight.w500,
@@ -48668,7 +48668,7 @@ class _SuggestionSection extends StatelessWidget {
   }
 }
 
-/// 错误对话�?
+/// 错误对话�?
 class BackupErrorDialog extends StatelessWidget {
   final UserFriendlyError error;
   final VoidCallback? onRetry;
@@ -48715,7 +48715,7 @@ class BackupErrorDialog extends StatelessWidget {
   }
 }
 
-/// 简化的错误提示�?
+/// 简化的错误提示�?
 class BackupErrorSnackBar extends SnackBar {
   BackupErrorSnackBar({
     super.key,
@@ -48767,7 +48767,7 @@ import 'package:flutter/material.dart';
 
 import '../../domain/models/auto_backup_settings.dart';
 
-/// 备份频率选择�?
+/// 备份频率选择�?
 class BackupFrequencySelector extends StatelessWidget {
   final BackupFrequency currentFrequency;
   final ValueChanged<BackupFrequency> onFrequencyChanged;
@@ -48835,11 +48835,11 @@ class BackupFrequencySelector extends StatelessWidget {
   String _getFrequencyDescription(BackupFrequency frequency) {
     switch (frequency) {
       case BackupFrequency.daily:
-        return '每天凌晨2点自动备�?;
+        return '每天凌晨2点自动备�?;
       case BackupFrequency.weekly:
-        return '每周日凌�?点自动备�?;
+        return '每周日凌�?点自动备�?;
       case BackupFrequency.monthly:
-        return '每月1号凌�?点自动备�?;
+        return '每月1号凌�?点自动备�?;
     }
   }
 }
@@ -48928,7 +48928,7 @@ class BackupOptionsCard extends StatelessWidget {
                     ),
                     const SizedBox(width: 8),
                     Text(
-                      '已设置加密密�?,
+                      '已设置加密密�?,
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
                         color: Theme.of(context).colorScheme.onSurfaceVariant,
                       ),
@@ -48964,7 +48964,7 @@ class BackupOptionsCard extends StatelessWidget {
               obscureText: true,
               decoration: const InputDecoration(
                 labelText: '密码',
-                hintText: '请输入加密密�?,
+                hintText: '请输入加密密�?,
               ),
             ),
             const SizedBox(height: 16),
@@ -48973,7 +48973,7 @@ class BackupOptionsCard extends StatelessWidget {
               obscureText: true,
               decoration: const InputDecoration(
                 labelText: '确认密码',
-                hintText: '请再次输入密�?,
+                hintText: '请再次输入密�?,
               ),
             ),
           ],
@@ -48997,7 +48997,7 @@ class BackupOptionsCard extends StatelessWidget {
 
               if (password != confirm) {
                 ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('两次输入的密码不一�?)),
+                  const SnackBar(content: Text('两次输入的密码不一�?)),
                 );
                 return;
               }
@@ -49058,7 +49058,7 @@ class BackupProgressInfo {
   int get progressPercent => (progress * 100).toInt();
 }
 
-/// 备份进度对话�?
+/// 备份进度对话�?
 class BackupProgressDialog extends StatelessWidget {
   final BackupProgressInfo progressInfo;
   final VoidCallback? onCancel;
@@ -49093,7 +49093,7 @@ class BackupProgressDialog extends StatelessWidget {
     if (progressInfo.isCancelled) {
       iconData = Icons.cancel;
       iconColor = Theme.of(context).colorScheme.error;
-      titleText = '备份已取�?;
+      titleText = '备份已取�?;
     } else if (progressInfo.errorMessage != null) {
       iconData = Icons.error;
       iconColor = Theme.of(context).colorScheme.error;
@@ -49140,7 +49140,7 @@ class BackupProgressDialog extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // 进度�?
+        // 进度�?
         LinearProgressIndicator(
           value: progressInfo.progress,
           backgroundColor: Theme.of(context).colorScheme.surfaceContainerHighest,
@@ -49222,7 +49222,7 @@ class BackupProgressDialog extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      '备份创建成功�?,
+                      '备份创建成功�?,
                       style: Theme.of(context).textTheme.titleMedium?.copyWith(
                         color: Theme.of(context).colorScheme.onPrimaryContainer,
                         fontWeight: FontWeight.w600,
@@ -49268,7 +49268,7 @@ class BackupProgressDialog extends StatelessWidget {
                   const SizedBox(width: 12),
                   Expanded(
                     child: Text(
-                      '备份过程中发生错�?,
+                      '备份过程中发生错�?,
                       style: Theme.of(context).textTheme.titleMedium?.copyWith(
                         color: Theme.of(context).colorScheme.onErrorContainer,
                         fontWeight: FontWeight.w600,
@@ -49314,7 +49314,7 @@ class BackupProgressDialog extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      '备份操作已取�?,
+                      '备份操作已取�?,
                       style: Theme.of(context).textTheme.titleMedium?.copyWith(
                         color: Theme.of(context).colorScheme.onSurfaceVariant,
                         fontWeight: FontWeight.w600,
@@ -49322,7 +49322,7 @@ class BackupProgressDialog extends StatelessWidget {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      '您可以稍后重新开始备�?,
+                      '您可以稍后重新开始备�?,
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
                         color: Theme.of(context).colorScheme.onSurfaceVariant,
                       ),
@@ -49372,7 +49372,7 @@ class BackupProgressDialog extends StatelessWidget {
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('确认取消'),
-        content: const Text('确定要取消备份操作吗？\n\n当前进度将丢失，需要重新开始�?),
+        content: const Text('确定要取消备份操作吗？\n\n当前进度将丢失，需要重新开始�?),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
@@ -49380,7 +49380,7 @@ class BackupProgressDialog extends StatelessWidget {
           ),
           ElevatedButton(
             onPressed: () {
-              Navigator.of(context).pop(); // 关闭确认对话�?
+              Navigator.of(context).pop(); // 关闭确认对话�?
               onCancel?.call();
             },
             style: ElevatedButton.styleFrom(
@@ -49424,41 +49424,41 @@ class BackupTroubleshootingGuide extends StatelessWidget {
           children: [
             _buildSection(
               context,
-              '常见问题及解决方�?,
+              '常见问题及解决方�?,
               [
                 _TroubleshootingItem(
                   problem: '备份失败 - 存储空间不足',
                   solutions: [
                     '清理设备存储空间，删除不需要的文件',
                     '卸载不常用的应用程序',
-                    '清理应用缓存和临时文�?,
+                    '清理应用缓存和临时文�?,
                     '使用外部存储设备（如SD卡）',
                   ],
                 ),
                 _TroubleshootingItem(
-                  problem: '备份失败 - 权限被拒�?,
+                  problem: '备份失败 - 权限被拒�?,
                   solutions: [
-                    '在系统设置中检查应用权�?,
+                    '在系统设置中检查应用权�?,
                     '授予应用存储权限',
-                    '重启应用后重�?,
+                    '重启应用后重�?,
                     '检查是否启用了应用权限管理',
                   ],
                 ),
                 _TroubleshootingItem(
-                  problem: '备份过程中应用崩�?,
+                  problem: '备份过程中应用崩�?,
                   solutions: [
-                    '关闭其他正在运行的应�?,
+                    '关闭其他正在运行的应�?,
                     '重启设备释放内存',
                     '确保设备有足够的可用内存',
                     '尝试在设备空闲时进行备份',
                   ],
                 ),
                 _TroubleshootingItem(
-                  problem: '数据库连接失�?,
+                  problem: '数据库连接失�?,
                   solutions: [
                     '完全关闭应用后重新打开',
                     '重启设备',
-                    '检查是否有其他应用占用数据�?,
+                    '检查是否有其他应用占用数据�?,
                     '清理应用缓存（注意：可能丢失未保存数据）',
                   ],
                 ),
@@ -49473,7 +49473,7 @@ class BackupTroubleshootingGuide extends StatelessWidget {
                   problem: '如何避免备份失败',
                   solutions: [
                     '定期清理设备存储空间',
-                    '保持应用为最新版�?,
+                    '保持应用为最新版�?,
                     '在设备电量充足时进行备份',
                     '避免在备份过程中使用其他功能',
                     '定期重启设备保持系统稳定',
@@ -49484,15 +49484,15 @@ class BackupTroubleshootingGuide extends StatelessWidget {
             const SizedBox(height: 24),
             _buildSection(
               context,
-              '联系技术支�?,
+              '联系技术支�?,
               [
                 _TroubleshootingItem(
                   problem: '如果问题仍然存在',
                   solutions: [
                     '记录错误发生的具体时间和操作',
                     '截图保存错误信息',
-                    '提供设备型号和系统版本信�?,
-                    '联系技术支持团队获取帮�?,
+                    '提供设备型号和系统版本信�?,
+                    '联系技术支持团队获取帮�?,
                   ],
                 ),
               ],
@@ -49621,44 +49621,44 @@ class BackupTroubleshootingGuide extends StatelessWidget {
 常见问题及解决方案：
 
 1. 备份失败 - 存储空间不足
-   �?清理设备存储空间，删除不需要的文件
-   �?卸载不常用的应用程序
-   �?清理应用缓存和临时文�?
-   �?使用外部存储设备（如SD卡）
+   �?清理设备存储空间，删除不需要的文件
+   �?卸载不常用的应用程序
+   �?清理应用缓存和临时文�?
+   �?使用外部存储设备（如SD卡）
 
-2. 备份失败 - 权限被拒�?
-   �?在系统设置中检查应用权�?
-   �?授予应用存储权限
-   �?重启应用后重�?
-   �?检查是否启用了应用权限管理
+2. 备份失败 - 权限被拒�?
+   �?在系统设置中检查应用权�?
+   �?授予应用存储权限
+   �?重启应用后重�?
+   �?检查是否启用了应用权限管理
 
-3. 备份过程中应用崩�?
-   �?关闭其他正在运行的应�?
-   �?重启设备释放内存
-   �?确保设备有足够的可用内存
-   �?尝试在设备空闲时进行备份
+3. 备份过程中应用崩�?
+   �?关闭其他正在运行的应�?
+   �?重启设备释放内存
+   �?确保设备有足够的可用内存
+   �?尝试在设备空闲时进行备份
 
-4. 数据库连接失�?
-   �?完全关闭应用后重新打开
-   �?重启设备
-   �?检查是否有其他应用占用数据�?
-   �?清理应用缓存（注意：可能丢失未保存数据）
+4. 数据库连接失�?
+   �?完全关闭应用后重新打开
+   �?重启设备
+   �?检查是否有其他应用占用数据�?
+   �?清理应用缓存（注意：可能丢失未保存数据）
 
-预防措施�?
-�?定期清理设备存储空间
-�?保持应用为最新版�?
-�?在设备电量充足时进行备份
-�?避免在备份过程中使用其他功能
-�?定期重启设备保持系统稳定
+预防措施�?
+�?定期清理设备存储空间
+�?保持应用为最新版�?
+�?在设备电量充足时进行备份
+�?避免在备份过程中使用其他功能
+�?定期重启设备保持系统稳定
 
-如需更多帮助，请联系技术支持团队�?
+如需更多帮助，请联系技术支持团队�?
 ''';
 
     Clipboard.setData(const ClipboardData(text: troubleshootingText));
     
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
-        content: Text('故障排除信息已复制到剪贴�?),
+        content: Text('故障排除信息已复制到剪贴�?),
         duration: Duration(seconds: 2),
       ),
     );
@@ -49679,7 +49679,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../domain/models/backup_options.dart';
 
-/// 创建备份对话�?
+/// 创建备份对话�?
 class CreateBackupDialog extends ConsumerStatefulWidget {
   final Function(BackupOptions) onCreateBackup;
 
@@ -49741,12 +49741,12 @@ class _CreateBackupDialogState extends ConsumerState<CreateBackupDialog> {
                   controller: _nameController,
                   decoration: const InputDecoration(
                     labelText: '备份名称',
-                    hintText: '请输入备份名�?,
+                    hintText: '请输入备份名�?,
                     prefixIcon: Icon(Icons.label),
                   ),
                   validator: (value) {
                     if (value == null || value.trim().isEmpty) {
-                      return '请输入备份名�?;
+                      return '请输入备份名�?;
                     }
                     return null;
                   },
@@ -49758,7 +49758,7 @@ class _CreateBackupDialogState extends ConsumerState<CreateBackupDialog> {
                   controller: _descriptionController,
                   decoration: const InputDecoration(
                     labelText: '备份描述（可选）',
-                    hintText: '请输入备份描�?,
+                    hintText: '请输入备份描�?,
                     prefixIcon: Icon(Icons.description),
                   ),
                   maxLines: 2,
@@ -49777,7 +49777,7 @@ class _CreateBackupDialogState extends ConsumerState<CreateBackupDialog> {
                 // 包含图片
                 CheckboxListTile(
                   title: const Text('包含图片文件'),
-                  subtitle: const Text('备份产品图片等媒体文�?),
+                  subtitle: const Text('备份产品图片等媒体文�?),
                   value: _includeImages,
                   onChanged: (value) {
                     setState(() {
@@ -49827,7 +49827,7 @@ class _CreateBackupDialogState extends ConsumerState<CreateBackupDialog> {
                     controller: _passwordController,
                     decoration: InputDecoration(
                       labelText: '加密密码',
-                      hintText: '请输入加密密�?,
+                      hintText: '请输入加密密�?,
                       prefixIcon: const Icon(Icons.lock),
                       suffixIcon: IconButton(
                         icon: Icon(_showPassword ? Icons.visibility_off : Icons.visibility),
@@ -49841,7 +49841,7 @@ class _CreateBackupDialogState extends ConsumerState<CreateBackupDialog> {
                     obscureText: !_showPassword,
                     validator: (value) {
                       if (_encrypt && (value == null || value.length < 6)) {
-                        return '密码长度至少6�?;
+                        return '密码长度至少6�?;
                       }
                       return null;
                     },
@@ -49851,7 +49851,7 @@ class _CreateBackupDialogState extends ConsumerState<CreateBackupDialog> {
                     controller: _confirmPasswordController,
                     decoration: InputDecoration(
                       labelText: '确认密码',
-                      hintText: '请再次输入密�?,
+                      hintText: '请再次输入密�?,
                       prefixIcon: const Icon(Icons.lock_outline),
                       suffixIcon: IconButton(
                         icon: Icon(_showConfirmPassword ? Icons.visibility_off : Icons.visibility),
@@ -49865,7 +49865,7 @@ class _CreateBackupDialogState extends ConsumerState<CreateBackupDialog> {
                     obscureText: !_showConfirmPassword,
                     validator: (value) {
                       if (_encrypt && value != _passwordController.text) {
-                        return '两次输入的密码不一�?;
+                        return '两次输入的密码不一�?;
                       }
                       return null;
                     },
@@ -49891,7 +49891,7 @@ class _CreateBackupDialogState extends ConsumerState<CreateBackupDialog> {
                       const SizedBox(width: 8),
                       Expanded(
                         child: Text(
-                          '备份将包含所有业务数据，请确保设备有足够的存储空间�?,
+                          '备份将包含所有业务数据，请确保设备有足够的存储空间�?,
                           style: Theme.of(context).textTheme.bodySmall?.copyWith(
                             color: Theme.of(context).colorScheme.onSurfaceVariant,
                           ),
@@ -50051,7 +50051,7 @@ class _EnhancedErrorDialogState extends State<EnhancedErrorDialog> {
           _buildDiagnosticResult(context),
         ],
 
-        // 技术详�?
+        // 技术详�?
         if (widget.error.technicalDetails != null) ...[
           const SizedBox(height: 16),
           _buildTechnicalDetailsSection(context),
@@ -50228,7 +50228,7 @@ class _EnhancedErrorDialogState extends State<EnhancedErrorDialog> {
               ),
               const SizedBox(width: 4),
               Text(
-                '技术详�?,
+                '技术详�?,
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
                   color: Theme.of(context).colorScheme.onSurfaceVariant,
                   fontWeight: FontWeight.w500,
@@ -50291,7 +50291,7 @@ class _EnhancedErrorDialogState extends State<EnhancedErrorDialog> {
                   child: CircularProgressIndicator(strokeWidth: 2),
                 )
               : const Icon(Icons.medical_services, size: 16),
-          label: Text(_isDiagnosing ? '诊断�?..' : '诊断'),
+          label: Text(_isDiagnosing ? '诊断�?..' : '诊断'),
         ),
       
       // 关闭按钮
@@ -50363,7 +50363,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../data/utils/file_access_helper.dart';
 
-/// 文件访问帮助对话�?
+/// 文件访问帮助对话�?
 class FileAccessHelpDialog extends StatelessWidget {
   const FileAccessHelpDialog({super.key});
 
@@ -50377,7 +50377,7 @@ class FileAccessHelpDialog extends StatelessWidget {
             color: Theme.of(context).colorScheme.primary,
           ),
           const SizedBox(width: 12),
-          const Text('无法访问备份文件�?),
+          const Text('无法访问备份文件�?),
         ],
       ),
       content: SingleChildScrollView(
@@ -50386,29 +50386,29 @@ class FileAccessHelpDialog extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             Text(
-              '如果您的备份文件位于 /data/user/0/... 路径下，系统文件选择器无法直接访问�?,
+              '如果您的备份文件位于 /data/user/0/... 路径下，系统文件选择器无法直接访问�?,
               style: Theme.of(context).textTheme.bodyMedium,
             ),
             const SizedBox(height: 16),
             
-            _buildSectionTitle(context, '解决方法�?),
+            _buildSectionTitle(context, '解决方法�?),
             const SizedBox(height: 8),
             
-            _buildStep(context, '1', '使用文件管理�?, [
+            _buildStep(context, '1', '使用文件管理�?, [
               '打开手机的文件管理器应用',
-              '导航到备份文件所在位�?,
+              '导航到备份文件所在位�?,
               '长按备份文件，选择"复制"',
-              '导航�?下载"�?文档"文件�?,
+              '导航�?下载"�?文档"文件�?,
               '粘贴文件',
             ]),
             
             const SizedBox(height: 12),
             
-            _buildStep(context, '2', '推荐的存放位�?, [
-              '下载文件�?(Downloads)',
-              '文档文件�?(Documents)', 
+            _buildStep(context, '2', '推荐的存放位�?, [
+              '下载文件�?(Downloads)',
+              '文档文件�?(Documents)', 
               'SD卡根目录',
-              '桌面文件�?,
+              '桌面文件�?,
             ]),
             
             const SizedBox(height: 12),
@@ -50437,7 +50437,7 @@ class FileAccessHelpDialog extends StatelessWidget {
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
-                      '提示：应用会自动处理文件数据，即使无法访问原始路径也能正常恢复�?,
+                      '提示：应用会自动处理文件数据，即使无法访问原始路径也能正常恢复�?,
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
                         color: Theme.of(context).colorScheme.onPrimaryContainer,
                       ),
@@ -50458,7 +50458,7 @@ class FileAccessHelpDialog extends StatelessWidget {
           onPressed: () {
             Clipboard.setData(ClipboardData(text: FileAccessHelper.getAccessGuide()));
             ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('帮助信息已复制到剪贴�?)),
+              const SnackBar(content: Text('帮助信息已复制到剪贴�?)),
             );
             Navigator.of(context).pop();
           },
@@ -50521,7 +50521,7 @@ class FileAccessHelpDialog extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    '�?',
+                    '�?',
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
                       color: Theme.of(context).colorScheme.primary,
                     ),
@@ -50543,7 +50543,7 @@ class FileAccessHelpDialog extends StatelessWidget {
     );
   }
 
-  /// 显示帮助对话�?
+  /// 显示帮助对话�?
   static Future<void> show(BuildContext context) {
     return showDialog<void>(
       context: context,
@@ -50557,7 +50557,7 @@ import 'package:flutter/services.dart';
 import '../../domain/models/backup_metadata.dart';
 import '../../domain/models/restore_result.dart';
 
-/// 操作结果对话�?- 用于显示备份或恢复完成后的详细结�?
+/// 操作结果对话�?- 用于显示备份或恢复完成后的详细结�?
 class OperationResultDialog extends StatelessWidget {
   final String title;
   final bool isSuccess;
@@ -50582,7 +50582,7 @@ class OperationResultDialog extends StatelessWidget {
     this.onShare,
   });
 
-  /// 创建备份结果对话�?
+  /// 创建备份结果对话�?
   factory OperationResultDialog.backup({
     required bool isSuccess,
     String? errorMessage,
@@ -50604,7 +50604,7 @@ class OperationResultDialog extends StatelessWidget {
     );
   }
 
-  /// 创建恢复结果对话�?
+  /// 创建恢复结果对话�?
   factory OperationResultDialog.restore({
     required bool isSuccess,
     String? errorMessage,
@@ -50731,7 +50731,7 @@ class OperationResultDialog extends StatelessWidget {
                   const SizedBox(width: 12),
                   Expanded(
                     child: Text(
-                      '备份创建成功�?,
+                      '备份创建成功�?,
                       style: Theme.of(context).textTheme.titleMedium?.copyWith(
                         color: Theme.of(context).colorScheme.onPrimaryContainer,
                         fontWeight: FontWeight.w600,
@@ -50768,8 +50768,8 @@ class OperationResultDialog extends StatelessWidget {
     final result = restoreResult!;
     final duration = result.endTime.difference(result.startTime);
     final durationText = duration.inMinutes > 0
-        ? '${duration.inMinutes}�?{duration.inSeconds % 60}�?
-        : '${duration.inSeconds}�?;
+        ? '${duration.inMinutes}�?{duration.inSeconds % 60}�?
+        : '${duration.inSeconds}�?;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -50792,7 +50792,7 @@ class OperationResultDialog extends StatelessWidget {
                   const SizedBox(width: 12),
                   Expanded(
                     child: Text(
-                      '数据恢复成功！“什么时候才能帮窗台的老盆栽擦掉年轮呀？�?,
+                      '数据恢复成功！“什么时候才能帮窗台的老盆栽擦掉年轮呀？�?,
                       style: Theme.of(context).textTheme.titleMedium?.copyWith(
                         color: Theme.of(context).colorScheme.onPrimaryContainer,
                         fontWeight: FontWeight.w600,
@@ -50808,7 +50808,7 @@ class OperationResultDialog extends StatelessWidget {
                 result.totalRecordsRestored.toString(),
               ),
               _buildInfoRow(context, '耗时', durationText),
-              _buildInfoRow(context, '开始时�?, _formatDateTime(result.startTime)),
+              _buildInfoRow(context, '开始时�?, _formatDateTime(result.startTime)),
               _buildInfoRow(context, '结束时间', _formatDateTime(result.endTime)),
             ],
           ),
@@ -50932,7 +50932,7 @@ class OperationResultDialog extends StatelessWidget {
             (warning) => Padding(
               padding: const EdgeInsets.only(bottom: 4),
               child: Text(
-                '�?$warning',
+                '�?$warning',
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
                   color: Theme.of(context).colorScheme.onTertiaryContainer,
                 ),
@@ -51039,20 +51039,20 @@ class OperationResultDialog extends StatelessWidget {
       'unit': '单位',
       'unit_product': '产品单位',
       'shop': '店铺',
-      'supplier': '供应�?,
+      'supplier': '供应�?,
       'customers': '客户',
       'product_batch': '产品批次',
       'stock': '库存',
       'inventory_transaction': '库存交易',
       'locations': '货位',
-      'inbound_receipt': '入库�?,
+      'inbound_receipt': '入库�?,
       'inbound_item': '入库明细',
-      'outbound_receipt': '出库�?,
+      'outbound_receipt': '出库�?,
       'outbound_item': '出库明细',
-      'purchase_order': '采购�?,
+      'purchase_order': '采购�?,
       'purchase_order_item': '采购明细',
-      'sales_transaction': '销售交�?,
-      'sales_transaction_item': '销售明�?,
+      'sales_transaction': '销售交�?,
+      'sales_transaction_item': '销售明�?,
       'barcode': '条码',
     };
     return tableNames[tableName] ?? tableName;
@@ -51062,7 +51062,7 @@ class OperationResultDialog extends StatelessWidget {
     Clipboard.setData(ClipboardData(text: text));
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
-        content: Text('路径已复制到剪贴�?),
+        content: Text('路径已复制到剪贴�?),
         duration: Duration(seconds: 2),
       ),
     );
@@ -51070,7 +51070,7 @@ class OperationResultDialog extends StatelessWidget {
 }
 import 'package:flutter/material.dart';
 
-/// 密码输入对话�?
+/// 密码输入对话�?
 class PasswordInputDialog extends StatefulWidget {
   final ValueChanged<String> onPasswordSubmitted;
 
@@ -51122,7 +51122,7 @@ class _PasswordInputDialogState extends State<PasswordInputDialog> {
               autofocus: true,
               decoration: InputDecoration(
                 labelText: '密码',
-                hintText: '请输入备份密�?,
+                hintText: '请输入备份密�?,
                 prefixIcon: const Icon(Icons.key),
                 suffixIcon: IconButton(
                   icon: Icon(
@@ -51138,7 +51138,7 @@ class _PasswordInputDialogState extends State<PasswordInputDialog> {
               ),
               validator: (value) {
                 if (value == null || value.isEmpty) {
-                  return '请输入密�?;
+                  return '请输入密�?;
                 }
                 return null;
               },
@@ -51200,7 +51200,7 @@ import 'operation_result_dialog.dart';
 import 'enhanced_error_dialog.dart';
 import '../../data/services/backup_error_handler.dart';
 
-/// 进度管理�?- 统一管理备份和恢复的进度显示
+/// 进度管理�?- 统一管理备份和恢复的进度显示
 class ProgressManager extends ConsumerWidget {
   final Widget child;
 
@@ -51211,12 +51211,12 @@ class ProgressManager extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    // 监听备份状�?
+    // 监听备份状�?
     ref.listen<BackupState>(backupControllerProvider, (previous, current) {
       _handleBackupStateChange(context, ref, previous, current);
     });
 
-    // 监听恢复状�?
+    // 监听恢复状�?
     ref.listen<RestoreState>(restoreControllerProvider, (previous, current) {
       _handleRestoreStateChange(context, ref, previous, current);
     });
@@ -51230,7 +51230,7 @@ class ProgressManager extends ConsumerWidget {
     BackupState? previous,
     BackupState current,
   ) {
-    // 显示备份进度对话�?
+    // 显示备份进度对话�?
     if (current.isBackingUp && current.progressInfo != null) {
       if (previous?.progressInfo == null) {
         _showBackupProgressDialog(context, ref);
@@ -51245,7 +51245,7 @@ class ProgressManager extends ConsumerWidget {
       // 延迟一下再显示结果，让进度对话框有时间更新
       Future.delayed(const Duration(milliseconds: 500), () {
         if (context.mounted) {
-          Navigator.of(context).pop(); // 关闭进度对话�?
+          Navigator.of(context).pop(); // 关闭进度对话�?
           _showBackupResultDialog(context, ref, current);
         }
       });
@@ -51258,12 +51258,12 @@ class ProgressManager extends ConsumerWidget {
     RestoreState? previous,
     RestoreState current,
   ) {
-    // 显示恢复进度对话�?
-    // 只有在开始恢复时才显示对话框，避免在恢复完成时重复显�?
+    // 显示恢复进度对话�?
+    // 只有在开始恢复时才显示对话框，避免在恢复完成时重复显�?
     if (current.progressInfo != null && 
         !current.progressInfo!.isCompleted && 
         !current.progressInfo!.isCancelled) {
-      // 检查是否已经显示了对话�?
+      // 检查是否已经显示了对话�?
       bool isDialogAlreadyShown = false;
       final prevProgress = previous?.progressInfo;
       if (prevProgress != null && 
@@ -51277,13 +51277,13 @@ class ProgressManager extends ConsumerWidget {
       }
     }
 
-    // 处理恢复完成的情�?
-    // 当恢复完成时，不需要额外操作，因为用户会点�?完成"按钮关闭对话�?
+    // 处理恢复完成的情�?
+    // 当恢复完成时，不需要额外操作，因为用户会点�?完成"按钮关闭对话�?
     if (previous?.progressInfo?.isCompleted != true &&
         current.progressInfo?.isCompleted == true) {
       
-      // 不需要额外操作，RestoreProgressDialog 会自动更新显示完成状�?
-      // 用户点击"完成"按钮后会关闭对话�?
+      // 不需要额外操作，RestoreProgressDialog 会自动更新显示完成状�?
+      // 用户点击"完成"按钮后会关闭对话�?
     }
   }
 
@@ -51364,7 +51364,7 @@ class ProgressManager extends ConsumerWidget {
         ref.read(backupControllerProvider.notifier).reset();
       });
     } else {
-      // 显示成功结果对话�?
+      // 显示成功结果对话�?
       showDialog(
         context: context,
         builder: (context) => OperationResultDialog.backup(
@@ -51397,7 +51397,7 @@ class ProgressManager extends ConsumerWidget {
       
       if (!await file.exists()) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('备份文件不存�?)),
+          const SnackBar(content: Text('备份文件不存�?)),
         );
         return;
       }
@@ -51419,7 +51419,7 @@ import 'package:flutter/material.dart';
 import 'package:path/path.dart' as path;
 import 'file_access_help_dialog.dart';
 
-/// 恢复文件选择器组�?
+/// 恢复文件选择器组�?
 class RestoreFileSelector extends StatelessWidget {
   final String? selectedFilePath;
   final VoidCallback onSelectFile;
@@ -51545,7 +51545,7 @@ class RestoreFileSelector extends StatelessWidget {
             
             const SizedBox(height: 12),
             Text(
-              '支持的文件格�? .json, .backup',
+              '支持的文件格�? .json, .backup',
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
                 color: Theme.of(context).colorScheme.onSurfaceVariant,
               ),
@@ -51582,14 +51582,14 @@ class RestoreFileSelector extends StatelessWidget {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    '如果无法访问 /data/user/0/... 路径下的备份文件，请�?,
+                    '如果无法访问 /data/user/0/... 路径下的备份文件，请�?,
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
                       color: Theme.of(context).colorScheme.onSurfaceVariant,
                     ),
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    '�?将文件复制到下载文件夹\n�?或复制到文档文件夹\n�?然后重新选择文件',
+                    '�?将文件复制到下载文件夹\n�?或复制到文档文件夹\n�?然后重新选择文件',
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
                       color: Theme.of(context).colorScheme.onSurfaceVariant,
                       height: 1.3,
@@ -51607,7 +51607,7 @@ class RestoreFileSelector extends StatelessWidget {
 import 'package:flutter/material.dart';
 import '../../domain/models/restore_mode.dart';
 
-/// 恢复模式选择器组�?
+/// 恢复模式选择器组�?
 class RestoreModeSelector extends StatelessWidget {
   final RestoreMode selectedMode;
   final ValueChanged<RestoreMode> onModeChanged;
@@ -51647,7 +51647,7 @@ class RestoreModeSelector extends StatelessWidget {
               context,
               RestoreMode.merge,
               '合并数据',
-              '保留现有数据，添加备份中的新数据。如果存在冲突，优先使用备份数据�?,
+              '保留现有数据，添加备份中的新数据。如果存在冲突，优先使用备份数据�?,
               Icons.merge,
               Colors.blue,
             ),
@@ -51658,7 +51658,7 @@ class RestoreModeSelector extends StatelessWidget {
               context,
               RestoreMode.replace,
               '完全替换',
-              '删除所有现有数据，完全使用备份数据替换。此操作不可撤销�?,
+              '删除所有现有数据，完全使用备份数据替换。此操作不可撤销�?,
               Icons.swap_horiz,
               Colors.red,
             ),
@@ -51669,7 +51669,7 @@ class RestoreModeSelector extends StatelessWidget {
               context,
               RestoreMode.addOnly,
               '仅添加新数据',
-              '只添加不存在的数据，不修改现有记录。最安全的恢复模式�?,
+              '只添加不存在的数据，不修改现有记录。最安全的恢复模式�?,
               Icons.add_circle_outline,
               Colors.green,
             ),
@@ -51795,14 +51795,14 @@ class RestorePreviewCard extends StatelessWidget {
 
             // 基本信息
             _buildInfoSection(context, '基本信息', [
-              _InfoItem('文件�?, preview.metadata.fileName),
+              _InfoItem('文件�?, preview.metadata.fileName),
               _InfoItem('创建时间', dateFormat.format(preview.metadata.createdAt)),
               _InfoItem('文件大小', _formatFileSize(preview.metadata.fileSize)),
-              _InfoItem('总记录数', '$totalRecords �?),
+              _InfoItem('总记录数', '$totalRecords �?),
               if (preview.metadata.isEncrypted)
                 _InfoItem(
-                  '加密状�?,
-                  '已加�?,
+                  '加密状�?,
+                  '已加�?,
                   color: Theme.of(context).colorScheme.secondary,
                 ),
             ]),
@@ -51817,7 +51817,7 @@ class RestorePreviewCard extends StatelessWidget {
               _buildWarningSection(
                 context,
                 '预计冲突',
-                '${preview.estimatedConflicts} 条记录可能存在冲�?,
+                '${preview.estimatedConflicts} 条记录可能存在冲�?,
               ),
             ],
 
@@ -51958,7 +51958,7 @@ class RestorePreviewCard extends StatelessWidget {
               ),
               const SizedBox(width: 8),
               Text(
-                '兼容性检�?,
+                '兼容性检�?,
                 style: Theme.of(context).textTheme.titleSmall?.copyWith(
                   color: preview.isCompatible
                       ? Theme.of(context).colorScheme.onSecondaryContainer
@@ -51970,7 +51970,7 @@ class RestorePreviewCard extends StatelessWidget {
           ),
           const SizedBox(height: 4),
           Text(
-            preview.isCompatible ? '备份文件与当前版本兼�? : '备份文件与当前版本不完全兼容',
+            preview.isCompatible ? '备份文件与当前版本兼�? : '备份文件与当前版本不完全兼容',
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
               color: preview.isCompatible
                   ? Theme.of(context).colorScheme.onSecondaryContainer
@@ -51983,7 +51983,7 @@ class RestorePreviewCard extends StatelessWidget {
               (warning) => Padding(
                 padding: const EdgeInsets.only(bottom: 2),
                 child: Text(
-                  '�?$warning',
+                  '�?$warning',
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
                     color: preview.isCompatible
                         ? Theme.of(context).colorScheme.onSecondaryContainer
@@ -52008,17 +52008,17 @@ class RestorePreviewCard extends StatelessWidget {
   }
 
   String _formatDuration(int seconds) {
-    if (seconds < 60) return '$seconds �?;
+    if (seconds < 60) return '$seconds �?;
     final minutes = seconds ~/ 60;
     final remainingSeconds = seconds % 60;
     if (minutes < 60) {
       return remainingSeconds > 0
-          ? '$minutes �?$remainingSeconds �?
-          : '$minutes �?;
+          ? '$minutes �?$remainingSeconds �?
+          : '$minutes �?;
     }
     final hours = minutes ~/ 60;
     final remainingMinutes = minutes % 60;
-    return '$hours 小时 $remainingMinutes �?;
+    return '$hours 小时 $remainingMinutes �?;
   }
 
   Widget _buildDataStatisticsSection(BuildContext context) {
@@ -52031,7 +52031,7 @@ class RestorePreviewCard extends StatelessWidget {
       (sum, count) => sum + count,
     );
 
-    // 计算表数�?
+    // 计算表数�?
     final backupTableCount = preview.recordCounts.keys
         .where((key) => preview.recordCounts[key]! > 0)
         .length;
@@ -52048,7 +52048,7 @@ class RestorePreviewCard extends StatelessWidget {
         )
         .toList();
 
-    // 找出记录数不同的�?
+    // 找出记录数不同的�?
     final differentTables = preview.recordCounts.keys.where((table) {
       final backupCount = preview.recordCounts[table] ?? 0;
       final currentCount = preview.currentDatabaseCounts[table] ?? 0;
@@ -52091,7 +52091,7 @@ class RestorePreviewCard extends StatelessWidget {
                     ),
                   ),
                   Text(
-                    '$backupTableCount 个表�?totalRestoreRecords 条记�?,
+                    '$backupTableCount 个表�?totalRestoreRecords 条记�?,
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                       fontWeight: FontWeight.w600,
                       color: Theme.of(context).colorScheme.secondary,
@@ -52100,19 +52100,19 @@ class RestorePreviewCard extends StatelessWidget {
                 ],
               ),
               const SizedBox(height: 4),
-              // 当前数据库统�?
+              // 当前数据库统�?
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
-                    '当前数据�?,
+                    '当前数据�?,
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                       fontWeight: FontWeight.w600,
                       color: Theme.of(context).colorScheme.primary,
                     ),
                   ),
                   Text(
-                    '$currentTableCount 个表�?totalCurrentRecords 条记�?,
+                    '$currentTableCount 个表�?totalCurrentRecords 条记�?,
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                       fontWeight: FontWeight.w600,
                       color: Theme.of(context).colorScheme.primary,
@@ -52189,7 +52189,7 @@ class RestorePreviewCard extends StatelessWidget {
                                 ),
                           ),
                           Text(
-                            '${preview.recordCounts[table]} 条记�?,
+                            '${preview.recordCounts[table]} 条记�?,
                             style: Theme.of(context).textTheme.bodySmall
                                 ?.copyWith(
                                   fontWeight: FontWeight.w500,
@@ -52208,7 +52208,7 @@ class RestorePreviewCard extends StatelessWidget {
             const SizedBox(height: 8),
           ],
 
-          // 记录数不同的�?
+          // 记录数不同的�?
           if (differentTables.isNotEmpty) ...[
             Container(
               width: double.infinity,
@@ -52233,7 +52233,7 @@ class RestorePreviewCard extends StatelessWidget {
                       ),
                       const SizedBox(width: 8),
                       Text(
-                        '记录数不同的�?,
+                        '记录数不同的�?,
                         style: Theme.of(context).textTheme.bodySmall?.copyWith(
                           fontWeight: FontWeight.w600,
                           color: Theme.of(
@@ -52268,7 +52268,7 @@ class RestorePreviewCard extends StatelessWidget {
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
                               Text(
-                                '当前数据�? $currentCount �?,
+                                '当前数据�? $currentCount �?,
                                 style: Theme.of(context).textTheme.bodySmall
                                     ?.copyWith(
                                       color: Theme.of(context)
@@ -52278,7 +52278,7 @@ class RestorePreviewCard extends StatelessWidget {
                                     ),
                               ),
                               Text(
-                                '备份文件: $backupCount �?,
+                                '备份文件: $backupCount �?,
                                 style: Theme.of(context).textTheme.bodySmall
                                     ?.copyWith(
                                       color: Theme.of(context)
@@ -52309,20 +52309,20 @@ class RestorePreviewCard extends StatelessWidget {
       'unit': '单位',
       'unit_product': '产品单位',
       'shop': '店铺',
-      'supplier': '供应�?,
+      'supplier': '供应�?,
       'customers': '客户',
       'product_batch': '产品批次',
       'stock': '库存',
       'inventory_transaction': '库存交易',
       'locations': '货位',
-      'inbound_receipt': '入库�?,
+      'inbound_receipt': '入库�?,
       'inbound_item': '入库明细',
-      'outbound_receipt': '出库�?,
+      'outbound_receipt': '出库�?,
       'outbound_item': '出库明细',
-      'purchase_order': '采购�?,
+      'purchase_order': '采购�?,
       'purchase_order_item': '采购明细',
-      'sales_transaction': '销售交�?,
-      'sales_transaction_item': '销售明�?,
+      'sales_transaction': '销售交�?,
+      'sales_transaction_item': '销售明�?,
       'barcode': '条码',
     };
     return tableNames[tableName] ?? tableName;
@@ -52341,7 +52341,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../controllers/restore_controller.dart';
 import '../../domain/models/restore_result.dart';
 
-/// 恢复进度对话�?
+/// 恢复进度对话�?
 class RestoreProgressDialog extends ConsumerWidget {
   final VoidCallback? onClose;
   final VoidCallback? onRetry;
@@ -52381,7 +52381,7 @@ class RestoreProgressDialog extends ConsumerWidget {
     if (progressInfo.isCancelled) {
       iconData = Icons.cancel;
       iconColor = Theme.of(context).colorScheme.error;
-      titleText = '恢复已取�?;
+      titleText = '恢复已取�?;
     } else if (errorMessage != null || (restoreResult != null && !restoreResult.success)) {
       iconData = Icons.error;
       iconColor = Theme.of(context).colorScheme.error;
@@ -52427,7 +52427,7 @@ class RestoreProgressDialog extends ConsumerWidget {
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // 进度�?
+        // 进度�?
         LinearProgressIndicator(
           value: progress,
           backgroundColor: Theme.of(context).colorScheme.surfaceContainerHighest,
@@ -52489,8 +52489,8 @@ class RestoreProgressDialog extends ConsumerWidget {
   Widget _buildSuccessContent(BuildContext context, RestoreResult result) {
     final duration = result.endTime.difference(result.startTime);
     final durationText = duration.inMinutes > 0
-        ? '${duration.inMinutes}�?{duration.inSeconds % 60}�?
-        : '${duration.inSeconds}�?;
+        ? '${duration.inMinutes}�?{duration.inSeconds % 60}�?
+        : '${duration.inSeconds}�?;
 
     return Column(
       mainAxisSize: MainAxisSize.min,
@@ -52514,7 +52514,7 @@ class RestoreProgressDialog extends ConsumerWidget {
                   const SizedBox(width: 12),
                   Expanded(
                     child: Text(
-                      '数据恢复成功�?,
+                      '数据恢复成功�?,
                       style: Theme.of(context).textTheme.titleMedium?.copyWith(
                         color: Theme.of(context).colorScheme.onPrimaryContainer,
                         fontWeight: FontWeight.w600,
@@ -52526,7 +52526,7 @@ class RestoreProgressDialog extends ConsumerWidget {
               const SizedBox(height: 12),
               _buildInfoRow(context, '总记录数', result.totalRecordsRestored.toString()),
               _buildInfoRow(context, '耗时', durationText),
-              _buildInfoRow(context, '开始时�?, _formatDateTime(result.startTime)),
+              _buildInfoRow(context, '开始时�?, _formatDateTime(result.startTime)),
               _buildInfoRow(context, '结束时间', _formatDateTime(result.endTime)),
               if (result.tableRecordCounts.isNotEmpty) ...[
                 const SizedBox(height: 12),
@@ -52576,7 +52576,7 @@ class RestoreProgressDialog extends ConsumerWidget {
           ...warnings.map((warning) => Padding(
             padding: const EdgeInsets.only(bottom: 4),
             child: Text(
-              '�?$warning',
+              '�?$warning',
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
                 color: Theme.of(context).colorScheme.onTertiaryContainer,
               ),
@@ -52606,7 +52606,7 @@ class RestoreProgressDialog extends ConsumerWidget {
               const SizedBox(width: 12),
               Expanded(
                 child: Text(
-                  '恢复过程中发生错�?,
+                  '恢复过程中发生错�?,
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
                     color: Theme.of(context).colorScheme.onErrorContainer,
                     fontWeight: FontWeight.w600,
@@ -52646,7 +52646,7 @@ class RestoreProgressDialog extends ConsumerWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  '恢复操作已取�?,
+                  '恢复操作已取�?,
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
                     color: Theme.of(context).colorScheme.onSurfaceVariant,
                     fontWeight: FontWeight.w600,
@@ -52654,7 +52654,7 @@ class RestoreProgressDialog extends ConsumerWidget {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  '已恢复的数据将保留，您可以稍后重新开�?,
+                  '已恢复的数据将保留，您可以稍后重新开�?,
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
                     color: Theme.of(context).colorScheme.onSurfaceVariant,
                   ),
@@ -52710,7 +52710,7 @@ class RestoreProgressDialog extends ConsumerWidget {
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('确认取消'),
-        content: const Text('确定要取消恢复操作吗？\n\n已恢复的数据将保留，但恢复过程将中断�?),
+        content: const Text('确定要取消恢复操作吗？\n\n已恢复的数据将保留，但恢复过程将中断�?),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
@@ -52718,7 +52718,7 @@ class RestoreProgressDialog extends ConsumerWidget {
           ),
           ElevatedButton(
             onPressed: () {
-              Navigator.of(context).pop(); // 关闭确认对话�?
+              Navigator.of(context).pop(); // 关闭确认对话�?
               ref.read(restoreControllerProvider.notifier).cancelRestore();
             },
             style: ElevatedButton.styleFrom(
@@ -52813,7 +52813,7 @@ class RestoreProgressDialog extends ConsumerWidget {
     );
   }
 
-  // 新增方法：获取表名显示名称（�?OperationResultDialog 一致）
+  // 新增方法：获取表名显示名称（�?OperationResultDialog 一致）
   String _getTableDisplayName(String tableName) {
     const tableNames = {
       'product': '产品',
@@ -52821,20 +52821,20 @@ class RestoreProgressDialog extends ConsumerWidget {
       'unit': '单位',
       'unit_product': '产品单位',
       'shop': '店铺',
-      'supplier': '供应�?,
+      'supplier': '供应�?,
       'customers': '客户',
       'product_batch': '产品批次',
       'stock': '库存',
       'inventory_transaction': '库存交易',
       'locations': '货位',
-      'inbound_receipt': '入库�?,
+      'inbound_receipt': '入库�?,
       'inbound_item': '入库明细',
-      'outbound_receipt': '出库�?,
+      'outbound_receipt': '出库�?,
       'outbound_item': '出库明细',
-      'purchase_order': '采购�?,
+      'purchase_order': '采购�?,
       'purchase_order_item': '采购明细',
-      'sales_transaction': '销售交�?,
-      'sales_transaction_item': '销售明�?,
+      'sales_transaction': '销售交�?,
+      'sales_transaction_item': '销售明�?,
       'barcode': '条码',
     };
     return tableNames[tableName] ?? tableName;
@@ -52844,7 +52844,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../../domain/models/restore_result.dart';
 
-/// 恢复结果对话�?
+/// 恢复结果对话�?
 class RestoreResultDialog extends StatelessWidget {
   final RestoreResult result;
   final VoidCallback onClose;
@@ -52898,7 +52898,7 @@ class RestoreResultDialog extends StatelessWidget {
         if (result.success)
           TextButton(
             onPressed: () {
-              // 可以添加查看详细日志的功�?
+              // 可以添加查看详细日志的功�?
             },
             child: const Text('查看详情'),
           ),
@@ -52938,7 +52938,7 @@ class RestoreResultDialog extends StatelessWidget {
               ),
               const SizedBox(height: 4),
               Text(
-                '成功恢复 ${result.totalRecordsRestored} 条记�?,
+                '成功恢复 ${result.totalRecordsRestored} 条记�?,
                 style: Theme.of(context).textTheme.bodyMedium,
               ),
               Text(
@@ -52974,7 +52974,7 @@ class RestoreResultDialog extends StatelessWidget {
                   ),
                   const SizedBox(width: 8),
                   Text(
-                    '${entry.value} �?,
+                    '${entry.value} �?,
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
                       fontWeight: FontWeight.w500,
                     ),
@@ -53030,16 +53030,16 @@ class RestoreResultDialog extends StatelessWidget {
         
         const SizedBox(height: 16),
         Text(
-          '建议解决方案�?,
+          '建议解决方案�?,
           style: Theme.of(context).textTheme.titleSmall?.copyWith(
             fontWeight: FontWeight.w600,
           ),
         ),
         const SizedBox(height: 8),
-        const Text('�?检查备份文件是否完整且未损�?),
-        const Text('�?确认密码是否正确（如果文件已加密�?),
-        const Text('�?检查设备存储空间是否充�?),
-        const Text('�?尝试重新选择备份文件'),
+        const Text('�?检查备份文件是否完整且未损�?),
+        const Text('�?确认密码是否正确（如果文件已加密�?),
+        const Text('�?检查设备存储空间是否充�?),
+        const Text('�?尝试重新选择备份文件'),
       ],
     );
   }
@@ -53077,7 +53077,7 @@ class RestoreResultDialog extends StatelessWidget {
             Padding(
               padding: const EdgeInsets.only(bottom: 2),
               child: Text(
-                '�?$warning',
+                '�?$warning',
                 style: Theme.of(context).textTheme.bodySmall,
               ),
             ),
@@ -53100,11 +53100,11 @@ class RestoreResultDialog extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 8),
-        _buildDetailRow(context, '开始时�?, timeFormat.format(result.startTime)),
+        _buildDetailRow(context, '开始时�?, timeFormat.format(result.startTime)),
         _buildDetailRow(context, '结束时间', timeFormat.format(result.endTime)),
         _buildDetailRow(context, '总耗时', durationText),
         if (result.skippedRecords > 0)
-          _buildDetailRow(context, '跳过记录', '${result.skippedRecords} �?),
+          _buildDetailRow(context, '跳过记录', '${result.skippedRecords} �?),
       ],
     );
   }
@@ -53141,11 +53141,11 @@ class RestoreResultDialog extends StatelessWidget {
     final seconds = duration.inSeconds % 60;
     
     if (hours > 0) {
-      return '$hours 小时 $minutes �?$seconds �?;
+      return '$hours 小时 $minutes �?$seconds �?;
     } else if (minutes > 0) {
-      return '$minutes �?$seconds �?;
+      return '$minutes �?$seconds �?;
     } else {
-      return '$seconds �?;
+      return '$seconds �?;
     }
   }
 
@@ -53156,20 +53156,20 @@ class RestoreResultDialog extends StatelessWidget {
       'unit': '单位',
       'unit_product': '产品单位',
       'shop': '店铺',
-      'supplier': '供应�?,
+      'supplier': '供应�?,
       'customers': '客户',
       'product_batch': '产品批次',
       'stock': '库存',
       'inventory_transaction': '库存交易',
       'locations': '货位',
-      'inbound_receipt': '入库�?,
+      'inbound_receipt': '入库�?,
       'inbound_item': '入库明细',
-      'outbound_receipt': '出库�?,
+      'outbound_receipt': '出库�?,
       'outbound_item': '出库明细',
-      'purchase_order': '采购�?,
+      'purchase_order': '采购�?,
       'purchase_order_item': '采购明细',
-      'sales_transaction': '销售交�?,
-      'sales_transaction_item': '销售明�?,
+      'sales_transaction': '销售交�?,
+      'sales_transaction_item': '销售明�?,
       'barcode': '条码',
     };
     return tableNames[tableName] ?? tableName;
@@ -53185,8 +53185,8 @@ import '../../../../core/utils/snackbar_helper.dart';
 import '../../../../core/widgets/cached_image_widget.dart';
 import '../../../../core/widgets/full_screen_image_viewer.dart';
 
-/// 数据库展示屏�?
-/// 显示数据库中所有表的数�?
+/// 数据库展示屏�?
+/// 显示数据库中所有表的数�?
 class DatabaseViewerScreen extends ConsumerStatefulWidget {
   const DatabaseViewerScreen({super.key});
 
@@ -53250,7 +53250,7 @@ class _DatabaseViewerScreenState extends ConsumerState<DatabaseViewerScreen>
     );
   }
 
-  /// 刷新所有数�?
+  /// 刷新所有数�?
   void _refreshData() {
     // 刷新产品数据
     ref.invalidate(allProductsProvider);
@@ -53258,7 +53258,7 @@ class _DatabaseViewerScreenState extends ConsumerState<DatabaseViewerScreen>
     ref.read(categoryListProvider.notifier).loadCategories();
 
     // 显示刷新提示
-    showAppSnackBar(context, message: '数据已刷�?);
+    showAppSnackBar(context, message: '数据已刷�?);
   }
 
   /// 构建产品数据页面
@@ -53309,8 +53309,8 @@ class _DatabaseViewerScreenState extends ConsumerState<DatabaseViewerScreen>
                         if (product.categoryId != null)
                           Text('类别ID: ${product.categoryId}'),
                         if (product.retailPrice != null)
-                          Text('零售�? ${product.retailPrice!.format()}'),
-                        Text('状�? ${product.status}')
+                          Text('零售�? ${product.retailPrice!.format()}'),
+                        Text('状�? ${product.status}')
                       ],
                     ),
                     isThreeLine: true,
@@ -53400,7 +53400,7 @@ class _DatabaseViewerScreenState extends ConsumerState<DatabaseViewerScreen>
                     if (category.parentId != null)
                       Text('父类别ID: ${category.parentId}')
                     else
-                      const Text('根类�?),
+                      const Text('根类�?),
                   ],
                 ),
                 trailing: Icon(
@@ -53543,11 +53543,11 @@ class _DatabaseViewerScreenState extends ConsumerState<DatabaseViewerScreen>
                       children: [
                         Text('产品单位ID: ${pu.id ?? '-'}'),
                         Text('单位ID: ${pu.unitId}'),
-                        Text('换算�? ${pu.conversionRate}'),
+                        Text('换算�? ${pu.conversionRate}'),
                         if (pu.sellingPriceInCents != null)
-                          Text('售价(�?: ${pu.sellingPriceInCents}'),
+                          Text('售价(�?: ${pu.sellingPriceInCents}'),
                         if (pu.wholesalePriceInCents != null)
-                          Text('批发�?�?: ${pu.wholesalePriceInCents}'),
+                          Text('批发�?�?: ${pu.wholesalePriceInCents}'),
                       ],
                     ),
                   ),
@@ -53577,7 +53577,7 @@ class _DatabaseViewerScreenState extends ConsumerState<DatabaseViewerScreen>
     );
   }
 
-  /// 显示全屏图片查看�?
+  /// 显示全屏图片查看�?
   void _showFullScreenImage(BuildContext context, String imagePath) {
     Navigator.of(context).push(
       PageRouteBuilder(
@@ -53603,7 +53603,7 @@ import '../../../core/database/database.dart';
 import '../../../core/utils/snackbar_helper.dart';
 import '../../../core/constants/app_routes.dart';
 
-/// 数据库管理开发工�?
+/// 数据库管理开发工�?
 /// 仅在开发模式下使用
 class DatabaseManagementScreen extends ConsumerWidget {
   const DatabaseManagementScreen({super.key});
@@ -53612,7 +53612,7 @@ class DatabaseManagementScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('数据库管�?),
+        title: const Text('数据库管�?),
         backgroundColor: Colors.orange.shade400,
         leading: IconButton(
           onPressed: () => context.go(AppRoutes.home),
@@ -53627,14 +53627,14 @@ class DatabaseManagementScreen extends ConsumerWidget {
           children: [
             const SizedBox(height: 16),
 
-            // 初始化操�?
-            Text('初始化操�?, style: Theme.of(context).textTheme.titleMedium),
+            // 初始化操�?
+            Text('初始化操�?, style: Theme.of(context).textTheme.titleMedium),
             const SizedBox(height: 8),
 
             ElevatedButton.icon(
               onPressed: () => _initializeDatabase(ref, context),
               icon: const Icon(Icons.refresh),
-              label: const Text('重新初始化所有默认数�?),
+              label: const Text('重新初始化所有默认数�?),
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.blue.shade600,
                 foregroundColor: Colors.white,
@@ -53734,7 +53734,7 @@ class DatabaseManagementScreen extends ConsumerWidget {
             Expanded(
               child: OutlinedButton(
                 onPressed: () => _showSuppliersData(context, ref),
-                child: const Text('查看供应�?),
+                child: const Text('查看供应�?),
               ),
             ),
             const SizedBox(width: 8),
@@ -53770,7 +53770,7 @@ class DatabaseManagementScreen extends ConsumerWidget {
             Expanded(
               child: OutlinedButton(
                 onPressed: () => _showSalesTransactionsData(context, ref),
-                child: const Text('查看销售交�?),
+                child: const Text('查看销售交�?),
               ),
             ),
             const SizedBox(width: 8),
@@ -53806,7 +53806,7 @@ class DatabaseManagementScreen extends ConsumerWidget {
             Expanded(
               child: OutlinedButton(
                 onPressed: () => _showOutboundReceiptsData(context, ref),
-                child: const Text('查看出库�?),
+                child: const Text('查看出库�?),
               ),
             ),
             const SizedBox(width: 8),
@@ -53836,7 +53836,7 @@ class DatabaseManagementScreen extends ConsumerWidget {
         showDialog(
           context: context,
           builder: (context) => AlertDialog(
-            title: Text('出库单数�?(${outboundReceipts.length} �?'),
+            title: Text('出库单数�?(${outboundReceipts.length} �?'),
             content: SizedBox(
               width: double.maxFinite,
               height: 500, // 设置固定高度以便滚动
@@ -53881,7 +53881,7 @@ class DatabaseManagementScreen extends ConsumerWidget {
     } catch (e) {
       print('查询出库单数据时出错: $e');
       if (context.mounted) {
-        showAppSnackBar(context, message: '�?查询失败: $e', isError: true);
+        showAppSnackBar(context, message: '�?查询失败: $e', isError: true);
       }
     }
   }
@@ -53890,11 +53890,11 @@ class DatabaseManagementScreen extends ConsumerWidget {
     try {
       await ref.read(databaseInitializationProvider.future);
       if (context.mounted) {
-        showAppSnackBar(context, message: '�?数据库初始化完成');
+        showAppSnackBar(context, message: '�?数据库初始化完成');
       }
     } catch (e) {
       if (context.mounted) {
-        showAppSnackBar(context, message: '�?初始化失�? $e', isError: true);
+        showAppSnackBar(context, message: '�?初始化失�? $e', isError: true);
       }
     }
   }
@@ -53923,11 +53923,11 @@ class DatabaseManagementScreen extends ConsumerWidget {
       try {
         await ref.read(resetDatabaseProvider(true).future);
         if (context.mounted) {
-          showAppSnackBar(context, message: '�?数据库重置完�?);
+          showAppSnackBar(context, message: '�?数据库重置完�?);
         }
       } catch (e) {
         if (context.mounted) {
-          showAppSnackBar(context, message: '�?重置失败: $e', isError: true);
+          showAppSnackBar(context, message: '�?重置失败: $e', isError: true);
         }
       }
     }
@@ -53941,7 +53941,7 @@ class DatabaseManagementScreen extends ConsumerWidget {
       showDialog(
         context: context,
         builder: (context) => AlertDialog(
-          title: Text('店铺数据 (${shops.length} �?'),
+          title: Text('店铺数据 (${shops.length} �?'),
           content: SizedBox(
             width: double.maxFinite,
             child: ListView.builder(
@@ -53976,7 +53976,7 @@ class DatabaseManagementScreen extends ConsumerWidget {
       showDialog(
         context: context,
         builder: (context) => AlertDialog(
-          title: Text('类别数据 (${categories.length} �?'),
+          title: Text('类别数据 (${categories.length} �?'),
           content: SizedBox(
             width: double.maxFinite,
             child: ListView.builder(
@@ -54010,7 +54010,7 @@ class DatabaseManagementScreen extends ConsumerWidget {
       showDialog(
         context: context,
         builder: (context) => AlertDialog(
-          title: Text('单位数据 (${units.length} �?'),
+          title: Text('单位数据 (${units.length} �?'),
           content: SizedBox(
             width: double.maxFinite,
             child: ListView.builder(
@@ -54044,7 +54044,7 @@ class DatabaseManagementScreen extends ConsumerWidget {
       showDialog(
         context: context,
         builder: (context) => AlertDialog(
-          title: Text('产品数据 (${products.length} �?'),
+          title: Text('产品数据 (${products.length} �?'),
           content: SizedBox(
             width: double.maxFinite,
             child: ListView.builder(
@@ -54054,7 +54054,7 @@ class DatabaseManagementScreen extends ConsumerWidget {
                 final product = products[index];
                 return ListTile(
                   title: Text(product.name),
-                  subtitle: Text('状�? ${product.status}'),
+                  subtitle: Text('状�? ${product.status}'),
                   trailing: Text(product.id.toString()),
                 );
               },
@@ -54079,7 +54079,7 @@ class DatabaseManagementScreen extends ConsumerWidget {
       showDialog(
         context: context,
         builder: (context) => AlertDialog(
-          title: Text('供应商数�?(${suppliers.length} �?'),
+          title: Text('供应商数�?(${suppliers.length} �?'),
           content: SizedBox(
             width: double.maxFinite,
             child: ListView.builder(
@@ -54116,7 +54116,7 @@ class DatabaseManagementScreen extends ConsumerWidget {
       showDialog(
         context: context,
         builder: (context) => AlertDialog(
-          title: Text('采购数据 (${purchases.length} �?'),
+          title: Text('采购数据 (${purchases.length} �?'),
           content: SizedBox(
             width: double.maxFinite,
             height: 400, // 设置固定高度以便滚动
@@ -54137,7 +54137,7 @@ class DatabaseManagementScreen extends ConsumerWidget {
                         Text(
                           '采购日期: ${purchase.createdAt.toString().substring(0, 16)}',
                         ),
-                        Text('状�? ${purchase.status}'),
+                        Text('状�? ${purchase.status}'),
                       ],
                     ),
                     isThreeLine: true,
@@ -54165,7 +54165,7 @@ class DatabaseManagementScreen extends ConsumerWidget {
       showDialog(
         context: context,
         builder: (context) => AlertDialog(
-          title: Text('条码数据 (${barcodes.length} �?'),
+          title: Text('条码数据 (${barcodes.length} �?'),
           content: SizedBox(
             width: double.maxFinite,
             height: 400, // 设置固定高度以便滚动
@@ -54210,7 +54210,7 @@ class DatabaseManagementScreen extends ConsumerWidget {
       showDialog(
         context: context,
         builder: (context) => AlertDialog(
-          title: Text('批次数据 (${batches.length} �?'),
+          title: Text('批次数据 (${batches.length} �?'),
           content: SizedBox(
             width: double.maxFinite,
             height: 400,
@@ -54222,7 +54222,7 @@ class DatabaseManagementScreen extends ConsumerWidget {
                 return Card(
                   margin: const EdgeInsets.symmetric(vertical: 4),
                   child: ListTile(
-                    title: Text('批次�? ${batch.id}'),
+                    title: Text('批次�? ${batch.id}'),
                     subtitle: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -54265,7 +54265,7 @@ class DatabaseManagementScreen extends ConsumerWidget {
       showDialog(
         context: context,
         builder: (context) => AlertDialog(
-          title: Text('销售交易数�?(${salesTransactions.length} �?'),
+          title: Text('销售交易数�?(${salesTransactions.length} �?'),
           content: SizedBox(
             width: double.maxFinite,
             height: 500, // 设置固定高度以便滚动
@@ -54284,12 +54284,12 @@ class DatabaseManagementScreen extends ConsumerWidget {
                         Text('客户ID: ${salesTransaction.customerId}'),
                         Text('店铺ID: ${salesTransaction.shopId}'),
                         Text(
-                          '总金�? ¥${salesTransaction.totalAmount.toStringAsFixed(2)}',
+                          '总金�? ¥${salesTransaction.totalAmount.toStringAsFixed(2)}',
                         ),
                         Text(
                           '实际金额: ¥${salesTransaction.actualAmount.toStringAsFixed(2)}',
                         ),
-                        Text('状�? ${salesTransaction.status}'),
+                        Text('状�? ${salesTransaction.status}'),
                         if (salesTransaction.remarks != null &&
                             salesTransaction.remarks!.isNotEmpty)
                           Text('备注: ${salesTransaction.remarks}'),
@@ -54326,7 +54326,7 @@ class DatabaseManagementScreen extends ConsumerWidget {
       showDialog(
         context: context,
         builder: (context) => AlertDialog(
-          title: Text('客户数据 (${customers.length} �?'),
+          title: Text('客户数据 (${customers.length} �?'),
           content: SizedBox(
             width: double.maxFinite,
             height: 400, // 设置固定高度以便滚动
@@ -54374,13 +54374,13 @@ class DatabaseManagementScreen extends ConsumerWidget {
           .get();
 
       // 添加调试日志
-      print('销售交易项数据查询结果: ${salesTransactionItems.length} 条记�?);
+      print('销售交易项数据查询结果: ${salesTransactionItems.length} 条记�?);
 
       if (context.mounted) {
         showDialog(
           context: context,
           builder: (context) => AlertDialog(
-            title: Text('销售交易项数据 (${salesTransactionItems.length} �?'),
+            title: Text('销售交易项数据 (${salesTransactionItems.length} �?'),
             content: SizedBox(
               width: double.maxFinite,
               height: 500, // 设置固定高度以便滚动
@@ -54400,8 +54400,8 @@ class DatabaseManagementScreen extends ConsumerWidget {
                         children: [
                           Text('产品ID: ${salesTransactionItem.productId}'),
                           Text('数量: ${salesTransactionItem.quantity}'),
-                          Text('价格(�?: ${salesTransactionItem.priceInCents}'),
-                          Text('批次ID: ${salesTransactionItem.batchId ?? '�?}'),
+                          Text('价格(�?: ${salesTransactionItem.priceInCents}'),
+                          Text('批次ID: ${salesTransactionItem.batchId ?? '�?}'),
                         ],
                       ),
                       isThreeLine: true,
@@ -54420,9 +54420,9 @@ class DatabaseManagementScreen extends ConsumerWidget {
         );
       }
     } catch (e) {
-      print('查询销售交易项数据时出�? $e');
+      print('查询销售交易项数据时出�? $e');
       if (context.mounted) {
-        showAppSnackBar(context, message: '�?查询失败: $e', isError: true);
+        showAppSnackBar(context, message: '�?查询失败: $e', isError: true);
       }
     }
   }
@@ -54436,7 +54436,7 @@ class DatabaseManagementScreen extends ConsumerWidget {
         showDialog(
           context: context,
           builder: (context) => AlertDialog(
-            title: Text('库存数据 (${stockItems.length} �?'),
+            title: Text('库存数据 (${stockItems.length} �?'),
             content: SizedBox(
               width: double.maxFinite,
               height: 500, // 设置固定高度以便滚动
@@ -54452,7 +54452,7 @@ class DatabaseManagementScreen extends ConsumerWidget {
                       subtitle: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text('批次ID: ${stock.batchId ?? '�?}'),
+                          Text('批次ID: ${stock.batchId ?? '�?}'),
                           Text('数量: ${stock.quantity}'),
                           Text('店铺ID: ${stock.shopId}'),
                         ],
@@ -54473,9 +54473,9 @@ class DatabaseManagementScreen extends ConsumerWidget {
         );
       }
     } catch (e) {
-      print('查询库存数据时出�? $e');
+      print('查询库存数据时出�? $e');
       if (context.mounted) {
-        showAppSnackBar(context, message: '�?查询失败: $e', isError: true);
+        showAppSnackBar(context, message: '�?查询失败: $e', isError: true);
       }
     }
   }
@@ -54492,7 +54492,7 @@ class DatabaseManagementScreen extends ConsumerWidget {
         showDialog(
           context: context,
           builder: (context) => AlertDialog(
-            title: Text('产品单位数据 (${productUnits.length} �?'),
+            title: Text('产品单位数据 (${productUnits.length} �?'),
             content: SizedBox(
               width: double.maxFinite,
               height: 500,
@@ -54510,14 +54510,14 @@ class DatabaseManagementScreen extends ConsumerWidget {
                         children: [
                           Text('产品ID: ${productUnit.productId}'),
                           Text('单位ID: ${productUnit.unitId}'),
-                          Text('换算�? ${productUnit.conversionRate}'),
+                          Text('换算�? ${productUnit.conversionRate}'),
                           if (productUnit.sellingPriceInCents != null)
                             Text(
                               '售价: ¥${(productUnit.sellingPriceInCents! / 100).toStringAsFixed(2)}',
                             ),
                           if (productUnit.wholesalePriceInCents != null)
                             Text(
-                              '批发�? ¥${(productUnit.wholesalePriceInCents! / 100).toStringAsFixed(2)}',
+                              '批发�? ¥${(productUnit.wholesalePriceInCents! / 100).toStringAsFixed(2)}',
                             ),
                           Text(
                             '更新时间: ${productUnit.lastUpdated.toString().substring(0, 16)}',
@@ -54540,9 +54540,9 @@ class DatabaseManagementScreen extends ConsumerWidget {
         );
       }
     } catch (e) {
-      print('查询产品单位数据时出�? $e');
+      print('查询产品单位数据时出�? $e');
       if (context.mounted) {
-        showAppSnackBar(context, message: '�?查询失败: $e', isError: true);
+        showAppSnackBar(context, message: '�?查询失败: $e', isError: true);
       }
     }
   }
@@ -54563,14 +54563,14 @@ class HomeScreen extends ConsumerStatefulWidget {
 class _HomeScreenState extends ConsumerState<HomeScreen> {
   // Removed unused method _scanAndShowProductDialog - functionality may be implemented elsewhere
 
-  // 隐私弹窗已由 AppInitializer 统一处理，这里不再重复处理�?
+  // 隐私弹窗已由 AppInitializer 统一处理，这里不再重复处理�?
 
   @override
   Widget build(BuildContext context) {
     final ref = this.ref;
     final flavorConfig = ref.watch(flavorConfigProvider);
     return Scaffold(
-      appBar: AppBar(title: const Text('铺得�?- 首页')),
+      appBar: AppBar(title: const Text('铺得�?- 首页')),
       body: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16.0),
         child: Column(
@@ -54578,7 +54578,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           children: [
             const SizedBox(height: 20),
             const Text(
-              '欢迎使用 铺得�?库存管理系统',
+              '欢迎使用 铺得�?库存管理系统',
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 24,
@@ -54621,7 +54621,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   ),
                   ElevatedButton(
                     onPressed: () => context.push(AppRoutes.inboundCreate),
-                    child: const Text('新建入库�?),
+                    child: const Text('新建入库�?),
                   ),
                   ElevatedButton(
                     onPressed: () => context.push(AppRoutes.purchase),
@@ -54629,7 +54629,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   ),
                   ElevatedButton(
                     onPressed: () => context.push(AppRoutes.sales),
-                    child: const Text('销售管�?),
+                    child: const Text('销售管�?),
                   ),
                   ElevatedButton(
                     onPressed: () => context.push(AppRoutes.saleCreate),
@@ -54637,7 +54637,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       backgroundColor: Colors.green,
                       foregroundColor: Colors.white,
                     ),
-                    child: const Text('收银�?),
+                    child: const Text('收银�?),
                   ),
                   ElevatedButton(
                     onPressed: () => context.push(AppRoutes.customers),
@@ -54659,7 +54659,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                         backgroundColor: Colors.orange.shade600,
                         foregroundColor: Colors.white,
                       ),
-                      child: const Text('数据库管�?),
+                      child: const Text('数据库管�?),
                     ),
                     ElevatedButton(
                       onPressed: () =>
@@ -54754,9 +54754,9 @@ class InboundItemState {
   }
 }
 
-/// 入库列表状态通知�?
+/// 入库列表状态通知�?
 ///
-/// 管理入库项列表的状态，并提供增、删、改、查等操作�?
+/// 管理入库项列表的状态，并提供增、删、改、查等操作�?
 class InboundListNotifier extends StateNotifier<List<InboundItemState>> {
   InboundListNotifier() : super([]);
 
@@ -54770,7 +54770,7 @@ class InboundListNotifier extends StateNotifier<List<InboundItemState>> {
     state = [...items.reversed, ...state];
   }
 
-  /// 根据ID移除入库�?
+  /// 根据ID移除入库�?
   void removeItem(String itemId) {
     state = state.where((item) => item.id != itemId).toList();
   }
@@ -54783,7 +54783,7 @@ class InboundListNotifier extends StateNotifier<List<InboundItemState>> {
     ];
   }
 
-  /// 添加一个新货品，或如果已存在则更新其数�?
+  /// 添加一个新货品，或如果已存在则更新其数�?
   /// 合并策略：优先按条码匹配，如果没有条码或条码不匹配，则按产品ID+单位ID匹配
   void addOrUpdateItem({
     required ProductModel product,
@@ -54842,7 +54842,7 @@ class InboundListNotifier extends StateNotifier<List<InboundItemState>> {
 
 /// 入库列表Provider
 ///
-/// 这是UI层访�?[InboundListNotifier] 的入口�?
+/// 这是UI层访�?[InboundListNotifier] 的入口�?
 final inboundListProvider =
     StateNotifierProvider<InboundListNotifier, List<InboundItemState>>(
   (ref) => InboundListNotifier(),
@@ -54850,8 +54850,8 @@ final inboundListProvider =
 
 /// 入库统计信息Provider
 ///
-/// 派生�?[inboundListProvider]，用于高效计算总计信息�?
-/// UI可以只监听这个Provider，从而避免在列表项内容变化时进行不必要的重算�?
+/// 派生�?[inboundListProvider]，用于高效计算总计信息�?
+/// UI可以只监听这个Provider，从而避免在列表项内容变化时进行不必要的重算�?
 final inboundTotalsProvider = Provider<Map<String, double>>((ref) {
   final items = ref.watch(inboundListProvider);
   // 使用 `totalBaseQuantity` 计算基础单位总数
@@ -54862,7 +54862,7 @@ final inboundTotalsProvider = Provider<Map<String, double>>((ref) {
   return {
     'varieties': items.length.toDouble(),
     'quantity': totalQuantity,
-    'amount': totalAmountInCents / 100.0, // 将总金额从分转换为�?
+    'amount': totalAmountInCents / 100.0, // 将总金额从分转换为�?
   };
 });
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -54915,10 +54915,10 @@ class InboundService {
       _inboundItemDao = _database.inboundItemDao;
       // _productSupplierDao = _database.productSupplierDao;
 
-  /// 一键入�?
+  /// 一键入�?
   /// 1. 如果是采购模式，检查并创建供应商、创建采购单、写入货品供应商关联
-  /// 2. 写入批次�?
-  /// 3. 写入入库单表、入库单明细�?
+  /// 2. 写入批次�?
+  /// 3. 写入入库单表、入库单明细�?
   /// 4. 更新库存
   Future<String> processOneClickInbound({
     required int shopId,
@@ -54929,8 +54929,8 @@ class InboundService {
     String? supplierName,
     String? remarks,
   }) async {
-    print('🚀 开始执行一键入库流�?..');
-    print('📦 模式: ${isPurchaseMode ? "采购" : "非采�?}');
+    print('🚀 开始执行一键入库流�?..');
+    print('📦 模式: ${isPurchaseMode ? "采购" : "非采�?}');
     print('🏪 店铺ID: $shopId');
     print('📦 商品数量: ${inboundItems.length}');
     print('ℹ️ 来源: $source');
@@ -54942,7 +54942,7 @@ class InboundService {
       // 1. 将UI状态模型转换为内部处理用的元组列表
       final internalItems = await Future.wait(inboundItems.map((item) async {
         final domainModel = InboundItemModel(
-          // UI上的id是临时的，数据库中会自增，此处不�?
+          // UI上的id是临时的，数据库中会自增，此处不�?
           productId: item.productId,
           
           quantity: item.quantity,
@@ -54959,10 +54959,10 @@ class InboundService {
 
       if (isPurchaseMode) {
         // --- 采购模式下的特定逻辑 ---
-        // 允许仅提供名称时自动创建供应�?
+        // 允许仅提供名称时自动创建供应�?
         final actualSupplierId =
             await _ensureSupplierExists(supplierId, supplierName);
-        print('�?确认供应商ID: $actualSupplierId');
+        print('�?确认供应商ID: $actualSupplierId');
 
         final purchaseOrderData = await _createPurchaseOrder(
           supplierId: actualSupplierId,
@@ -54971,7 +54971,7 @@ class InboundService {
         );
         purchaseOrderId = purchaseOrderData.orderId;
         id = purchaseOrderData.orderNumber;
-        print('�?采购订单创建完成，ID: $purchaseOrderId');
+        print('�?采购订单创建完成，ID: $purchaseOrderId');
 
         // await _writeProductSupplierRecords(
         //   supplierId: actualSupplierId,
@@ -55007,7 +55007,7 @@ class InboundService {
     // 生成采购单号
     final purchaseNumber = 'PO${DateTime.now().millisecondsSinceEpoch}';
 
-    // 准备订单�?
+    // 准备订单�?
     final orderCompanion = PurchaseOrderCompanion(
       // id is auto-increment, so we don't set it.
       supplierId: drift.Value(supplierId),
@@ -55039,7 +55039,7 @@ class InboundService {
     return (orderId: orderId, orderNumber: purchaseNumber);
   }
 
-  /// 根据条件写入批次�?
+  /// 根据条件写入批次�?
   Future<void> _writeBatchRecords({
     required int shopId,
     required List<_PurchaseItem> inboundItems,
@@ -55095,11 +55095,11 @@ class InboundService {
   //             );
   //             await _productSupplierDao.updateProductSupplier(updatedRelation);
   //             print(
-  //               '📝 更新 ${item.productName}(${item.unitName}) 的供货价�? ${item.unitPriceInCents}',
+  //               '📝 更新 ${item.productName}(${item.unitName}) 的供货价�? ${item.unitPriceInCents}',
   //             );
   //           } else {
   //             print(
-  //                 '�?${item.productName}(${item.unitName}) 的供应商关联已存在，无需更新');
+  //                 '�?${item.productName}(${item.unitName}) 的供应商关联已存在，无需更新');
   //           }
   //         }
   //       } else {
@@ -55114,24 +55114,24 @@ class InboundService {
   //           supplyPrice: drift.Value(item.unitPriceInCents.toDouble()),
   //           isPrimary: const drift.Value(false),
   //           status: const drift.Value('active'),
-  //           remarks: const drift.Value('通过采购单自动创�?),
+  //           remarks: const drift.Value('通过采购单自动创�?),
   //         );
 
   //         await _productSupplierDao.insertProductSupplier(companion);
   //         print(
-  //           '�?新建货品供应商关�? ${item.productName}(${item.unitName}) - $supplierId',
+  //           '�?新建货品供应商关�? ${item.productName}(${item.unitName}) - $supplierId',
   //         );
   //       }
   //     } catch (e) {
-  //       print('�?处理 ${item.productName} 的供应商关联失败: $e');
+  //       print('�?处理 ${item.productName} 的供应商关联失败: $e');
   //       // 不抛出异常，继续处理其他商品
   //     }
   //   }
 
-  //   print('📋 货品供应商关联处理完�?);
+  //   print('📋 货品供应商关联处理完�?);
   // }
 
-  /// 写入入库单表、入库单明细�?
+  /// 写入入库单表、入库单明细�?
   Future<String> _writeInboundRecords({
     required int shopId,
     required List<_PurchaseItem> inboundItems,
@@ -55148,14 +55148,14 @@ class InboundService {
 
     final receipt = InboundReceiptCompanion(
       // id is auto-incrementing
-      status: const drift.Value('completed'), // 一键入库直接完�?
+      status: const drift.Value('completed'), // 一键入库直接完�?
       remarks: drift.Value(remarks),
       shopId: drift.Value(shopId),
       source: drift.Value(source),
     );
 
     final receiptId = await _inboundReceiptDao.insertInboundReceipt(receipt);
-    print('�?入库单创建完�? $receiptId'); // 创建入库单明细记�?
+    print('�?入库单创建完�? $receiptId'); // 创建入库单明细记�?
     final itemCompanions = <InboundItemCompanion>[];
 
     for (final item in inboundItems) {
@@ -55174,7 +55174,7 @@ class InboundService {
       }
 
       final itemCompanion = InboundItemCompanion(
-        // id 在数据库中自增，此处不需要提�?
+        // id 在数据库中自增，此处不需要提�?
         receiptId: drift.Value(receiptId),
         productId: drift.Value(item.model.productId),
         quantity: drift.Value(item.model.quantity),
@@ -55187,9 +55187,9 @@ class InboundService {
     }
 
     await _inboundItemDao.insertMultipleInboundItems(itemCompanions);
-    print('�?入库明细创建完成，共 ${itemCompanions.length} �?);
+    print('�?入库明细创建完成，共 ${itemCompanions.length} �?);
 
-  // 如果没有传入单号，则用数据库生成�?receiptId 作为回传编号
+  // 如果没有传入单号，则用数据库生成�?receiptId 作为回传编号
   return (receiptNumber ?? receiptId.toString());
   }
 
@@ -55235,7 +55235,7 @@ class InboundService {
         inboundUnitPriceInCents: item.unitPriceInCents,
       );
 
-      print('�?商品 ${item.productName} 库存和移动加权平均价格更新完�?);
+      print('�?商品 ${item.productName} 库存和移动加权平均价格更新完�?);
     }
   }
 
@@ -55250,13 +55250,13 @@ class InboundService {
         supplierId,
       );
       if (existingSupplier != null) {
-        print('�?供应商已存在: ${existingSupplier.name}');
+        print('�?供应商已存在: ${existingSupplier.name}');
         return supplierId;
       }
-      // �?ID 不存在，则尝试用名称处理
+      // �?ID 不存在，则尝试用名称处理
     }
 
-    // 2) 若无有效 ID，则必须有名�?
+    // 2) 若无有效 ID，则必须有名�?
     if (supplierName == null || supplierName.trim().isEmpty) {
       throw Exception('采购模式下需要提供供应商名称，或选择一个已有供应商');
     }
@@ -55266,7 +55266,7 @@ class InboundService {
       supplierName,
     );
     if (supplierByName != null) {
-      print('�?找到重名供应商，使用现有供应�? ${supplierByName.name}');
+      print('�?找到重名供应商，使用现有供应�? ${supplierByName.name}');
       return supplierByName.id!;
     }
 
@@ -55275,16 +55275,16 @@ class InboundService {
 
     try {
       final newId = await _supplierRepository.addSupplier(newSupplier);
-      print('�?自动创建新供应商: ${newSupplier.name} (ID: $newId)');
+      print('�?自动创建新供应商: ${newSupplier.name} (ID: $newId)');
       return newId;
     } catch (e) {
-      print('�?创建供应商失�? $e');
-      throw Exception('创建供应商失�? $e');
+      print('�?创建供应商失�? $e');
+      throw Exception('创建供应商失�? $e');
     }
   }
 }
 
-/// 入库服务提供�?
+/// 入库服务提供�?
 final inboundServiceProvider = Provider<InboundService>((ref) {
   final database = ref.watch(appDatabaseProvider);
   final inventoryService = ref.watch(inventoryServiceProvider);
@@ -55298,19 +55298,19 @@ import '../../../../core/database/inbound_receipt_items_table.dart';
 
 part 'inbound_item_dao.g.dart';
 
-/// 入库单明细数据访问对�?
+/// 入库单明细数据访问对�?
 /// 负责处理入库单明细表的数据库操作
 @DriftAccessor(tables: [InboundItem])
 class InboundItemDao extends DatabaseAccessor<AppDatabase>
     with _$InboundItemDaoMixin {
   InboundItemDao(super.db);
 
-  /// 插入入库单明�?
+  /// 插入入库单明�?
   Future<int> insertInboundItem(InboundItemCompanion item) async {
     return await into(inboundItem).insert(item);
   }
 
-  /// 批量插入入库单明�?
+  /// 批量插入入库单明�?
   Future<void> insertMultipleInboundItems(
     List<InboundItemCompanion> items,
   ) async {
@@ -55319,28 +55319,28 @@ class InboundItemDao extends DatabaseAccessor<AppDatabase>
     });
   }
 
-  /// 根据ID获取入库单明�?
+  /// 根据ID获取入库单明�?
   Future<InboundItemData?> getInboundItemById(int id) {
     return (select(
       inboundItem,
     )..where((t) => t.id.equals(id))).getSingleOrNull();
   }
 
-  /// 根据入库单ID获取所有明�?
+  /// 根据入库单ID获取所有明�?
   Future<List<InboundItemData>> getInboundItemsByReceiptId(int receiptId) {
     return (select(
       inboundItem,
     )..where((t) => t.receiptId.equals(receiptId))).get();
   }
 
-  /// 监听入库单明细变�?
+  /// 监听入库单明细变�?
   Stream<List<InboundItemData>> watchInboundItemsByReceiptId(int receiptId) {
     return (select(
       inboundItem,
     )..where((t) => t.receiptId.equals(receiptId))).watch();
   }
 
-  /// 更新入库单明�?
+  /// 更新入库单明�?
   Future<bool> updateInboundItem(InboundItemCompanion item) async {
     final result = await (update(
       inboundItem,
@@ -55348,12 +55348,12 @@ class InboundItemDao extends DatabaseAccessor<AppDatabase>
     return result > 0;
   }
 
-  /// 删除入库单明�?
+  /// 删除入库单明�?
   Future<int> deleteInboundItem(int id) {
     return (delete(inboundItem)..where((t) => t.id.equals(id))).go();
   }
 
-  /// 删除入库单的所有明�?
+  /// 删除入库单的所有明�?
   Future<int> deleteInboundItemsByReceiptId(int receiptId) {
     return (delete(
       inboundItem,
@@ -55367,7 +55367,7 @@ class InboundItemDao extends DatabaseAccessor<AppDatabase>
     )..where((t) => t.productId.equals(productId))).get();
   }
 
-  /// 根据批次号获取入库明�?
+  /// 根据批次号获取入库明�?
   Future<List<InboundItemData>> getInboundItemsByBatchNumber(int id) {
     return (select(
       inboundItem,
@@ -55384,7 +55384,7 @@ class InboundItemDao extends DatabaseAccessor<AppDatabase>
     return result.read(inboundItem.id.count()) ?? 0;
   }
 
-  /// 获取入库单总数�?
+  /// 获取入库单总数�?
   Future<double> getInboundTotalQuantity(int receiptId) async {
     final result =
         await (selectOnly(inboundItem)
@@ -55402,7 +55402,7 @@ class InboundItemDao extends DatabaseAccessor<AppDatabase>
     await transaction(() async {
       // 删除现有明细
       await deleteInboundItemsByReceiptId(receiptId);
-      // 插入新明�?
+      // 插入新明�?
       if (items.isNotEmpty) {
         await insertMultipleInboundItems(items);
       }
@@ -55431,26 +55431,26 @@ import '../../../../core/database/inbound_receipts_table.dart';
 
 part 'inbound_receipt_dao.g.dart';
 
-/// 入库单数据访问对�?
+/// 入库单数据访问对�?
 /// 负责处理入库单表的数据库操作
 @DriftAccessor(tables: [InboundReceipt])
 class InboundReceiptDao extends DatabaseAccessor<AppDatabase>
     with _$InboundReceiptDaoMixin {
   InboundReceiptDao(super.db);
 
-  /// 插入入库�?
+  /// 插入入库�?
   Future<int> insertInboundReceipt(InboundReceiptCompanion receipt) async {
     return await into(inboundReceipt).insert(receipt);
   }
 
-  /// 根据ID获取入库�?
+  /// 根据ID获取入库�?
   Future<InboundReceiptData?> getInboundReceiptById(int id) {
     return (select(
       inboundReceipt,
     )..where((t) => t.id.equals(id))).getSingleOrNull();
   }
 
-  // /// 根据入库单号获取入库�?
+  // /// 根据入库单号获取入库�?
   // Future<InboundReceiptData?> getInboundReceiptByNumber(
   //   String receiptNumber,
   // ) {
@@ -55464,7 +55464,7 @@ class InboundReceiptDao extends DatabaseAccessor<AppDatabase>
     return select(inboundReceipt).get();
   }
 
-  /// 根据店铺ID获取入库�?
+  /// 根据店铺ID获取入库�?
   Future<List<InboundReceiptData>> getInboundReceiptsByShop(int shopId) {
     return (select(
       inboundReceipt,
@@ -55490,7 +55490,7 @@ class InboundReceiptDao extends DatabaseAccessor<AppDatabase>
     )..where((t) => t.shopId.equals(shopId))).watch();
   }
 
-  /// 更新入库�?
+  /// 更新入库�?
   Future<bool> updateInboundReceipt(InboundReceiptCompanion receipt) async {
     final result = await (update(
       inboundReceipt,
@@ -55498,7 +55498,7 @@ class InboundReceiptDao extends DatabaseAccessor<AppDatabase>
     return result > 0;
   }
 
-  /// 删除入库�?
+  /// 删除入库�?
   Future<int> deleteInboundReceipt(int id) {
     return (delete(inboundReceipt)..where((t) => t.id.equals(id))).go();
   }
@@ -55511,7 +55511,7 @@ class InboundReceiptDao extends DatabaseAccessor<AppDatabase>
     return result.read(inboundReceipt.id.count()) ?? 0;
   }
 
-  /// 根据日期范围获取入库�?
+  /// 根据日期范围获取入库�?
   Future<List<InboundReceiptData>> getInboundReceiptsByDateRange(
     DateTime startDate,
     DateTime endDate,
@@ -55539,7 +55539,7 @@ import '../../../../core/database/locations_table.dart';
 part 'location_dao.g.dart';
 
 /// 货位数据访问对象
-/// 负责处理货位表的数据库操�?
+/// 负责处理货位表的数据库操�?
 @DriftAccessor(tables: [LocationsTable])
 class LocationDao extends DatabaseAccessor<AppDatabase>
     with _$LocationDaoMixin {
@@ -55564,7 +55564,7 @@ class LocationDao extends DatabaseAccessor<AppDatabase>
         .getSingleOrNull();
   }
 
-  /// 获取所有货�?
+  /// 获取所有货�?
   Future<List<LocationsTableData>> getAllLocations() {
     return select(locationsTable).get();
   }
@@ -55576,7 +55576,7 @@ class LocationDao extends DatabaseAccessor<AppDatabase>
     )..where((t) => t.shopId.equals(shopId))).get();
   }
 
-  /// 根据状态获取货�?
+  /// 根据状态获取货�?
   Future<List<LocationsTableData>> getLocationsByStatus(String status) {
     return (select(
       locationsTable,
@@ -55590,12 +55590,12 @@ class LocationDao extends DatabaseAccessor<AppDatabase>
     )..where((t) => t.shopId.equals(shopId) & t.status.equals('active'))).get();
   }
 
-  /// 监听所有货位变�?
+  /// 监听所有货位变�?
   Stream<List<LocationsTableData>> watchAllLocations() {
     return select(locationsTable).watch();
   }
 
-  /// 监听指定店铺的货位变�?
+  /// 监听指定店铺的货位变�?
   Stream<List<LocationsTableData>> watchLocationsByShop(int shopId) {
     return (select(
       locationsTable,
@@ -55665,8 +55665,8 @@ part of 'location_dao.dart';
 mixin _$LocationDaoMixin on DatabaseAccessor<AppDatabase> {
   $LocationsTableTable get locationsTable => attachedDatabase.locationsTable;
 }
-/// 入库单明�?领域模型（freezed�?
-/// 对应�? InboundItem (lib/core/database/inbound_receipt_items_table.dart)
+/// 入库单明�?领域模型（freezed�?
+/// 对应�? InboundItem (lib/core/database/inbound_receipt_items_table.dart)
 library;
 import 'package:freezed_annotation/freezed_annotation.dart';
 
@@ -55682,7 +55682,7 @@ abstract class InboundItemModel with _$InboundItemModel {
     /// 可能尚未持久化，因而为可空
     int? id,
 
-    /// 所属入库单ID（新建时可能为空，保存后回填�?
+    /// 所属入库单ID（新建时可能为空，保存后回填�?
     int? receiptId,
 
     /// 商品ID（必填）
@@ -55693,17 +55693,17 @@ abstract class InboundItemModel with _$InboundItemModel {
     /// 批次号（可空，空批次与有批次的唯一性策略不同）
     int? batchId,
 
-    /// 数量�? 0�?
+    /// 数量�? 0�?
     required int quantity,
   }) = _InboundItemModel;
 
   factory InboundItemModel.fromJson(Map<String, dynamic> json) =>
       _$InboundItemModelFromJson(json);
 
-  /// 生成用于判定同一入库单中的“唯一性键�?
+  /// 生成用于判定同一入库单中的“唯一性键�?
   /// 唯一性与表约束一致：
-  /// - �?id 非空：唯一�?= (receiptId, productId, unitId, id)
-  /// - �?id 为空：唯一�?= (receiptId, productId, unitId, null)
+  /// - �?id 非空：唯一�?= (receiptId, productId, unitId, id)
+  /// - �?id 为空：唯一�?= (receiptId, productId, unitId, null)
   String uniqueKey({int? overrideReceiptId}) {
     final rid = overrideReceiptId ?? receiptId;
     return '${rid ?? 'null'}#$productId#${id ?? 'null'}';
@@ -55737,9 +55737,9 @@ T _$identity<T>(T value) => value;
 mixin _$InboundItemModel {
 
 /// 可能尚未持久化，因而为可空
- int? get id;/// 所属入库单ID（新建时可能为空，保存后回填�? int? get receiptId;/// 商品ID（必填）
+ int? get id;/// 所属入库单ID（新建时可能为空，保存后回填�? int? get receiptId;/// 商品ID（必填）
  int get productId;/// 批次号（可空，空批次与有批次的唯一性策略不同）
- int? get batchId;/// 数量�? 0�? int get quantity;
+ int? get batchId;/// 数量�? 0�? int get quantity;
 /// Create a copy of InboundItemModel
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -55812,12 +55812,12 @@ class _InboundItemModel extends InboundItemModel {
 
 /// 可能尚未持久化，因而为可空
 @override final  int? id;
-/// 所属入库单ID（新建时可能为空，保存后回填�?@override final  int? receiptId;
+/// 所属入库单ID（新建时可能为空，保存后回填�?@override final  int? receiptId;
 /// 商品ID（必填）
 @override final  int productId;
 /// 批次号（可空，空批次与有批次的唯一性策略不同）
 @override final  int? batchId;
-/// 数量�? 0�?@override final  int quantity;
+/// 数量�? 0�?@override final  int quantity;
 
 /// Create a copy of InboundItemModel
 /// with the given fields replaced by the non-null parameter values.
@@ -55909,8 +55909,8 @@ Map<String, dynamic> _$InboundItemModelToJson(_InboundItemModel instance) =>
       'batchId': instance.batchId,
       'quantity': instance.quantity,
     };
-/// 入库�?领域模型（freezed�?
-/// 对应�? InboundReceipt (lib/core/database/inbound_receipts_table.dart)
+/// 入库�?领域模型（freezed�?
+/// 对应�? InboundReceipt (lib/core/database/inbound_receipts_table.dart)
 library;
 
 import 'package:freezed_annotation/freezed_annotation.dart';
@@ -55946,7 +55946,7 @@ abstract class InboundReceiptModel with _$InboundReceiptModel {
     required DateTime createdAt,
     required DateTime updatedAt,
 
-    /// 明细列表（仅领域层维护，不对应表字段�?
+    /// 明细列表（仅领域层维护，不对应表字段�?
     @Default(<InboundItemModel>[]) List<InboundItemModel> items,
   }) = _InboundReceiptModel;
 
@@ -55967,7 +55967,7 @@ abstract class InboundReceiptModel with _$InboundReceiptModel {
     return json;
   }
 
-  /// 状态辅�?
+  /// 状态辅�?
   bool get isPreset => status == InboundReceiptStatus.preset;
   bool get isDraft => status == InboundReceiptStatus.draft;
   bool get isCompleted => status == InboundReceiptStatus.completed;
@@ -56005,7 +56005,7 @@ abstract class InboundReceiptModel with _$InboundReceiptModel {
     return copyWith(items: map.values.toList(growable: false));
   }
 
-  /// 移除明细（按唯一性键�?
+  /// 移除明细（按唯一性键�?
   InboundReceiptModel removeItem(InboundItemModel item) {
     final key = item.uniqueKey(overrideReceiptId: id);
     final next = items
@@ -56014,7 +56014,7 @@ abstract class InboundReceiptModel with _$InboundReceiptModel {
     return copyWith(items: next);
   }
 
-  /// 更新某条明细（按唯一性键定位�?
+  /// 更新某条明细（按唯一性键定位�?
   InboundReceiptModel updateItem(InboundItemModel item) {
     final key = item.uniqueKey(overrideReceiptId: id);
     final next = items
@@ -56030,7 +56030,7 @@ abstract class InboundReceiptModel with _$InboundReceiptModel {
       'InboundReceiptModel(id: ${id?.toString() ?? 'null'}, shopId: $shopId, status: $status, items: ${items.length})';
 }
 
-/// 状态常量集中定义，避免硬编�?
+/// 状态常量集中定义，避免硬编�?
 class InboundReceiptStatus {
   static const String preset = 'preset';
   static const String draft = 'draft';
@@ -56070,7 +56070,7 @@ mixin _$InboundReceiptModel {
  int? get purchaseOrderId;/// 状态：preset, draft, completed
  String get status;/// 备注
  String? get remarks;/// 创建/更新时间
- DateTime get createdAt; DateTime get updatedAt;/// 明细列表（仅领域层维护，不对应表字段�?@JsonKey(toJson: _itemsToJson, fromJson: _itemsFromJson) List<InboundItemModel> get items;
+ DateTime get createdAt; DateTime get updatedAt;/// 明细列表（仅领域层维护，不对应表字段�?@JsonKey(toJson: _itemsToJson, fromJson: _itemsFromJson) List<InboundItemModel> get items;
 /// Create a copy of InboundReceiptModel
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -56156,8 +56156,8 @@ class _InboundReceiptModel extends InboundReceiptModel {
 /// 创建/更新时间
 @override final  DateTime createdAt;
 @override final  DateTime updatedAt;
-/// 明细列表（仅领域层维护，不对应表字段�? final  List<InboundItemModel> _items;
-/// 明细列表（仅领域层维护，不对应表字段�?@override@JsonKey(toJson: _itemsToJson, fromJson: _itemsFromJson) List<InboundItemModel> get items {
+/// 明细列表（仅领域层维护，不对应表字段�? final  List<InboundItemModel> _items;
+/// 明细列表（仅领域层维护，不对应表字段�?@override@JsonKey(toJson: _itemsToJson, fromJson: _itemsFromJson) List<InboundItemModel> get items {
   if (_items is EqualUnmodifiableListView) return _items;
   // ignore: implicit_dynamic_type
   return EqualUnmodifiableListView(_items);
@@ -56288,17 +56288,17 @@ class Location {
     required this.updatedAt,
   });
 
-  /// 货位状态常�?
+  /// 货位状态常�?
   static const String statusActive = 'active';
   static const String statusInactive = 'inactive';
 
-  /// 状态显示名称映�?
+  /// 状态显示名称映�?
   static const Map<String, String> statusNames = {
     statusActive: '活跃',
     statusInactive: '停用',
   };
 
-  /// 获取状态显示名�?
+  /// 获取状态显示名�?
   String get statusDisplayName => statusNames[status] ?? status;
 
   /// 是否活跃
@@ -56307,7 +56307,7 @@ class Location {
   /// 是否停用
   bool get isInactive => status == statusInactive;
 
-  /// 复制并更新货�?
+  /// 复制并更新货�?
   Location copyWith({
     String? id,
     String? code,
@@ -56330,7 +56330,7 @@ class Location {
     );
   }
 
-  /// 创建新货�?
+  /// 创建新货�?
   factory Location.create({
     required String code,
     required String name,
@@ -56338,7 +56338,7 @@ class Location {
     required int shopId,
   }) {
     final now = DateTime.now();
-    // 使用微秒、对象哈希码和随机数确保ID唯一�?
+    // 使用微秒、对象哈希码和随机数确保ID唯一�?
     final uniqueId = 'location_${now.microsecondsSinceEpoch}_${Object().hashCode}';
     return Location(
       id: uniqueId,
@@ -56352,7 +56352,7 @@ class Location {
     );
   }
 
-  /// 获取完整显示名称（编�?- 名称�?
+  /// 获取完整显示名称（编�?- 名称�?
   String get fullDisplayName => '$code - $name';
 
   @override
@@ -56373,37 +56373,37 @@ export 'inbound_receipt.dart';
 export 'location.dart';
 import '../model/inbound_item.dart';
 
-/// 入库单明细仓储接�?
+/// 入库单明细仓储接�?
 /// 定义入库单明细相关的业务操作规范
 abstract class IInboundItemRepository {
-  /// 添加入库单明�?
+  /// 添加入库单明�?
   Future<int> addInboundItem(InboundItemModel item);
 
-  /// 批量添加入库单明�?
+  /// 批量添加入库单明�?
   Future<void> addMultipleInboundItems(List<InboundItemModel> items);
 
-  /// 根据ID获取入库单明�?
+  /// 根据ID获取入库单明�?
   Future<InboundItemModel?> getInboundItemById(int id);
 
-  /// 根据入库单ID获取所有明�?
+  /// 根据入库单ID获取所有明�?
   Future<List<InboundItemModel>> getInboundItemsByReceiptId(int receiptId);
 
-  /// 监听入库单明细变�?
+  /// 监听入库单明细变�?
   Stream<List<InboundItemModel>> watchInboundItemsByReceiptId(int receiptId);
 
-  /// 更新入库单明�?
+  /// 更新入库单明�?
   Future<bool> updateInboundItem(InboundItemModel item);
 
-  /// 删除入库单明�?
+  /// 删除入库单明�?
   Future<int> deleteInboundItem(int id);
 
-  /// 删除入库单的所有明�?
+  /// 删除入库单的所有明�?
   Future<int> deleteInboundItemsByReceiptId(int receiptId);
 
   /// 根据商品ID获取入库明细
   Future<List<InboundItemModel>> getInboundItemsByProductId(int productId);
 
-  /// 根据批次号获取入库明�?
+  /// 根据批次号获取入库明�?
   Future<List<InboundItemModel>> getInboundItemsByBatchNumber(int id);
 
   /// 根据货位ID获取入库明细
@@ -56412,7 +56412,7 @@ abstract class IInboundItemRepository {
   /// 获取入库单明细总数
   Future<int> getInboundItemCount(int receiptId);
 
-  /// 获取入库单总数�?
+  /// 获取入库单总数�?
   Future<double> getInboundTotalQuantity(int receiptId);
 
   /// 替换入库单明细（删除旧的，插入新的）
@@ -56420,22 +56420,22 @@ abstract class IInboundItemRepository {
 }
 import '../model/inbound_receipt.dart';
 
-/// 入库单仓储接�?
+/// 入库单仓储接�?
 /// 定义入库单相关的业务操作规范
 abstract class IInboundReceiptRepository {
-  /// 添加入库�?
+  /// 添加入库�?
   Future<int> addInboundReceipt(InboundReceiptModel receipt);
 
-  /// 根据ID获取入库�?
+  /// 根据ID获取入库�?
   Future<InboundReceiptModel?> getInboundReceiptById(int id);
 
-  /// 根据入库单号获取入库�?
+  /// 根据入库单号获取入库�?
   Future<InboundReceiptModel?> getInboundReceiptByNumber(String receiptNumber);
 
   /// 获取所有入库单
   Future<List<InboundReceiptModel>> getAllInboundReceipts();
 
-  /// 根据店铺ID获取入库�?
+  /// 根据店铺ID获取入库�?
   Future<List<InboundReceiptModel>> getInboundReceiptsByShop(int shopId);
 
   /// 根据状态获取入库单
@@ -56447,10 +56447,10 @@ abstract class IInboundReceiptRepository {
   /// 监听指定店铺的入库单变化
   Stream<List<InboundReceiptModel>> watchInboundReceiptsByShop(int shopId);
 
-  /// 更新入库�?
+  /// 更新入库�?
   Future<bool> updateInboundReceipt(InboundReceiptModel receipt);
 
-  /// 删除入库�?
+  /// 删除入库�?
   Future<int> deleteInboundReceipt(int id);
 
   /// 生成新的入库单号
@@ -56462,7 +56462,7 @@ abstract class IInboundReceiptRepository {
   /// 获取入库单总数
   Future<int> getInboundReceiptCount();
 
-  /// 根据日期范围获取入库�?
+  /// 根据日期范围获取入库�?
   Future<List<InboundReceiptModel>> getInboundReceiptsByDateRange(
     DateTime startDate,
     DateTime endDate,
@@ -56471,7 +56471,7 @@ abstract class IInboundReceiptRepository {
 import '../model/location.dart';
 
 /// 货位仓储接口
-/// 定义货位相关的业务操作规�?
+/// 定义货位相关的业务操作规�?
 abstract class ILocationRepository {
   /// 添加货位
   Future<int> addLocation(Location location);
@@ -56482,22 +56482,22 @@ abstract class ILocationRepository {
   /// 根据编码获取货位
   Future<Location?> getLocationByCode(String code, int shopId);
 
-  /// 获取所有货�?
+  /// 获取所有货�?
   Future<List<Location>> getAllLocations();
 
   /// 根据店铺ID获取货位
   Future<List<Location>> getLocationsByShop(int shopId);
 
-  /// 根据状态获取货�?
+  /// 根据状态获取货�?
   Future<List<Location>> getLocationsByStatus(String status);
 
   /// 获取活跃货位
   Future<List<Location>> getActiveLocationsByShop(int shopId);
 
-  /// 监听所有货位变�?
+  /// 监听所有货位变�?
   Stream<List<Location>> watchAllLocations();
 
-  /// 监听指定店铺的货位变�?
+  /// 监听指定店铺的货位变�?
   Stream<List<Location>> watchLocationsByShop(int shopId);
 
   /// 更新货位
@@ -56528,7 +56528,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:collection/collection.dart'; // 导入 collection �?
+import 'package:collection/collection.dart'; // 导入 collection �?
 import '../../../product/domain/model/product.dart';
 import '../../../../core/constants/app_routes.dart';
 import '../../application/provider/inbound_list_provider.dart';
@@ -56550,7 +56550,7 @@ import '../../../../core/widgets/custom_date_picker.dart';
 
 enum InboundMode { purchase, nonPurchase }
 
-/// 新建入库单页�?
+/// 新建入库单页�?
 class CreateInboundScreen extends ConsumerStatefulWidget {
   final ScannedProductPayload? payload;
   const CreateInboundScreen({super.key, this.payload});
@@ -56563,9 +56563,9 @@ class CreateInboundScreen extends ConsumerStatefulWidget {
 class _CreateInboundScreenState extends ConsumerState<CreateInboundScreen> {
   final _remarksController = TextEditingController();
   final _supplierController = TextEditingController();
-  final _sourceController = TextEditingController(); // �?来源'新增Controller
+  final _sourceController = TextEditingController(); // �?来源'新增Controller
 
-  InboundMode _currentMode = InboundMode.purchase; // 默认是采购模�?
+  InboundMode _currentMode = InboundMode.purchase; // 默认是采购模�?
   Supplier? _selectedSupplier;
   Shop? _selectedShop;
   bool _isProcessing = false;
@@ -56595,7 +56595,7 @@ class _CreateInboundScreenState extends ConsumerState<CreateInboundScreen> {
                 barcode: p.barcode,
                 wholesalePriceInCents: p.wholesalePriceInCents,
               );
-          // 可选：提示已添�?
+          // 可选：提示已添�?
           // showAppSnackBar(context, message: '已添加：${p.product.name}');
         } catch (_) {}
       }
@@ -56673,14 +56673,14 @@ class _CreateInboundScreenState extends ConsumerState<CreateInboundScreen> {
       MaterialPageRoute(builder: (context) => const ProductSelectionScreen()),
     );
 
-    // 如果没有返回结果或结果为空，则直接返�?
+    // 如果没有返回结果或结果为空，则直接返�?
     if (result == null || result.isEmpty) return;
 
     try {
-      // 核心修复�?
-      // 使用 `ref.read(provider.future)` 来异步等待数据加载完成�?
-      // 这可以确保无�?`allProductsWithUnitProvider` 是否已缓存数据，
-      // 我们都能在获取到数据后再执行后续逻辑，从而修复首次加载时数据未就绪的bug�?
+      // 核心修复�?
+      // 使用 `ref.read(provider.future)` 来异步等待数据加载完成�?
+      // 这可以确保无�?`allProductsWithUnitProvider` 是否已缓存数据，
+      // 我们都能在获取到数据后再执行后续逻辑，从而修复首次加载时数据未就绪的bug�?
       final List<
         ({
           ProductModel product,
@@ -56738,7 +56738,7 @@ class _CreateInboundScreenState extends ConsumerState<CreateInboundScreen> {
   }
 
   void _continuousScan() {
-    _lastScannedBarcode = null; // 重置上次扫描的条�?
+    _lastScannedBarcode = null; // 重置上次扫描的条�?
     Navigator.of(context).push(
       MaterialPageRoute(
         builder: (context) => Scaffold(
@@ -56746,7 +56746,7 @@ class _CreateInboundScreenState extends ConsumerState<CreateInboundScreen> {
             child: UniversalBarcodeScanner(
               config: const BarcodeScannerConfig(
                 title: '连续扫码',
-                subtitle: '将条码对准扫描框，自动连续添�?,
+                subtitle: '将条码对准扫描框，自动连续添�?,
                 continuousMode: true, // 启用连续扫码模式
                 continuousDelay: 1500, // 设置扫码间隔
               ),
@@ -56765,13 +56765,13 @@ class _CreateInboundScreenState extends ConsumerState<CreateInboundScreen> {
     final Map<int, InboundItemState> mergedItemsMap = {};
 
     for (final item in originalItems) {
-      // 异步获取完整的货品信�?
+      // 异步获取完整的货品信�?
       final product = await ref.read(
         productByIdProvider(item.productId).future,
       );
-      if (product == null) continue; // 如果找不到货品，则跳�?
+      if (product == null) continue; // 如果找不到货品，则跳�?
 
-      // 计算当前项目以基本单位（如“包”）计的总数�?
+      // 计算当前项目以基本单位（如“包”）计的总数�?
       // conversionRate 是指一个大单位（如“条”）等于多少个基本单位（如“包”）
       final baseUnitQuantity = item.quantity * item.conversionRate;
 
@@ -56784,8 +56784,8 @@ class _CreateInboundScreenState extends ConsumerState<CreateInboundScreen> {
             (existingItem.quantity * existingItem.conversionRate) +
             baseUnitQuantity;
 
-        // 计算加权平均单价（以分为单位�?
-        // (旧总价 + 新总价) / 新总数�?
+        // 计算加权平均单价（以分为单位�?
+        // (旧总价 + 新总价) / 新总数�?
         final totalCost =
             (existingItem.quantity *
                 existingItem.conversionRate *
@@ -56795,7 +56795,7 @@ class _CreateInboundScreenState extends ConsumerState<CreateInboundScreen> {
         final newUnitPrice = (totalCost / newTotalBaseQuantity).round();
 
         // 更新 Map 中的项目
-        // 查找基本单位的名�?
+        // 查找基本单位的名�?
         final baseUnitName = originalItems
             .firstWhere(
               (i) => i.productId == item.productId && i.conversionRate == 1,
@@ -56803,16 +56803,16 @@ class _CreateInboundScreenState extends ConsumerState<CreateInboundScreen> {
             )
             .unitName;
 
-        // 注意：合并后的项目将统一使用基本单位，因�?conversionRate 设为 1
+        // 注意：合并后的项目将统一使用基本单位，因�?conversionRate 设为 1
         mergedItemsMap[item.productId] = existingItem.copyWith(
           quantity: newTotalBaseQuantity,
           unitPriceInCents: newUnitPrice,
-          conversionRate: 1, // 合并后统一为基本单�?
+          conversionRate: 1, // 合并后统一为基本单�?
           unitName: baseUnitName, // 使用货品的基本单位名
         );
       } else {
         // 如果是新货品，直接添加入Map
-        // 如果当前单位不是基本单位，则转换为基本单�?
+        // 如果当前单位不是基本单位，则转换为基本单�?
         if (item.conversionRate > 1) {
           final baseUnitName = originalItems
               .firstWhere(
@@ -56833,7 +56833,7 @@ class _CreateInboundScreenState extends ConsumerState<CreateInboundScreen> {
         }
       }
     }
-    // 返回合并后的值列�?
+    // 返回合并后的值列�?
     return mergedItemsMap.values.toList();
   }
 
@@ -56877,9 +56877,9 @@ class _CreateInboundScreenState extends ConsumerState<CreateInboundScreen> {
           supplierName = _supplierController.text.trim();
         }
       } else {
-        // 非采购模�?
+        // 非采购模�?
         source = _sourceController.text.trim().isEmpty
-            ? '非采�?
+            ? '非采�?
             : _sourceController.text.trim();
         supplierId = null;
         supplierName = null;
@@ -56902,26 +56902,26 @@ class _CreateInboundScreenState extends ConsumerState<CreateInboundScreen> {
       );
 
       Navigator.of(context).pop();
-      showAppSnackBar(context, message: '�?一键入库成功！入库单号�?receiptNumber');
+      showAppSnackBar(context, message: '�?一键入库成功！入库单号�?receiptNumber');
 
-      // 核心修复：使入库记录和库存查询的Provider失效，以便在导航后刷新数�?
+      // 核心修复：使入库记录和库存查询的Provider失效，以便在导航后刷新数�?
       ref.invalidate(inboundRecordsProvider);
       ref.invalidate(inventoryQueryProvider);
 
       Future.delayed(const Duration(seconds: 1), () {
         if (mounted) {
-          // 使用 go 而不�?push, 以替换当前页面，而不是堆�?
+          // 使用 go 而不�?push, 以替换当前页面，而不是堆�?
           context.go(AppRoutes.inventoryInboundRecords);
         }
       });
     } catch (e, st) {
       Navigator.of(context).pop();
       // 打印详细堆栈以定位真正的抛错位置
-      debugPrint('�?一键入库失�? $e');
+      debugPrint('�?一键入库失�? $e');
       debugPrintStack(stackTrace: st);
       showAppSnackBar(
         context,
-        message: '�?一键入库失�? ${e.toString()}',
+        message: '�?一键入库失�? ${e.toString()}',
         isError: true,
       );
     } finally {
@@ -56942,7 +56942,7 @@ class _CreateInboundScreenState extends ConsumerState<CreateInboundScreen> {
 
       if (!mounted) return;
 
-      // 无论成功与否，都先关闭扫码页�?
+      // 无论成功与否，都先关闭扫码页�?
       Navigator.of(context).pop();
 
       if (result != null) {
@@ -56956,7 +56956,7 @@ class _CreateInboundScreenState extends ConsumerState<CreateInboundScreen> {
               barcode: barcode,
               wholesalePriceInCents: result.wholesalePriceInCents,
             );
-        // 成功添加商品后播放音�?
+        // 成功添加商品后播放音�?
         HapticFeedback.lightImpact();
         SoundHelper.playSuccessSound();
       } else {
@@ -56968,17 +56968,17 @@ class _CreateInboundScreenState extends ConsumerState<CreateInboundScreen> {
       // 关闭扫码页面
       Navigator.of(context).pop();
       // 显示错误信息
-      showAppSnackBar(context, message: '�?查询货品失败: $e', isError: true);
+      showAppSnackBar(context, message: '�?查询货品失败: $e', isError: true);
     }
   }
 
   void _handleContinuousProductScan(String barcode) async {
-    // 连续扫码去重：如果条码与上一个相同，则忽�?
+    // 连续扫码去重：如果条码与上一个相同，则忽�?
     if (barcode == _lastScannedBarcode) {
       return;
     }
 
-    // 在连续扫码模式下，不显示全局的加载提示，而是快速反�?
+    // 在连续扫码模式下，不显示全局的加载提示，而是快速反�?
     HapticFeedback.lightImpact();
     showAppSnackBar(context, message: '条码: $barcode...');
 
@@ -57001,24 +57001,24 @@ class _CreateInboundScreenState extends ConsumerState<CreateInboundScreen> {
               barcode: barcode,
               wholesalePriceInCents: result.wholesalePriceInCents,
             );
-        _lastScannedBarcode = barcode; // 仅在成功时更新上一个条�?
-        // 成功添加商品后播放音�?
+        _lastScannedBarcode = barcode; // 仅在成功时更新上一个条�?
+        // 成功添加商品后播放音�?
         SoundHelper.playSuccessSound();
-        // 成功添加后给予一个更明确的提�?
-        showAppSnackBar(context, message: '�?${result.product.name} 已添�?);
+        // 成功添加后给予一个更明确的提�?
+        showAppSnackBar(context, message: '�?${result.product.name} 已添�?);
       } else {
-        _lastScannedBarcode = null; // 如果未找到，则允许立即重�?
-        // 未找到货品时给予一个失败提�?
+        _lastScannedBarcode = null; // 如果未找到，则允许立即重�?
+        // 未找到货品时给予一个失败提�?
         showAppSnackBar(
           context,
-          message: '�?未找到条码对应的货品: $barcode',
+          message: '�?未找到条码对应的货品: $barcode',
           isError: true,
         );
       }
     } catch (e) {
       if (!mounted) return;
       _lastScannedBarcode = null; // 如果出错，则允许立即重扫
-      showAppSnackBar(context, message: '�?查询失败: $e', isError: true);
+      showAppSnackBar(context, message: '�?查询失败: $e', isError: true);
     }
   }
 
@@ -57029,9 +57029,9 @@ class _CreateInboundScreenState extends ConsumerState<CreateInboundScreen> {
         final theme = Theme.of(context);
         final textTheme = theme.textTheme;
         return AlertDialog(
-          title: Text('货品未找�?, style: textTheme.titleLarge),
+          title: Text('货品未找�?, style: textTheme.titleLarge),
           content: Text(
-            '条码 $barcode 对应的货品未在系统中找到�?,
+            '条码 $barcode 对应的货品未在系统中找到�?,
             style: textTheme.bodyMedium,
           ),
           actions: [
@@ -57066,7 +57066,7 @@ class _CreateInboundScreenState extends ConsumerState<CreateInboundScreen> {
       if (item.quantity <= 0) {
         showAppSnackBar(
           context,
-          message: '货品"${item.productName}"的数量必须大�?',
+          message: '货品"${item.productName}"的数量必须大�?',
           isError: true,
         );
         return false;
@@ -57079,7 +57079,7 @@ class _CreateInboundScreenState extends ConsumerState<CreateInboundScreen> {
         );
         return false;
       }
-      // 采购模式下，单价不能�?
+      // 采购模式下，单价不能�?
       if (_currentMode == InboundMode.purchase && item.unitPriceInCents == 0) {
         showAppSnackBar(
           context,
@@ -57130,7 +57130,7 @@ class _CreateInboundScreenState extends ConsumerState<CreateInboundScreen> {
             title: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Text(_currentMode == InboundMode.purchase ? '采购入库' : '非采购入�?),
+                Text(_currentMode == InboundMode.purchase ? '采购入库' : '非采购入�?),
                 IconButton(
                   icon: const Icon(Icons.swap_horiz_outlined),
                   tooltip: '切换模式',
@@ -57220,7 +57220,7 @@ class _CreateInboundScreenState extends ConsumerState<CreateInboundScreen> {
           ),
           const SizedBox(height: 8),
           Text(
-            '请使用下方按钮添加货品到入库�?,
+            '请使用下方按钮添加货品到入库�?,
             style: textTheme.bodyMedium?.copyWith(
               color: theme.colorScheme.onSurfaceVariant.withOpacity(0.7),
             ),
@@ -57293,7 +57293,7 @@ class _CreateInboundScreenState extends ConsumerState<CreateInboundScreen> {
           if (_currentMode == InboundMode.purchase)
             _buildTotalItem(
               textTheme,
-              '总金�?,
+              '总金�?,
               '¥${totalAmount.toStringAsFixed(2)}',
               isAmount: true,
             ),
@@ -57335,7 +57335,7 @@ class _CreateInboundScreenState extends ConsumerState<CreateInboundScreen> {
       icon: _isProcessing
           ? const SizedBox(
               width: 24,
-              height: 0, // 修复：将高度�?0 改为 24
+              height: 0, // 修复：将高度�?0 改为 24
               child: CircularProgressIndicator(
                 strokeWidth: 3,
                 color: Colors.white,
@@ -57343,14 +57343,14 @@ class _CreateInboundScreenState extends ConsumerState<CreateInboundScreen> {
             )
           : const Icon(Icons.check_circle_outline, size: 24),
       label: Text(
-        _isProcessing ? '正在入库...' : '一键入�?,
+        _isProcessing ? '正在入库...' : '一键入�?,
         style: textTheme.titleMedium?.copyWith(
           color: theme.colorScheme.onPrimary,
           fontWeight: FontWeight.bold,
         ),
       ),
       style: ElevatedButton.styleFrom(
-        // 修改：使�?padding 调整按钮高度
+        // 修改：使�?padding 调整按钮高度
         padding: const EdgeInsets.symmetric(vertical: 0),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         backgroundColor: theme.colorScheme.primary,
@@ -57421,7 +57421,7 @@ class _CreateInboundScreenState extends ConsumerState<CreateInboundScreen> {
                       crossAxisAlignment: CrossAxisAlignment.baseline,
                       textBaseline: TextBaseline.alphabetic,
                       children: [
-                        Text('供应�?', style: const TextStyle(fontSize: 17)),
+                        Text('供应�?', style: const TextStyle(fontSize: 17)),
                         const SizedBox(width: 8),
                         Expanded(
                           child: TypeAheadField<Supplier>(
@@ -57477,7 +57477,7 @@ class _CreateInboundScreenState extends ConsumerState<CreateInboundScreen> {
                             controller: _sourceController,
                             style: const TextStyle(fontSize: 15.5),
                             decoration: const InputDecoration(
-                              hintText: '输入货品来源 (可�?',
+                              hintText: '输入货品来源 (可�?',
                               isDense: true,
                               contentPadding: EdgeInsets.symmetric(vertical: 0),
                             ),
@@ -57504,7 +57504,7 @@ import '../../../../core/widgets/cached_image_widget.dart';
 import '../../application/provider/inbound_list_provider.dart';
 
 /// 入库单商品项卡片
-/// 显示商品信息、价格、数量和金额输入�?
+/// 显示商品信息、价格、数量和金额输入�?
 class InboundItemCard extends ConsumerStatefulWidget {
   final String itemId;
   final FocusNode? quantityFocusNode;
@@ -57513,7 +57513,7 @@ class InboundItemCard extends ConsumerStatefulWidget {
   final bool showPriceInfo;
 
   const InboundItemCard({
-    // 使用ValueKey确保Widget与数据项的正确绑�?
+    // 使用ValueKey确保Widget与数据项的正确绑�?
     required super.key,
     required this.itemId,
     this.quantityFocusNode,
@@ -57534,14 +57534,14 @@ class _InboundItemCardState extends ConsumerState<InboundItemCard> {
   // 为内部管理的文本框创建FocusNode
   final _unitPriceFocusNode = FocusNode();
 
-  bool _isUpdatingFromAmount = false; // 标记是否从金额更新其他字�?
+  bool _isUpdatingFromAmount = false; // 标记是否从金额更新其他字�?
 
   void _onUnitPriceFocusChange() {
     if (_unitPriceFocusNode.hasFocus) {
       // 获取焦点时清空，方便重新输入
       _unitPriceController.clear();
     } else {
-      // 失去焦点时，如果为空，则恢复为原来的�?
+      // 失去焦点时，如果为空，则恢复为原来的�?
       if (_unitPriceController.text.isEmpty) {
         final item = ref
             .read(inboundListProvider)
@@ -57581,7 +57581,7 @@ class _InboundItemCardState extends ConsumerState<InboundItemCard> {
   @override
   void initState() {
     super.initState();
-    // 监听器在initState中添�?
+    // 监听器在initState中添�?
     _unitPriceFocusNode.addListener(_onUnitPriceFocusChange);
     widget.quantityFocusNode?.addListener(_onQuantityFocusChange);
     widget.amountFocusNode?.addListener(_onAmountFocusChange);
@@ -57673,7 +57673,7 @@ class _InboundItemCardState extends ConsumerState<InboundItemCard> {
 
   @override
   Widget build(BuildContext context) {
-    // 订阅单个item的状态，当这个item变化时，只有这个card会重�?
+    // 订阅单个item的状态，当这个item变化时，只有这个card会重�?
     final item = ref.watch(
       inboundListProvider.select(
         (items) => items.firstWhere((it) => it.id == widget.itemId),
@@ -57716,7 +57716,7 @@ class _InboundItemCardState extends ConsumerState<InboundItemCard> {
             padding: const EdgeInsets.all(3),
             child: Consumer(
               builder: (context, ref, _) {
-                // 将product provider的监听提升到顶层，以便在多个地方共享其状�?
+                // 将product provider的监听提升到顶层，以便在多个地方共享其状�?
                 final productAsync = ref.watch(
                   productByIdProvider(item.productId),
                 );
@@ -57733,11 +57733,11 @@ class _InboundItemCardState extends ConsumerState<InboundItemCard> {
                     ),
                   ),
                   data: (product) {
-                    // 根据产品是否需要批次管理，决定日期选择器是否可�?
+                    // 根据产品是否需要批次管理，决定日期选择器是否可�?
                     final bool isDatePickerVisible =
                         product?.enableBatchManagement == true;
 
-                    // 根据日期选择器的可见性，动态调整垂直对齐方�?
+                    // 根据日期选择器的可见性，动态调整垂直对齐方�?
                     return Row(
                       crossAxisAlignment: isDatePickerVisible
                           ? CrossAxisAlignment.start
@@ -57762,7 +57762,7 @@ class _InboundItemCardState extends ConsumerState<InboundItemCard> {
                         ),
                         const SizedBox(width: 8),
 
-                        // --- 右侧信息�?---
+                        // --- 右侧信息�?---
                         Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
@@ -57822,7 +57822,7 @@ class _InboundItemCardState extends ConsumerState<InboundItemCard> {
 
                               const SizedBox(height: 3),
 
-                              // 第二行：价格、数量、金�?(仅采购入�?
+                              // 第二行：价格、数量、金�?(仅采购入�?
                               if (widget.showPriceInfo)
                                 Row(
                                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -58083,7 +58083,7 @@ class InventoryService {
   InventoryService(this._inventoryRepository, this._transactionRepository, this._db);
 
   /// 入库操作
-  /// 增加库存数量并记录入库流�?
+  /// 增加库存数量并记录入库流�?
   Future<bool> inbound({
     required int productId,
     required int shopId,
@@ -58092,14 +58092,14 @@ class InventoryService {
     DateTime? time,
   }) async {
     try {
-      // 事务内：变更库存 + 写流�?
+      // 事务内：变更库存 + 写流�?
       return await _db.transaction(() async {
-      // �?产品+店铺+批次 维度检查库存是否存�?
+      // �?产品+店铺+批次 维度检查库存是否存�?
       var inventory = await _inventoryRepository
           .getInventoryByProductShopAndBatch(productId, shopId, batchId);
 
       if (inventory == null) {
-        // 如果库存不存在，创建新库存记�?
+        // 如果库存不存在，创建新库存记�?
         inventory = StockModel.create(
           productId: productId,
           quantity: quantity,
@@ -58108,7 +58108,7 @@ class InventoryService {
         );
         await _inventoryRepository.addInventory(inventory);
       } else {
-        // 如果库存存在，增加库存数�?
+        // 如果库存存在，增加库存数�?
         final ok = await _inventoryRepository.addInventoryQuantityByBatch(
           productId,
           shopId,
@@ -58129,13 +58129,13 @@ class InventoryService {
       return true;
       });
     } catch (e) {
-      print('📦 库存服务：入库操作失�? $e');
+      print('📦 库存服务：入库操作失�? $e');
       return false;
     }
   }
 
   /// 出库操作
-  /// 减少库存数量并记录出库流�?
+  /// 减少库存数量并记录出库流�?
   Future<bool> outbound({
     required int productId,
     required int shopId,
@@ -58145,13 +58145,13 @@ class InventoryService {
   }) async {
     try {
   return await _db.transaction(() async {
-        // 检查库存记录是否存�?
+        // 检查库存记录是否存�?
         var inventory = await _inventoryRepository
             .getInventoryByProductShopAndBatch(productId, shopId, batchId);
         
         if (inventory == null) {
-          // 如果库存记录不存在，创建初始库存�?的记�?
-          print('📦 库存服务：产�?$productId 在店�?$shopId 的库存记录不存在，创建初始记�?);
+          // 如果库存记录不存在，创建初始库存�?的记�?
+          print('📦 库存服务：产�?$productId 在店�?$shopId 的库存记录不存在，创建初始记�?);
           inventory = StockModel.create(
             productId: productId,
             quantity: 0,
@@ -58161,7 +58161,7 @@ class InventoryService {
           await _inventoryRepository.addInventory(inventory);
         }
         
-        // 减少库存数量（允许负库存�?
+        // 减少库存数量（允许负库存�?
         final ok = batchId != null
             ? await _inventoryRepository.subtractInventoryQuantityByBatch(
                 productId,
@@ -58187,13 +58187,13 @@ class InventoryService {
         return true;
       });
     } catch (e) {
-      print('📦 库存服务：出库操作失�? $e');
+      print('📦 库存服务：出库操作失�? $e');
       return false;
     }
   }
 
   /// 库存调整
-  /// 调整库存数量并记录调整流�?
+  /// 调整库存数量并记录调整流�?
   Future<bool> adjust({
     required int productId,
     required int shopId,
@@ -58226,7 +58226,7 @@ class InventoryService {
         return true;
       });
     } catch (e) {
-      print('📦 库存服务：库存调整失�? $e');
+      print('📦 库存服务：库存调整失�? $e');
       return false;
     }
   }
@@ -58239,7 +58239,7 @@ class InventoryService {
     );
   }
 
-  /// 获取店铺所有库�?
+  /// 获取店铺所有库�?
   Future<List<StockModel>> getShopInventory(int shopId) async {
     return await _inventoryRepository.getInventoryByShop(shopId);
   }
@@ -58249,7 +58249,7 @@ class InventoryService {
     return await _inventoryRepository.getInventoryByProduct(productId);
   }
 
-  /// 获取低库存预警列�?
+  /// 获取低库存预警列�?
   Future<List<StockModel>> getLowStockInventory(
     int shopId,
     int warningLevel,
@@ -58313,7 +58313,7 @@ class InventoryService {
     required int quantity,
     required int shopId,
   }) async {
-    // 以“目标量-当前量”为调整额，复用 adjust（允许负库存�?
+    // 以“目标量-当前量”为调整额，复用 adjust（允许负库存�?
     final inventory = await _inventoryRepository.getInventoryByProductAndShop(
       productId,
       shopId,
@@ -58341,7 +58341,7 @@ final inventoryServiceProvider = Provider<InventoryService>((ref) {
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/database/database.dart';
 
-/// 根据批次号获取批次信�?
+/// 根据批次号获取批次信�?
 final batchByNumberProvider =
     FutureProvider.family<ProductBatchData?, int>((ref, id) async {
   final db = ref.watch(appDatabaseProvider);
@@ -58352,10 +58352,10 @@ import '../../domain/model/shop.dart';
 import '../../domain/repository/i_shop_repository.dart';
 import '../../data/repository/shop_repository.dart';
 
-/// 店铺操作状�?
+/// 店铺操作状�?
 enum ShopOperationStatus { initial, loading, success, error }
 
-/// 店铺控制器状�?
+/// 店铺控制器状�?
 class ShopControllerState {
   final ShopOperationStatus status;
   final String? errorMessage;
@@ -58384,7 +58384,7 @@ class ShopControllerState {
   bool get isSuccess => status == ShopOperationStatus.success;
 }
 
-/// 店铺控制�?- 管理店铺的增删改操作
+/// 店铺控制�?- 管理店铺的增删改操作
 class ShopController extends StateNotifier<ShopControllerState> {
   final IShopRepository _repository;
 
@@ -58395,12 +58395,12 @@ class ShopController extends StateNotifier<ShopControllerState> {
     state = state.copyWith(status: ShopOperationStatus.loading);
 
     try {
-      print('🎮 控制器：开始添加店�?- ${shop.name}');
+      print('🎮 控制器：开始添加店�?- ${shop.name}');
 
       // 检查名称是否已存在
       final exists = await _repository.isShopNameExists(shop.name);
       if (exists) {
-        throw Exception('店铺名称已存�?);
+        throw Exception('店铺名称已存�?);
       }
 
       await _repository.addShop(shop);
@@ -58426,12 +58426,12 @@ class ShopController extends StateNotifier<ShopControllerState> {
     state = state.copyWith(status: ShopOperationStatus.loading);
 
     try {
-      print('🎮 控制器：开始更新店�?- ${shop.name}');
+      print('🎮 控制器：开始更新店�?- ${shop.name}');
 
       // 检查名称是否已存在（排除当前店铺）
       final exists = await _repository.isShopNameExists(shop.name, shop.id);
       if (exists) {
-        throw Exception('店铺名称已存�?);
+        throw Exception('店铺名称已存�?);
       }
 
       final success = await _repository.updateShop(shop);
@@ -58480,36 +58480,36 @@ class ShopController extends StateNotifier<ShopControllerState> {
     }
   }
 
-  /// 重置状�?
+  /// 重置状�?
   void resetState() {
     state = const ShopControllerState();
   }
 }
 
 // =============================================================================
-// Riverpod 提供者定�?
+// Riverpod 提供者定�?
 // =============================================================================
 
-/// 店铺控制器提供�?
+/// 店铺控制器提供�?
 final shopControllerProvider =
     StateNotifierProvider<ShopController, ShopControllerState>((ref) {
       final repository = ref.watch(shopRepositoryProvider);
       return ShopController(repository);
     });
 
-/// 获取所有店铺提供�?
+/// 获取所有店铺提供�?
 final allShopsProvider = StreamProvider<List<Shop>>((ref) {
   final repository = ref.watch(shopRepositoryProvider);
   return repository.watchAllShops();
 });
 
-/// 根据ID获取店铺提供�?
+/// 根据ID获取店铺提供�?
 final shopByIdProvider = FutureProvider.family<Shop?, int>((ref, id) {
   final repository = ref.watch(shopRepositoryProvider);
   return repository.getShopById(id);
 });
 
-/// 根据名称搜索店铺提供�?
+/// 根据名称搜索店铺提供�?
 final searchShopsProvider = FutureProvider.family<List<Shop>, String>((
   ref,
   searchTerm,
@@ -58521,13 +58521,13 @@ final searchShopsProvider = FutureProvider.family<List<Shop>, String>((
   return repository.searchShopsByName(searchTerm);
 });
 
-/// 店铺数量提供�?
+/// 店铺数量提供�?
 final shopCountProvider = FutureProvider<int>((ref) {
   final repository = ref.watch(shopRepositoryProvider);
   return repository.getShopCount();
 });
 
-/// 检查店铺名称是否存在提供�?
+/// 检查店铺名称是否存在提供�?
 final shopNameExistsProvider =
     FutureProvider.family<bool, Map<String, String?>>((ref, params) {
       final repository = ref.watch(shopRepositoryProvider);
@@ -58539,10 +58539,10 @@ final shopNameExistsProvider =
       return repository.isShopNameExists(name, excludeId);
     });
 
-/// 当前选中的店铺ID提供�?
+/// 当前选中的店铺ID提供�?
 final selectedShopIdProvider = StateProvider<int?>((ref) => null);
 
-/// 当前活跃店铺提供�?
+/// 当前活跃店铺提供�?
 final activeShopProvider = Provider<Shop?>((ref) {
   final selectedShopId = ref.watch(selectedShopIdProvider);
   if (selectedShopId == null) return null;
@@ -58565,9 +58565,9 @@ class WeightedAveragePriceService {
 
   WeightedAveragePriceService(this._database);
 
-  /// 计算并更新移动加权平均价�?
+  /// 计算并更新移动加权平均价�?
   /// 当有新的入库时调用此方法
-  /// 注意：此方法只更新平均价格，不更新库存数量（库存数量�?InventoryService.inbound 负责�?
+  /// 注意：此方法只更新平均价格，不更新库存数量（库存数量�?InventoryService.inbound 负责�?
   Future<void> updateWeightedAveragePrice({
     required int productId,
     required int shopId,
@@ -58581,17 +58581,17 @@ class WeightedAveragePriceService {
           .getInventoryByProductShopAndBatch(productId, shopId, batchId);
 
       if (currentStock == null) {
-        // 如果没有现有库存，不做任何操�?
+        // 如果没有现有库存，不做任何操�?
         // 库存记录会由 InventoryService.inbound 创建
-        // 这里只需要在库存创建后更新平均价格即�?
+        // 这里只需要在库存创建后更新平均价格即�?
         return;
       } else {
         // 计算新的移动加权平均价格
         final currentQuantity = currentStock.quantity;
         final currentAveragePrice = currentStock.averageUnitPriceInCents;
 
-        // 移动加权平均价格公式�?
-        // 新平均价�?= (现有库存数量 × 现有平均价格 + 入库数量 × 入库单价) ÷ (现有库存数量 + 入库数量)
+        // 移动加权平均价格公式�?
+        // 新平均价�?= (现有库存数量 × 现有平均价格 + 入库数量 × 入库单价) ÷ (现有库存数量 + 入库数量)
         final totalValue =
             (currentQuantity * currentAveragePrice) +
             (inboundQuantity * inboundUnitPriceInCents);
@@ -58601,7 +58601,7 @@ class WeightedAveragePriceService {
             ? (totalValue / totalQuantity).round()
             : 0;
 
-        // 只更新平均价格，不更新库存数�?
+        // 只更新平均价格，不更新库存数�?
         await _database.inventoryDao.updateInventory(
           StockCompanion(
             id: drift.Value(currentStock.id),
@@ -58613,8 +58613,8 @@ class WeightedAveragePriceService {
     });
   }
 
-  /// 出库时更新移动加权平均价�?
-  /// 出库不改变平均价格，只减少数�?
+  /// 出库时更新移动加权平均价�?
+  /// 出库不改变平均价格，只减少数�?
   Future<void> updateOnOutbound({
     required int productId,
     required int shopId,
@@ -58637,7 +58637,7 @@ class WeightedAveragePriceService {
     }
   }
 
-  /// 获取指定库存的移动加权平均价�?
+  /// 获取指定库存的移动加权平均价�?
   Future<int> getWeightedAveragePrice({
     required int productId,
     required int shopId,
@@ -58650,10 +58650,10 @@ class WeightedAveragePriceService {
   }
 
   /// 批量重新计算所有库存的移动加权平均价格
-  /// 基于历史入库记录重新计算，用于数据修�?
+  /// 基于历史入库记录重新计算，用于数据修�?
   Future<void> recalculateAllWeightedAveragePrices() async {
     await _database.transaction(() async {
-      // 获取所有库存记�?
+      // 获取所有库存记�?
       final allStocks = await _database.inventoryDao.getAllInventory();
 
       for (final stock in allStocks) {
@@ -58666,13 +58666,13 @@ class WeightedAveragePriceService {
     });
   }
 
-  /// 重新计算单个库存的移动加权平均价�?
+  /// 重新计算单个库存的移动加权平均价�?
   Future<void> _recalculateStockWeightedAveragePrice({
     required int productId,
     required int shopId,
     int? batchId,
   }) async {
-    // 获取该库存的所有入库记录，按时间排�?
+    // 获取该库存的所有入库记录，按时间排�?
     final inboundRecords = await _getInboundRecordsForStock(
       productId: productId,
       shopId: shopId,
@@ -58684,13 +58684,13 @@ class WeightedAveragePriceService {
     int cumulativeQuantity = 0;
     int weightedAveragePrice = 0;
 
-    // 按时间顺序重新计算移动加权平均价�?
+    // 按时间顺序重新计算移动加权平均价�?
     for (final record in inboundRecords) {
       final inboundQuantity = record['quantity'] as int;
       final inboundPrice = record['unitPriceInCents'] as int;
 
       if (cumulativeQuantity == 0) {
-        // 第一次入�?
+        // 第一次入�?
         weightedAveragePrice = inboundPrice;
       } else {
         // 计算新的移动加权平均价格
@@ -58704,7 +58704,7 @@ class WeightedAveragePriceService {
       cumulativeQuantity += inboundQuantity;
     }
 
-    // 更新库存的移动加权平均价�?
+    // 更新库存的移动加权平均价�?
     final currentStock = await _database.inventoryDao
         .getInventoryByProductShopAndBatch(productId, shopId, batchId);
 
@@ -58719,7 +58719,7 @@ class WeightedAveragePriceService {
     }
   }
 
-  /// 获取指定库存的入库记�?
+  /// 获取指定库存的入库记�?
   Future<List<Map<String, dynamic>>> _getInboundRecordsForStock({
     required int productId,
     required int shopId,
@@ -58757,7 +58757,7 @@ class WeightedAveragePriceService {
   }
 }
 
-/// 移动加权平均价格服务提供�?
+/// 移动加权平均价格服务提供�?
 final weightedAveragePriceServiceProvider =
     Provider<WeightedAveragePriceService>((ref) {
       final database = ref.watch(appDatabaseProvider);
@@ -58791,8 +58791,8 @@ class InventoryDao extends DatabaseAccessor<AppDatabase>
     int productId,
     int shopId,
   ) {
-    // 注意：同一 productId + shopId 可能存在多条记录（不�?batchId）�?
-    // 为避�?getSingleOrNull 在多行时抛出异常，这里限定只取一条�?
+    // 注意：同一 productId + shopId 可能存在多条记录（不�?batchId）�?
+    // 为避�?getSingleOrNull 在多行时抛出异常，这里限定只取一条�?
     return (select(stock)
           ..where(
             (t) => t.productId.equals(productId) & t.shopId.equals(shopId),
@@ -58819,13 +58819,13 @@ class InventoryDao extends DatabaseAccessor<AppDatabase>
     return query.getSingleOrNull();
   }
 
-  /// 获取所有库�?
+  /// 获取所有库�?
   Future<List<StockData>> getAllInventory() async {
     try {
       return await select(stock).get();
     } catch (e) {
-      print('📦 DAO层：获取所有库存数据失�? $e');
-      // 如果标准查询失败，尝试使用原�?SQL 过滤有问题的记录
+      print('📦 DAO层：获取所有库存数据失�? $e');
+      // 如果标准查询失败，尝试使用原�?SQL 过滤有问题的记录
       try {
         final result = await customSelect(
           'SELECT id, product_id, batch_id, quantity, average_unit_price_in_cents, shop_id, '
@@ -58851,7 +58851,7 @@ class InventoryDao extends DatabaseAccessor<AppDatabase>
           );
         }).toList();
       } catch (e2) {
-        print('📦 DAO层：备用查询也失�? $e2');
+        print('📦 DAO层：备用查询也失�? $e2');
         return [];
       }
     }
@@ -58871,19 +58871,19 @@ class InventoryDao extends DatabaseAccessor<AppDatabase>
     )..where((t) => t.productId.equals(productId))).get();
   }
 
-  /// 监听所有库存变�?
+  /// 监听所有库存变�?
   Stream<List<StockData>> watchAllInventory() {
     return select(stock).watch();
   }
 
-  /// 监听指定店铺的库存变�?
+  /// 监听指定店铺的库存变�?
   Stream<List<StockData>> watchInventoryByShop(int shopId) {
     return (select(
       stock,
     )..where((t) => t.shopId.equals(shopId))).watch();
   }
 
-  /// 监听指定产品的库存变�?
+  /// 监听指定产品的库存变�?
   Stream<List<StockData>> watchInventoryByProduct(int productId) {
     return (select(
       stock,
@@ -58903,7 +58903,7 @@ class InventoryDao extends DatabaseAccessor<AppDatabase>
     return (delete(stock)..where((t) => t.id.equals(id))).go();
   }
 
-  /// 根据产品和店铺删除库�?
+  /// 根据产品和店铺删除库�?
   Future<int> deleteInventoryByProductAndShop(int productId, int shopId) {
     return (delete(stock)..where(
           (t) => t.productId.equals(productId) & t.shopId.equals(shopId),
@@ -58930,7 +58930,7 @@ class InventoryDao extends DatabaseAccessor<AppDatabase>
     return result > 0;
   }
 
-  /// 原子增加库存数量（允许负库存，单SQL更新�?
+  /// 原子增加库存数量（允许负库存，单SQL更新�?
   Future<int> incrementQuantity(
     int productId,
     int shopId,
@@ -58965,7 +58965,7 @@ class InventoryDao extends DatabaseAccessor<AppDatabase>
     }
   }
 
-  /// 原子减少库存数量（允许负库存，不�?>=0 约束�?
+  /// 原子减少库存数量（允许负库存，不�?>=0 约束�?
   Future<int> decrementQuantity(
     int productId,
     int shopId,
@@ -59025,7 +59025,7 @@ class InventoryDao extends DatabaseAccessor<AppDatabase>
     return result > 0;
   }
 
-  /// 获取低库存产品列�?
+  /// 获取低库存产品列�?
   Future<List<StockData>> getLowStockInventory(
     int shopId,
     int warningLevel,
@@ -59066,9 +59066,9 @@ class InventoryDao extends DatabaseAccessor<AppDatabase>
     return result.read(stock.quantity.sum().cast<double>()) ?? 0.0;
   }
 
-  /// 检查库存是否存�?
+  /// 检查库存是否存�?
   Future<bool> inventoryExists(int productId, int shopId) async {
-    // 使用受限查询判断是否存在，避免因多条记录导致的单行读取异�?
+    // 使用受限查询判断是否存在，避免因多条记录导致的单行读取异�?
     final rows = await (select(stock)
           ..where(
             (t) => t.productId.equals(productId) & t.shopId.equals(shopId),
@@ -59078,13 +59078,13 @@ class InventoryDao extends DatabaseAccessor<AppDatabase>
     return rows.isNotEmpty;
   }
 
-  /// 获取库存的移动加权平均价�?
+  /// 获取库存的移动加权平均价�?
   Future<int> getAverageUnitPrice(int productId, int shopId, int? batchId) async {
     final stock = await getInventoryByProductShopAndBatch(productId, shopId, batchId);
     return stock?.averageUnitPriceInCents ?? 0;
   }
 
-  /// 更新库存的移动加权平均价�?
+  /// 更新库存的移动加权平均价�?
   Future<bool> updateAverageUnitPrice(
     int productId,
     int shopId,
@@ -59109,7 +59109,7 @@ class InventoryDao extends DatabaseAccessor<AppDatabase>
     return result > 0;
   }
 
-  /// 获取库存总价值（数量 × 移动加权平均价格�?
+  /// 获取库存总价值（数量 × 移动加权平均价格�?
   Future<double> getTotalInventoryValue(int shopId) async {
     final result = await customSelect(
       'SELECT SUM(quantity * average_unit_price_in_cents) as total_value FROM stock WHERE shop_id = ?',
@@ -59121,7 +59121,7 @@ class InventoryDao extends DatabaseAccessor<AppDatabase>
     return totalValueInCents / 100.0; // 转换为元
   }
 
-  /// 获取指定产品的库存总价�?
+  /// 获取指定产品的库存总价�?
   Future<double> getProductInventoryValue(int productId) async {
     final result = await customSelect(
       'SELECT SUM(quantity * average_unit_price_in_cents) as total_value FROM stock WHERE product_id = ?',
@@ -59171,7 +59171,7 @@ class InventoryTransactionDao extends DatabaseAccessor<AppDatabase>
     )..where((t) => t.id.equals(id))).getSingleOrNull();
   }
 
-  /// 获取所有库存流�?
+  /// 获取所有库存流�?
   Future<List<InventoryTransactionData>> getAllTransactions() {
     return (select(
       inventoryTransaction,
@@ -59208,7 +59208,7 @@ class InventoryTransactionDao extends DatabaseAccessor<AppDatabase>
         .get();
   }
 
-  /// 根据产品和店铺获取流水记�?
+  /// 根据产品和店铺获取流水记�?
   Future<List<InventoryTransactionData>> getTransactionsByProductAndShop(
     int productId,
     int shopId,
@@ -59242,14 +59242,14 @@ class InventoryTransactionDao extends DatabaseAccessor<AppDatabase>
     return (query..orderBy([(t) => OrderingTerm.desc(t.createdAt)])).get();
   }
 
-  /// 监听所有库存流水变�?
+  /// 监听所有库存流水变�?
   Stream<List<InventoryTransactionData>> watchAllTransactions() {
     return (select(
       inventoryTransaction,
     )..orderBy([(t) => OrderingTerm.desc(t.createdAt)])).watch();
   }
 
-  /// 监听指定产品的流水变�?
+  /// 监听指定产品的流水变�?
   Stream<List<InventoryTransactionData>> watchTransactionsByProduct(
     int productId,
   ) {
@@ -59259,7 +59259,7 @@ class InventoryTransactionDao extends DatabaseAccessor<AppDatabase>
         .watch();
   }
 
-  /// 监听指定店铺的流水变�?
+  /// 监听指定店铺的流水变�?
   Stream<List<InventoryTransactionData>> watchTransactionsByShop(
     int shopId,
   ) {
@@ -59391,12 +59391,12 @@ class ShopDao extends DatabaseAccessor<AppDatabase> with _$ShopDaoMixin {
     )..where((t) => t.name.equals(name))).getSingleOrNull();
   }
 
-  /// 获取所有店�?
+  /// 获取所有店�?
   Future<List<ShopData>> getAllShops() {
     return select(shop).get();
   }
 
-  /// 监听所有店铺变�?
+  /// 监听所有店铺变�?
   Stream<List<ShopData>> watchAllShops() {
     return select(shop).watch();
   }
@@ -59428,7 +59428,7 @@ class ShopDao extends DatabaseAccessor<AppDatabase> with _$ShopDaoMixin {
     )..where((t) => t.manager.like('%$managerName%'))).get();
   }
 
-  /// 检查店铺名称是否存在（排除指定ID�?
+  /// 检查店铺名称是否存在（排除指定ID�?
   Future<bool> isShopNameExists(String name, [int? excludeId]) async {
     var query = select(shop)..where((t) => t.name.equals(name));
 
@@ -59463,8 +59463,8 @@ import '../dao/inventory_dao.dart';
 import 'package:drift/drift.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-/// 库存仓储实现�?
-/// 基于本地数据库的库存数据访问层实�?
+/// 库存仓储实现�?
+/// 基于本地数据库的库存数据访问层实�?
 class InventoryRepository implements IInventoryRepository {
   final InventoryDao _inventoryDao;
 
@@ -59475,7 +59475,7 @@ class InventoryRepository implements IInventoryRepository {
   Future<int> addInventory(StockModel inventory) async {
     try {
       print('📦 仓储层：添加库存记录，ID: ${inventory.id}');
-      // 新增时不应强制携带自增主�?ID
+      // 新增时不应强制携带自增主�?ID
       final companion = StockCompanion(
         productId: Value(inventory.productId),
         quantity: Value(inventory.quantity),
@@ -59516,7 +59516,7 @@ class InventoryRepository implements IInventoryRepository {
       );
       return data != null ? _dataToInventory(data) : null;
     } catch (e) {
-      print('📦 仓储层：根据产品和店铺获取库存失�? $e');
+      print('📦 仓储层：根据产品和店铺获取库存失�? $e');
       rethrow;
     }
   }
@@ -59546,8 +59546,8 @@ class InventoryRepository implements IInventoryRepository {
       final dataList = await _inventoryDao.getAllInventory();
       return dataList.map(_dataToInventory).toList();
     } catch (e) {
-      print('📦 仓储层：获取所有库存失�? $e');
-      // 返回空列表而不是抛出异�?
+      print('📦 仓储层：获取所有库存失�? $e');
+      // 返回空列表而不是抛出异�?
       return [];
     }
   }
@@ -59581,7 +59581,7 @@ class InventoryRepository implements IInventoryRepository {
         (dataList) => dataList.map(_dataToInventory).toList(),
       );
     } catch (e) {
-      print('📦 仓储层：监听所有库存失�? $e');
+      print('📦 仓储层：监听所有库存失�? $e');
       rethrow;
     }
   }
@@ -59684,7 +59684,7 @@ class InventoryRepository implements IInventoryRepository {
         quantity,
       );
     } catch (e) {
-      print('📦 仓储层：按批次更新库存数量失�? $e');
+      print('📦 仓储层：按批次更新库存数量失�? $e');
       rethrow;
     }
   }
@@ -59725,7 +59725,7 @@ class InventoryRepository implements IInventoryRepository {
       );
       return affected > 0;
     } catch (e) {
-      print('📦 仓储层：按批次增加库存数量失�? $e');
+      print('📦 仓储层：按批次增加库存数量失�? $e');
       rethrow;
     }
   }
@@ -59766,7 +59766,7 @@ class InventoryRepository implements IInventoryRepository {
       );
       return affected > 0;
     } catch (e) {
-      print('📦 仓储层：按批次减少库存数量失�? $e');
+      print('📦 仓储层：按批次减少库存数量失�? $e');
       rethrow;
     }
   }
@@ -59783,7 +59783,7 @@ class InventoryRepository implements IInventoryRepository {
       );
       return dataList.map(_dataToInventory).toList();
     } catch (e) {
-      print('📦 仓储层：获取低库存产品失�? $e');
+      print('📦 仓储层：获取低库存产品失�? $e');
       rethrow;
     }
   }
@@ -59824,7 +59824,7 @@ class InventoryRepository implements IInventoryRepository {
     try {
       return await _inventoryDao.inventoryExists(productId, shopId);
     } catch (e) {
-      print('📦 仓储层：检查库存是否存在失�? $e');
+      print('📦 仓储层：检查库存是否存在失�? $e');
       rethrow;
     }
   }
@@ -59832,7 +59832,7 @@ class InventoryRepository implements IInventoryRepository {
   /// 将Inventory模型转换为数据库Companion对象
   StockCompanion _inventoryToCompanion(StockModel inventory) {
     return StockCompanion(
-      // 对于更新等需要指定行的场景，id 需由调用方通过 where 子句控制；此处避免强制要�?
+      // 对于更新等需要指定行的场景，id 需由调用方通过 where 子句控制；此处避免强制要�?
       id: inventory.id != null ? Value(inventory.id!) : const Value.absent(),
       productId: Value(inventory.productId),
       quantity: Value(inventory.quantity),
@@ -59877,8 +59877,8 @@ import '../dao/inventory_transaction_dao.dart';
 import 'package:drift/drift.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-/// 库存流水仓储实现�?
-/// 基于本地数据库的库存流水数据访问层实�?
+/// 库存流水仓储实现�?
+/// 基于本地数据库的库存流水数据访问层实�?
 class InventoryTransactionRepository
     implements IInventoryTransactionRepository {
   final InventoryTransactionDao _transactionDao;
@@ -59916,7 +59916,7 @@ class InventoryTransactionRepository
       final dataList = await _transactionDao.getAllTransactions();
       return dataList.map(_dataToTransaction).toList();
     } catch (e) {
-      print('📋 仓储层：获取所有库存流水失�? $e');
+      print('📋 仓储层：获取所有库存流水失�? $e');
       rethrow;
     }
   }
@@ -59974,7 +59974,7 @@ class InventoryTransactionRepository
       );
       return dataList.map(_dataToTransaction).toList();
     } catch (e) {
-      print('📋 仓储层：根据产品和店铺获取库存流水失�? $e');
+      print('📋 仓储层：根据产品和店铺获取库存流水失�? $e');
       rethrow;
     }
   }
@@ -60007,7 +60007,7 @@ class InventoryTransactionRepository
         (dataList) => dataList.map(_dataToTransaction).toList(),
       );
     } catch (e) {
-      print('📋 仓储层：监听所有库存流水失�? $e');
+      print('📋 仓储层：监听所有库存流水失�? $e');
       rethrow;
     }
   }
@@ -60087,7 +60087,7 @@ class InventoryTransactionRepository
     int? shopId,
     int? productId,
   }) async {
-  // 使用数据库短码，避免 name �?DB 存储不一�?
+  // 使用数据库短码，避免 name �?DB 存储不一�?
   return getTransactionsByType(InventoryTransactionType.inbound.toDbCode);
   }
 
@@ -60130,7 +60130,7 @@ class InventoryTransactionRepository
 
       return summary;
     } catch (e) {
-      print('📋 仓储层：获取库存流水汇总失�? $e');
+      print('📋 仓储层：获取库存流水汇总失�? $e');
       rethrow;
     }
   }
@@ -60149,7 +60149,7 @@ class InventoryTransactionRepository
       );
       return dataList.map(_dataToTransaction).toList();
     } catch (e) {
-      print('📋 仓储层：获取最近库存流水失�? $e');
+      print('📋 仓储层：获取最近库存流水失�? $e');
       rethrow;
     }
   }
@@ -60179,7 +60179,7 @@ class InventoryTransactionRepository
     return InventoryTransactionCompanion(
       id: transaction.id == null ? const Value.absent() : Value(transaction.id!),
       productId: Value(transaction.productId),
-    // 数据库存�?type 字段使用短码（in/out/adjust/transfer/return�?
+    // 数据库存�?type 字段使用短码（in/out/adjust/transfer/return�?
     transactionType: Value(transaction.type.toDbCode),
       quantity: Value(transaction.quantity),
       shopId: Value(transaction.shopId),
@@ -60206,7 +60206,7 @@ class InventoryTransactionRepository
   }
 
   /// 将外部传入的类型字符串标准化为数据库短码
-  /// 支持传入 enum.name（如 'inbound'）或已是短码（如 'in'�?
+  /// 支持传入 enum.name（如 'inbound'）或已是短码（如 'in'�?
   String _normalizeTypeToDbCode(String type) {
     final t = type.toLowerCase();
     switch (t) {
@@ -60243,8 +60243,8 @@ import '../dao/shop_dao.dart';
 import 'package:drift/drift.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-/// 店铺仓储实现�?
-/// 基于本地数据库的店铺数据访问层实�?
+/// 店铺仓储实现�?
+/// 基于本地数据库的店铺数据访问层实�?
 class ShopRepository implements IShopRepository {
   final ShopDao _shopDao;
 
@@ -60289,7 +60289,7 @@ class ShopRepository implements IShopRepository {
       final dataList = await _shopDao.getAllShops();
       return dataList.map(_dataToShop).toList();
     } catch (e) {
-      print('🏪 仓储层：获取所有店铺失�? $e');
+      print('🏪 仓储层：获取所有店铺失�? $e');
       rethrow;
     }
   }
@@ -60301,7 +60301,7 @@ class ShopRepository implements IShopRepository {
         (dataList) => dataList.map(_dataToShop).toList(),
       );
     } catch (e) {
-      print('🏪 仓储层：监听所有店铺失�? $e');
+      print('🏪 仓储层：监听所有店铺失�? $e');
       rethrow;
     }
   }
@@ -60333,7 +60333,7 @@ class ShopRepository implements IShopRepository {
     try {
       return await _shopDao.isShopNameExists(name, excludeId);
     } catch (e) {
-      print('🏪 仓储层：检查店铺名称是否存在失�? $e');
+      print('🏪 仓储层：检查店铺名称是否存在失�? $e');
       rethrow;
     }
   }
@@ -60405,8 +60405,8 @@ import 'package:freezed_annotation/freezed_annotation.dart';
 part 'aggregated_inventory.freezed.dart';
 part 'aggregated_inventory.g.dart';
 
-/// 聚合后的库存�?
-/// 用于在未筛选店铺时展示同一货品的汇总信�?
+/// 聚合后的库存�?
+/// 用于在未筛选店铺时展示同一货品的汇总信�?
 @freezed
 abstract class AggregatedInventoryItem with _$AggregatedInventoryItem {
   const factory AggregatedInventoryItem({
@@ -60428,7 +60428,7 @@ abstract class AggregatedInventoryItem with _$AggregatedInventoryItem {
 
   /// 从原始库存数据列表创建聚合项
   ///
-  /// [inventoryItems] 相同货品的所有库存记�?
+  /// [inventoryItems] 相同货品的所有库存记�?
   factory AggregatedInventoryItem.fromInventoryList(
     List<Map<String, dynamic>> inventoryItems,
   ) {
@@ -60438,7 +60438,7 @@ abstract class AggregatedInventoryItem with _$AggregatedInventoryItem {
 
     final firstItem = inventoryItems.first;
 
-    // 计算总库存数�?
+    // 计算总库存数�?
     final totalQuantity = inventoryItems.fold<int>(
       0,
       (sum, item) => sum + (item['quantity'] as int? ?? 0),
@@ -60464,9 +60464,9 @@ abstract class AggregatedInventoryItem with _$AggregatedInventoryItem {
       productName: firstItem['productName'] as String,
       productImage: firstItem['productImage'] as String?,
       totalQuantity: totalQuantity,
-      unit: firstItem['unit'] as String? ?? '�?,
+      unit: firstItem['unit'] as String? ?? '�?,
       categoryId: firstItem['categoryId'] as int?,
-      categoryName: firstItem['categoryName'] as String? ?? '未分�?,
+      categoryName: firstItem['categoryName'] as String? ?? '未分�?,
       details: details,
       totalValue: totalValue,
     );
@@ -60491,19 +60491,19 @@ abstract class AggregatedInventoryItem with _$AggregatedInventoryItem {
     return minDays != null && minDays <= 30;
   }
 
-  /// 是否有已过期的批�?
+  /// 是否有已过期的批�?
   bool get hasExpired {
     final minDays = minRemainingDays;
     return minDays != null && minDays <= 0;
   }
 
-  /// 是否可展开（判断是否有多条记录�?
-  /// 仅当�?条或以上记录时才需要展开/收起功能
+  /// 是否可展开（判断是否有多条记录�?
+  /// 仅当�?条或以上记录时才需要展开/收起功能
   bool get isExpandable => details.length > 1;
 }
 
 /// 库存详细信息
-/// 表示单个店铺-批次组合的库存记�?
+/// 表示单个店铺-批次组合的库存记�?
 @freezed
 abstract class InventoryDetail with _$InventoryDetail {
   const factory InventoryDetail({
@@ -60517,7 +60517,7 @@ abstract class InventoryDetail with _$InventoryDetail {
     int? shelfLifeDays,
     String? shelfLifeUnit,
     int? remainingDays,
-    int? purchasePrice, // 进货价格（分�?
+    int? purchasePrice, // 进货价格（分�?
   }) = _InventoryDetail;
 
   const InventoryDetail._();
@@ -60527,7 +60527,7 @@ abstract class InventoryDetail with _$InventoryDetail {
 
   /// 从原始库存数据Map创建详细记录
   factory InventoryDetail.fromMap(Map<String, dynamic> map) {
-    // 计算剩余保质期天�?
+    // 计算剩余保质期天�?
     int? remainingDays;
     if (map['productionDate'] != null && map['shelfLifeDays'] != null) {
       try {
@@ -60538,7 +60538,7 @@ abstract class InventoryDetail with _$InventoryDetail {
         final shelfLifeValue = map['shelfLifeDays'] as int;
         final shelfLifeUnit = map['shelfLifeUnit'] as String?;
         
-        // 根据单位将保质期转换为天�?
+        // 根据单位将保质期转换为天�?
         int shelfLifeInDays;
         if (shelfLifeUnit == 'years') {
           shelfLifeInDays = shelfLifeValue * 365;
@@ -60551,7 +60551,7 @@ abstract class InventoryDetail with _$InventoryDetail {
         
         final expiryDate = productionDate.add(Duration(days: shelfLifeInDays));
 
-        // 计算剩余天数：将当前日期和过期日期都归零到午夜，然后计算天数�?
+        // 计算剩余天数：将当前日期和过期日期都归零到午夜，然后计算天数�?
         final now = DateTime.now();
         final today = DateTime(now.year, now.month, now.day);
         final expiry = DateTime(
@@ -60593,21 +60593,21 @@ abstract class InventoryDetail with _$InventoryDetail {
     return '-';
   }
 
-  /// 获取剩余保质期显示文�?
+  /// 获取剩余保质期显示文�?
   String get remainingDaysDisplayText {
     if (remainingDays == null) return '-';
 
     if (remainingDays! < 0) {
-      return '已过�?{-remainingDays!}�?;
+      return '已过�?{-remainingDays!}�?;
     } else if (remainingDays! == 0) {
       return '今天过期';
     } else {
-      return '剩余$remainingDays�?;
+      return '剩余$remainingDays�?;
     }
   }
 
-  /// 获取保质期状态颜�?
-  /// 返回颜色代码：red(已过�?, orange(7天内), yellow(30天内), green(正常)
+  /// 获取保质期状态颜�?
+  /// 返回颜色代码：red(已过�?, orange(7天内), yellow(30天内), green(正常)
   String get shelfLifeColorStatus {
     if (remainingDays == null) return 'normal';
 
@@ -60622,12 +60622,12 @@ abstract class InventoryDetail with _$InventoryDetail {
     }
   }
 
-  /// 是否即将过期�?0天内�?
+  /// 是否即将过期�?0天内�?
   bool get isExpiringSoon {
     return remainingDays != null && remainingDays! > 0 && remainingDays! <= 30;
   }
 
-  /// 是否已过�?
+  /// 是否已过�?
   bool get isExpired {
     return remainingDays != null && remainingDays! <= 0;
   }
@@ -61048,12 +61048,12 @@ Map<String, dynamic> _$InventoryDetailToJson(_InventoryDetail instance) =>
       'purchasePrice': instance.purchasePrice,
     };
 /// 批次模型
-/// 用于批次管理功能的数据模�?
+/// 用于批次管理功能的数据模�?
 class BatchModel {
-  /// 主键 - 批次号，无业务意�?
+  /// 主键 - 批次号，无业务意�?
   final int? id;
   final int productId;
-  /// 仅使用到“日期”粒度（00:00:00），避免时间部分影响唯一�?
+  /// 仅使用到“日期”粒度（00:00:00），避免时间部分影响唯一�?
   final DateTime productionDate;
   final int totalInboundQuantity;
   final int shopId;
@@ -61068,9 +61068,9 @@ class BatchModel {
     required this.shopId,
     required this.createdAt,
     required this.updatedAt,
-  }) : assert(totalInboundQuantity >= 0, 'totalInboundQuantity 不能为负�?);
+  }) : assert(totalInboundQuantity >= 0, 'totalInboundQuantity 不能为负�?);
 
-  /// 创建新批�?
+  /// 创建新批�?
   factory BatchModel.create({
     required int productId,
     required DateTime productionDate,
@@ -61088,7 +61088,7 @@ class BatchModel {
     );
   }
 
-  /// 复制批次并更新指定字�?
+  /// 复制批次并更新指定字�?
   BatchModel copyWith({
     int? id,
     int? productId,
@@ -61111,7 +61111,7 @@ class BatchModel {
     );
   }
 
-  /// JSON 序列�?
+  /// JSON 序列�?
   Map<String, dynamic> toJson() => {
         'id': id,
         'productId': productId,
@@ -61147,7 +61147,7 @@ class BatchModel {
       return id == other.id;
     }
 
-    // 否则使用业务唯一键（产品+日期+店铺）判�?
+    // 否则使用业务唯一键（产品+日期+店铺）判�?
     return productId == other.productId &&
         _sameDate(productionDate, other.productionDate) &&
         shopId == other.shopId;
@@ -61156,13 +61156,13 @@ class BatchModel {
   @override
   int get hashCode {
     if (id != null) return id.hashCode;
-    // 业务键哈希：确保�?== 一�?
+    // 业务键哈希：确保�?== 一�?
     final d = productionDate.toUtc();
     final dateOnly = DateTime.utc(d.year, d.month, d.day);
     return Object.hash(productId, dateOnly.millisecondsSinceEpoch, shopId);
   }
 
-  // 将任意时间标准化�?UTC 的“日�?00:00:00�?
+  // 将任意时间标准化�?UTC 的“日�?00:00:00�?
   static DateTime _dateOnlyUtc(DateTime dt) {
     final u = dt.toUtc();
     return DateTime.utc(u.year, u.month, u.day);
@@ -61198,7 +61198,7 @@ abstract class StockModel with _$StockModel {
   factory StockModel.fromJson(Map<String, dynamic> json) =>
       _$StockModelFromJson(json);
 
-  /// 创建新库存记�?
+  /// 创建新库存记�?
   factory StockModel.create({
     required int productId,
     required int quantity,
@@ -61449,7 +61449,7 @@ enum InventoryTransactionType {
   @JsonValue('transfer')
   transfer,
 
-  /// 退�?
+  /// 退�?
   @JsonValue('return')
   returned,
 }
@@ -61466,7 +61466,7 @@ extension InventoryTransactionTypeExtension on InventoryTransactionType {
       case InventoryTransactionType.transfer:
         return '调拨';
       case InventoryTransactionType.returned:
-        return '退�?;
+        return '退�?;
     }
   }
 
@@ -61487,7 +61487,7 @@ extension InventoryTransactionTypeExtension on InventoryTransactionType {
   }
 }
 
-/// 从数据库短码还原为枚举�?
+/// 从数据库短码还原为枚举�?
 InventoryTransactionType inventoryTransactionTypeFromDbCode(String code) {
   switch (code) {
     case 'in':
@@ -61508,7 +61508,7 @@ InventoryTransactionType inventoryTransactionTypeFromDbCode(String code) {
 
 
 /// 库存流水领域模型
-/// 表示库存变动的历史记�?
+/// 表示库存变动的历史记�?
 @freezed
 abstract class InventoryTransactionModel with _$InventoryTransactionModel {
   const factory InventoryTransactionModel({
@@ -61583,19 +61583,19 @@ abstract class InventoryTransactionModel with _$InventoryTransactionModel {
   /// 获取流水类型显示名称
   String get typeDisplayName => type.displayName;
 
-  /// 是否为入�?
+  /// 是否为入�?
   bool get isInbound => type == InventoryTransactionType.inbound;
 
-  /// 是否为出�?
+  /// 是否为出�?
   bool get isOutbound => type == InventoryTransactionType.outbound;
 
-  /// 是否为调�?
+  /// 是否为调�?
   bool get isAdjustment => type == InventoryTransactionType.adjustment;
 
-  /// 是否为调�?
+  /// 是否为调�?
   bool get isTransfer => type == InventoryTransactionType.transfer;
 
-  /// 是否为退�?
+  /// 是否为退�?
   bool get isReturn => type == InventoryTransactionType.returned;
 }
 // dart format width=80
@@ -61811,7 +61811,7 @@ part 'shop.freezed.dart';
 part 'shop.g.dart';
 
 /// 店铺领域模型
-/// 表示店铺的业务实�?
+/// 表示店铺的业务实�?
 @freezed
 abstract class Shop with _$Shop {
   const factory Shop({
@@ -61826,7 +61826,7 @@ abstract class Shop with _$Shop {
 
   factory Shop.fromJson(Map<String, dynamic> json) => _$ShopFromJson(json);
 
-  /// 创建新店�?
+  /// 创建新店�?
   factory Shop.create({required String name, required String manager}) {
     final now = DateTime.now();
     return Shop(
@@ -61838,7 +61838,7 @@ abstract class Shop with _$Shop {
     );
   }
 
-  /// 复制并更新店铺信�?
+  /// 复制并更新店铺信�?
   Shop updateInfo({String? name, String? manager}) {
     return copyWith(
       name: name ?? this.name,
@@ -62037,7 +62037,7 @@ Map<String, dynamic> _$ShopToJson(_Shop instance) => <String, dynamic>{
 import '../model/inventory.dart';
 
 /// 库存仓储接口
-/// 定义库存相关的业务操作规�?
+/// 定义库存相关的业务操作规�?
 abstract class IInventoryRepository {
   /// 添加库存记录
   Future<int> addInventory(StockModel inventory);
@@ -62058,7 +62058,7 @@ abstract class IInventoryRepository {
     int? batchId,
   );
 
-  /// 获取所有库�?
+  /// 获取所有库�?
   Future<List<StockModel>> getAllInventory();
 
   /// 根据店铺ID获取库存列表
@@ -62067,13 +62067,13 @@ abstract class IInventoryRepository {
   /// 根据产品ID获取库存列表
   Future<List<StockModel>> getInventoryByProduct(int productId);
 
-  /// 监听所有库存变�?
+  /// 监听所有库存变�?
   Stream<List<StockModel>> watchAllInventory();
 
-  /// 监听指定店铺的库存变�?
+  /// 监听指定店铺的库存变�?
   Stream<List<StockModel>> watchInventoryByShop(int shopId);
 
-  /// 监听指定产品的库存变�?
+  /// 监听指定产品的库存变�?
   Stream<List<StockModel>> watchInventoryByProduct(int productId);
 
   /// 更新库存
@@ -62082,7 +62082,7 @@ abstract class IInventoryRepository {
   /// 删除库存记录
   Future<int> deleteInventory(int id);
 
-  /// 根据产品和店铺删除库�?
+  /// 根据产品和店铺删除库�?
   Future<int> deleteInventoryByProductAndShop(int productId, int shopId);
 
   /// 更新库存数量
@@ -62130,7 +62130,7 @@ abstract class IInventoryRepository {
     int amount,
   );
 
-  /// 获取低库存产品列�?
+  /// 获取低库存产品列�?
   Future<List<StockModel>> getLowStockInventory(int shopId, int warningLevel);
 
   /// 获取缺货产品列表
@@ -62142,13 +62142,13 @@ abstract class IInventoryRepository {
   /// 获取库存总数量（按产品）
   Future<double> getTotalInventoryByProduct(int productId);
 
-  /// 检查库存是否存�?
+  /// 检查库存是否存�?
   Future<bool> inventoryExists(int productId, int shopId);
 }
 import '../model/inventory_transaction.dart';
 
 /// 库存流水仓储接口
-/// 定义库存流水相关的业务操作规�?
+/// 定义库存流水相关的业务操作规�?
 abstract class IInventoryTransactionRepository {
   /// 添加库存流水记录
   Future<int> addTransaction(InventoryTransactionModel transaction);
@@ -62156,7 +62156,7 @@ abstract class IInventoryTransactionRepository {
   /// 根据ID获取库存流水
   Future<InventoryTransactionModel?> getTransactionById(int id);
 
-  /// 获取所有库存流�?
+  /// 获取所有库存流�?
   Future<List<InventoryTransactionModel>> getAllTransactions();
 
   /// 根据产品ID获取流水记录
@@ -62168,7 +62168,7 @@ abstract class IInventoryTransactionRepository {
   /// 根据流水类型获取记录
   Future<List<InventoryTransactionModel>> getTransactionsByType(String type);
 
-  /// 根据产品和店铺获取流水记�?
+  /// 根据产品和店铺获取流水记�?
   Future<List<InventoryTransactionModel>> getTransactionsByProductAndShop(
     int productId,
     int shopId,
@@ -62182,15 +62182,15 @@ abstract class IInventoryTransactionRepository {
     int? productId,
   });
 
-  /// 监听所有库存流水变�?
+  /// 监听所有库存流水变�?
   Stream<List<InventoryTransactionModel>> watchAllTransactions();
 
-  /// 监听指定产品的流水变�?
+  /// 监听指定产品的流水变�?
   Stream<List<InventoryTransactionModel>> watchTransactionsByProduct(
     int productId,
   );
 
-  /// 监听指定店铺的流水变�?
+  /// 监听指定店铺的流水变�?
   Stream<List<InventoryTransactionModel>> watchTransactionsByShop(int shopId);
 
   /// 更新库存流水
@@ -62223,7 +62223,7 @@ abstract class IInventoryTransactionRepository {
     int? productId,
   });
 
-  /// 统计指定期间的流水数�?
+  /// 统计指定期间的流水数�?
   Future<Map<String, double>> getTransactionSummaryByDateRange(
     DateTime startDate,
     DateTime endDate, {
@@ -62248,7 +62248,7 @@ abstract class IInventoryTransactionRepository {
 import '../model/shop.dart';
 
 /// 店铺仓储接口
-/// 定义店铺相关的业务操作规�?
+/// 定义店铺相关的业务操作规�?
 abstract class IShopRepository {
   /// 添加店铺
   Future<int> addShop(Shop shop);
@@ -62259,10 +62259,10 @@ abstract class IShopRepository {
   /// 根据名称获取店铺
   Future<Shop?> getShopByName(String name);
 
-  /// 获取所有店�?
+  /// 获取所有店�?
   Future<List<Shop>> getAllShops();
 
-  /// 监听所有店铺变�?
+  /// 监听所有店铺变�?
   Stream<List<Shop>> watchAllShops();
 
   /// 更新店铺
@@ -62330,18 +62330,18 @@ class InventoryQueryService {
     String? statusFilter,
   }) async {
     try {
-      print('📦 库存查询服务：开始获取库存详细信�?);
+      print('📦 库存查询服务：开始获取库存详细信�?);
 
-      // 1. 获取所有库存记�?
+      // 1. 获取所有库存记�?
       List<dynamic> inventoryList;
-      if (shopFilter != null && shopFilter != '所有仓�?) {
-        // TODO: 根据店铺名称查找shopId，然后查询该店铺的库�?
+      if (shopFilter != null && shopFilter != '所有仓�?) {
+        // TODO: 根据店铺名称查找shopId，然后查询该店铺的库�?
         inventoryList = await _inventoryRepository.getAllInventory();
       } else {
         inventoryList = await _inventoryRepository.getAllInventory();
       }
 
-      print('📦 库存查询服务：获取到 ${inventoryList.length} 条库存记�?);
+      print('📦 库存查询服务：获取到 ${inventoryList.length} 条库存记�?);
 
       if (inventoryList.isEmpty) {
         return [];
@@ -62350,22 +62350,22 @@ class InventoryQueryService {
       // 2. 获取所有相关的产品信息
       final allProducts = await _productRepository.getAllProducts();
       final productMap = {for (var p in allProducts) p.id: p};
-      print('📦 库存查询服务：获取到 ${allProducts.length} 个产�?);
+      print('📦 库存查询服务：获取到 ${allProducts.length} 个产�?);
 
-      // 3. 获取所有单位信�?
+      // 3. 获取所有单位信�?
       final allUnits = await _unitRepository.getAllUnits();
       final unitMap = {for (var u in allUnits) u.id: u};
-      print('📦 库存查询服务：获取到 ${allUnits.length} 个单�?); // 4. 获取所有分类信�?
+      print('📦 库存查询服务：获取到 ${allUnits.length} 个单�?); // 4. 获取所有分类信�?
       final allCategories = await _ref.read(allCategoriesStreamProvider.future);
       final categoryMap = {for (var c in allCategories) c.id: c};
-      print('📦 库存查询服务：获取到 ${allCategories.length} 个分�?);
+      print('📦 库存查询服务：获取到 ${allCategories.length} 个分�?);
 
-      // 5. 获取所有店铺信�?
+      // 5. 获取所有店铺信�?
       final allShops = await _ref.read(allShopsProvider.future);
       final shopMap = {for (var s in allShops) s.id: s};
-      print('📦 库存查询服务：获取到 ${allShops.length} 个店�?);
+      print('📦 库存查询服务：获取到 ${allShops.length} 个店�?);
 
-      // 6. 构建详细的库存信息列�?
+      // 6. 构建详细的库存信息列�?
       final result = <Map<String, dynamic>>[];
 
       // 先按时间排序，最新的在前
@@ -62381,12 +62381,12 @@ class InventoryQueryService {
       for (final inventory in inventoryList) {
         final product = productMap[inventory.productId];
         if (product == null) {
-          print('📦 库存查询服务：警�?- 找不到产品ID: ${inventory.productId}');
+          print('📦 库存查询服务：警�?- 找不到产品ID: ${inventory.productId}');
           continue;
         }
 
         // 获取产品的基础单位
-        String unitName = '�?; // 默认单位
+        String unitName = '�?; // 默认单位
         try {
           final baseUnit = await _productUnitRepository.getBaseUnitForProduct(
             inventory.productId,
@@ -62405,7 +62405,7 @@ class InventoryQueryService {
           }
         
         } catch (e) {
-          print('📦 库存查询服务：获取单位失�? $e');
+          print('📦 库存查询服务：获取单位失�? $e');
         }
 
         // 获取分类名称
@@ -62422,30 +62422,30 @@ class InventoryQueryService {
           shopName = shop.name;
         }
 
-        // 应用筛选条�?
+        // 应用筛选条�?
         bool shouldInclude = true;
 
-        // 分类筛�?
-        if (categoryFilter != null && categoryFilter != '所有分�?) {
+        // 分类筛�?
+        if (categoryFilter != null && categoryFilter != '所有分�?) {
           if (categoryName != categoryFilter) {
             shouldInclude = false;
           }
         }
 
-        // 店铺筛�?
-        if (shopFilter != null && shopFilter != '所有仓�?) {
+        // 店铺筛�?
+        if (shopFilter != null && shopFilter != '所有仓�?) {
           if (shopName != shopFilter) {
             shouldInclude = false;
           }
         }
 
-        // 库存状态筛�?
-        if (statusFilter != null && statusFilter != '库存状�?) {
+        // 库存状态筛�?
+        if (statusFilter != null && statusFilter != '库存状�?) {
           switch (statusFilter) {
             case '正常':
               if (inventory.quantity <= 10) shouldInclude = false;
               break;
-            case '低库�?:
+            case '低库�?:
               if (inventory.quantity <= 0 || inventory.quantity > 10) {
                 shouldInclude = false;
               }
@@ -62479,19 +62479,19 @@ class InventoryQueryService {
           'shopId': inventory.shopId,
           'shopName': shopName,
           'categoryId': product.categoryId,
-          'categoryName': categoryName ?? '未分�?,
+          'categoryName': categoryName ?? '未分�?,
           'productId': inventory.productId,
           'purchasePrice': await _purchaseDao.getLatestPurchasePrice(inventory.productId) ?? 0,
         };
 
         if (batch != null) {
           inventoryItem['batchNumber'] = batch.id;
-          // 安全处理日期，确保格式正�?
+          // 安全处理日期，确保格式正�?
           try {
             inventoryItem['productionDate'] = batch.productionDate.toIso8601String();
                     } catch (e) {
             print('日期转换失败: ${batch.productionDate}, 错误: $e');
-            // 如果日期转换失败，使用当前日期作为默认�?
+            // 如果日期转换失败，使用当前日期作为默认�?
             inventoryItem['productionDate'] = DateTime.now().toIso8601String();
           }
           inventoryItem['shelfLifeDays'] = product.shelfLife;
@@ -62501,23 +62501,23 @@ class InventoryQueryService {
         result.add(inventoryItem);
       }
 
-      print('📦 库存查询服务：筛选后得到 ${result.length} 条记�?);
+      print('📦 库存查询服务：筛选后得到 ${result.length} 条记�?);
       return result;
     } catch (e) {
-      print('📦 库存查询服务：获取库存详细信息失�? $e');
+      print('📦 库存查询服务：获取库存详细信息失�? $e');
       print('📦 错误堆栈: ${e.toString()}');
       rethrow;
     }
   }
 
-  /// 获取聚合后的库存数据（未筛选店铺时使用�?
+  /// 获取聚合后的库存数据（未筛选店铺时使用�?
   /// 将相同货品的多条库存记录聚合为一条，包含总库存和详细记录列表
   Future<List<AggregatedInventoryItem>> getAggregatedInventory({
     String? categoryFilter,
     String? statusFilter,
   }) async {
     try {
-      print('📦 库存聚合服务：开始获取聚合库存数�?);
+      print('📦 库存聚合服务：开始获取聚合库存数�?);
 
       // 1. 获取所有库存详细信息（不传入店铺筛选）
       final allInventory = await getInventoryWithDetails(
@@ -62525,7 +62525,7 @@ class InventoryQueryService {
         statusFilter: statusFilter,
       );
 
-      print('📦 库存聚合服务：获取到 ${allInventory.length} 条原始库存记�?);
+      print('📦 库存聚合服务：获取到 ${allInventory.length} 条原始库存记�?);
 
       if (allInventory.isEmpty) {
         return [];
@@ -62538,7 +62538,7 @@ class InventoryQueryService {
         groupedByProduct.putIfAbsent(productId, () => []).add(item);
       }
 
-      print('📦 库存聚合服务：按货品分组后得�?${groupedByProduct.length} 个货�?);
+      print('📦 库存聚合服务：按货品分组后得�?${groupedByProduct.length} 个货�?);
 
       // 3. 构建聚合数据列表
       final result = <AggregatedInventoryItem>[];
@@ -62546,27 +62546,27 @@ class InventoryQueryService {
         final items = entry.value;
         
         try {
-          // 使用工厂方法创建聚合�?
+          // 使用工厂方法创建聚合�?
           final aggregatedItem = AggregatedInventoryItem.fromInventoryList(items);
           result.add(aggregatedItem);
         } catch (e) {
-          print('📦 库存聚合服务：聚合货�?${entry.key} 失败: $e');
+          print('📦 库存聚合服务：聚合货�?${entry.key} 失败: $e');
           // 继续处理其他货品，不中断整个流程
           continue;
         }
       }
 
-      print('📦 库存聚合服务：成功聚�?${result.length} 个货�?);
+      print('📦 库存聚合服务：成功聚�?${result.length} 个货�?);
       return result;
     } catch (e) {
-      print('📦 库存聚合服务：获取聚合库存数据失�? $e');
+      print('📦 库存聚合服务：获取聚合库存数据失�? $e');
       print('📦 错误堆栈: ${e.toString()}');
       rethrow;
     }
   }
 
   /// 调整库存
-  /// 如果找到记录，则更新其数量，否则创建新记�?
+  /// 如果找到记录，则更新其数量，否则创建新记�?
   Future<void> adjustStock({
     required int productId,
     required int shopId,
@@ -62575,7 +62575,7 @@ class InventoryQueryService {
   }) async {
     try {
       print(
-          '📦 库存调整服务：开始调整库�?- Product: $productId, Shop: $shopId, Batch: $batchId, New Quantity: $newQuantity');
+          '📦 库存调整服务：开始调整库�?- Product: $productId, Shop: $shopId, Batch: $batchId, New Quantity: $newQuantity');
 
       final existingStock =
           await _inventoryRepository.getInventoryByProductShopAndBatch(
@@ -62591,7 +62591,7 @@ class InventoryQueryService {
           updatedAt: DateTime.now(),
         );
         await _inventoryRepository.updateInventory(updatedStock);
-        print('📦 库存调整服务：库存更新成�?);
+        print('📦 库存调整服务：库存更新成�?);
       } else {
         print('📦 库存调整服务：未找到现有库存记录，准备创建新记录');
         final newStock = StockModel(
@@ -62606,7 +62606,7 @@ class InventoryQueryService {
         print('📦 库存调整服务：新库存记录创建成功');
       }
     } catch (e) {
-      print('📦 库存调整服务：调整库存失�? $e');
+      print('📦 库存调整服务：调整库存失�? $e');
       rethrow;
     }
   }
@@ -62674,7 +62674,7 @@ import '../../domain/model/aggregated_inventory.dart';
 
 enum InventorySortType { none, byQuantity, byShelfLife }
 
-/// 库存筛选状�?
+/// 库存筛选状�?
 class InventoryFilterState {
   final String selectedShop;
   final String selectedCategory;
@@ -62682,9 +62682,9 @@ class InventoryFilterState {
   final InventorySortType sortBy;
 
   const InventoryFilterState({
-    this.selectedShop = '所有仓�?,
-    this.selectedCategory = '所有分�?,
-    this.selectedStatus = '库存状�?,
+    this.selectedShop = '所有仓�?,
+    this.selectedCategory = '所有分�?,
+    this.selectedStatus = '库存状�?,
     this.sortBy = InventorySortType.none,
   });
 
@@ -62708,18 +62708,18 @@ class InventoryFilterNotifier extends StateNotifier<InventoryFilterState> {
   InventoryFilterNotifier() : super(const InventoryFilterState());
 
   void updateShop(String? shop) {
-    if (shop == '所有仓�?) shop = null;
-    state = state.copyWith(selectedShop: shop ?? '所有仓�?);
+    if (shop == '所有仓�?) shop = null;
+    state = state.copyWith(selectedShop: shop ?? '所有仓�?);
   }
 
   void updateCategory(String? category) {
-    if (category == '所有分�?) category = null;
-    state = state.copyWith(selectedCategory: category ?? '所有分�?);
+    if (category == '所有分�?) category = null;
+    state = state.copyWith(selectedCategory: category ?? '所有分�?);
   }
 
   void updateStatus(String? status) {
-    if (status == '库存状�?) status = null;
-    state = state.copyWith(selectedStatus: status ?? '库存状�?);
+    if (status == '库存状�?) status = null;
+    state = state.copyWith(selectedStatus: status ?? '库存状�?);
   }
 
   void updateSortBy(InventorySortType sortBy) {
@@ -62737,8 +62737,8 @@ final inventoryFilterProvider =
       return InventoryFilterNotifier();
     });
 
-/// 库存查询数据Provider - 使用真实数据库查�?
-/// 添加对产品数据变化的监听，确保产品图片更新后库存页面能同步刷�?
+/// 库存查询数据Provider - 使用真实数据库查�?
+/// 添加对产品数据变化的监听，确保产品图片更新后库存页面能同步刷�?
 /// 支持聚合模式：未筛选店铺时返回聚合数据，筛选店铺时返回原始数据
 final inventoryQueryProvider = FutureProvider<dynamic>((
   ref,
@@ -62746,17 +62746,17 @@ final inventoryQueryProvider = FutureProvider<dynamic>((
   final filterState = ref.watch(inventoryFilterProvider);
   final queryService = ref.watch(inventoryQueryServiceProvider);
   
-  // 监听产品数据变化，确保产品信息（包括图片）更新后库存页面能同步刷�?
+  // 监听产品数据变化，确保产品信息（包括图片）更新后库存页面能同步刷�?
   ref.watch(productListStreamProvider);
   
   // 将默认值转换为null传递给查询服务
-  final shopFilter = filterState.selectedShop == '所有仓�?
+  final shopFilter = filterState.selectedShop == '所有仓�?
       ? null
       : filterState.selectedShop;
-  final categoryFilter = filterState.selectedCategory == '所有分�?
+  final categoryFilter = filterState.selectedCategory == '所有分�?
       ? null
       : filterState.selectedCategory;
-  final statusFilter = filterState.selectedStatus == '库存状�?
+  final statusFilter = filterState.selectedStatus == '库存状�?
       ? null
       : filterState.selectedStatus;
 
@@ -62764,32 +62764,32 @@ final inventoryQueryProvider = FutureProvider<dynamic>((
 
   // 判断是否需要聚合：未筛选店铺时使用聚合模式
   if (shopFilter == null) {
-    // 聚合模式：返回聚合数�?
+    // 聚合模式：返回聚合数�?
     final aggregatedData = await queryService.getAggregatedInventory(
       categoryFilter: categoryFilter,
       statusFilter: statusFilter,
     );
 
-    // 应用排序到聚合数�?
+    // 应用排序到聚合数�?
     _applySortToAggregated(aggregatedData, sortBy);
 
     return aggregatedData;
   } else {
-    // 原始模式：返回原始数�?
+    // 原始模式：返回原始数�?
     final data = await queryService.getInventoryWithDetails(
       shopFilter: shopFilter,
       categoryFilter: categoryFilter,
       statusFilter: statusFilter,
     );
 
-    // 应用排序到原始数�?
+    // 应用排序到原始数�?
     _applySortToOriginal(data, sortBy);
 
     return data;
   }
 });
 
-/// 对聚合数据应用排�?
+/// 对聚合数据应用排�?
 void _applySortToAggregated(
   List<AggregatedInventoryItem> data,
   InventorySortType sortBy,
@@ -62812,7 +62812,7 @@ void _applySortToAggregated(
   }
 }
 
-/// 对原始数据应用排�?
+/// 对原始数据应用排�?
 void _applySortToOriginal(
   List<Map<String, dynamic>> data,
   InventorySortType sortBy,
@@ -62833,7 +62833,7 @@ void _applySortToOriginal(
 
     filteredData.sort((a, b) {
       try {
-        // 安全解析日期字符�?
+        // 安全解析日期字符�?
         final aDateStr = (a['productionDate'] as String).trim();
         final bDateStr = (b['productionDate'] as String).trim();
         
@@ -62863,10 +62863,10 @@ void _applySortToOriginal(
             aShelfLifeInDays = aShelfLife;
             break;
           case 'months':
-            aShelfLifeInDays = aShelfLife * 30; // 近似�?
+            aShelfLifeInDays = aShelfLife * 30; // 近似�?
             break;
           case 'years':
-            aShelfLifeInDays = aShelfLife * 365; // 近似�?
+            aShelfLifeInDays = aShelfLife * 365; // 近似�?
             break;
           default:
             aShelfLifeInDays = aShelfLife; // 默认按天处理
@@ -62885,10 +62885,10 @@ void _applySortToOriginal(
             bShelfLifeInDays = bShelfLife;
             break;
           case 'months':
-            bShelfLifeInDays = bShelfLife * 30; // 近似�?
+            bShelfLifeInDays = bShelfLife * 30; // 近似�?
             break;
           case 'years':
-            bShelfLifeInDays = bShelfLife * 365; // 近似�?
+            bShelfLifeInDays = bShelfLife * 365; // 近似�?
             break;
           default:
             bShelfLifeInDays = bShelfLife; // 默认按天处理
@@ -62899,12 +62899,12 @@ void _applySortToOriginal(
 
         return aRemaining.compareTo(bRemaining);
       } catch (e) {
-        // 如果解析失败，则将该项排在后�?
+        // 如果解析失败，则将该项排在后�?
         return 1;
       }
     });
     
-    // 将排序后的数据复制回原列�?
+    // 将排序后的数据复制回原列�?
     data.clear();
     data.addAll(filteredData);
   }
@@ -62989,14 +62989,14 @@ import '../../domain/model/aggregated_inventory.dart';
 import '../../../../core/widgets/cached_image_widget.dart';
 
 /// 库存查询页面
-/// 展示商品库存信息，支持筛选功�?
+/// 展示商品库存信息，支持筛选功�?
 class InventoryQueryScreen extends ConsumerWidget {
   const InventoryQueryScreen({super.key});
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final inventoryAsyncValue = ref.watch(inventoryQueryProvider);
     final filterState = ref.watch(inventoryFilterProvider);
-    final isAggregatedMode = filterState.selectedShop == '所有仓�?;
+    final isAggregatedMode = filterState.selectedShop == '所有仓�?;
 
     return Scaffold(
       appBar: AppBar(
@@ -63019,7 +63019,7 @@ class InventoryQueryScreen extends ConsumerWidget {
                 <PopupMenuEntry<InventorySortType>>[
                   const PopupMenuItem<InventorySortType>(
                     value: InventorySortType.byQuantity,
-                    child: Text('按库存数量排�?),
+                    child: Text('按库存数量排�?),
                   ),
                   const PopupMenuItem<InventorySortType>(
                     value: InventorySortType.byShelfLife,
@@ -63080,15 +63080,15 @@ class InventoryQueryScreen extends ConsumerWidget {
     );
   }
 
-  /// 构建聚合模式的视�?
+  /// 构建聚合模式的视�?
   Widget _buildAggregatedView(List<AggregatedInventoryItem> aggregatedList) {
-    // 计算总数�?
+    // 计算总数�?
     final totalQuantity = aggregatedList.fold<int>(
       0,
       (sum, item) => sum + item.totalQuantity,
     );
 
-    // 计算总价�?
+    // 计算总价�?
     final totalValue = aggregatedList.fold<double>(
       0,
       (sum, item) => sum + item.totalValue,
@@ -63108,7 +63108,7 @@ class InventoryQueryScreen extends ConsumerWidget {
               children: [
                 _buildSummaryItem('品种', '${aggregatedList.length}'),
                 _buildSummaryItem('总数', '$totalQuantity'),
-                _buildSummaryItem('总价�?, '¥${totalValue.toStringAsFixed(2)}'),
+                _buildSummaryItem('总价�?, '¥${totalValue.toStringAsFixed(2)}'),
               ],
             ),
           ),
@@ -63151,16 +63151,16 @@ class InventoryQueryScreen extends ConsumerWidget {
     );
   }
 
-  /// 构建原始模式的视�?
+  /// 构建原始模式的视�?
   Widget _buildOriginalView(List<Map<String, dynamic>> inventoryList) {
-    // 计算总数�?
+    // 计算总数�?
     final totalQuantity = inventoryList.fold<int>(
       0,
       (previousValue, element) =>
           previousValue + (element['quantity'] as num).toInt(),
     );
 
-    // 计算总价�?
+    // 计算总价�?
     final totalValue = inventoryList.fold<double>(
       0,
       (previousValue, element) =>
@@ -63184,7 +63184,7 @@ class InventoryQueryScreen extends ConsumerWidget {
               children: [
                 _buildSummaryItem('品种', '${inventoryList.length}'),
                 _buildSummaryItem('总数', '$totalQuantity'),
-                _buildSummaryItem('总价�?, '¥${totalValue.toStringAsFixed(2)}'),
+                _buildSummaryItem('总价�?, '¥${totalValue.toStringAsFixed(2)}'),
               ],
             ),
           ),
@@ -63244,11 +63244,11 @@ class InventoryQueryScreen extends ConsumerWidget {
     final productName = inventoryData['productName'] as String? ?? '未知商品';
     final productImage = inventoryData['productImage'] as String?;
     final quantity = (inventoryData['quantity'] as num?)?.toInt() ?? 0;
-    final unit = inventoryData['unit'] as String? ?? '�?;
+    final unit = inventoryData['unit'] as String? ?? '�?;
     final shopName = inventoryData['shopName'] as String? ?? '未知店铺';
-    final categoryName = inventoryData['categoryName'] as String? ?? '未分�?;
+    final categoryName = inventoryData['categoryName'] as String? ?? '未分�?;
 
-    // 根据库存数量确定状�?
+    // 根据库存数量确定状�?
     final stockStatus = _getStockStatus(quantity);
 
     // 计算保质期（如果有批次信息）
@@ -63282,9 +63282,9 @@ class InventoryQueryScreen extends ConsumerWidget {
         final remainingDays = expiryDate.difference(DateTime.now()).inDays;
 
         if (remainingDays <= 0) {
-          shelfLifeText = '已过�?;
+          shelfLifeText = '已过�?;
         } else {
-          shelfLifeText = '剩余: $remainingDays �?;
+          shelfLifeText = '剩余: $remainingDays �?;
         }
       } catch (e) {
         // 如果日期解析失败，忽略保质期显示
@@ -63318,7 +63318,7 @@ class InventoryQueryScreen extends ConsumerWidget {
                   ),
             const SizedBox(width: 16),
 
-            // 商品信息和库�?
+            // 商品信息和库�?
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -63335,7 +63335,7 @@ class InventoryQueryScreen extends ConsumerWidget {
                   ),
                   const SizedBox(height: 4),
 
-                  // 分类和店铺信�?
+                  // 分类和店铺信�?
                   Text(
                     '$categoryName · $shopName',
                     style: TextStyle(fontSize: 12, color: Colors.grey[600]),
@@ -63347,7 +63347,7 @@ class InventoryQueryScreen extends ConsumerWidget {
                       shelfLifeText,
                       style: TextStyle(
                         fontSize: 12,
-                        color: shelfLifeText == '已过�?
+                        color: shelfLifeText == '已过�?
                             ? Colors.red
                             : Colors.grey[600],
                       ),
@@ -63394,7 +63394,7 @@ class InventoryQueryScreen extends ConsumerWidget {
     );
   }
 
-  /// 根据库存数量获取状�?
+  /// 根据库存数量获取状�?
   _StockStatus _getStockStatus(int quantity) {
     if (quantity <= 0) {
       return _StockStatus.outOfStock;
@@ -63432,7 +63432,7 @@ class InventoryQueryScreen extends ConsumerWidget {
   }
 }
 
-/// 库存状态枚�?
+/// 库存状态枚�?
 enum _StockStatus { normal, lowStock, outOfStock }
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -63444,7 +63444,7 @@ import '../providers/outbound_receipts_provider.dart';
 import '../widgets/outbound_record_card.dart';
 
 /// 库存记录页面
-/// 展示所有入库和出库记录，支持查看详�?
+/// 展示所有入库和出库记录，支持查看详�?
 class InventoryRecordsScreen extends ConsumerStatefulWidget {
   const InventoryRecordsScreen({super.key});
 
@@ -63471,7 +63471,7 @@ class _InventoryRecordsScreenState extends ConsumerState<InventoryRecordsScreen>
         appBar: AppBar(
           leading: IconButton(
             icon: const Icon(Icons.arrow_back),
-            onPressed: () => context.go('/'), // 导航到应用首�?
+            onPressed: () => context.go('/'), // 导航到应用首�?
             tooltip: '返回首页',
           ),
           title: Text(_isOutboundView ? '出库记录' : '入库记录'),
@@ -63486,7 +63486,7 @@ class _InventoryRecordsScreenState extends ConsumerState<InventoryRecordsScreen>
                   _isOutboundView = !_isOutboundView;
                 });
               },
-              child: Text(_isOutboundView ? '看入�? : '看出�?),
+              child: Text(_isOutboundView ? '看入�? : '看出�?),
             ),
           ],
         ),
@@ -63537,7 +63537,7 @@ class _InventoryRecordsScreenState extends ConsumerState<InventoryRecordsScreen>
                       ),
                       const SizedBox(height: 16),
                       Text(
-                        '加载失败�?error',
+                        '加载失败�?error',
                         style:
                             const TextStyle(fontSize: 16, color: Colors.red),
                         textAlign: TextAlign.center,
@@ -63604,7 +63604,7 @@ class _InventoryRecordsScreenState extends ConsumerState<InventoryRecordsScreen>
                             ),
                             const SizedBox(height: 16),
                             Text(
-                              '加载失败�?error',
+                              '加载失败�?error',
                               style: const TextStyle(
                                   fontSize: 16, color: Colors.red),
                               textAlign: TextAlign.center,
@@ -63793,7 +63793,7 @@ class _AdjustInventoryDialogState extends ConsumerState<AdjustInventoryDialog> {
                           setState(() {
                             _selectedBatch = newValue;
                           });
-                          // 选择批次后获取当前库�?
+                          // 选择批次后获取当前库�?
                           await _loadCurrentInventory();
                         },
                         items: _batches!.map<DropdownMenuItem<bm.BatchModel>>(
@@ -63833,7 +63833,7 @@ class _AdjustInventoryDialogState extends ConsumerState<AdjustInventoryDialog> {
           onPressed: () async {
             final newQuantity = int.tryParse(_quantityController.text);
             if (_selectedShop == null) {
-              showAppSnackBar(context, message: '请选择一个店�?, isError: true);
+              showAppSnackBar(context, message: '请选择一个店�?, isError: true);
               return;
             }
             if (newQuantity == null) {
@@ -63872,7 +63872,7 @@ import '../../domain/model/aggregated_inventory.dart';
 import '../../../../core/widgets/cached_image_widget.dart';
 
 /// 聚合库存卡片组件
-/// 用于在未筛选店铺时展示同一货品的汇总信�?
+/// 用于在未筛选店铺时展示同一货品的汇总信�?
 /// 支持展开/收起查看详细库存明细
 class AggregatedInventoryCard extends StatefulWidget {
   final AggregatedInventoryItem item;
@@ -63934,7 +63934,7 @@ class _AggregatedInventoryCardState extends State<AggregatedInventoryCard>
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: Column(
         children: [
-          // 收起状态：显示货品基本信息和总库�?
+          // 收起状态：显示货品基本信息和总库�?
           _buildCollapsedHeader(context),
 
           // 展开状态：显示详细库存列表
@@ -63984,7 +63984,7 @@ class _AggregatedInventoryCardState extends State<AggregatedInventoryCard>
                     style: TextStyle(fontSize: 12, color: Colors.grey[600]),
                   ),
 
-                  // 如果有即将过期或已过期的批次，显示警�?
+                  // 如果有即将过期或已过期的批次，显示警�?
                   if (widget.item.hasExpired ||
                       widget.item.hasExpiringSoon) ...[
                     const SizedBox(height: 4),
@@ -63999,7 +63999,7 @@ class _AggregatedInventoryCardState extends State<AggregatedInventoryCard>
                         ),
                         const SizedBox(width: 4),
                         Text(
-                          widget.item.hasExpired ? '含已过期批次' : '含即将过期批�?,
+                          widget.item.hasExpired ? '含已过期批次' : '含即将过期批�?,
                           style: TextStyle(
                             fontSize: 12,
                             color: widget.item.hasExpired
@@ -64013,7 +64013,7 @@ class _AggregatedInventoryCardState extends State<AggregatedInventoryCard>
 
                   const SizedBox(height: 12),
 
-                  // 总库存（醒目显示�?
+                  // 总库存（醒目显示�?
                   Row(
                     children: [
                       Text(
@@ -64041,7 +64041,7 @@ class _AggregatedInventoryCardState extends State<AggregatedInventoryCard>
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: Text(
-                          '${widget.item.details.length}条记�?,
+                          '${widget.item.details.length}条记�?,
                           style: TextStyle(
                             fontSize: 12,
                             color: Colors.grey[700],
@@ -64133,7 +64133,7 @@ class _AggregatedInventoryCardState extends State<AggregatedInventoryCard>
                 Expanded(
                   flex: 2,
                   child: Text(
-                    '剩余保质�?,
+                    '剩余保质�?,
                     style: TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w600,
@@ -64174,7 +64174,7 @@ class _AggregatedInventoryCardState extends State<AggregatedInventoryCard>
     );
   }
 
-  /// 构建单条详细记录�?
+  /// 构建单条详细记录�?
   Widget _buildDetailRow(BuildContext context, InventoryDetail detail) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -64202,7 +64202,7 @@ class _AggregatedInventoryCardState extends State<AggregatedInventoryCard>
             ),
           ),
 
-          // 剩余保质�?
+          // 剩余保质�?
           Expanded(
             flex: 2,
             child: GestureDetector(
@@ -64217,9 +64217,9 @@ class _AggregatedInventoryCardState extends State<AggregatedInventoryCard>
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text('生产日期: ${detail.productionDate}'),
-                        Text('保质期天�? ${detail.shelfLifeDays}'),
-                        Text('保质期单�? ${detail.shelfLifeUnit}'),
-                        Text('计算的剩余天�? ${detail.remainingDays}'),
+                        Text('保质期天�? ${detail.shelfLifeDays}'),
+                        Text('保质期单�? ${detail.shelfLifeUnit}'),
+                        Text('计算的剩余天�? ${detail.remainingDays}'),
                         Text('显示文本: ${detail.remainingDaysDisplayText}'),
                       ],
                     ),
@@ -64261,7 +64261,7 @@ class _AggregatedInventoryCardState extends State<AggregatedInventoryCard>
     );
   }
 
-  /// 获取保质期颜�?
+  /// 获取保质期颜�?
   Color _getShelfLifeColor(InventoryDetail detail) {
     switch (detail.shelfLifeColorStatus) {
       case 'expired':
@@ -64279,7 +64279,7 @@ class _AggregatedInventoryCardState extends State<AggregatedInventoryCard>
 import 'package:flutter/material.dart';
 import '../../domain/model/aggregated_inventory.dart';
 
-/// 调试用：显示库存详细信息的原始数�?
+/// 调试用：显示库存详细信息的原始数�?
 class DebugInventoryDetail extends StatelessWidget {
   final InventoryDetail detail;
 
@@ -64305,13 +64305,13 @@ class DebugInventoryDetail extends StatelessWidget {
             const Divider(),
             _buildRow('店铺名称', detail.shopName),
             _buildRow('生产日期', detail.productionDate?.toString() ?? 'null'),
-            _buildRow('保质期数�?, detail.shelfLifeDays?.toString() ?? 'null'),
-            _buildRow('保质期单�?, detail.shelfLifeUnit ?? 'null'),
-            _buildRow('计算的剩余天�?, detail.remainingDays?.toString() ?? 'null'),
+            _buildRow('保质期数�?, detail.shelfLifeDays?.toString() ?? 'null'),
+            _buildRow('保质期单�?, detail.shelfLifeUnit ?? 'null'),
+            _buildRow('计算的剩余天�?, detail.remainingDays?.toString() ?? 'null'),
             _buildRow('显示文本', detail.remainingDaysDisplayText),
             const Divider(),
             Text(
-              '如果显示不对，请检查数据库中的实际�?,
+              '如果显示不对，请检查数据库中的实际�?,
               style: TextStyle(
                 fontSize: 12,
                 color: Colors.grey[600],
@@ -64397,7 +64397,7 @@ class InboundRecordCard extends ConsumerWidget {
             Text('日期: $formattedDate'),
             shopAsync.when(
               data: (shop) => Text('店铺: ${shop?.name ?? '未知'}'),
-              loading: () => const Text('店铺: 加载�?..'),
+              loading: () => const Text('店铺: 加载�?..'),
               error: (_, _) => const Text('店铺: 加载失败'),
             ),
             if (record.source.isNotEmpty) Text('来源: ${record.source}'),
@@ -64414,13 +64414,13 @@ class InboundRecordCard extends ConsumerWidget {
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
                 Text(
-                  '${items.length} �?,
+                  '${items.length} �?,
                   style: const TextStyle(
                     fontWeight: FontWeight.bold,
                   ),
                 ),
                 Text(
-                  '${totalQuantity.toStringAsFixed(totalQuantity.truncateToDouble() == totalQuantity ? 0 : 1)} �?,
+                  '${totalQuantity.toStringAsFixed(totalQuantity.truncateToDouble() == totalQuantity ? 0 : 1)} �?,
                   style: const TextStyle(fontSize: 12, color: Colors.grey),
                 ),
               ],
@@ -64467,7 +64467,7 @@ class InboundRecordItemTile extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final productAsync = ref.watch(productByIdProvider(item.productId));
-    // 预留批次信息查询，未来可能使�?
+    // 预留批次信息查询，未来可能使�?
     // final batchAsync = ref.watch(batchByNumberProvider(item.id));
 
     return ListTile(
@@ -64491,7 +64491,7 @@ class InboundRecordItemTile extends ConsumerWidget {
                 product?.name ?? '货品ID: ${item.productId}',
                 style: const TextStyle(fontSize: 16),
               ),
-              loading: () => const Text('加载�?..'),
+              loading: () => const Text('加载�?..'),
               error: (err, stack) => Text(
                 '加载货品失败',
                 style: TextStyle(color: Theme.of(context).colorScheme.error),
@@ -64519,7 +64519,7 @@ import '../providers/inventory_query_providers.dart';
 import '../../application/provider/shop_providers.dart';
 import '../../../product/application/category_service.dart';
 
-/// 分类流提供�?
+/// 分类流提供�?
 final categoriesStreamProvider = StreamProvider((ref) {
   final categoryService = ref.watch(categoryServiceProvider);
   return categoryService.watchAllCategories();
@@ -64546,12 +64546,12 @@ class InventoryFilterBar extends ConsumerWidget {
       ),
       child: Row(
         children: [
-          // 所有仓库筛�?- 使用店铺表数�?
+          // 所有仓库筛�?- 使用店铺表数�?
           Expanded(
             child: shopsAsync.when(
               data: (shops) {
                 // 构建店铺下拉选项
-                final shopItems = ['所有仓�?, ...shops.map((shop) => shop.name)];
+                final shopItems = ['所有仓�?, ...shops.map((shop) => shop.name)];
                 return _buildFilterDropdown(
                   context: context,
                   value: filterState.selectedShop,
@@ -64565,25 +64565,25 @@ class InventoryFilterBar extends ConsumerWidget {
               },
               loading: () => _buildFilterDropdown(
                 context: context,
-                value: '所有仓�?,
-                items: const ['所有仓�?],
-                onChanged: (_) {}, // 加载时禁�?
+                value: '所有仓�?,
+                items: const ['所有仓�?],
+                onChanged: (_) {}, // 加载时禁�?
               ),
               error: (error, stackTrace) => _buildFilterDropdown(
                 context: context,
-                value: '所有仓�?,
-                items: const ['所有仓�?],
-                onChanged: (_) {}, // 错误时禁�?
+                value: '所有仓�?,
+                items: const ['所有仓�?],
+                onChanged: (_) {}, // 错误时禁�?
               ),
             ),
           ),
           const SizedBox(width: 12),
 
-          // 所有分类筛�?
+          // 所有分类筛�?
           Expanded(
             child: categoriesAsync.when(
               data: (categories) {
-                final categoryItems = ['所有分�?, ...categories.map((cat) => cat.name)];
+                final categoryItems = ['所有分�?, ...categories.map((cat) => cat.name)];
                 return _buildFilterDropdown(
                   context: context,
                   value: filterState.selectedCategory,
@@ -64597,26 +64597,26 @@ class InventoryFilterBar extends ConsumerWidget {
               },
               loading: () => _buildFilterDropdown(
                 context: context,
-                value: '所有分�?,
-                items: const ['所有分�?],
+                value: '所有分�?,
+                items: const ['所有分�?],
                 onChanged: (_) {},
               ),
               error: (error, stackTrace) => _buildFilterDropdown(
                 context: context,
-                value: '所有分�?,
-                items: const ['所有分�?],
+                value: '所有分�?,
+                items: const ['所有分�?],
                 onChanged: (_) {},
               ),
             ),
           ),
           const SizedBox(width: 12),
 
-          // 库存状态筛�?
+          // 库存状态筛�?
           Expanded(
             child: _buildFilterDropdown(
               context: context,
               value: filterState.selectedStatus,
-              items: const ['库存状�?, '正常', '低库�?, '缺货'],
+              items: const ['库存状�?, '正常', '低库�?, '缺货'],
               onChanged: (value) {
                 ref.read(inventoryFilterProvider.notifier).updateStatus(value);
               },
@@ -64681,7 +64681,7 @@ import 'package:stocko_app/features/inventory/domain/model/inventory.dart';
 import 'package:stocko_app/features/product/domain/model/product.dart';
 
 /// 库存商品卡片
-/// 展示单个商品的库存信�?
+/// 展示单个商品的库存信�?
 class InventoryItemCard extends StatelessWidget {
   final StockModel inventory;
 
@@ -64693,12 +64693,12 @@ class InventoryItemCard extends StatelessWidget {
     final quantity = inventory.quantity;
     final productName = product.name;
     final productImage = product.image;
-    final unit = '�?; // Assuming '�? as a default, will need to be updated with actual data if available
+    final unit = '�?; // Assuming '�? as a default, will need to be updated with actual data if available
 
-    // 根据库存数量确定状�?
+    // 根据库存数量确定状�?
     final stockStatus = _getStockStatus(quantity);
 
-    // 计算保质�?
+    // 计算保质�?
     String? shelfLifeText;
     if (product.shelfLife != null && product.shelfLife! > 0) {
       // NOTE: This logic assumes `createdAt` of the stock is the production date.
@@ -64720,9 +64720,9 @@ class InventoryItemCard extends StatelessWidget {
       final remainingDays = expiryDate.difference(DateTime.now()).inDays;
 
       if (remainingDays <= 0) {
-        shelfLifeText = '已过�?;
+        shelfLifeText = '已过�?;
       } else {
-        shelfLifeText = '剩余: $remainingDays �?;
+        shelfLifeText = '剩余: $remainingDays �?;
       }
     }
 
@@ -64752,7 +64752,7 @@ class InventoryItemCard extends StatelessWidget {
                   ),
             const SizedBox(width: 16),
 
-            // 商品信息和库�?
+            // 商品信息和库�?
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -64773,7 +64773,7 @@ class InventoryItemCard extends StatelessWidget {
                       shelfLifeText,
                       style: TextStyle(
                         fontSize: 12,
-                        color: shelfLifeText == '已过�?
+                        color: shelfLifeText == '已过�?
                             ? Colors.red
                             : Colors.grey[600],
                       ),
@@ -64823,7 +64823,7 @@ class InventoryItemCard extends StatelessWidget {
     );
   }
 
-  /// 根据库存数量获取状�?
+  /// 根据库存数量获取状�?
   _StockStatus _getStockStatus(int quantity) {
     if (quantity <= 0) {
       return _StockStatus.outOfStock;
@@ -64869,10 +64869,10 @@ class InventoryItemCard extends StatelessWidget {
   }
 }
 
-/// 库存状态枚�?
+/// 库存状态枚�?
 enum _StockStatus {
   normal, // 正常
-  lowStock, // 低库�?
+  lowStock, // 低库�?
   outOfStock, // 缺货
 }
 import 'package:flutter/material.dart';
@@ -64916,7 +64916,7 @@ class OutboundRecordCard extends ConsumerWidget {
             Text('日期: $formattedDate'),
             shopAsync.when(
               data: (shop) => Text('店铺: ${shop?.name ?? '未知'}'),
-              loading: () => const Text('店铺: 加载�?..'),
+              loading: () => const Text('店铺: 加载�?..'),
               error: (_, __) => const Text('店铺: 加载失败'),
             ),
             if (record.reason.isNotEmpty) Text('原因: ${record.reason}'),
@@ -64933,11 +64933,11 @@ class OutboundRecordCard extends ConsumerWidget {
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
                 Text(
-                  '${items.length} �?,
+                  '${items.length} �?,
                   style: const TextStyle(fontWeight: FontWeight.bold),
                 ),
                 Text(
-                  '$totalQuantity �?,
+                  '$totalQuantity �?,
                   style: const TextStyle(fontSize: 12, color: Colors.grey),
                 ),
               ],
@@ -65003,7 +65003,7 @@ class OutboundRecordItemTile extends ConsumerWidget {
             Expanded(
               child: productAsync.when(
                 data: (product) => Text(product?.name ?? '货品ID: ${item.productId}', style: const TextStyle(fontSize: 16)),
-                loading: () => const Text('加载�?..'),
+                loading: () => const Text('加载�?..'),
                 error: (err, stack) => Text(
                   '加载货品失败',
                   style: TextStyle(color: Theme.of(context).colorScheme.error),
@@ -65044,9 +65044,9 @@ import 'package:flutter/material.dart';
 import '../../domain/model/aggregated_inventory.dart';
 import '../../../../core/widgets/cached_image_widget.dart';
 
-/// 简单库存卡片组�?
-/// 用于展示单条记录的货品（不可展开�?
-/// 样式与原始卡片一�?
+/// 简单库存卡片组�?
+/// 用于展示单条记录的货品（不可展开�?
+/// 样式与原始卡片一�?
 class SimpleInventoryCard extends StatelessWidget {
   final AggregatedInventoryItem item;
 
@@ -65057,13 +65057,13 @@ class SimpleInventoryCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // 断言：此组件仅用于单条记�?
+    // 断言：此组件仅用于单条记�?
     assert(
       !item.isExpandable,
       'SimpleInventoryCard should only be used for items with single record',
     );
 
-    final detail = item.details.first; // 只有一条记�?
+    final detail = item.details.first; // 只有一条记�?
 
     return Card(
       elevation: 2,
@@ -65094,7 +65094,7 @@ class SimpleInventoryCard extends StatelessWidget {
                   ),
                   const SizedBox(height: 4),
 
-                  // 分类和店铺信�?
+                  // 分类和店铺信�?
                   Text(
                     '${item.categoryName} · ${detail.shopName}',
                     style: TextStyle(
@@ -65103,7 +65103,7 @@ class SimpleInventoryCard extends StatelessWidget {
                     ),
                   ),
 
-                  // 保质期信�?
+                  // 保质期信�?
                   if (detail.remainingDays != null) ...[
                     const SizedBox(height: 4),
                     Text(
@@ -65174,7 +65174,7 @@ class SimpleInventoryCard extends StatelessWidget {
     }
   }
 
-  /// 获取保质期颜�?
+  /// 获取保质期颜�?
   Color _getShelfLifeColor(InventoryDetail detail) {
     switch (detail.shelfLifeColorStatus) {
       case 'expired':
@@ -65225,7 +65225,7 @@ class OutboundItemDao extends DatabaseAccessor<AppDatabase>
     with _$OutboundItemDaoMixin {
   OutboundItemDao(super.db);
 
-  /// 根据出库单ID获取所有明�?
+  /// 根据出库单ID获取所有明�?
   Future<List<OutboundItemData>> getOutboundItemsByReceiptId(int receiptId) {
     return (select(outboundItem)
           ..where((t) => t.receiptId.equals(receiptId)))
@@ -65260,12 +65260,12 @@ class OutboundReceiptDao extends DatabaseAccessor<AppDatabase>
     with _$OutboundReceiptDaoMixin {
   OutboundReceiptDao(super.db);
 
-  /// 插入出库�?
+  /// 插入出库�?
   Future<int> insertOutboundReceipt(OutboundReceiptCompanion receipt) async {
     return await into(outboundReceipt).insert(receipt);
   }
 
-  /// 根据ID获取出库�?
+  /// 根据ID获取出库�?
   Future<OutboundReceiptData?> getOutboundReceiptById(int id) {
     return (select(outboundReceipt)..where((t) => t.id.equals(id)))
         .getSingleOrNull();
@@ -65276,7 +65276,7 @@ class OutboundReceiptDao extends DatabaseAccessor<AppDatabase>
     return select(outboundReceipt).get();
   }
 
-  /// 根据店铺ID获取出库�?
+  /// 根据店铺ID获取出库�?
   Future<List<OutboundReceiptData>> getOutboundReceiptsByShop(int shopId) {
     return (select(outboundReceipt)..where((t) => t.shopId.equals(shopId)))
         .get();
@@ -65301,8 +65301,8 @@ mixin _$OutboundReceiptDaoMixin on DatabaseAccessor<AppDatabase> {
 }
 export 'outbound_receipt.dart';
 export 'outbound_item.dart';
-/// 出库单明�?领域模型（freezed�?
-/// 对应�? OutboundItem (lib/core/database/outbound_receipt_items_table.dart)
+/// 出库单明�?领域模型（freezed�?
+/// 对应�? OutboundItem (lib/core/database/outbound_receipt_items_table.dart)
 library;
 import 'package:freezed_annotation/freezed_annotation.dart';
 
@@ -65318,7 +65318,7 @@ abstract class OutboundItemModel with _$OutboundItemModel {
     /// 可能尚未持久化，因而为可空
     int? id,
 
-    /// 所属出库单ID（新建时可能为空，保存后回填�?
+    /// 所属出库单ID（新建时可能为空，保存后回填�?
     int? receiptId,
 
     /// 商品ID（必填）
@@ -65327,17 +65327,17 @@ abstract class OutboundItemModel with _$OutboundItemModel {
     /// 批次号（可空，空批次与有批次的唯一性策略不同）
     int? batchId,
 
-    /// 数量�? 0�?
+    /// 数量�? 0�?
     required int quantity,
   }) = _OutboundItemModel;
 
   factory OutboundItemModel.fromJson(Map<String, dynamic> json) =>
       _$OutboundItemModelFromJson(json);
 
-  /// 生成用于判定同一出库单中的“唯一性键�?
+  /// 生成用于判定同一出库单中的“唯一性键�?
   /// 与表约束一致：
-  /// - �?batchId 非空：唯一�?= (receiptId, productId, batchId)
-  /// - �?batchId 为空：唯一�?= (receiptId, productId)
+  /// - �?batchId 非空：唯一�?= (receiptId, productId, batchId)
+  /// - �?batchId 为空：唯一�?= (receiptId, productId)
   String uniqueKey({int? overrideReceiptId}) {
     final rid = overrideReceiptId ?? receiptId;
     final batchKey = batchId?.toString() ?? 'null';
@@ -65372,9 +65372,9 @@ T _$identity<T>(T value) => value;
 mixin _$OutboundItemModel {
 
 /// 可能尚未持久化，因而为可空
- int? get id;/// 所属出库单ID（新建时可能为空，保存后回填�? int? get receiptId;/// 商品ID（必填）
+ int? get id;/// 所属出库单ID（新建时可能为空，保存后回填�? int? get receiptId;/// 商品ID（必填）
  int get productId;/// 批次号（可空，空批次与有批次的唯一性策略不同）
- int? get batchId;/// 数量�? 0�? int get quantity;
+ int? get batchId;/// 数量�? 0�? int get quantity;
 /// Create a copy of OutboundItemModel
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -65447,12 +65447,12 @@ class _OutboundItemModel extends OutboundItemModel {
 
 /// 可能尚未持久化，因而为可空
 @override final  int? id;
-/// 所属出库单ID（新建时可能为空，保存后回填�?@override final  int? receiptId;
+/// 所属出库单ID（新建时可能为空，保存后回填�?@override final  int? receiptId;
 /// 商品ID（必填）
 @override final  int productId;
 /// 批次号（可空，空批次与有批次的唯一性策略不同）
 @override final  int? batchId;
-/// 数量�? 0�?@override final  int quantity;
+/// 数量�? 0�?@override final  int quantity;
 
 /// Create a copy of OutboundItemModel
 /// with the given fields replaced by the non-null parameter values.
@@ -65544,8 +65544,8 @@ Map<String, dynamic> _$OutboundItemModelToJson(_OutboundItemModel instance) =>
       'batchId': instance.batchId,
       'quantity': instance.quantity,
     };
-/// 出库�?领域模型（freezed�?
-/// 对应�? OutboundReceipt (lib/core/database/outbound_receipts_table.dart)
+/// 出库�?领域模型（freezed�?
+/// 对应�? OutboundReceipt (lib/core/database/outbound_receipts_table.dart)
 library;
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'outbound_item.dart';
@@ -65564,7 +65564,7 @@ abstract class OutboundReceiptModel with _$OutboundReceiptModel {
     /// 店铺ID（必填）
     required int shopId,
 
-    /// 原因（如：销售出库、调拨、报损等�?
+    /// 原因（如：销售出库、调拨、报损等�?
     required String reason,
 
     /// 关联销售单ID（可空）
@@ -65576,7 +65576,7 @@ abstract class OutboundReceiptModel with _$OutboundReceiptModel {
     /// 备注（领域层可选）
     String? remarks,
 
-    /// 明细列表（仅领域层维护，不对应表字段�?
+    /// 明细列表（仅领域层维护，不对应表字段�?
     @Default(<OutboundItemModel>[]) List<OutboundItemModel> items,
   }) = _OutboundReceiptModel;
 
@@ -65658,10 +65658,10 @@ mixin _$OutboundReceiptModel {
 
 /// 主键（草稿阶段可能为空）
  int? get id;/// 店铺ID（必填）
- int get shopId;/// 原因（如：销售出库、调拨、报损等�? String get reason;/// 关联销售单ID（可空）
+ int get shopId;/// 原因（如：销售出库、调拨、报损等�? String get reason;/// 关联销售单ID（可空）
  int? get salesTransactionId;/// 创建时间
  DateTime get createdAt;/// 备注（领域层可选）
- String? get remarks;/// 明细列表（仅领域层维护，不对应表字段�? List<OutboundItemModel> get items;
+ String? get remarks;/// 明细列表（仅领域层维护，不对应表字段�? List<OutboundItemModel> get items;
 /// Create a copy of OutboundReceiptModel
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -65734,15 +65734,15 @@ class _OutboundReceiptModel extends OutboundReceiptModel {
 @override final  int? id;
 /// 店铺ID（必填）
 @override final  int shopId;
-/// 原因（如：销售出库、调拨、报损等�?@override final  String reason;
+/// 原因（如：销售出库、调拨、报损等�?@override final  String reason;
 /// 关联销售单ID（可空）
 @override final  int? salesTransactionId;
 /// 创建时间
 @override final  DateTime createdAt;
 /// 备注（领域层可选）
 @override final  String? remarks;
-/// 明细列表（仅领域层维护，不对应表字段�? final  List<OutboundItemModel> _items;
-/// 明细列表（仅领域层维护，不对应表字段�?@override@JsonKey() List<OutboundItemModel> get items {
+/// 明细列表（仅领域层维护，不对应表字段�? final  List<OutboundItemModel> _items;
+/// 明细列表（仅领域层维护，不对应表字段�?@override@JsonKey() List<OutboundItemModel> get items {
   if (_items is EqualUnmodifiableListView) return _items;
   // ignore: implicit_dynamic_type
   return EqualUnmodifiableListView(_items);
@@ -65851,7 +65851,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../domain/model/category.dart';
 import 'category_service.dart';
 
-/// 类别列表状�?
+/// 类别列表状�?
 class CategoryListState {
   final List<CategoryModel> categories;
   final bool isLoading;
@@ -65892,7 +65892,7 @@ class CategoryListNotifier extends StateNotifier<CategoryListState> {
     super.dispose();
   }
 
-  /// 加载所有类�?
+  /// 加载所有类�?
   Future<void> loadCategories() async {
     if (_disposed) return;
     state = state.copyWith(isLoading: true, error: null);
@@ -65955,7 +65955,7 @@ class CategoryListNotifier extends StateNotifier<CategoryListState> {
     }
   }
 
-  /// 级联删除类别及所有关联内�?
+  /// 级联删除类别及所有关联内�?
   Future<void> deleteCategoryCascade(int id) async {
     try {
       await _categoryService.deleteCategoryCascade(id);
@@ -65990,13 +65990,13 @@ final categoryListProvider =
       return CategoryListNotifier(categoryService);
     });
 
-/// 根类�?Provider
+/// 根类�?Provider
 final rootCategoriesProvider = StreamProvider<List<CategoryModel>>((ref) {
   final categoryService = ref.watch(categoryServiceProvider);
   return categoryService.watchRootCategories();
 });
 
-/// 指定父类别的子类�?Provider
+/// 指定父类别的子类�?Provider
 final subCategoriesProvider = StreamProvider.family<List<CategoryModel>, int>((
   ref,
   parentId,
@@ -66017,7 +66017,7 @@ final categoriesProvider = Provider<List<CategoryModel>>((ref) {
   return categoryListState.categories;
 });
 
-/// 根据ID获取类别�?Provider
+/// 根据ID获取类别�?Provider
 final getCategoryByIdProvider = Provider.family<CategoryModel?, int>((
   ref,
   categoryId,
@@ -66049,14 +66049,14 @@ import '../domain/repository/i_category_repository.dart';
 import '../domain/repository/i_product_repository.dart';
 
 /// 类别应用服务
-/// 处理类别相关的业务逻辑和状态管�?
+/// 处理类别相关的业务逻辑和状态管�?
 class CategoryService {
   final ICategoryRepository _repository;
   final IProductRepository? _productRepository;
 
   CategoryService(this._repository, [this._productRepository]);
 
-  /// 添加新类�?
+  /// 添加新类�?
   Future<int> addCategory({
     int? id,
     required String name,
@@ -66101,7 +66101,7 @@ class CategoryService {
     // 验证类别是否存在
     final existingCategory = await _repository.getCategoryById(id);
     if (existingCategory == null) {
-      throw Exception('类别不存�?);
+      throw Exception('类别不存�?);
     }
 
     // 验证类别名称
@@ -66119,7 +66119,7 @@ class CategoryService {
       throw Exception('在当前层级下，类别名称已存在');
     }
 
-    // 如果有父类别，验证父类别是否存在且不是自己或子类�?
+    // 如果有父类别，验证父类别是否存在且不是自己或子类�?
     if (parentId != null && parentId>0) {
       if (parentId == id) {
         throw Exception('不能将自己设为父类别');
@@ -66133,7 +66133,7 @@ class CategoryService {
       // 检查是否会形成循环引用
       final path = await _repository.getCategoryPath(parentId);
       if (path.any((category) => category.id == id)) {
-        throw Exception('不能将子类别设为父类�?);
+        throw Exception('不能将子类别设为父类�?);
       }
     }
 
@@ -66150,7 +66150,7 @@ class CategoryService {
     // 验证类别是否存在
     final category = await _repository.getCategoryById(id);
     if (category == null) {
-      throw Exception('类别不存�?);
+      throw Exception('类别不存�?);
     }
 
     // 获取当前类别的所有子类别
@@ -66169,7 +66169,7 @@ class CategoryService {
         final updatedProduct = ProductModel(
           id: product.id,
           name: product.name,
-          // barcode 字段已移除，条码现在由独立的条码表管�?
+          // barcode 字段已移除，条码现在由独立的条码表管�?
           sku: product.sku,
           image: product.image,
           categoryId: category.parentId, // 转移到父类别或设为null
@@ -66193,11 +66193,11 @@ class CategoryService {
     // 处理子类别的父级关系
     if (subCategories.isNotEmpty) {
       for (final subCategory in subCategories) {
-        // 将子类别的父级设置为当前类别的父�?
+        // 将子类别的父级设置为当前类别的父�?
         final updatedSubCategory = CategoryModel(
           id: subCategory.id,
           name: subCategory.name,
-          parentId: category.parentId, // 继承当前类别的父�?
+          parentId: category.parentId, // 继承当前类别的父�?
         );
         await _repository.updateCategory(updatedSubCategory);
       }
@@ -66207,20 +66207,20 @@ class CategoryService {
     await _repository.deleteCategory(id);
   }
 
-  /// 级联删除类别及所有关联内�?
+  /// 级联删除类别及所有关联内�?
   Future<void> deleteCategoryCascade(int id) async {
     // 验证类别是否存在
     final category = await _repository.getCategoryById(id);
     if (category == null) {
-      throw Exception('类别不存�?);
+      throw Exception('类别不存�?);
     }
 
-    // 递归获取所有子类别（包括多层级嵌套�?
+    // 递归获取所有子类别（包括多层级嵌套�?
     final allSubCategories = await _getAllDescendantCategories(id);
 
     // 获取所有需要删除的类别ID（包括当前类别）
     final allCategoryIds = [id, ...allSubCategories.map((cat) => cat.id)];
-    // 删除所有关联产�?
+    // 删除所有关联产�?
     if (_productRepository != null) {
       for (final categoryId in allCategoryIds) {
         final relatedProducts = await _productRepository.getProductsByCondition(
@@ -66251,7 +66251,7 @@ class CategoryService {
       }
     }
 
-    // 从最深层开始删�?
+    // 从最深层开始删�?
     final sortedLevels = categoryLevels.keys.toList()
       ..sort((a, b) => b.compareTo(a));
 
@@ -66264,19 +66264,19 @@ class CategoryService {
     }
   }
 
-  /// 递归获取所有后代类�?
+  /// 递归获取所有后代类�?
   Future<List<CategoryModel>> _getAllDescendantCategories(int parentId) async {
     final allCategories = await _repository.getAllCategories();
     final result = <CategoryModel>[];
 
-    // 获取直接子类�?
+    // 获取直接子类�?
     final directSubCategories = allCategories
         .where((cat) => cat.parentId == parentId)
         .toList();
 
     for (final subCategory in directSubCategories) {
       result.add(subCategory);
-      // 递归获取子类别的子类�?
+      // 递归获取子类别的子类�?
       if (subCategory.id != null) {
         final descendants = await _getAllDescendantCategories(subCategory.id!);
         result.addAll(descendants);
@@ -66286,23 +66286,23 @@ class CategoryService {
     return result;
   }
 
-  /// 兼容原有的删除方法（保持向后兼容�?
+  /// 兼容原有的删除方法（保持向后兼容�?
   Future<void> deleteCategory(int id) async {
     // 默认使用级联删除模式
     await deleteCategoryCascade(id);
   }
 
-  /// 获取所有类�?
+  /// 获取所有类�?
   Future<List<CategoryModel>> getAllCategories() async {
     return await _repository.getAllCategories();
   }
 
-  /// 获取根类�?
+  /// 获取根类�?
   Future<List<CategoryModel>> getRootCategories() async {
     return await _repository.getRootCategories();
   }
 
-  /// 获取子类�?
+  /// 获取子类�?
   Future<List<CategoryModel>> getSubCategories(int parentId) async {
     return await _repository.getCategoriesByParentId(parentId);
   }
@@ -66312,17 +66312,17 @@ class CategoryService {
     return await _repository.getCategoryPath(categoryId);
   }
 
-  /// 监听所有类别变�?
+  /// 监听所有类别变�?
   Stream<List<CategoryModel>> watchAllCategories() {
     return _repository.watchAllCategories();
   }
 
-  /// 监听根类别变�?
+  /// 监听根类别变�?
   Stream<List<CategoryModel>> watchRootCategories() {
     return _repository.watchRootCategories();
   }
 
-  /// 监听子类别变�?
+  /// 监听子类别变�?
   Stream<List<CategoryModel>> watchSubCategories(int parentId) {
     return _repository.watchCategoriesByParentId(parentId);
   }
@@ -66346,13 +66346,13 @@ import '../../../core/database/database.dart';
 
 import 'package:stocko_app/features/product/domain/model/product.dart';
 
-/// 一个服务类，用于处理从外部数据源批量导入商品�?
+/// 一个服务类，用于处理从外部数据源批量导入商品�?
 class ProductImportService {
   final AppDatabase db;
 
   ProductImportService(this.db);
 
-  /// 根据名称和可选的父ID查找或创建一个分类，并返回其ID�?
+  /// 根据名称和可选的父ID查找或创建一个分类，并返回其ID�?
   Future<int> _getOrCreateCategory(String name, {int? parentId}) async {
     // 1. 尝试查找已存在的分类
     final query = db.select(db.category)..where((tbl) => tbl.name.equals(name));
@@ -66368,7 +66368,7 @@ class ProductImportService {
     if (existingCategory != null) {
       return existingCategory.id; // 2. 如果找到，返回其ID
     } else {
-      // 3. 如果没找到，创建一个新�?
+      // 3. 如果没找到，创建一个新�?
       final companion = CategoryCompanion.insert(
         name: name,
         parentId: Value(parentId),
@@ -66378,7 +66378,7 @@ class ProductImportService {
     }
   }
 
-  /// 根据名称查找或创建一个单位，并返回其ID�?
+  /// 根据名称查找或创建一个单位，并返回其ID�?
   Future<int> _getOrCreateUnit(String name) async {
     final existingUnit = await (db.select(
       db.unit,
@@ -66393,30 +66393,30 @@ class ProductImportService {
   }
 
   double _parsePrice(String priceString) {
-    // 使用正则表达式从字符串中提取价格数�?
-    // 这个表达式匹配第一个出现的数字序列（可以包含一个小数点�?
+    // 使用正则表达式从字符串中提取价格数�?
+    // 这个表达式匹配第一个出现的数字序列（可以包含一个小数点�?
     final match = RegExp(r'\d+\.?\d*').firstMatch(priceString);
     if (match != null) {
-      // group(0) 返回整个匹配的字符串，例�?"50.00"
+      // group(0) 返回整个匹配的字符串，例�?"50.00"
       return double.tryParse(match.group(0)!) ?? 0.0;
     }
     return 0.0;
   }
 
-  /// 从一个原始数据Map列表中批量插入商品�?
+  /// 从一个原始数据Map列表中批量插入商品�?
   Future<String?> bulkInsertProducts(
     List<Map<String, dynamic>> rawProductsData,
   ) async {
-    if (rawProductsData.isEmpty) return '没有需要导入的数据�?;
+    if (rawProductsData.isEmpty) return '没有需要导入的数据�?;
 
-    // --- 新增步骤: 预检查条码唯一�?---
+    // --- 新增步骤: 预检查条码唯一�?---
     final allBarcodes = <String>[];
     final duplicateBarcodesInFile = <String>{};
     final seenBarcodes = <String>{};
 
     for (final productData in rawProductsData) {
-      final packBarcode = productData['包条�?] as String?;
-      final cartonBarcode = productData['条条�?] as String?;
+      final packBarcode = productData['包条�?] as String?;
+      final cartonBarcode = productData['条条�?] as String?;
 
       if (packBarcode != null && packBarcode.isNotEmpty) {
         if (seenBarcodes.contains(packBarcode)) {
@@ -66437,25 +66437,25 @@ class ProductImportService {
     }
 
     if (duplicateBarcodesInFile.isNotEmpty) {
-      return '导入失败：文件中发现重复条码: ${duplicateBarcodesInFile.join(', ')}。请修正数据后重试�?;
+      return '导入失败：文件中发现重复条码: ${duplicateBarcodesInFile.join(', ')}。请修正数据后重试�?;
     }
 
     // --- 步骤 1: 预处理，收集所有唯一的品牌和单位名称 ---
     final categoryNames = rawProductsData
         .map((data) => data['品牌'] as String)
         .toSet();
-    final unitNames = {'�?, '�?}; // 根据需求固�?
+    final unitNames = {'�?, '�?}; // 根据需求固�?
 
     // --- 步骤 2: 一次性查找或创建所有需要的ID，并存入Map ---
     // --- 步骤 2: 创建层级分类 ---
-    // 2.1 首先创建或获取顶级分�?�?
-    final rootCategoryName = '�?;
+    // 2.1 首先创建或获取顶级分�?�?
+    final rootCategoryName = '�?;
     final rootCategoryId = await _getOrCreateCategory(rootCategoryName);
 
-    // 2.2 然后将文件中的品牌作�?�?的子分类
+    // 2.2 然后将文件中的品牌作�?�?的子分类
     final categoryIdMap = <String, int>{};
     for (final name in categoryNames) {
-      // 将品牌作为二级分类，父级�?�?
+      // 将品牌作为二级分类，父级�?�?
       categoryIdMap[name] = await _getOrCreateCategory(
         name,
         parentId: rootCategoryId,
@@ -66467,8 +66467,8 @@ class ProductImportService {
       unitIdMap[name] = await _getOrCreateUnit(name);
     }
 
-    final packUnitId = unitIdMap['�?]!;
-    final cartonUnitId = unitIdMap['�?]!;
+    final packUnitId = unitIdMap['�?]!;
+    final cartonUnitId = unitIdMap['�?]!;
 
     // --- 处理已存在的条码：删除旧产品数据以便覆盖 ---
     if (allBarcodes.isNotEmpty) {
@@ -66503,9 +66503,9 @@ class ProductImportService {
         await (db.delete(db.product)..where((t) => t.id.isIn(productIds))).go();
       }
     }
-    // --- 预检查结�?---
+    // --- 预检查结�?---
 
-    // --- 步骤 3: 执行高效的批量插�?---
+    // --- 步骤 3: 执行高效的批量插�?---
     try {
       await db.batch((batch) {
         // --- 新增: 改进ID生成策略 ---
@@ -66525,14 +66525,14 @@ class ProductImportService {
           final categoryId = categoryIdMap[brand]!; // 从Map中快速获取ID
 
           final cartonSuggestedRetailPrice = _parsePrice(
-            productData['建议零售�?] as String,
+            productData['建议零售�?] as String,
           );
           final cartonWholesalePrice = _parsePrice(
-            productData['批发�?] as String,
+            productData['批发�?] as String,
           );
           const conversionRate = 10;
 
-          // 插入商品主记�?
+          // 插入商品主记�?
           batch.insert(
             db.product,
             ProductCompanion.insert(
@@ -66540,7 +66540,7 @@ class ProductImportService {
               name: productName,
               brand: Value(brand),
               categoryId: Value(categoryId),
-              baseUnitId: packUnitId, // 基础单位ID�?�?
+              baseUnitId: packUnitId, // 基础单位ID�?�?
               suggestedRetailPrice: Value(
                 Money(
                   (cartonSuggestedRetailPrice * 100 / conversionRate).toInt(),
@@ -66549,7 +66549,7 @@ class ProductImportService {
             ),
           );
 
-          // 插入"�?的单位和条码记录
+          // 插入"�?的单位和条码记录
           batch.insert(
             db.unitProduct,
             UnitProductCompanion.insert(
@@ -66565,7 +66565,7 @@ class ProductImportService {
               ),
             ),
           );
-          final packBarcode = productData['包条�?] as String?;
+          final packBarcode = productData['包条�?] as String?;
           if (packBarcode != null && packBarcode.isNotEmpty) {
             batch.insert(
               db.barcode,
@@ -66577,7 +66577,7 @@ class ProductImportService {
             );
           }
 
-          // 插入"�?的单位和条码记录
+          // 插入"�?的单位和条码记录
           batch.insert(
             db.unitProduct,
             UnitProductCompanion.insert(
@@ -66593,7 +66593,7 @@ class ProductImportService {
               ),
             ),
           );
-          final cartonBarcode = productData['条条�?] as String?;
+          final cartonBarcode = productData['条条�?] as String?;
           if (cartonBarcode != null && cartonBarcode.isNotEmpty) {
             batch.insert(
               db.barcode,
@@ -66604,22 +66604,22 @@ class ProductImportService {
               ),
             );
           }
-          // 为下一个商品增加ID偏移�?
+          // 为下一个商品增加ID偏移�?
           idOffset += 5;
         }
       });
-      return '批量导入任务完成，成功处�?${rawProductsData.length} 条记录�?;
+      return '批量导入任务完成，成功处�?${rawProductsData.length} 条记录�?;
     } catch (e, s) {
       // 在预检查后，此处的 UNIQUE constraint 错误理论上不应再发生
       // 但保留以防万一
       print(
-        '>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>处理商品数据时发生意外错�? $e\n$s<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<',
-      ); // 保留开发者日�?
+        '>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>处理商品数据时发生意外错�? $e\n$s<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<',
+      ); // 保留开发者日�?
       print(
         '>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>日志结束<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<',
-      ); // 保留开发者日�?
+      ); // 保留开发者日�?
 
-      return '导入过程中发生未知错误，请检查日志�?;
+      return '导入过程中发生未知错误，请检查日志�?;
     }
   }
 }
@@ -66630,10 +66630,10 @@ import '../../data/repository/barcode_repository.dart';
 import '../../domain/model/product_unit.dart';
 import '../../data/repository/product_unit_repository.dart';
 
-/// 条码操作状�?
+/// 条码操作状�?
 enum BarcodeOperationStatus { initial, loading, success, error }
 
-/// 条码控制器状�?
+/// 条码控制器状�?
 class BarcodeControllerState {
   final BarcodeOperationStatus status;
   final String? errorMessage;
@@ -66662,7 +66662,7 @@ class BarcodeControllerState {
   bool get isError => status == BarcodeOperationStatus.error;
 }
 
-/// 条码控制�?
+/// 条码控制�?
 class BarcodeController extends StateNotifier<BarcodeControllerState> {
   final IBarcodeRepository _repository;
 
@@ -66678,7 +66678,7 @@ class BarcodeController extends StateNotifier<BarcodeControllerState> {
       if (exists) {
         state = state.copyWith(
           status: BarcodeOperationStatus.error,
-          errorMessage: '条码 ${barcode.barcodeValue} 已存�?,
+          errorMessage: '条码 ${barcode.barcodeValue} 已存�?,
         );
         return;
       }
@@ -66704,13 +66704,13 @@ class BarcodeController extends StateNotifier<BarcodeControllerState> {
     state = state.copyWith(status: BarcodeOperationStatus.loading);
 
     try {
-      // 检查是否有重复的条�?
+      // 检查是否有重复的条�?
       for (final barcode in barcodes) {
         final exists = await _repository.barcodeExists(barcode.barcodeValue);
         if (exists) {
           state = state.copyWith(
             status: BarcodeOperationStatus.error,
-            errorMessage: '条码 ${barcode.barcodeValue} 已存�?,
+            errorMessage: '条码 ${barcode.barcodeValue} 已存�?,
           );
           return;
         }
@@ -66745,7 +66745,7 @@ class BarcodeController extends StateNotifier<BarcodeControllerState> {
       } else {
         state = state.copyWith(
           status: BarcodeOperationStatus.error,
-          errorMessage: '更新条码失败：未找到对应的记�?,
+          errorMessage: '更新条码失败：未找到对应的记�?,
         );
       }
     } catch (e) {
@@ -66770,7 +66770,7 @@ class BarcodeController extends StateNotifier<BarcodeControllerState> {
       } else {
         state = state.copyWith(
           status: BarcodeOperationStatus.error,
-          errorMessage: '删除条码失败：未找到对应的记�?,
+          errorMessage: '删除条码失败：未找到对应的记�?,
         );
       }
     } catch (e) {
@@ -66781,7 +66781,7 @@ class BarcodeController extends StateNotifier<BarcodeControllerState> {
     }
   }
 
-  /// 删除产品单位的所有条�?
+  /// 删除产品单位的所有条�?
   Future<void> deleteBarcodesByProductUnitId(int id) async {
     state = state.copyWith(status: BarcodeOperationStatus.loading);
 
@@ -66793,7 +66793,7 @@ class BarcodeController extends StateNotifier<BarcodeControllerState> {
         status: BarcodeOperationStatus.success,
         errorMessage: null,
       );
-      print('删除�?$deletedCount 个条�?);
+      print('删除�?$deletedCount 个条�?);
     } catch (e) {
       state = state.copyWith(
         status: BarcodeOperationStatus.error,
@@ -66802,7 +66802,7 @@ class BarcodeController extends StateNotifier<BarcodeControllerState> {
     }
   }
 
-  /// 根据条码值获取条码信�?
+  /// 根据条码值获取条码信�?
   Future<BarcodeModel?> getBarcodeByValue(String barcode) async {
     try {
       return await _repository.getBarcodeByValue(barcode);
@@ -66815,7 +66815,7 @@ class BarcodeController extends StateNotifier<BarcodeControllerState> {
     }
   }
 
-  /// 根据产品单位ID获取所有条�?
+  /// 根据产品单位ID获取所有条�?
   Future<List<BarcodeModel>> getBarcodesByProductUnitId(int? id) async {
     try {
       return await _repository.getBarcodesByProductUnitId(id);
@@ -66828,20 +66828,20 @@ class BarcodeController extends StateNotifier<BarcodeControllerState> {
     }
   }
 
-  /// 检查条码是否存�?
+  /// 检查条码是否存�?
   Future<bool> barcodeExists(String barcode) async {
     try {
       return await _repository.barcodeExists(barcode);
     } catch (e) {
       state = state.copyWith(
         status: BarcodeOperationStatus.error,
-        errorMessage: '检查条码是否存在失�? ${e.toString()}',
+        errorMessage: '检查条码是否存在失�? ${e.toString()}',
       );
       return false;
     }
   }
 
-  /// 清除错误状�?
+  /// 清除错误状�?
   void clearError() {
     if (state.isError) {
       state = state.copyWith(
@@ -66852,14 +66852,14 @@ class BarcodeController extends StateNotifier<BarcodeControllerState> {
   }
 }
 
-/// 条码控制�?Provider
+/// 条码控制�?Provider
 final barcodeControllerProvider =
     StateNotifierProvider<BarcodeController, BarcodeControllerState>((ref) {
       final repository = ref.watch(barcodeRepositoryProvider);
       return BarcodeController(repository);
     });
 
-/// 根据产品单位ID获取条码列表�?Provider
+/// 根据产品单位ID获取条码列表�?Provider
 final barcodesByProductUnitIdProvider =
     StreamProvider.family<List<BarcodeModel>, int>((ref, id) {
       final repository = ref.watch(barcodeRepositoryProvider);
@@ -66888,7 +66888,7 @@ final mainBarcodeProvider =
   if (productUnits.isEmpty) {
     print('未找到任何货品单位配置，返回 null');
     print('=============================================');
-    return null; // 没有单位配置，自然没有条�?
+    return null; // 没有单位配置，自然没有条�?
   }
 
   UnitProduct? baseProductUnit;
@@ -66897,8 +66897,8 @@ final mainBarcodeProvider =
         productUnits.firstWhere((unit) => unit.conversionRate == 1.0);
     print('找到基础单位 (conversionRate == 1.0): id: ${baseProductUnit.id}');
   } catch (e) {
-    // 如果没有严格意义上的基础单位，使用第一个作为备�?
-    print('未找到严格的基础单位 (conversionRate == 1.0)，使用列表中的第一个单位作为备�?);
+    // 如果没有严格意义上的基础单位，使用第一个作为备�?
+    print('未找到严格的基础单位 (conversionRate == 1.0)，使用列表中的第一个单位作为备�?);
     baseProductUnit = productUnits.first;
     print('备选的基础单位: id: ${baseProductUnit.id}');
   }
@@ -66908,7 +66908,7 @@ final mainBarcodeProvider =
 
   if (barcodes.isNotEmpty) {
     final barcodeValue = barcodes.first.barcodeValue;
-    print('返回第一个条�? $barcodeValue');
+    print('返回第一个条�? $barcodeValue');
     print('=============================================');
     return barcodeValue;
   }
@@ -66920,7 +66920,7 @@ final mainBarcodeProvider =
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/database/database.dart';
 
-/// 批次列表（按产品+店铺�?
+/// 批次列表（按产品+店铺�?
 final batchesByProductAndShopProvider = FutureProvider.family<
     List<ProductBatchData>, ({int productId, int shopId})>((ref, args) async {
   final db = ref.watch(appDatabaseProvider);
@@ -66930,18 +66930,18 @@ import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../domain/model/product.dart';
 import '../../domain/model/category.dart';
-import '../../data/repository/product_repository.dart'; // 这里包含�?productRepositoryProvider
+import '../../data/repository/product_repository.dart'; // 这里包含�?productRepositoryProvider
 import '../category_notifier.dart';
 
 // 注意：这个文件展示了使用 AsyncNotifier 重构后的代码结构
-// 这是 product_providers.dart 的完整重构版�?
+// 这是 product_providers.dart 的完整重构版�?
 
-/// 使用传统方式�?AsyncNotifier 示例（不使用代码生成�?
-/// 产品操作状态管�?
+/// 使用传统方式�?AsyncNotifier 示例（不使用代码生成�?
+/// 产品操作状态管�?
 class ProductOperationsNotifier extends AsyncNotifier<void> {
   @override
   FutureOr<void> build() {
-    // 初始状�?
+    // 初始状�?
     return null;
   }
 
@@ -66973,12 +66973,12 @@ class ProductOperationsNotifier extends AsyncNotifier<void> {
       final success = await repository.updateProduct(product);
 
       if (!success) {
-        throw Exception('更新产品失败：未找到对应的产品记�?);
+        throw Exception('更新产品失败：未找到对应的产品记�?);
       }
 
       // 刷新产品列表
       ref.invalidate(allProductsProvider);
-// 使对应的 productByIdProvider 无效，以便获取最新数�?
+// 使对应的 productByIdProvider 无效，以便获取最新数�?
       ref.invalidate(productByIdProvider(product.id!));
     });
   }
@@ -66996,12 +66996,12 @@ class ProductOperationsNotifier extends AsyncNotifier<void> {
     });
   }
 
-  /// 重置状�?
+  /// 重置状�?
   void resetState() {
     state = const AsyncValue.data(null);
   }
 
-  /// 清除错误状�?
+  /// 清除错误状�?
   void clearError() {
     if (state.hasError) {
       state = const AsyncValue.data(null);
@@ -67063,7 +67063,7 @@ class ProductOperationsNotifier extends AsyncNotifier<void> {
         averageUnitPriceInCents: result.averageUnitPriceInCents,
       );
     } catch (e, st) {
-      state = AsyncValue.error(Exception('根据条码查询产品及单位失�? ${e.toString()}'), st);
+      state = AsyncValue.error(Exception('根据条码查询产品及单位失�? ${e.toString()}'), st);
       return null;
     }
   }
@@ -67077,7 +67077,7 @@ class ProductListNotifier extends StreamNotifier<List<ProductModel>> {
     return repository.watchAllProducts().map((products) {
       final sortedProducts = List.of(products);
 
-      // �?lastUpdated 降序排序，最新的产品在最前面
+      // �?lastUpdated 降序排序，最新的产品在最前面
       sortedProducts.sort((a, b) {
         final aDate = a.lastUpdated;
         final bDate = b.lastUpdated;
@@ -67087,7 +67087,7 @@ class ProductListNotifier extends StreamNotifier<List<ProductModel>> {
         return bDate.compareTo(aDate);
       });
 
-      // 如果列表长度大于3，将最新的产品移动到第4�?
+      // 如果列表长度大于3，将最新的产品移动到第4�?
       if (sortedProducts.length > 3) {
         final latestProduct = sortedProducts.removeAt(0);
         sortedProducts.insert(3, latestProduct);
@@ -67141,7 +67141,7 @@ final selectedCategoryIdProvider = StateProvider<int?>((ref) => null);
 /// 用于存储当前的搜索关键字
 final searchQueryProvider = StateProvider<String>((ref) => '');
 
-/// 提供根据分类筛选和关键字搜索后的产品列�?
+/// 提供根据分类筛选和关键字搜索后的产品列�?
 final filteredProductsProvider = Provider<AsyncValue<List<ProductModel>>>((ref) {
   final selectedCategoryId = ref.watch(selectedCategoryIdProvider);
   final searchQuery = ref.watch(searchQueryProvider);
@@ -67164,7 +67164,7 @@ final filteredProductsProvider = Provider<AsyncValue<List<ProductModel>>>((ref) 
 
       // 默认筛选：如果未选择任何分类，则默认不显示“烟”类别及其所有子类别
       if (selectedCategoryId == null) {
-        // 查找所有后代ID的辅助函�?
+        // 查找所有后代ID的辅助函�?
         Set<int> getAllDescendantIds(
             int parentId, List<CategoryModel> categories) {
           final Set<int> descendantIds = {};
@@ -67182,7 +67182,7 @@ final filteredProductsProvider = Provider<AsyncValue<List<ProductModel>>>((ref) 
 
         try {
           final tobaccoCategory =
-              allCategories.firstWhere((c) => c.name == '�?);
+              allCategories.firstWhere((c) => c.name == '�?);
           final idsToExclude = {tobaccoCategory.id!};
           if (tobaccoCategory.id != null) {
             idsToExclude.addAll(
@@ -67193,11 +67193,11 @@ final filteredProductsProvider = Provider<AsyncValue<List<ProductModel>>>((ref) 
               .where((p) => !idsToExclude.contains(p.categoryId))
               .toList();
         } catch (e) {
-          // 未找�?"�? 类别，不执行任何操作
+          // 未找�?"�? 类别，不执行任何操作
         }
       }
 
-      // 按分类筛�?
+      // 按分类筛�?
       if (selectedCategoryId != null) {
         filteredList = filteredList
             .where((p) => p.categoryId == selectedCategoryId)
@@ -67219,7 +67219,7 @@ final filteredProductsProvider = Provider<AsyncValue<List<ProductModel>>>((ref) 
   );
 });
 
-/// 提供所有产品及其单位名称的�?
+/// 提供所有产品及其单位名称的�?
 final allProductsWithUnitProvider =
     StreamProvider<
       List<
@@ -67248,10 +67248,10 @@ import '../../domain/model/product_unit.dart';
 import '../../domain/repository/i_product_unit_repository.dart';
 import '../../data/repository/product_unit_repository.dart';
 
-/// 产品单位操作状�?
+/// 产品单位操作状�?
 enum ProductUnitOperationStatus { initial, loading, success, error }
 
-/// 产品单位控制器状�?
+/// 产品单位控制器状�?
 class ProductUnitControllerState {
   final ProductUnitOperationStatus status;
   final String? errorMessage;
@@ -67281,7 +67281,7 @@ class ProductUnitControllerState {
   bool get isSuccess => status == ProductUnitOperationStatus.success;
 }
 
-/// 产品单位控制�?- 管理产品单位的增删改操作
+/// 产品单位控制�?- 管理产品单位的增删改操作
 class ProductUnitController extends StateNotifier<ProductUnitControllerState> {
   final IProductUnitRepository _repository;
   final Ref _ref;
@@ -67356,7 +67356,7 @@ class ProductUnitController extends StateNotifier<ProductUnitControllerState> {
       } else {
         state = state.copyWith(
           status: ProductUnitOperationStatus.error,
-          errorMessage: '更新产品单位失败：未找到对应的记�?,
+          errorMessage: '更新产品单位失败：未找到对应的记�?,
         );
       }
     } catch (e) {
@@ -67384,7 +67384,7 @@ class ProductUnitController extends StateNotifier<ProductUnitControllerState> {
       } else {
         state = state.copyWith(
           status: ProductUnitOperationStatus.error,
-          errorMessage: '删除产品单位失败：未找到对应的记�?,
+          errorMessage: '删除产品单位失败：未找到对应的记�?,
         );
       }
     } catch (e) {
@@ -67395,25 +67395,25 @@ class ProductUnitController extends StateNotifier<ProductUnitControllerState> {
     }
   }
 
-  /// 替换产品的所有单位配�?
+  /// 替换产品的所有单位配�?
   Future<void> replaceProductUnits(
     int productId,
     List<UnitProduct> productUnits,
   ) async {
-    print('🎯 ProductUnitController.replaceProductUnits - 开始替换产品单位配�?);
+    print('🎯 ProductUnitController.replaceProductUnits - 开始替换产品单位配�?);
     print('🎯 产品ID: $productId');
     print('🎯 单位数量: ${productUnits.length}');
     for (int i = 0; i < productUnits.length; i++) {
       final unit = productUnits[i];
-      print('🎯   [$i] 单位ID: ${unit.unitId}, 换算�? ${unit.conversionRate}');
+      print('🎯   [$i] 单位ID: ${unit.unitId}, 换算�? ${unit.conversionRate}');
     }
     
     state = state.copyWith(status: ProductUnitOperationStatus.loading);
 
     try {
-      print('💾 调用仓储层替换方�?..');
+      print('💾 调用仓储层替换方�?..');
       await _repository.replaceProductUnits(productId, productUnits);
-      print('�?仓储层替换成�?);
+      print('�?仓储层替换成�?);
       
       state = state.copyWith(
         status: ProductUnitOperationStatus.success,
@@ -67424,9 +67424,9 @@ class ProductUnitController extends StateNotifier<ProductUnitControllerState> {
       // 刷新相关的Provider
       print('🔄 刷新产品单位列表...');
       _ref.invalidate(productUnitsProvider(productId));
-      print('�?ProductUnitController.replaceProductUnits - 替换产品单位配置完成');
+      print('�?ProductUnitController.replaceProductUnits - 替换产品单位配置完成');
     } catch (e) {
-      print('�?ProductUnitController.replaceProductUnits - 替换失败: $e');
+      print('�?ProductUnitController.replaceProductUnits - 替换失败: $e');
       state = state.copyWith(
         status: ProductUnitOperationStatus.error,
         errorMessage: '替换产品单位配置失败: ${e.toString()}',
@@ -67471,18 +67471,18 @@ class ProductUnitController extends StateNotifier<ProductUnitControllerState> {
     } catch (e) {
       state = state.copyWith(
         status: ProductUnitOperationStatus.error,
-        errorMessage: '检查产品单位配置失�? ${e.toString()}',
+        errorMessage: '检查产品单位配置失�? ${e.toString()}',
       );
       return false;
     }
   }
 
-  /// 重置状�?
+  /// 重置状�?
   void resetState() {
     state = const ProductUnitControllerState();
   }
 
-  /// 清除错误状�?
+  /// 清除错误状�?
   void clearError() {
     if (state.isError) {
       state = state.copyWith(
@@ -67522,9 +67522,9 @@ final baseUnitProvider = FutureProvider.family<UnitProduct?, int>((
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../domain/model/auxiliary_unit_data.dart';
 
-/// 单位编辑页面辅单位数据状�?
+/// 单位编辑页面辅单位数据状�?
 class UnitEditFormState {
-  /// 辅单位数据列�?
+  /// 辅单位数据列�?
   final List<AuxiliaryUnitData> auxiliaryUnits;
 
   /// 辅单位计数器
@@ -67584,7 +67584,7 @@ class UnitEditFormNotifier extends Notifier<UnitEditFormState> {
     return const UnitEditFormState();
   }
 
-  /// 添加新的辅单�?
+  /// 添加新的辅单�?
   void addAuxiliaryUnit() {
     final newUnit = AuxiliaryUnitData.empty(state.auxiliaryCounter);
     final updatedUnits = [...state.auxiliaryUnits, newUnit];
@@ -67613,7 +67613,7 @@ class UnitEditFormNotifier extends Notifier<UnitEditFormState> {
     state = state.copyWith(auxiliaryUnits: updatedUnits);
   }
 
-  /// 更新辅单位的换算�?
+  /// 更新辅单位的换算�?
   void updateAuxiliaryUnitConversionRate(int id, int conversionRate) {
     final updatedUnits = state.auxiliaryUnits.map((unit) {
       if (unit.id == id) {
@@ -67635,7 +67635,7 @@ class UnitEditFormNotifier extends Notifier<UnitEditFormState> {
     state = state.copyWith(auxiliaryUnits: updatedUnits);
   }
 
-  /// 更新辅单位的建议零售�?
+  /// 更新辅单位的建议零售�?
   void updateAuxiliaryUnitRetailPrice(int id, String retailPriceInYuan) {
     // 将元转换为分存储
     String retailPriceInCents = '';
@@ -67655,7 +67655,7 @@ class UnitEditFormNotifier extends Notifier<UnitEditFormState> {
     state = state.copyWith(auxiliaryUnits: updatedUnits);
   }
 
-  /// 更新辅单位的批发�?
+  /// 更新辅单位的批发�?
   void updateAuxiliaryUnitWholesalePrice(int id, String wholesalePriceInYuan) {
     // 将元转换为分存储
     String wholesalePriceInCents = '';
@@ -67693,16 +67693,16 @@ class UnitEditFormNotifier extends Notifier<UnitEditFormState> {
     state = state.copyWith(auxiliaryUnits: [], auxiliaryCounter: 1);
   }
 
-  /// 从现有的_AuxiliaryUnit列表初始化数�?
+  /// 从现有的_AuxiliaryUnit列表初始化数�?
   void initializeFromExisting(List<dynamic> existingUnits, int counter) {
     final auxiliaryUnits = <AuxiliaryUnitData>[];
 
     for (final unit in existingUnits) {
       if (unit is Map<String, dynamic>) {
-        // 从Map初始�?
+        // 从Map初始�?
         auxiliaryUnits.add(AuxiliaryUnitData.fromJson(unit));
       } else {
-        // 从现有的_AuxiliaryUnit对象初始�?
+        // 从现有的_AuxiliaryUnit对象初始�?
         final auxUnit = unit as dynamic;
         
         // 将元转换为分
@@ -67757,10 +67757,10 @@ import '../../data/repository/unit_repository.dart';
 import '../../domain/repository/i_product_repository.dart';
 import '../../data/repository/product_repository.dart';
 
-/// 单位操作状�?
+/// 单位操作状�?
 enum UnitOperationStatus { initial, loading, success, error }
 
-/// 单位控制器状�?
+/// 单位控制器状�?
 class UnitControllerState {
   final UnitOperationStatus status;
   final String? errorMessage;
@@ -67789,7 +67789,7 @@ class UnitControllerState {
   bool get isSuccess => status == UnitOperationStatus.success;
 }
 
-/// 单位控制�?- 管理单位的增删改操作
+/// 单位控制�?- 管理单位的增删改操作
 class UnitController extends StateNotifier<UnitControllerState> {
   final IUnitRepository _repository;
   final IProductRepository _productRepository;
@@ -67800,13 +67800,13 @@ class UnitController extends StateNotifier<UnitControllerState> {
 
   /// 添加单位
   Future<Unit> addUnit(Unit unit) async {
-    print('🎯 UnitController.addUnit - 开始添加单�? ID=${unit.id}, 名称="${unit.name}"');
+    print('🎯 UnitController.addUnit - 开始添加单�? ID=${unit.id}, 名称="${unit.name}"');
     state = state.copyWith(status: UnitOperationStatus.loading);
 
     try {
-      // 检查单位名称是否为�?
+      // 检查单位名称是否为�?
       if (unit.name.trim().isEmpty) {
-        print('�?单位名称为空');
+        print('�?单位名称为空');
         throw Exception('单位名称不能为空');
       }
 
@@ -67814,14 +67814,14 @@ class UnitController extends StateNotifier<UnitControllerState> {
       print('🔍 检查单位名称是否已存在: "${unit.name.trim()}"');
       final existingUnit = await _repository.getUnitByName(unit.name.trim());
       if (existingUnit != null) {
-        print('�?单位名称已存�? ${existingUnit.id}');
-        throw Exception('单位名称已存�?);
+        print('�?单位名称已存�? ${existingUnit.id}');
+        throw Exception('单位名称已存�?);
       }
-      print('�?单位名称检查通过');
+      print('�?单位名称检查通过');
 
-      print('💾 调用仓储层添加单�?..');
+      print('💾 调用仓储层添加单�?..');
       final newUnit = await _repository.addUnit(unit);
-      print('�?仓储层添加单位成�? 新ID: ${newUnit.id}');
+      print('�?仓储层添加单位成�? 新ID: ${newUnit.id}');
       
       state = state.copyWith(
         status: UnitOperationStatus.success,
@@ -67830,29 +67830,29 @@ class UnitController extends StateNotifier<UnitControllerState> {
       );
 
       // 刷新单位列表 - Stream会自动更新，所以invalidate不是必须的，
-      // 但为了确保依赖此provider的旧代码能立即反应，可以保留�?
-      // 不过，由于我们返回了新对象，调用方应优先使用返回值�?
+      // 但为了确保依赖此provider的旧代码能立即反应，可以保留�?
+      // 不过，由于我们返回了新对象，调用方应优先使用返回值�?
       print('🔄 刷新单位列表...');
       _ref.invalidate(allUnitsProvider);
-      print('�?UnitController.addUnit - 添加单位完成');
+      print('�?UnitController.addUnit - 添加单位完成');
       return newUnit;
     } catch (e) {
-      print('�?UnitController.addUnit - 添加单位失败: $e');
+      print('�?UnitController.addUnit - 添加单位失败: $e');
       state = state.copyWith(
         status: UnitOperationStatus.error,
         errorMessage: '添加单位失败: ${e.toString()}',
       );
-      rethrow; // 重新抛出异常，让调用方可以处�?
+      rethrow; // 重新抛出异常，让调用方可以处�?
     }
   }
 
-  // updateUnit 方法已不再需要，因为编辑功能被移除了�?
+  // updateUnit 方法已不再需要，因为编辑功能被移除了�?
 
   /// 删除单位
   Future<void> deleteUnit(int unitId) async {
     state = state.copyWith(status: UnitOperationStatus.loading);
     try {
-      // 依赖检�?
+      // 依赖检�?
       final isUsed = await _productRepository.isUnitUsed(unitId);
       if (isUsed) {
         throw Exception('无法删除：该单位已被一个或多个商品使用');
@@ -67867,14 +67867,14 @@ class UnitController extends StateNotifier<UnitControllerState> {
         );
         _ref.invalidate(allUnitsProvider);
       } else {
-        throw Exception('删除单位失败：未找到对应的单位记�?);
+        throw Exception('删除单位失败：未找到对应的单位记�?);
       }
     } catch (e) {
       state = state.copyWith(
         status: UnitOperationStatus.error,
         errorMessage: e.toString(),
       );
-      // 让UI层能捕获到详细错�?
+      // 让UI层能捕获到详细错�?
       rethrow;
     }
   }
@@ -67912,7 +67912,7 @@ class UnitController extends StateNotifier<UnitControllerState> {
     } catch (e) {
       state = state.copyWith(
         status: UnitOperationStatus.error,
-        errorMessage: '检查单位名称失�? ${e.toString()}',
+        errorMessage: '检查单位名称失�? ${e.toString()}',
       );
       return false;
     }
@@ -67939,12 +67939,12 @@ class UnitController extends StateNotifier<UnitControllerState> {
     }
   }
 
-  /// 重置状�?
+  /// 重置状�?
   void resetState() {
     state = const UnitControllerState();
   }
 
-  /// 清除错误状�?
+  /// 清除错误状�?
   void clearError() {
     if (state.isError) {
       state = state.copyWith(
@@ -67963,7 +67963,7 @@ final allUnitsProvider = StreamProvider<List<Unit>>((ref) {
 });
 
 /// 单位控制器Provider
-/// 管理单位的增删改操作状�?
+/// 管理单位的增删改操作状�?
 final unitControllerProvider =
     StateNotifierProvider<UnitController, UnitControllerState>((ref) {
       final repository = ref.watch(unitRepositoryProvider);
@@ -68003,14 +68003,14 @@ class BarcodeDao extends DatabaseAccessor<AppDatabase> with _$BarcodeDaoMixin {
     )..where((tbl) => tbl.id.equals(id))).getSingleOrNull();
   }
 
-  /// 根据条码值获取条码信�?
+  /// 根据条码值获取条码信�?
   Future<BarcodeData?> getBarcodeByValue(String barcode) async {
     return await (select(
       db.barcode,
     )..where((tbl) => tbl.barcodeValue.equals(barcode))).getSingleOrNull();
   }
 
-  /// 根据产品单位ID获取所有条�?
+  /// 根据产品单位ID获取所有条�?
   Future<List<BarcodeData>> getBarcodesByProductUnitId(
     int id,
   ) async {
@@ -68019,12 +68019,12 @@ class BarcodeDao extends DatabaseAccessor<AppDatabase> with _$BarcodeDaoMixin {
     )..where((tbl) => tbl.unitProductId.equals(id))).get();
   }
 
-  /// 获取所有条�?
+  /// 获取所有条�?
   Future<List<BarcodeData>> getAllBarcodes() async {
     return await select(db.barcode).get();
   }
 
-  /// 监听产品单位的条码变�?
+  /// 监听产品单位的条码变�?
   Stream<List<BarcodeData>> watchBarcodesByProductUnitId(
     int id,
   ) {
@@ -68048,7 +68048,7 @@ class BarcodeDao extends DatabaseAccessor<AppDatabase> with _$BarcodeDaoMixin {
     )..where((tbl) => tbl.id.equals(id))).go();
   }
 
-  /// 删除产品单位的所有条�?
+  /// 删除产品单位的所有条�?
   Future<int> deleteBarcodesByProductUnitId(int id) async {
     return await (delete(
       db.barcode,
@@ -68082,12 +68082,12 @@ class BarcodeDao extends DatabaseAccessor<AppDatabase> with _$BarcodeDaoMixin {
     return result.isNotEmpty;
   }
 
-  /// 更新或插入条码（如果存在则更新，否则插入�?
+  /// 更新或插入条码（如果存在则更新，否则插入�?
   Future<void> upsertBarcode(BarcodeCompanion companion) async {
     await into(db.barcode).insertOnConflictUpdate(companion);
   }
 
-  /// 批量更新或插入条�?
+  /// 批量更新或插入条�?
   Future<void> upsertMultipleBarcodes(
     List<BarcodeCompanion> companions,
   ) async {
@@ -68121,12 +68121,12 @@ import '../../../../core/database/batches_table.dart';
 part 'batch_dao.g.dart';
 
 /// 批次数据访问对象
-/// 负责处理批次表的数据库操�?
+/// 负责处理批次表的数据库操�?
 @DriftAccessor(tables: [ProductBatch])
 class BatchDao extends DatabaseAccessor<AppDatabase> with _$BatchDaoMixin {
   BatchDao(super.db);
 
-  /// 创建新批�?
+  /// 创建新批�?
   Future<void> createBatch({
     required int productId,
     required DateTime productionDate,
@@ -68144,14 +68144,14 @@ class BatchDao extends DatabaseAccessor<AppDatabase> with _$BatchDaoMixin {
   }
 
   /// 使用 ON CONFLICT DO UPDATE 在唯一键冲突时累加数量
-  /// �?(productId, productionDate, shopId) 已存在，�?total_inbound_quantity += increment 并刷�?updated_at
+  /// �?(productId, productionDate, shopId) 已存在，�?total_inbound_quantity += increment 并刷�?updated_at
   Future<void> upsertBatchIncrement({
     required int productId,
     required DateTime productionDate,
     required int shopId,
     required int increment,
   }) async {
-    // 可选：将时间标准化为日期粒度（与唯一键语义一致）�?
+    // 可选：将时间标准化为日期粒度（与唯一键语义一致）�?
     final d = productionDate.toUtc();
     final dateOnly = DateTime.utc(d.year, d.month, d.day);
     final now = DateTime.now();
@@ -68161,7 +68161,7 @@ class BatchDao extends DatabaseAccessor<AppDatabase> with _$BatchDaoMixin {
       'VALUES (?1, ?2, ?3, ?4, ?5, ?6) '
       'ON CONFLICT(product_id, production_date, shop_id) DO UPDATE SET '
       'total_inbound_quantity = product_batch.total_inbound_quantity + excluded.total_inbound_quantity, '
-      // 关键修复：避免使�?CURRENT_TIMESTAMP（TEXT），绑定 DateTime，匹�?Drift 的整数存储�?
+      // 关键修复：避免使�?CURRENT_TIMESTAMP（TEXT），绑定 DateTime，匹�?Drift 的整数存储�?
       'updated_at = ?6',
       variables: [
         Variable(productId),
@@ -68190,7 +68190,7 @@ class BatchDao extends DatabaseAccessor<AppDatabase> with _$BatchDaoMixin {
     return q.getSingleOrNull();
   }
 
-  /// 仅返回批�?id，避免映�?DateTime 列（兼容旧数�?TEXT 时间存储�?
+  /// 仅返回批�?id，避免映�?DateTime 列（兼容旧数�?TEXT 时间存储�?
   Future<int?> getBatchIdByBusinessKey({
     required int productId,
     required DateTime productionDate,
@@ -68207,7 +68207,7 @@ class BatchDao extends DatabaseAccessor<AppDatabase> with _$BatchDaoMixin {
     return row?.read(db.productBatch.id);
   }
 
-  /// 获取所有批�?
+  /// 获取所有批�?
   Future<List<ProductBatchData>> getAllBatches() {
     return select(db.productBatch).get();
   }
@@ -68217,7 +68217,7 @@ class BatchDao extends DatabaseAccessor<AppDatabase> with _$BatchDaoMixin {
     return (select(db.productBatch)..where((t) => t.shopId.equals(shopId))).get();
   }
 
-  /// 根据批次号获取批�?
+  /// 根据批次号获取批�?
   Future<ProductBatchData?> getBatchByNumber(int id) async {
     try {
       return await (select(
@@ -68299,41 +68299,41 @@ class CategoryDao extends DatabaseAccessor<AppDatabase>
     )..where((tbl) => tbl.id.equals(id))).getSingleOrNull();
   }
 
-  /// 获取所有类�?
+  /// 获取所有类�?
   Future<List<CategoryData>> getAllCategories() async {
     return await select(db.category).get();
   }
 
-  /// 监听所有类别变�?
+  /// 监听所有类别变�?
   Stream<List<CategoryData>> watchAllCategories() {
     return select(db.category).watch();
   }
 
-  /// 根据父类别ID获取子类�?
+  /// 根据父类别ID获取子类�?
   Future<List<CategoryData>> getCategoriesByParentId(
     int? parentId,
   ) async {
     if (parentId == null) {
-      // 获取根类别（没有父类别的类别�?
+      // 获取根类别（没有父类别的类别�?
       return await (select(
         db.category,
       )..where((tbl) => tbl.parentId.isNull())).get();
     } else {
-      // 获取指定父类别的子类�?
+      // 获取指定父类别的子类�?
       return await (select(
         db.category,
       )..where((tbl) => tbl.parentId.equals(parentId))).get();
     }
   }
 
-  /// 监听根类别变化（没有父类别的类别�?
+  /// 监听根类别变化（没有父类别的类别�?
   Stream<List<CategoryData>> watchRootCategories() {
     return (select(
       db.category,
     )..where((tbl) => tbl.parentId.isNull())).watch();
   }
 
-  /// 监听指定父类别的子类别变�?
+  /// 监听指定父类别的子类别变�?
   Stream<List<CategoryData>> watchCategoriesByParentId(int parentId) {
     return (select(
       db.category,
@@ -68353,7 +68353,7 @@ class CategoryDao extends DatabaseAccessor<AppDatabase>
     )..where((tbl) => tbl.id.equals(id))).go();
   }
 
-  /// 检查类别是否有子类�?
+  /// 检查类别是否有子类�?
   Future<bool> hasSubCategories(int categoryId) async {
     final count = await (select(
       db.category,
@@ -68361,7 +68361,7 @@ class CategoryDao extends DatabaseAccessor<AppDatabase>
     return count.isNotEmpty;
   }
 
-  /// 检查类别名称是否已存在（在同一父类别下�?
+  /// 检查类别名称是否已存在（在同一父类别下�?
   Future<bool> isCategoryNameExists(
     String name,
     int? parentId, {
@@ -68384,7 +68384,7 @@ class CategoryDao extends DatabaseAccessor<AppDatabase>
     return result.isNotEmpty;
   }
 
-  /// 获取类别层级路径（从根到指定类别�?
+  /// 获取类别层级路径（从根到指定类别�?
   Future<List<CategoryData>> getCategoryPath(int categoryId) async {
     final path = <CategoryData>[];
     int? currentId = categoryId;
@@ -68438,17 +68438,17 @@ class ProductDao extends DatabaseAccessor<AppDatabase> with _$ProductDaoMixin {
     )..where((tbl) => tbl.id.equals(id))).getSingleOrNull();
   }
 
-  /// 获取所有产�?
+  /// 获取所有产�?
   Future<List<ProductData>> getAllProducts() async {
     return await select(db.product).get();
   }
 
-  /// 监听所有产品变�?
+  /// 监听所有产品变�?
   Stream<List<ProductData>> watchAllProducts() {
     return select(db.product).watch();
   }
 
-  /// 监听所有产品及其主单位的名�?
+  /// 监听所有产品及其主单位的名�?
   Stream<
     List<
       ({
@@ -68481,7 +68481,7 @@ class ProductDao extends DatabaseAccessor<AppDatabase> with _$ProductDaoMixin {
           final unit = row.readTableOrNull(db.unit);
           final unitProduct = row.readTableOrNull(db.unitProduct);
           
-          // 安全地获取单位ID，确保不会出现数字解析错�?
+          // 安全地获取单位ID，确保不会出现数字解析错�?
           int unitId;
           String unitName;
           
@@ -68503,8 +68503,8 @@ class ProductDao extends DatabaseAccessor<AppDatabase> with _$ProductDaoMixin {
             wholesalePriceInCents: unitProduct?.wholesalePriceInCents,
           );
         } catch (e) {
-          print('处理产品单位数据时出�? $e');
-          // 返回一个安全的默认�?
+          print('处理产品单位数据时出�? $e');
+          // 返回一个安全的默认�?
           final product = row.readTable(db.product);
           return (
             product: product,
@@ -68574,7 +68574,7 @@ class ProductDao extends DatabaseAccessor<AppDatabase> with _$ProductDaoMixin {
     return await query.get();
   }
 
-  /// 监听指定类别的产�?
+  /// 监听指定类别的产�?
   Stream<List<ProductData>> watchProductsByCategory(int categoryId) {
     return (select(
       db.product,
@@ -68612,7 +68612,7 @@ class ProductDao extends DatabaseAccessor<AppDatabase> with _$ProductDaoMixin {
     });
   }
 
-  /// 检查产品是否存�?
+  /// 检查产品是否存�?
   Future<bool> productExists(int id) async {
     final result =
         await (selectOnly(db.product)
@@ -68631,7 +68631,7 @@ class ProductDao extends DatabaseAccessor<AppDatabase> with _$ProductDaoMixin {
   }
 
   /// 根据条码获取产品
-  /// 通过条码表和产品单位表联查获取产�?
+  /// 通过条码表和产品单位表联查获取产�?
   Future<ProductData?> getProductByBarcode(String barcode) async {
     // 首先在条码表中找到对应的产品单位ID
     final barcodeResult = await (select(
@@ -68639,7 +68639,7 @@ class ProductDao extends DatabaseAccessor<AppDatabase> with _$ProductDaoMixin {
     )..where((tbl) => tbl.barcodeValue.equals(barcode))).getSingleOrNull();
 
     if (barcodeResult == null) {
-      return null; // 条码不存�?
+      return null; // 条码不存�?
     }
 
     // 然后在产品单位表中找到对应的产品ID
@@ -68650,10 +68650,10 @@ class ProductDao extends DatabaseAccessor<AppDatabase> with _$ProductDaoMixin {
             .getSingleOrNull();
 
     if (productUnitResult == null) {
-      return null; // 产品单位不存�?
+      return null; // 产品单位不存�?
     }
 
-    // 最后获取产品信�?
+    // 最后获取产品信�?
     return await (select(db.product)
           ..where((tbl) => tbl.id.equals(productUnitResult.productId)))
         .getSingleOrNull();
@@ -68679,7 +68679,7 @@ class ProductDao extends DatabaseAccessor<AppDatabase> with _$ProductDaoMixin {
     )..where((tbl) => tbl.barcodeValue.equals(barcode))).getSingleOrNull();
 
     if (barcodeResult == null) {
-      return null; // 条码不存�?
+      return null; // 条码不存�?
     }
 
     // 联合查询产品单位表、产品表和单位表
@@ -68709,7 +68709,7 @@ class ProductDao extends DatabaseAccessor<AppDatabase> with _$ProductDaoMixin {
     final unitProduct = result.readTable(db.unitProduct);
 
     // 查询库存获取采购价（移动加权平均价）
-    // 这里获取所有店铺的库存，取第一个有库存的店铺的采购�?
+    // 这里获取所有店铺的库存，取第一个有库存的店铺的采购�?
     final stockQuery = select(db.stock)
       ..where((tbl) => tbl.productId.equals(product.id))
       ..orderBy([(tbl) => OrderingTerm.desc(tbl.quantity)])
@@ -68718,7 +68718,7 @@ class ProductDao extends DatabaseAccessor<AppDatabase> with _$ProductDaoMixin {
     final stock = await stockQuery.getSingleOrNull();
     final averageUnitPriceInCents = stock?.averageUnitPriceInCents;
 
-    // 如果 UnitProduct 表中的售价为 null，则回退使用 Product 表中的价�?
+    // 如果 UnitProduct 表中的售价为 null，则回退使用 Product 表中的价�?
     // 优先级：UnitProduct.sellingPriceInCents > Product.retailPrice > Product.suggestedRetailPrice
     final int? effectiveSellingPrice = unitProduct.sellingPriceInCents 
         ?? product.retailPrice?.cents 
@@ -68795,7 +68795,7 @@ class ProductUnitDao extends DatabaseAccessor<AppDatabase>
         .getSingleOrNull();
   }
 
-  /// 根据产品ID获取所有产品单�?
+  /// 根据产品ID获取所有产品单�?
   Future<List<UnitProductData>> getProductUnitsByProductId(
     int productId,
   ) async {
@@ -68804,12 +68804,12 @@ class ProductUnitDao extends DatabaseAccessor<AppDatabase>
     )..where((tbl) => tbl.productId.equals(productId))).get();
   }
 
-  /// 获取所有产品单�?
+  /// 获取所有产品单�?
   Future<List<UnitProductData>> getAllProductUnits() async {
     return await select(db.unitProduct).get();
   }
 
-  /// 监听产品的所有单位变�?
+  /// 监听产品的所有单位变�?
   Stream<List<UnitProductData>> watchProductUnitsByProductId(
     int productId,
   ) {
@@ -68835,7 +68835,7 @@ class ProductUnitDao extends DatabaseAccessor<AppDatabase>
     )..where((tbl) => tbl.id.equals(id))).go();
   }
 
-  /// 删除产品的所有单�?
+  /// 删除产品的所有单�?
   Future<int> deleteProductUnitsByProductId(int productId) async {
     return await (delete(
       db.unitProduct,
@@ -68856,7 +68856,7 @@ class ProductUnitDao extends DatabaseAccessor<AppDatabase>
     return result != null;
   }
 
-  /// 获取产品的基础单位（换算率�?.0的单位）
+  /// 获取产品的基础单位（换算率�?.0的单位）
   Future<UnitProductData?> getBaseUnitForProduct(int productId) async {
     return await (select(db.unitProduct)..where(
           (tbl) =>
@@ -68865,12 +68865,12 @@ class ProductUnitDao extends DatabaseAccessor<AppDatabase>
         .getSingleOrNull();
   }
 
-  /// 更新或插入产品单位（如果存在则更新，否则插入�?
+  /// 更新或插入产品单位（如果存在则更新，否则插入�?
   Future<void> upsertProductUnit(UnitProductCompanion companion) async {
     await into(db.unitProduct).insertOnConflictUpdate(companion);
   }
 
-  /// 批量更新或插入产品单�?
+  /// 批量更新或插入产品单�?
   Future<void> upsertMultipleProductUnits(
     List<UnitProductCompanion> companions,
   ) async {
@@ -68927,12 +68927,12 @@ class UnitDao extends DatabaseAccessor<AppDatabase> with _$UnitDaoMixin {
     )..where((tbl) => tbl.name.equals(name))).getSingleOrNull();
   }
 
-  /// 获取所有单�?
+  /// 获取所有单�?
   Future<List<UnitData>> getAllUnits() async {
     return await select(db.unit).get();
   }
 
-  /// 监听所有单位变�?
+  /// 监听所有单位变�?
   Stream<List<UnitData>> watchAllUnits() {
     return select(db.unit).watch();
   }
@@ -68970,12 +68970,12 @@ class UnitDao extends DatabaseAccessor<AppDatabase> with _$UnitDaoMixin {
   /// 批量插入默认单位
   Future<void> insertDefaultUnits() async {
     final defaultUnitNames = [
-      '�?,
-      '�?,
-      '�?,
+      '�?,
+      '�?,
+      '�?,
       '公斤',
-      '�?,
-      '�?,
+      '�?,
+      '�?,
       '毫升',
     ];
 
@@ -69002,8 +69002,8 @@ import '../dao/barcode_dao.dart';
 import 'package:drift/drift.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-/// 条码仓储实现�?
-/// 基于本地数据库的条码数据访问层实�?
+/// 条码仓储实现�?
+/// 基于本地数据库的条码数据访问层实�?
 class BarcodeRepository implements IBarcodeRepository {
   final BarcodeDao _barcodeDao;
 
@@ -69012,10 +69012,10 @@ class BarcodeRepository implements IBarcodeRepository {
   @override
   Future<int> addBarcode(BarcodeModel barcode) async {
     try {
-      print('🗃�?仓储层：添加条码，ID: ${barcode.id}');
+      print('🗃�?仓储层：添加条码，ID: ${barcode.id}');
       return await _barcodeDao.insertBarcode(_barcodeToCompanion(barcode));
     } catch (e) {
-      print('🗃�?仓储层：添加条码失败: $e');
+      print('🗃�?仓储层：添加条码失败: $e');
       rethrow;
     }
   }
@@ -69023,11 +69023,11 @@ class BarcodeRepository implements IBarcodeRepository {
   @override
   Future<void> addMultipleBarcodes(List<BarcodeModel> barcodes) async {
     try {
-      print('🗃�?仓储层：批量添加条码，数�? ${barcodes.length}');
+      print('🗃�?仓储层：批量添加条码，数�? ${barcodes.length}');
       final companions = barcodes.map(_barcodeToCompanion).toList();
       await _barcodeDao.insertMultipleBarcodes(companions);
     } catch (e) {
-      print('🗃�?仓储层：批量添加条码失败: $e');
+      print('🗃�?仓储层：批量添加条码失败: $e');
       rethrow;
     }
   }
@@ -69038,7 +69038,7 @@ class BarcodeRepository implements IBarcodeRepository {
       final data = await _barcodeDao.getBarcodeById(id);
       return data != null ? _dataToBarcode(data) : null;
     } catch (e) {
-      print('🗃�?仓储层：根据ID获取条码失败: $e');
+      print('🗃�?仓储层：根据ID获取条码失败: $e');
       rethrow;
     }
   }
@@ -69049,7 +69049,7 @@ class BarcodeRepository implements IBarcodeRepository {
       final data = await _barcodeDao.getBarcodeByValue(barcode);
       return data != null ? _dataToBarcode(data) : null;
     } catch (e) {
-      print('🗃�?仓储层：根据条码值获取条码失�? $e');
+      print('🗃�?仓储层：根据条码值获取条码失�? $e');
       rethrow;
     }
   }
@@ -69065,7 +69065,7 @@ class BarcodeRepository implements IBarcodeRepository {
       );
       return dataList.map(_dataToBarcode).toList();
     } catch (e) {
-      print('🗃�?仓储层：根据产品单位ID获取条码失败: $e');
+      print('🗃�?仓储层：根据产品单位ID获取条码失败: $e');
       rethrow;
     }
   }
@@ -69076,7 +69076,7 @@ class BarcodeRepository implements IBarcodeRepository {
       final dataList = await _barcodeDao.getAllBarcodes();
       return dataList.map(_dataToBarcode).toList();
     } catch (e) {
-      print('🗃�?仓储层：获取所有条码失�? $e');
+      print('🗃�?仓储层：获取所有条码失�? $e');
       rethrow;
     }
   }
@@ -69088,7 +69088,7 @@ class BarcodeRepository implements IBarcodeRepository {
           .watchBarcodesByProductUnitId(id)
           .map((dataList) => dataList.map(_dataToBarcode).toList());
     } catch (e) {
-      print('🗃�?仓储层：监听产品单位条码失败: $e');
+      print('🗃�?仓储层：监听产品单位条码失败: $e');
       rethrow;
     }
   }
@@ -69096,10 +69096,10 @@ class BarcodeRepository implements IBarcodeRepository {
   @override
   Future<bool> updateBarcode(BarcodeModel barcode) async {
     try {
-      print('🗃�?仓储层：更新条码，ID: ${barcode.id}');
+      print('🗃�?仓储层：更新条码，ID: ${barcode.id}');
       return await _barcodeDao.updateBarcode(_barcodeToCompanion(barcode));
     } catch (e) {
-      print('🗃�?仓储层：更新条码失败: $e');
+      print('🗃�?仓储层：更新条码失败: $e');
       rethrow;
     }
   }
@@ -69107,10 +69107,10 @@ class BarcodeRepository implements IBarcodeRepository {
   @override
   Future<int> deleteBarcode(int id) async {
     try {
-      print('🗃�?仓储层：删除条码，ID: $id');
+      print('🗃�?仓储层：删除条码，ID: $id');
       return await _barcodeDao.deleteBarcode(id);
     } catch (e) {
-      print('🗃�?仓储层：删除条码失败: $e');
+      print('🗃�?仓储层：删除条码失败: $e');
       rethrow;
     }
   }
@@ -69118,10 +69118,10 @@ class BarcodeRepository implements IBarcodeRepository {
   @override
   Future<int> deleteBarcodesByProductUnitId(int id) async {
     try {
-      print('🗃�?仓储层：删除产品单位的所有条码，产品单位ID: $id');
+      print('🗃�?仓储层：删除产品单位的所有条码，产品单位ID: $id');
       return await _barcodeDao.deleteBarcodesByProductUnitId(id);
     } catch (e) {
-      print('🗃�?仓储层：删除产品单位条码失败: $e');
+      print('🗃�?仓储层：删除产品单位条码失败: $e');
       rethrow;
     }
   }
@@ -69131,7 +69131,7 @@ class BarcodeRepository implements IBarcodeRepository {
     try {
       return await _barcodeDao.barcodeExists(barcode);
     } catch (e) {
-      print('🗃�?仓储层：检查条码是否存在失�? $e');
+      print('🗃�?仓储层：检查条码是否存在失�? $e');
       rethrow;
     }
   }
@@ -69144,7 +69144,7 @@ class BarcodeRepository implements IBarcodeRepository {
     try {
       return await _barcodeDao.productUnitHasBarcode(id, barcode);
     } catch (e) {
-      print('🗃�?仓储层：检查产品单位是否有条码失败: $e');
+      print('🗃�?仓储层：检查产品单位是否有条码失败: $e');
       rethrow;
     }
   }
@@ -69152,10 +69152,10 @@ class BarcodeRepository implements IBarcodeRepository {
   @override
   Future<void> upsertBarcode(BarcodeModel barcode) async {
     try {
-      print('🗃�?仓储层：更新或插入条码，ID: ${barcode.id}');
+      print('🗃�?仓储层：更新或插入条码，ID: ${barcode.id}');
       await _barcodeDao.upsertBarcode(_barcodeToCompanion(barcode));
     } catch (e) {
-      print('🗃�?仓储层：更新或插入条码失�? $e');
+      print('🗃�?仓储层：更新或插入条码失�? $e');
       rethrow;
     }
   }
@@ -69163,11 +69163,11 @@ class BarcodeRepository implements IBarcodeRepository {
   @override
   Future<void> upsertMultipleBarcodes(List<BarcodeModel> barcodes) async {
     try {
-      print('🗃�?仓储层：批量更新或插入条码，数量: ${barcodes.length}');
+      print('🗃�?仓储层：批量更新或插入条码，数量: ${barcodes.length}');
       final companions = barcodes.map(_barcodeToCompanion).toList();
       await _barcodeDao.upsertMultipleBarcodes(companions);
     } catch (e) {
-      print('🗃�?仓储层：批量更新或插入条码失�? $e');
+      print('🗃�?仓储层：批量更新或插入条码失�? $e');
       rethrow;
     }
   }
@@ -69203,8 +69203,8 @@ import '../dao/category_dao.dart';
 import 'package:drift/drift.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-/// 类别仓储实现�?
-/// 基于本地数据库的类别数据访问层实�?
+/// 类别仓储实现�?
+/// 基于本地数据库的类别数据访问层实�?
 class CategoryRepository implements ICategoryRepository {
   final CategoryDao _categoryDao;
 
@@ -69214,45 +69214,45 @@ class CategoryRepository implements ICategoryRepository {
   @override
   Future<int> addCategory(CategoryModel category) async {
     try {
-      print('🏷�?仓储层：添加类别，ID: ${category.id}, 名称: ${category.name}');
+      print('🏷�?仓储层：添加类别，ID: ${category.id}, 名称: ${category.name}');
       final newId = await _categoryDao.insertCategory(_categoryToCompanion(category));
-      print('🏷�?仓储层：类别添加成功，新ID: $newId');
+      print('🏷�?仓储层：类别添加成功，新ID: $newId');
       return newId; // 返回新创建的类别ID
     } catch (e) {
-      print('🏷�?仓储层：添加类别失败: $e');
+      print('🏷�?仓储层：添加类别失败: $e');
       throw Exception('添加类别失败: $e');
     }
   }
 
   @override
   Future<CategoryModel?> getCategoryById(int id) async {
-    print('🏷�?仓储层：根据ID获取类别，ID: $id');
+    print('🏷�?仓储层：根据ID获取类别，ID: $id');
     try {
       final categoryData = await _categoryDao.getCategoryById(id);
       if (categoryData != null) {
         final category = _categoryDataToModel(categoryData);
-        print('🏷�?仓储层：获取类别成功，名�? ${category.name}');
+        print('🏷�?仓储层：获取类别成功，名�? ${category.name}');
         return category;
       }
-      print('🏷�?仓储层：未找到指定ID的类�?);
+      print('🏷�?仓储层：未找到指定ID的类�?);
       return null;
     } catch (e) {
-      print('🏷�?仓储层：获取类别失败: $e');
+      print('🏷�?仓储层：获取类别失败: $e');
       throw Exception('获取类别失败: $e');
     }
   }
 
   @override
   Future<List<CategoryModel>> getAllCategories() async {
-    print('🏷�?仓储层：获取所有类�?);
+    print('🏷�?仓储层：获取所有类�?);
     try {
       final categoriesData = await _categoryDao.getAllCategories();
       final categories = categoriesData.map(_categoryDataToModel).toList();
-      print('🏷�?仓储层：获取�?${categories.length} 个类�?);
+      print('🏷�?仓储层：获取�?${categories.length} 个类�?);
       return categories;
     } catch (e) {
-      print('🏷�?仓储层：获取所有类别失�? $e');
-      throw Exception('获取所有类别失�? $e');
+      print('🏷�?仓储层：获取所有类别失�? $e');
+      throw Exception('获取所有类别失�? $e');
     }
   }
 
@@ -69262,7 +69262,7 @@ class CategoryRepository implements ICategoryRepository {
       final categoriesData = await _categoryDao.getCategoriesByParentId(null);
       return categoriesData.map(_categoryDataToModel).toList();
     } catch (e) {
-      throw Exception('获取根类别失�? $e');
+      throw Exception('获取根类别失�? $e');
     }
   }
 
@@ -69274,7 +69274,7 @@ class CategoryRepository implements ICategoryRepository {
       );
       return categoriesData.map(_categoryDataToModel).toList();
     } catch (e) {
-      throw Exception('获取子类别失�? $e');
+      throw Exception('获取子类别失�? $e');
     }
   }
 
@@ -69308,23 +69308,23 @@ class CategoryRepository implements ICategoryRepository {
     }
 
     try {
-      print('🏷�?仓储层：更新类别，ID: ${category.id}, 名称: ${category.name}');
+      print('🏷�?仓储层：更新类别，ID: ${category.id}, 名称: ${category.name}');
       return await _categoryDao.updateCategory(_categoryToCompanion(category));
     } catch (e) {
-      print('🏷�?仓储层：更新类别失败: $e');
+      print('🏷�?仓储层：更新类别失败: $e');
       throw Exception('更新类别失败: $e');
     }
   }
 
   @override
   Future<int> deleteCategory(int id) async {
-    print('🏷�?仓储层：删除类别，ID: $id');
+    print('🏷�?仓储层：删除类别，ID: $id');
     try {
       final result = await _categoryDao.deleteCategory(id);
-      print('🏷�?仓储层：删除结果，影响行�? $result');
+      print('🏷�?仓储层：删除结果，影响行�? $result');
       return result;
     } catch (e) {
-      print('🏷�?仓储层：删除类别失败: $e');
+      print('🏷�?仓储层：删除类别失败: $e');
       throw Exception('删除类别失败: $e');
     }
   }
@@ -69351,7 +69351,7 @@ class CategoryRepository implements ICategoryRepository {
         excludeId: excludeId,
       );
     } catch (e) {
-      throw Exception('检查类别名称失�? $e');
+      throw Exception('检查类别名称失�? $e');
     }
   }
 
@@ -69365,7 +69365,7 @@ class CategoryRepository implements ICategoryRepository {
     }
   }
 
-  /// �?CategoryModel 模型转换�?CategoryCompanion
+  /// �?CategoryModel 模型转换�?CategoryCompanion
   CategoryCompanion _categoryToCompanion(CategoryModel category) {
     return CategoryCompanion(
       name: Value(category.name),
@@ -69375,7 +69375,7 @@ class CategoryRepository implements ICategoryRepository {
     );
   }
 
-  /// �?CategoryData 转换�?CategoryModel 模型
+  /// �?CategoryData 转换�?CategoryModel 模型
   CategoryModel _categoryDataToModel(CategoryData data) {
     return CategoryModel(id: data.id, name: data.name, parentId: data.parentId);
   }
@@ -69395,8 +69395,8 @@ import '../dao/product_dao.dart';
 import 'package:drift/drift.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-/// 产品仓储实现�?
-/// 基于本地数据库的产品数据访问层实�?
+/// 产品仓储实现�?
+/// 基于本地数据库的产品数据访问层实�?
 class ProductRepository implements IProductRepository {
   final ProductDao _productDao;
 
@@ -69404,14 +69404,14 @@ class ProductRepository implements IProductRepository {
   @override
   Future<int> addProduct(ProductModel product) async {
     try {
-      print('🗃�?仓储层：添加产品，ID: ${product.id}, 名称: ${product.name}');
+      print('🗃�?仓储层：添加产品，ID: ${product.id}, 名称: ${product.name}');
       await _productDao.insertProduct(
         _productToCompanion(product.updateTimestamp()),
       );
-      // 由于我们使用的是String ID，返回一个表示成功的�?
+      // 由于我们使用的是String ID，返回一个表示成功的�?
       return 1;
     } catch (e) {
-      print('🗃�?仓储层：添加产品失败: $e');
+      print('🗃�?仓储层：添加产品失败: $e');
       throw Exception('添加产品失败: $e');
     }
   }
@@ -69432,12 +69432,12 @@ class ProductRepository implements IProductRepository {
 
   @override
   Future<int> deleteProduct(int id) async {
-    print('🗃�?仓储层：删除产品，ID: $id');
+    print('🗃�?仓储层：删除产品，ID: $id');
     try {
       final productUnitDao = (_productDao.db).productUnitDao;
       final barcodeDao = (_productDao.db).barcodeDao;
 
-      // 1. 先获取该产品关联的所有产品单�?
+      // 1. 先获取该产品关联的所有产品单�?
       final productUnits = await productUnitDao.getProductUnitsByProductId(id);
 
       // 2. 删除所有关联的条码
@@ -69448,18 +69448,18 @@ class ProductRepository implements IProductRepository {
         );
         barcodeTotal += barcodeResult;
       }
-      print('🗃�?仓储层：删除条码，影响行�? $barcodeTotal');
+      print('🗃�?仓储层：删除条码，影响行�? $barcodeTotal');
 
-      // 3. 删除产品单位关联�?
+      // 3. 删除产品单位关联�?
       final unitResult = await productUnitDao.deleteProductUnitsByProductId(id);
-      print('🗃�?仓储层：删除产品单位，影响行�? $unitResult');
+      print('🗃�?仓储层：删除产品单位，影响行�? $unitResult');
 
-      // 4. 最后删除产品本�?
+      // 4. 最后删除产品本�?
       final result = await _productDao.deleteProduct(id);
-      print('🗃�?仓储层：删除产品，影响行�? $result');
+      print('🗃�?仓储层：删除产品，影响行�? $result');
       return result;
     } catch (e) {
-      print('🗃�?仓储层：删除时发生异�? $e');
+      print('🗃�?仓储层：删除时发生异�? $e');
       throw Exception('删除产品失败: $e');
     }
   }
@@ -69514,7 +69514,7 @@ class ProductRepository implements IProductRepository {
                       wholesalePriceInCents: e.wholesalePriceInCents,
                     );
                   } catch (error) {
-                    print('转换产品数据时出�? $error');
+                    print('转换产品数据时出�? $error');
                     print('问题产品ID: ${e.product.id}');
                     // 返回一个安全的默认值，但跳过这个有问题的项
                     rethrow;
@@ -69525,7 +69525,7 @@ class ProductRepository implements IProductRepository {
         )
         .handleError((error) {
           print('监听产品及其单位失败: $error');
-          // 返回空列表而不是抛出异�?
+          // 返回空列表而不是抛出异�?
           return <({
             ProductModel product,
             int unitId,
@@ -69566,7 +69566,7 @@ class ProductRepository implements IProductRepository {
     }
   }
 
-  /// 监听指定类别的产�?
+  /// 监听指定类别的产�?
   @override
   Stream<List<ProductModel>> watchProductsByCategory(int categoryId) {
     return _productDao
@@ -69616,7 +69616,7 @@ class ProductRepository implements IProductRepository {
         averageUnitPriceInCents: result.averageUnitPriceInCents,
       );
     } catch (e) {
-      throw Exception('根据条码查询产品及单位失�? $e');
+      throw Exception('根据条码查询产品及单位失�? $e');
     }
   }
 
@@ -69650,12 +69650,12 @@ class ProductRepository implements IProductRepository {
     }
   }
 
-  /// 检查产品是否存�?
+  /// 检查产品是否存�?
   Future<bool> productExists(int id) async {
     try {
       return await _productDao.productExists(id);
     } catch (e) {
-      throw Exception('检查产品是否存在失�? $e');
+      throw Exception('检查产品是否存在失�? $e');
     }
   }
 
@@ -69671,7 +69671,7 @@ class ProductRepository implements IProductRepository {
   /// 将Product模型转换为数据库Companion
   ProductCompanion _productToCompanion(ProductModel product) {
     return ProductCompanion(
-      // 自增ID：插入时应当缺省，更新时需要提�?
+      // 自增ID：插入时应当缺省，更新时需要提�?
       id: product.id == null ? const Value.absent() : Value(product.id!),
       name: Value(product.name),
       sku: Value(product.sku),
@@ -69680,7 +69680,7 @@ class ProductRepository implements IProductRepository {
       baseUnitId: Value(product.baseUnitId),
       specification: Value(product.specification),
       brand: Value(product.brand),
-      // Money 字段，直接映射对应列�?
+      // Money 字段，直接映射对应列�?
       suggestedRetailPrice: Value(product.suggestedRetailPrice),
       retailPrice: Value(product.retailPrice),
       promotionalPrice: Value(product.promotionalPrice),
@@ -69718,7 +69718,7 @@ class ProductRepository implements IProductRepository {
         lastUpdated: data.lastUpdated,
       );
     } catch (e) {
-      print('转换产品数据时出�? $e');
+      print('转换产品数据时出�? $e');
       print('问题数据: id=${data.id}, name=${data.name}, baseUnitId=${data.baseUnitId}');
       rethrow;
     }
@@ -69740,7 +69740,7 @@ class ProductRepository implements IProductRepository {
       final data = await batchDao.getBatchesByProductAndShop(productId, shopId);
       return data.map(_dataToBatch).toList();
     } catch (e) {
-      throw Exception('根据产品和店铺获取批次失�? $e');
+      throw Exception('根据产品和店铺获取批次失�? $e');
     }
   }
 
@@ -69758,7 +69758,7 @@ class ProductRepository implements IProductRepository {
 }
 
 /// 产品仓储 Provider
-/// 提供 IProductRepository 的实现实�?
+/// 提供 IProductRepository 的实现实�?
 final productRepositoryProvider = Provider<IProductRepository>((ref) {
   return ProductRepository(ref.watch(appDatabaseProvider));
 });
@@ -69778,8 +69778,8 @@ import '../dao/product_unit_dao.dart';
 import 'package:drift/drift.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-/// 产品单位仓储实现�?
-/// 基于本地数据库的产品单位数据访问层实�?
+/// 产品单位仓储实现�?
+/// 基于本地数据库的产品单位数据访问层实�?
 class ProductUnitRepository implements IProductUnitRepository {
   final ProductUnitDao _productUnitDao;
 
@@ -69789,12 +69789,12 @@ class ProductUnitRepository implements IProductUnitRepository {
   @override
   Future<int> addProductUnit(UnitProduct unitProduct) async {
     try {
-      print('🗃�?仓储层：添加产品单位，ID: ${unitProduct.id}');
+      print('🗃�?仓储层：添加产品单位，ID: ${unitProduct.id}');
       return await _productUnitDao.insertProductUnit(
         _productUnitToCompanion(unitProduct),
       );
     } catch (e) {
-      print('🗃�?仓储层：添加产品单位失败: $e');
+      print('🗃�?仓储层：添加产品单位失败: $e');
       rethrow;
     }
   }
@@ -69802,11 +69802,11 @@ class ProductUnitRepository implements IProductUnitRepository {
   @override
   Future<void> addMultipleProductUnits(List<UnitProduct> productUnits) async {
     try {
-      print('🗃�?仓储层：批量添加产品单位，数�? ${productUnits.length}');
+      print('🗃�?仓储层：批量添加产品单位，数�? ${productUnits.length}');
       final companions = productUnits.map(_productUnitToCompanion).toList();
       await _productUnitDao.insertMultipleProductUnits(companions);
     } catch (e) {
-      print('🗃�?仓储层：批量添加产品单位失败: $e');
+      print('🗃�?仓储层：批量添加产品单位失败: $e');
       rethrow;
     }
   }
@@ -69817,7 +69817,7 @@ class ProductUnitRepository implements IProductUnitRepository {
       final data = await _productUnitDao.getProductUnitById(id);
       return data != null ? _dataToProductUnit(data) : null;
     } catch (e) {
-      print('🗃�?仓储层：根据ID获取产品单位失败: $e');
+      print('🗃�?仓储层：根据ID获取产品单位失败: $e');
       rethrow;
     }
   }
@@ -69830,7 +69830,7 @@ class ProductUnitRepository implements IProductUnitRepository {
       );
       return dataList.map(_dataToProductUnit).toList();
     } catch (e) {
-      print('🗃�?仓储层：根据产品ID获取产品单位失败: $e');
+      print('🗃�?仓储层：根据产品ID获取产品单位失败: $e');
       rethrow;
     }
   }
@@ -69841,7 +69841,7 @@ class ProductUnitRepository implements IProductUnitRepository {
       final dataList = await _productUnitDao.getAllProductUnits();
       return dataList.map(_dataToProductUnit).toList();
     } catch (e) {
-      print('🗃�?仓储层：获取所有产品单位失�? $e');
+      print('🗃�?仓储层：获取所有产品单位失�? $e');
       rethrow;
     }
   }
@@ -69855,7 +69855,7 @@ class ProductUnitRepository implements IProductUnitRepository {
         return dataList.map(_dataToProductUnit).toList();
       });
     } catch (e) {
-      print('🗃�?仓储层：监听产品单位失败: $e');
+      print('🗃�?仓储层：监听产品单位失败: $e');
       rethrow;
     }
   }
@@ -69863,12 +69863,12 @@ class ProductUnitRepository implements IProductUnitRepository {
   @override
   Future<bool> updateProductUnit(UnitProduct unitProduct) async {
     try {
-      print('🗃�?仓储层：更新产品单位，ID: ${unitProduct.id}');
+      print('🗃�?仓储层：更新产品单位，ID: ${unitProduct.id}');
       return await _productUnitDao.updateProductUnit(
         _productUnitToCompanion(unitProduct),
       );
     } catch (e) {
-      print('🗃�?仓储层：更新产品单位失败: $e');
+      print('🗃�?仓储层：更新产品单位失败: $e');
       rethrow;
     }
   }
@@ -69876,10 +69876,10 @@ class ProductUnitRepository implements IProductUnitRepository {
   @override
   Future<int> deleteProductUnit(int id) async {
     try {
-      print('🗃�?仓储层：删除产品单位，ID: $id');
+      print('🗃�?仓储层：删除产品单位，ID: $id');
       return await _productUnitDao.deleteProductUnit(id);
     } catch (e) {
-      print('🗃�?仓储层：删除产品单位失败: $e');
+      print('🗃�?仓储层：删除产品单位失败: $e');
       rethrow;
     }
   }
@@ -69887,10 +69887,10 @@ class ProductUnitRepository implements IProductUnitRepository {
   @override
   Future<int> deleteProductUnitsByProductId(int productId) async {
     try {
-      print('🗃�?仓储层：删除产品的所有单位，产品ID: $productId');
+      print('🗃�?仓储层：删除产品的所有单位，产品ID: $productId');
       return await _productUnitDao.deleteProductUnitsByProductId(productId);
     } catch (e) {
-      print('🗃�?仓储层：删除产品单位失败: $e');
+      print('🗃�?仓储层：删除产品单位失败: $e');
       rethrow;
     }
   }
@@ -69906,7 +69906,7 @@ class ProductUnitRepository implements IProductUnitRepository {
         unitId,
       );
     } catch (e) {
-      print('🗃�?仓储层：检查产品单位配置失�? $e');
+      print('🗃�?仓储层：检查产品单位配置失�? $e');
       rethrow;
     }
   }
@@ -69917,7 +69917,7 @@ class ProductUnitRepository implements IProductUnitRepository {
       final data = await _productUnitDao.getBaseUnitForProduct(productId);
       return data != null ? _dataToProductUnit(data) : null;
     } catch (e) {
-      print('🗃�?仓储层：获取产品基础单位失败: $e');
+      print('🗃�?仓储层：获取产品基础单位失败: $e');
       rethrow;
     }
   }
@@ -69925,12 +69925,12 @@ class ProductUnitRepository implements IProductUnitRepository {
   @override
   Future<void> upsertProductUnit(UnitProduct unitProduct) async {
     try {
-      print('🗃�?仓储层：更新或插入产品单位，ID: ${unitProduct.id}');
+      print('🗃�?仓储层：更新或插入产品单位，ID: ${unitProduct.id}');
       await _productUnitDao.upsertProductUnit(
         _productUnitToCompanion(unitProduct),
       );
     } catch (e) {
-      print('🗃�?仓储层：更新或插入产品单位失�? $e');
+      print('🗃�?仓储层：更新或插入产品单位失�? $e');
       rethrow;
     }
   }
@@ -69940,11 +69940,11 @@ class ProductUnitRepository implements IProductUnitRepository {
     List<UnitProduct> productUnits,
   ) async {
     try {
-      print('🗃�?仓储层：批量更新或插入产品单位，数量: ${productUnits.length}');
+      print('🗃�?仓储层：批量更新或插入产品单位，数量: ${productUnits.length}');
       final companions = productUnits.map(_productUnitToCompanion).toList();
       await _productUnitDao.upsertMultipleProductUnits(companions);
     } catch (e) {
-      print('🗃�?仓储层：批量更新或插入产品单位失�? $e');
+      print('🗃�?仓储层：批量更新或插入产品单位失�? $e');
       rethrow;
     }
   }
@@ -69955,64 +69955,64 @@ class ProductUnitRepository implements IProductUnitRepository {
     List<UnitProduct> productUnits,
   ) async {
     try {
-      print('🗃�?仓储层：差异更新产品单位配置，产品ID: $productId，新单位数量: ${productUnits.length}');
+      print('🗃�?仓储层：差异更新产品单位配置，产品ID: $productId，新单位数量: ${productUnits.length}');
 
-      // 开启事�?
+      // 开启事�?
       await _productUnitDao.db.transaction(() async {
-        // 1. 获取现有的产品单位配�?
+        // 1. 获取现有的产品单位配�?
         final existingUnits = await _productUnitDao.getProductUnitsByProductId(productId);
-        print('🗃�?仓储层：现有单位数量: ${existingUnits.length}');
+        print('🗃�?仓储层：现有单位数量: ${existingUnits.length}');
 
-        // 2. 构建现有单位的映射表（使�?unitId 作为唯一标识，符合数据库唯一键约束）
+        // 2. 构建现有单位的映射表（使�?unitId 作为唯一标识，符合数据库唯一键约束）
         final existingMap = <int, UnitProductData>{};
         for (final unit in existingUnits) {
           existingMap[unit.unitId] = unit;
         }
 
-        // 3. 构建新单位的映射�?
+        // 3. 构建新单位的映射�?
         final newMap = <int, UnitProduct>{};
         for (final unit in productUnits) {
           newMap[unit.unitId] = unit;
         }
 
-        // 4. 找出需要删除的单位（存在于旧列表但不在新列表中�?
+        // 4. 找出需要删除的单位（存在于旧列表但不在新列表中�?
         final toDelete = <int>[];
         for (final entry in existingMap.entries) {
           if (!newMap.containsKey(entry.key)) {
             toDelete.add(entry.value.id);
-            print('🗃�?仓储层：标记删除 - ID: ${entry.value.id}, unitId: ${entry.value.unitId}');
+            print('🗃�?仓储层：标记删除 - ID: ${entry.value.id}, unitId: ${entry.value.unitId}');
           }
         }
 
-        // 5. 找出需要新增和更新的单�?
+        // 5. 找出需要新增和更新的单�?
         final toInsert = <UnitProductCompanion>[];
         final toUpdate = <UnitProductCompanion>[];
         
         for (final entry in newMap.entries) {
           if (existingMap.containsKey(entry.key)) {
-            // 存在于旧列表中，需要更�?
+            // 存在于旧列表中，需要更�?
             final existingUnit = existingMap[entry.key]!;
             final newUnit = entry.value;
             
-            // 检查是否真的需要更新（换算率、价格或其他字段是否变化�?
+            // 检查是否真的需要更新（换算率、价格或其他字段是否变化�?
             if (existingUnit.conversionRate != newUnit.conversionRate ||
                 existingUnit.sellingPriceInCents != newUnit.sellingPriceInCents ||
                 existingUnit.wholesalePriceInCents != newUnit.wholesalePriceInCents) {
               toUpdate.add(_productUnitToCompanion(newUnit.copyWith(id: existingUnit.id)));
-              print('🗃�?仓储层：标记更新 - ID: ${existingUnit.id}, unitId: ${newUnit.unitId}');
+              print('🗃�?仓储层：标记更新 - ID: ${existingUnit.id}, unitId: ${newUnit.unitId}');
             } else {
-              print('🗃�?仓储层：无需更新 - ID: ${existingUnit.id}, unitId: ${newUnit.unitId}');
+              print('🗃�?仓储层：无需更新 - ID: ${existingUnit.id}, unitId: ${newUnit.unitId}');
             }
           } else {
-            // 不存在于旧列表中，需要新�?
+            // 不存在于旧列表中，需要新�?
             toInsert.add(_productUnitToCompanion(entry.value));
-            print('🗃�?仓储层：标记新增 - unitId: ${entry.value.unitId}');
+            print('🗃�?仓储层：标记新增 - unitId: ${entry.value.unitId}');
           }
         }
 
         // 6. 执行删除操作
         if (toDelete.isNotEmpty) {
-          print('🗃�?仓储层：执行删除操作，数�? ${toDelete.length}');
+          print('🗃�?仓储层：执行删除操作，数�? ${toDelete.length}');
           for (final id in toDelete) {
             await _productUnitDao.deleteProductUnit(id);
           }
@@ -70020,7 +70020,7 @@ class ProductUnitRepository implements IProductUnitRepository {
 
         // 7. 执行更新操作
         if (toUpdate.isNotEmpty) {
-          print('🗃�?仓储层：执行更新操作，数�? ${toUpdate.length}');
+          print('🗃�?仓储层：执行更新操作，数�? ${toUpdate.length}');
           for (final companion in toUpdate) {
             await _productUnitDao.updateProductUnit(companion);
           }
@@ -70028,21 +70028,21 @@ class ProductUnitRepository implements IProductUnitRepository {
 
         // 8. 执行新增操作
         if (toInsert.isNotEmpty) {
-          print('🗃�?仓储层：执行新增操作，数�? ${toInsert.length}');
+          print('🗃�?仓储层：执行新增操作，数�? ${toInsert.length}');
           await _productUnitDao.insertMultipleProductUnits(toInsert);
         }
       });
 
-      print('🗃�?仓储层：差异更新产品单位配置完成');
+      print('🗃�?仓储层：差异更新产品单位配置完成');
     } catch (e) {
-      print('🗃�?仓储层：差异更新产品单位配置失败: $e');
+      print('🗃�?仓储层：差异更新产品单位配置失败: $e');
       rethrow;
     }
   }
 
   /// 将ProductUnit模型转换为数据库Companion
   UnitProductCompanion _productUnitToCompanion(UnitProduct unitProduct) {
-    print('==================【批发价调试�?=================');
+    print('==================【批发价调试�?=================');
     print('UnitProduct ID: ${unitProduct.id}');
     print('SELLING PRICE: ${unitProduct.sellingPriceInCents}');
     print('WHOLESALE PRICE: ${unitProduct.wholesalePriceInCents}');
@@ -70069,7 +70069,7 @@ class ProductUnitRepository implements IProductUnitRepository {
 
   /// 将数据库数据转换为ProductUnit模型
   UnitProduct _dataToProductUnit(UnitProductData data) {
-    print('==================【批发价回显调试�?=================');
+    print('==================【批发价回显调试�?=================');
     print('UnitProduct ID: ${data.id}');
     print('SELLING PRICE: ${data.sellingPriceInCents}');
     print('WHOLESALE PRICE: ${data.wholesalePriceInCents}');
@@ -70101,8 +70101,8 @@ import '../dao/unit_dao.dart';
 import 'package:drift/drift.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-/// 单位仓储实现�?
-/// 基于本地数据库的单位数据访问层实�?
+/// 单位仓储实现�?
+/// 基于本地数据库的单位数据访问层实�?
 class UnitRepository implements IUnitRepository {
   final UnitDao _unitDao;
   UnitRepository(AppDatabase database) : _unitDao = database.unitDao;
@@ -70110,12 +70110,12 @@ class UnitRepository implements IUnitRepository {
   @override
   Future<Unit> addUnit(Unit unit) async {
     try {
-      print('🗃�?仓储层：添加单位，ID: ${unit.id}, 名称: ${unit.name}');
+      print('🗃�?仓储层：添加单位，ID: ${unit.id}, 名称: ${unit.name}');
       final newId = await _unitDao.insertUnit(_unitToCompanion(unit));
       // 返回一个包含新ID的新Unit实例
       return unit.copyWith(id: newId);
     } catch (e) {
-      print('🗃�?仓储层：添加单位失败: $e');
+      print('🗃�?仓储层：添加单位失败: $e');
       rethrow;
     }
   }
@@ -70126,7 +70126,7 @@ class UnitRepository implements IUnitRepository {
       final data = await _unitDao.getUnitById(id);
       return data != null ? _unitDataToModel(data) : null;
     } catch (e) {
-      print('🗃�?仓储层：根据ID获取单位失败: $e');
+      print('🗃�?仓储层：根据ID获取单位失败: $e');
       rethrow;
     }
   }
@@ -70137,7 +70137,7 @@ class UnitRepository implements IUnitRepository {
       final data = await _unitDao.getUnitByName(name);
       return data != null ? _unitDataToModel(data) : null;
     } catch (e) {
-      print('🗃�?仓储层：根据名称获取单位失败: $e');
+      print('🗃�?仓储层：根据名称获取单位失败: $e');
       rethrow;
     }
   }
@@ -70148,7 +70148,7 @@ class UnitRepository implements IUnitRepository {
       final dataList = await _unitDao.getAllUnits();
       return dataList.map(_unitDataToModel).toList();
     } catch (e) {
-      print('🗃�?仓储层：获取所有单位失�? $e');
+      print('🗃�?仓储层：获取所有单位失�? $e');
       rethrow;
     }
   }
@@ -70160,7 +70160,7 @@ class UnitRepository implements IUnitRepository {
         return dataList.map(_unitDataToModel).toList();
       });
     } catch (e) {
-      print('🗃�?仓储层：监听所有单位失�? $e');
+      print('🗃�?仓储层：监听所有单位失�? $e');
       rethrow;
     }
   }
@@ -70168,10 +70168,10 @@ class UnitRepository implements IUnitRepository {
   @override
   Future<bool> updateUnit(Unit unit) async {
     try {
-      print('🗃�?仓储层：更新单位，ID: ${unit.id}, 名称: ${unit.name}');
+      print('🗃�?仓储层：更新单位，ID: ${unit.id}, 名称: ${unit.name}');
       return await _unitDao.updateUnit(_unitToCompanion(unit));
     } catch (e) {
-      print('🗃�?仓储层：更新单位失败: $e');
+      print('🗃�?仓储层：更新单位失败: $e');
       rethrow;
     }
   }
@@ -70179,12 +70179,12 @@ class UnitRepository implements IUnitRepository {
   @override
   Future<int> deleteUnit(int id) async {
     try {
-      print('🗃�?仓储层：删除单位，ID: $id');
+      print('🗃�?仓储层：删除单位，ID: $id');
       final result = await _unitDao.deleteUnit(id);
-      print('🗃�?仓储层：删除完成，影响行�? $result');
+      print('🗃�?仓储层：删除完成，影响行�? $result');
       return result;
     } catch (e) {
-      print('🗃�?仓储层：删除单位失败: $e');
+      print('🗃�?仓储层：删除单位失败: $e');
       rethrow;
     }
   }
@@ -70194,7 +70194,7 @@ class UnitRepository implements IUnitRepository {
     try {
       return await _unitDao.isUnitNameExists(name, excludeId);
     } catch (e) {
-      print('🗃�?仓储层：检查单位名称是否存在失�? $e');
+      print('🗃�?仓储层：检查单位名称是否存在失�? $e');
       rethrow;
     }
   }
@@ -70202,16 +70202,16 @@ class UnitRepository implements IUnitRepository {
   @override
   Future<void> insertDefaultUnits() async {
     try {
-      print('🗃�?仓储层：插入默认单位');
+      print('🗃�?仓储层：插入默认单位');
       await _unitDao.insertDefaultUnits();
-      print('🗃�?仓储层：默认单位插入完成');
+      print('🗃�?仓储层：默认单位插入完成');
     } catch (e) {
-      print('🗃�?仓储层：插入默认单位失败: $e');
+      print('🗃�?仓储层：插入默认单位失败: $e');
       rethrow;
     }
   }
 
-  /// �?Unit 模型转换�?UnitCompanion
+  /// �?Unit 模型转换�?UnitCompanion
   UnitCompanion _unitToCompanion(Unit unit) {
     return UnitCompanion(
       id: unit.id == null ? const Value.absent() : Value(unit.id!),
@@ -70219,7 +70219,7 @@ class UnitRepository implements IUnitRepository {
     );
   }
 
-  /// �?UnitData 转换�?Unit 模型
+  /// �?UnitData 转换�?Unit 模型
   Unit _unitDataToModel(UnitData data) {
     return Unit(id: data.id, name: data.name);
   }
@@ -70232,11 +70232,11 @@ final unitRepositoryProvider = Provider<IUnitRepository>((ref) {
 });
 import 'package:flutter/foundation.dart';
 
-/// 辅单位数据模�?
-/// 用于表单数据的跨页面持久�?
+/// 辅单位数据模�?
+/// 用于表单数据的跨页面持久�?
 @immutable
 class AuxiliaryUnitData {
-  /// 唯一标识�?
+  /// 唯一标识�?
   final int id;
 
   /// 单位ID
@@ -70245,16 +70245,16 @@ class AuxiliaryUnitData {
   /// 单位名称
   final String unitName;
 
-  /// 换算�?
+  /// 换算�?
   final int conversionRate;
 
   /// 条码
   final String barcode;
 
-  /// 建议零售�?
+  /// 建议零售�?
   final String retailPriceInCents;
 
-  /// 批发�?
+  /// 批发�?
   final String wholesalePriceInCents;
 
   const AuxiliaryUnitData({
@@ -70267,7 +70267,7 @@ class AuxiliaryUnitData {
     this.wholesalePriceInCents = '',
   });
 
-  /// 创建空的辅单位数�?
+  /// 创建空的辅单位数�?
   const AuxiliaryUnitData.empty(this.id)
     : unitId = null,
       unitName = '',
@@ -70276,7 +70276,7 @@ class AuxiliaryUnitData {
       retailPriceInCents = '',
       wholesalePriceInCents = '';
 
-  /// 复制并更新指定字�?
+  /// 复制并更新指定字�?
   AuxiliaryUnitData copyWith({
     int? id,
     int? unitId,
@@ -70372,8 +70372,8 @@ part 'barcode.g.dart';
 abstract class BarcodeModel with _$BarcodeModel {
   const factory BarcodeModel({
     int? id, // 主键
-    required int unitProductId, // 外键，指�?UnitProduct
-    required String barcodeValue, // 条码�?
+    required int unitProductId, // 外键，指�?UnitProduct
+    required String barcodeValue, // 条码�?
   }) = _BarcodeModel;
 
   const BarcodeModel._();
@@ -70403,7 +70403,7 @@ T _$identity<T>(T value) => value;
 mixin _$BarcodeModel {
 
  int? get id;// 主键
- int get unitProductId;// 外键，指�?UnitProduct
+ int get unitProductId;// 外键，指�?UnitProduct
  String get barcodeValue;
 /// Create a copy of BarcodeModel
 /// with the given fields replaced by the non-null parameter values.
@@ -70476,7 +70476,7 @@ class _BarcodeModel extends BarcodeModel {
 @override final  int? id;
 // 主键
 @override final  int unitProductId;
-// 外键，指�?UnitProduct
+// 外键，指�?UnitProduct
 @override final  String barcodeValue;
 
 /// Create a copy of BarcodeModel
@@ -70762,7 +70762,7 @@ import 'package:intl/intl.dart';
 part 'product.freezed.dart';
 part 'product.g.dart';
 
-// 帮助函数，用�?JSON 转换
+// 帮助函数，用�?JSON 转换
 int? _intFromJson(dynamic value) {
   if (value == null) return null;
   if (value is int) return value;
@@ -70773,7 +70773,7 @@ int? _intFromJson(dynamic value) {
 Money? _moneyFromJson(int? cents) => cents == null ? null : Money(cents);
 int? _moneyToJson(Money? money) => money?.cents;
 
-/// 价格封装类（单位为分�?
+/// 价格封装类（单位为分�?
 class Money extends Equatable {
   final int cents;
   const Money(this.cents);
@@ -70799,11 +70799,11 @@ class Money extends Equatable {
 }
 
 
-/// 保质期单�?
+/// 保质期单�?
 @JsonEnum(alwaysCreate: true)
 enum ShelfLifeUnit { days, months, years }
 
-/// 产品状�?
+/// 产品状�?
 @JsonEnum(alwaysCreate: true)
 enum ProductStatus { active, inactive }
 
@@ -70838,14 +70838,14 @@ abstract class ProductModel with _$ProductModel {
 
   const ProductModel._();
 
-  /// 获取有效价格（促销�?> 零售�?> 建议零售价）
+  /// 获取有效价格（促销�?> 零售�?> 建议零售价）
   Money? get effectivePrice =>
       promotionalPrice ?? retailPrice ?? suggestedRetailPrice;
 
-  /// 是否有促销�?
+  /// 是否有促销�?
   bool get hasPromotionalPrice => promotionalPrice != null;
 
-  /// 是否需要库存预�?(优化�?
+  /// 是否需要库存预�?(优化�?
   bool isStockWarning(int currentStock) {
     final limit = stockWarningValue;
     if (limit == null || limit <= 0) {
@@ -70854,13 +70854,13 @@ abstract class ProductModel with _$ProductModel {
     return currentStock <= limit;
   }
 
-  /// 是否有效（状态为活跃�?
+  /// 是否有效（状态为活跃�?
   bool get isActive => status == ProductStatus.active;
 
   /// 获取格式化的价格显示
   String get formattedPrice => effectivePrice?.format() ?? '价格待定';
 
-  /// 复制并更新最后更新时间（统一�?UTC�?
+  /// 复制并更新最后更新时间（统一�?UTC�?
   ProductModel updateTimestamp() {
     return copyWith(lastUpdated: DateTime.now().toUtc());
   }
@@ -71144,12 +71144,12 @@ part 'product_unit.g.dart';
 abstract class UnitProduct with _$UnitProduct {
   const factory UnitProduct({
     int? id, // 主键
-    required int productId, // 外键, 指向 Products �?
-    required int unitId, // 外键, 指向 Units �?
-    required int conversionRate, // 换算�?
+    required int productId, // 外键, 指向 Products �?
+    required int unitId, // 外键, 指向 Units �?
+    required int conversionRate, // 换算�?
     int? sellingPriceInCents, // 售价
-    int? wholesalePriceInCents, // 批发�?
-    DateTime? lastUpdated, // 最后更新日�?
+    int? wholesalePriceInCents, // 批发�?
+    DateTime? lastUpdated, // 最后更新日�?
   }) = _UnitProduct;
 
   const UnitProduct._();
@@ -71157,7 +71157,7 @@ abstract class UnitProduct with _$UnitProduct {
   factory UnitProduct.fromJson(Map<String, dynamic> json) =>
       _$UnitProductFromJson(json);
 
-  // 将以“分”为单位的价格转换为“元”以供显�?
+  // 将以“分”为单位的价格转换为“元”以供显�?
   double get displaySellingPrice => (sellingPriceInCents ?? 0) / 100.0;
   double get displayWholesalePrice => (wholesalePriceInCents ?? 0) / 100.0;
 
@@ -71171,7 +71171,7 @@ abstract class UnitProduct with _$UnitProduct {
     return baseQuantity ~/ conversionRate;
   }
 
-  // 复制并更新最后更新时�?
+  // 复制并更新最后更新时�?
   UnitProduct updateTimestamp() {
     return copyWith(lastUpdated: DateTime.now());
   }
@@ -71195,8 +71195,8 @@ T _$identity<T>(T value) => value;
 mixin _$UnitProduct {
 
  int? get id;// 主键
- int get productId;// 外键, 指向 Products �? int get unitId;// 外键, 指向 Units �? int get conversionRate;// 换算�? int? get sellingPriceInCents;// 售价
- int? get wholesalePriceInCents;// 批发�? DateTime? get lastUpdated;
+ int get productId;// 外键, 指向 Products �? int get unitId;// 外键, 指向 Units �? int get conversionRate;// 换算�? int? get sellingPriceInCents;// 售价
+ int? get wholesalePriceInCents;// 批发�? DateTime? get lastUpdated;
 /// Create a copy of UnitProduct
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -71272,12 +71272,12 @@ class _UnitProduct extends UnitProduct {
 @override final  int? id;
 // 主键
 @override final  int productId;
-// 外键, 指向 Products �?@override final  int unitId;
-// 外键, 指向 Units �?@override final  int conversionRate;
-// 换算�?@override final  int? sellingPriceInCents;
+// 外键, 指向 Products �?@override final  int unitId;
+// 外键, 指向 Units �?@override final  int conversionRate;
+// 换算�?@override final  int? sellingPriceInCents;
 // 售价
 @override final  int? wholesalePriceInCents;
-// 批发�?@override final  DateTime? lastUpdated;
+// 批发�?@override final  DateTime? lastUpdated;
 
 /// Create a copy of UnitProduct
 /// with the given fields replaced by the non-null parameter values.
@@ -71562,7 +71562,7 @@ Map<String, dynamic> _$UnitToJson(_Unit instance) => <String, dynamic>{
 import '../model/barcode.dart';
 
 /// 条码仓储接口
-/// 定义条码相关的业务操作规�?
+/// 定义条码相关的业务操作规�?
 abstract class IBarcodeRepository {
   /// 添加条码
   Future<int> addBarcode(BarcodeModel barcode);
@@ -71573,16 +71573,16 @@ abstract class IBarcodeRepository {
   /// 根据ID获取条码
   Future<BarcodeModel?> getBarcodeById(int id);
 
-  /// 根据条码值获取条码信�?
+  /// 根据条码值获取条码信�?
   Future<BarcodeModel?> getBarcodeByValue(String barcode);
 
-  /// 根据产品单位ID获取所有条�?
+  /// 根据产品单位ID获取所有条�?
   Future<List<BarcodeModel>> getBarcodesByProductUnitId(int? id);
 
-  /// 获取所有条�?
+  /// 获取所有条�?
   Future<List<BarcodeModel>> getAllBarcodes();
 
-  /// 监听产品单位的条码变�?
+  /// 监听产品单位的条码变�?
   Stream<List<BarcodeModel>> watchBarcodesByProductUnitId(int id);
 
   /// 更新条码
@@ -71591,7 +71591,7 @@ abstract class IBarcodeRepository {
   /// 删除条码
   Future<int> deleteBarcode(int id);
 
-  /// 删除产品单位的所有条�?
+  /// 删除产品单位的所有条�?
   Future<int> deleteBarcodesByProductUnitId(int id);
 
   /// 检查条码是否已存在
@@ -71600,16 +71600,16 @@ abstract class IBarcodeRepository {
   /// 检查产品单位是否已有该条码
   Future<bool> productUnitHasBarcode(int id, String barcode);
 
-  /// 更新或插入条�?
+  /// 更新或插入条�?
   Future<void> upsertBarcode(BarcodeModel barcode);
 
-  /// 批量更新或插入条�?
+  /// 批量更新或插入条�?
   Future<void> upsertMultipleBarcodes(List<BarcodeModel> barcodes);
 }
 import '../model/category.dart';
 
 /// 类别仓储接口
-/// 定义类别相关的业务操作规�?
+/// 定义类别相关的业务操作规�?
 abstract class ICategoryRepository {
   /// 添加类别
   Future<int> addCategory(CategoryModel category);
@@ -71617,22 +71617,22 @@ abstract class ICategoryRepository {
   /// 根据ID获取类别
   Future<CategoryModel?> getCategoryById(int id);
 
-  /// 获取所有类�?
+  /// 获取所有类�?
   Future<List<CategoryModel>> getAllCategories();
 
-  /// 获取根类别（没有父类别的类别�?
+  /// 获取根类别（没有父类别的类别�?
   Future<List<CategoryModel>> getRootCategories();
 
-  /// 根据父类别ID获取子类�?
+  /// 根据父类别ID获取子类�?
   Future<List<CategoryModel>> getCategoriesByParentId(int parentId);
 
-  /// 监听所有类别变�?
+  /// 监听所有类别变�?
   Stream<List<CategoryModel>> watchAllCategories();
 
-  /// 监听根类别变�?
+  /// 监听根类别变�?
   Stream<List<CategoryModel>> watchRootCategories();
 
-  /// 监听指定父类别的子类别变�?
+  /// 监听指定父类别的子类别变�?
   Stream<List<CategoryModel>> watchCategoriesByParentId(int parentId);
 
   /// 更新类别
@@ -71641,17 +71641,17 @@ abstract class ICategoryRepository {
   /// 删除类别
   Future<int> deleteCategory(int id);
 
-  /// 检查类别是否有子类�?
+  /// 检查类别是否有子类�?
   Future<bool> hasSubCategories(int categoryId);
 
-  /// 检查类别名称是否已存在（在同一父类别下�?
+  /// 检查类别名称是否已存在（在同一父类别下�?
   Future<bool> isCategoryNameExists(
     String name,
     int? parentId, {
     int? excludeId,
   });
 
-  /// 获取类别层级路径（从根到指定类别�?
+  /// 获取类别层级路径（从根到指定类别�?
   Future<List<CategoryModel>> getCategoryPath(int categoryId);
 }
 import 'package:stocko_app/features/inventory/domain/model/batch.dart';
@@ -71659,7 +71659,7 @@ import 'package:stocko_app/features/inventory/domain/model/batch.dart';
 import '../model/product.dart';
 
 /// 产品仓储抽象接口
-/// 定义产品数据访问的核心方�?
+/// 定义产品数据访问的核心方�?
 abstract class IProductRepository {
   /// 添加产品
   /// [product] 要添加的产品
@@ -71681,12 +71681,12 @@ abstract class IProductRepository {
   /// 返回产品对象，如果不存在则返回null
   Future<ProductModel?> getProductById(int id);
 
-  /// 监听所有产品变�?
-  /// 使用Stream实时监听产品列表的变�?
+  /// 监听所有产品变�?
+  /// 使用Stream实时监听产品列表的变�?
   /// 返回产品列表的数据流
   Stream<List<ProductModel>> watchAllProducts();
 
-  /// 监听所有产品及其单位名�?
+  /// 监听所有产品及其单位名�?
   Stream<
     List<
       ({
@@ -71701,22 +71701,22 @@ abstract class IProductRepository {
   >
   watchAllProductsWithUnit();
 
-  /// 获取所有产�?
+  /// 获取所有产�?
   /// 返回当前所有产品的列表
   Future<List<ProductModel>> getAllProducts();
 
   /// 根据条件查询产品
   /// [categoryId] 类别ID
-  /// [status] 产品状�?
-  /// [keyword] 关键�?
-  /// 返回符合条件的产品列�?
+  /// [status] 产品状�?
+  /// [keyword] 关键�?
+  /// 返回符合条件的产品列�?
   Future<List<ProductModel>> getProductsByCondition({
     int? categoryId,
     String? status,
     String? keyword,
   });
 
-  /// 监听指定类别的产�?
+  /// 监听指定类别的产�?
   /// [categoryId] 类别ID
   /// 返回指定类别产品的数据流
   Stream<List<ProductModel>> watchProductsByCategory(int categoryId);
@@ -71744,7 +71744,7 @@ abstract class IProductRepository {
 
   /// 检查单位是否被任何产品使用
   /// [unitId] 单位ID
-  /// 返回布尔值，表示是否被使�?
+  /// 返回布尔值，表示是否被使�?
   Future<bool> isUnitUsed(int unitId);
   /// 根据货品ID和店铺ID获取批次
   Future<List<BatchModel>> getBatchesByProductAndShop(int productId, int shopId);
@@ -71752,7 +71752,7 @@ abstract class IProductRepository {
 import '../model/product_unit.dart';
 
 /// 产品单位仓储接口
-/// 定义产品单位关联相关的业务操作规�?
+/// 定义产品单位关联相关的业务操作规�?
 abstract class IProductUnitRepository {
   /// 添加产品单位
   Future<int> addProductUnit(UnitProduct unitProduct);
@@ -71762,13 +71762,13 @@ abstract class IProductUnitRepository {
 
   /// 根据产品单位ID获取产品单位
   Future<UnitProduct?> getProductUnitById(int id);
-  /// 根据产品ID获取所有产品单�?
+  /// 根据产品ID获取所有产品单�?
   Future<List<UnitProduct>> getProductUnitsByProductId(int productId);
 
-  /// 获取所有产品单�?
+  /// 获取所有产品单�?
   Future<List<UnitProduct>> getAllProductUnits();
 
-  /// 监听产品的所有单位变�?
+  /// 监听产品的所有单位变�?
   Stream<List<UnitProduct>> watchProductUnitsByProductId(int productId);
 
   /// 更新产品单位
@@ -71777,7 +71777,7 @@ abstract class IProductUnitRepository {
   /// 删除产品单位
   Future<int> deleteProductUnit(int id);
 
-  /// 删除产品的所有单�?
+  /// 删除产品的所有单�?
   Future<int> deleteProductUnitsByProductId(int productId);
 
   /// 检查产品是否已配置某个单位
@@ -71786,13 +71786,13 @@ abstract class IProductUnitRepository {
   /// 获取产品的基础单位
   Future<UnitProduct?> getBaseUnitForProduct(int productId);
 
-  /// 更新或插入产品单�?
+  /// 更新或插入产品单�?
   Future<void> upsertProductUnit(UnitProduct unitProduct);
 
-  /// 批量更新或插入产品单�?
+  /// 批量更新或插入产品单�?
   Future<void> upsertMultipleProductUnits(List<UnitProduct> productUnits);
 
-  /// 替换产品的所有单位配�?
+  /// 替换产品的所有单位配�?
   /// 这会删除产品的现有单位配置，然后添加新的配置
   Future<void> replaceProductUnits(
     int productId,
@@ -71802,7 +71802,7 @@ abstract class IProductUnitRepository {
 import '../model/unit.dart';
 
 /// 单位仓储接口
-/// 定义单位相关的业务操作规�?
+/// 定义单位相关的业务操作规�?
 abstract class IUnitRepository {
   /// 添加单位
   Future<Unit> addUnit(Unit unit);
@@ -71813,10 +71813,10 @@ abstract class IUnitRepository {
   /// 根据名称获取单位
   Future<Unit?> getUnitByName(String name);
 
-  /// 获取所有单�?
+  /// 获取所有单�?
   Future<List<Unit>> getAllUnits();
 
-  /// 监听所有单位变�?
+  /// 监听所有单位变�?
   Stream<List<Unit>> watchAllUnits();
 
   /// 更新单位
@@ -71863,11 +71863,11 @@ class ProductAddEditActions {
       final String? barcode = await BarcodeScannerService.scanForProduct(context);
       if (barcode != null && barcode.isNotEmpty) {
         barcodeController.text = barcode;
-        ToastService.success('�?条码扫描成功: $barcode');
+        ToastService.success('�?条码扫描成功: $barcode');
         nextFocus?.requestFocus();
       }
     } catch (e) {
-      ToastService.error('�?扫码失败: $e');
+      ToastService.error('�?扫码失败: $e');
     }
   }
 
@@ -71886,7 +71886,7 @@ class ProductAddEditActions {
     }
   }
 
-  /// 选择单位（从列表�?
+  /// 选择单位（从列表�?
   Future<void> chooseUnit({
     required int? selectedUnitId,
     required void Function(Unit u) onPicked,
@@ -71902,12 +71902,12 @@ class ProductAddEditActions {
     }
   }
 
-  /// 编辑辅单�?
+  /// 编辑辅单�?
   Future<void> editAuxUnits({
     required int? currentUnitId,
     required String currentUnitName,
   }) async {
-    // �?标记用户已进入辅单位编辑页面
+    // �?标记用户已进入辅单位编辑页面
     ref.read(productFormUiProvider.notifier).setHasEnteredAuxUnitPage(true);
     
     final dynamic result = await ProductFormCoordinator.editAuxiliaryUnits(
@@ -71931,14 +71931,14 @@ class ProductAddEditActions {
     }
 
     if (productUnits != null && productUnits.isNotEmpty) {
-      // 保存�?UI 状�?
+      // 保存�?UI 状�?
       ref.read(productFormUiProvider.notifier).setProductUnitsAndBarcodes(
             productUnits: productUnits,
             auxiliaryUnitBarcodes: auxiliaryBarcodes,
           );
 
       // 找到基础单位
-      final List<UnitProduct> units = productUnits; // 非空断言后赋�?
+      final List<UnitProduct> units = productUnits; // 非空断言后赋�?
       final baseProductUnit = units.firstWhere(
         (unit) => unit.conversionRate == 1.0,
         orElse: () => units.first,
@@ -71966,7 +71966,7 @@ class ProductAddEditActions {
 
     // 基本单位校验
     if (unitController.text.trim().isEmpty) {
-      onError('�?基本单位不能为空');
+      onError('�?基本单位不能为空');
       return;
     }
 
@@ -71975,13 +71975,13 @@ class ProductAddEditActions {
     if (formState.auxiliaryUnits.isNotEmpty) {
       for (final auxUnit in formState.auxiliaryUnits) {
         if (auxUnit.unitName.trim().isNotEmpty && auxUnit.conversionRate <= 0) {
-          onError('�?辅单位换算率不能为空');
+          onError('�?辅单位换算率不能为空');
           return;
         }
       }
     }
 
-    // 批次开关推�?
+    // 批次开关推�?
     final shelfLife = int.tryParse(shelfLifeController.text.trim());
     final enableBatch = shelfLife != null && shelfLife > 0;
     ref.read(productFormUiProvider.notifier).setEnableBatchManagement(enableBatch);
@@ -71992,8 +71992,8 @@ class ProductAddEditActions {
     if (ui.auxiliaryUnitBarcodes != null && ui.auxiliaryUnitBarcodes!.isNotEmpty) {
       auxiliaryBarcodeData = ui.auxiliaryUnitBarcodes!
           .map((item) => AuxiliaryUnitBarcodeData(
-                // 某些临时ID可能包含下划线等非数字字符，例如 "1757666934778_8"�?
-                // 为避�?int.parse 抛出异常，这里先移除非数字字符再尝试解析，失败则置为 0�?
+                // 某些临时ID可能包含下划线等非数字字符，例如 "1757666934778_8"�?
+                // 为避�?int.parse 抛出异常，这里先移除非数字字符再尝试解析，失败则置为 0�?
                 id: int.tryParse(
                       (item['id'] ?? '')
                           .replaceAll(RegExp(r'[^0-9]'), ''),
@@ -72028,15 +72028,15 @@ class ProductAddEditActions {
       final controller = ref.read(productAddEditControllerProvider);
       final result = await controller.submitForm(formData);
       if (result.success) {
-        ToastService.success('�?${result.message ?? '操作成功'}');
-        // 提交成功，清空辅单位临时表单状态，避免下次进入串数�?
+        ToastService.success('�?${result.message ?? '操作成功'}');
+        // 提交成功，清空辅单位临时表单状态，避免下次进入串数�?
         ref.read(unitEditFormProvider.notifier).resetUnitEditForm();
         onSuccess();
       } else {
-        onError('�?${result.message ?? '操作失败'}');
+        onError('�?${result.message ?? '操作失败'}');
       }
     } catch (e) {
-      onError('�?操作失败: $e');
+      onError('�?操作失败: $e');
     }
   }
 }
@@ -72061,7 +72061,7 @@ import '../../application/provider/unit_edit_form_providers.dart';
 import '../../data/repository/product_unit_repository.dart';
 import '../state/product_form_ui_provider.dart';
 
-/// 辅单位条码数�?
+/// 辅单位条码数�?
 class AuxiliaryUnitBarcodeData {
   final int id;
   final String barcode;
@@ -72079,7 +72079,7 @@ class ProductFormData {
   final String newUnitName;
   final String? imagePath;
   final String barcode;
-  // 价格（元�?
+  // 价格（元�?
   final double? retailPriceInCents;
   final double? promotionalPriceInCents;
   final double? suggestedRetailPriceInCents;
@@ -72130,17 +72130,17 @@ class ProductOperationResult {
       ProductOperationResult._(false, message: message);
 }
 
-/// Controller 提供�?
+/// Controller 提供�?
 final productAddEditControllerProvider = Provider<ProductAddEditController>(
   (ref) => ProductAddEditController(ref),
 );
 
-/// 产品添加/编辑控制�?
+/// 产品添加/编辑控制�?
 class ProductAddEditController {
   final Ref ref;
   ProductAddEditController(this.ref);
 
-  /// 提交表单并返回操作结�?
+  /// 提交表单并返回操作结�?
   Future<ProductOperationResult> submitForm(ProductFormData data) async {
     try {
       // 1. 处理类别
@@ -72163,7 +72163,7 @@ class ProductAddEditController {
           categoryId = existingCat.id;
         } else {
           // 调试信息
-          print('🔍 [DEBUG] 创建新类�? "${data.newCategoryName.trim()}"');
+          print('🔍 [DEBUG] 创建新类�? "${data.newCategoryName.trim()}"');
 
           final service = ref.read(categoryServiceProvider);
           categoryId = await service.addCategory(
@@ -72206,7 +72206,7 @@ class ProductAddEditController {
         return ProductOperationResult.failure('请选择计量单位');
       }
 
-      // 2.1 处理辅单�?- 检查并插入新的辅单位到单位�?
+      // 2.1 处理辅单�?- 检查并插入新的辅单位到单位�?
       await _processAuxiliaryUnits(data.productUnits);
 
       // 3. 构建产品对象
@@ -72217,13 +72217,13 @@ class ProductAddEditController {
       print('🔍 [DEBUG] ==================== 创建产品 ====================');
       print('🔍 [DEBUG] 产品名称: "${data.name.trim()}"');
       print('🔍 [DEBUG] 选中的类别ID: ${data.selectedCategoryId}');
-      print('🔍 [DEBUG] 新类别名�? "${data.newCategoryName.trim()}"');
+      print('🔍 [DEBUG] 新类别名�? "${data.newCategoryName.trim()}"');
       print('🔍 [DEBUG] 最终类别ID: $categoryId');
       print('🔍 [DEBUG] 单位ID: $unitId');
 
       final product = ProductModel(
         id: data.productId ?? DateTime.now().millisecondsSinceEpoch,
-        // 确保id为整数类�?
+        // 确保id为整数类�?
         name: data.name.trim(),
         image: data.imagePath,
         categoryId: categoryId,
@@ -72251,16 +72251,16 @@ class ProductAddEditController {
       // 5. 保存单位配置
       await _saveProductUnits(product, data.productUnits);
 
-      // 6. 保存主条�?
+      // 6. 保存主条�?
       await _saveMainBarcode(product, data.barcode);
 
-      // 7. 保存辅单位条�?
+      // 7. 保存辅单位条�?
       await _saveAuxiliaryUnitBarcodes(product, data.auxiliaryUnitBarcodes);
 
       // 修复：在所有数据库操作（包括单位和条码）完成后，再次强制刷新产品列表，
-      // 确保UI获取到包含最新单位信息的货品数据�?
+      // 确保UI获取到包含最新单位信息的货品数据�?
       ref.invalidate(allProductsProvider);
-      // 关键修复：同时使主条码的Provider失效，以便下次进入页面时能重新获�?
+      // 关键修复：同时使主条码的Provider失效，以便下次进入页面时能重新获�?
       ref.invalidate(mainBarcodeProvider(product.id!));
       // 确保类别列表也被刷新，以便编辑页面能正确显示新创建的类别
       ref.invalidate(categoryListProvider);
@@ -72274,26 +72274,26 @@ class ProductAddEditController {
     }
   }
 
-  /// 保存或替换产品单位配�?
+  /// 保存或替换产品单位配�?
   Future<void> _saveProductUnits(
     ProductModel product,
     List<UnitProduct>? units,
   ) async {
-    print('🔍 [DEBUG] ==================== 开始保存产品单�?====================');
+    print('🔍 [DEBUG] ==================== 开始保存产品单�?====================');
     print('🔍 [DEBUG] 产品ID: ${product.id}');
     print('🔍 [DEBUG] 传入单位数量: ${units?.length ?? 0}');
 
     if (units != null && units.isNotEmpty) {
-      print('🔍 [DEBUG] --- 传入的单位列�?---');
+      print('🔍 [DEBUG] --- 传入的单位列�?---');
       for (int i = 0; i < units.length; i++) {
         final unit = units[i];
         print(
-          '🔍 [DEBUG] 单位 ${i + 1}: ${unit.id} (换算�? ${unit.conversionRate})',
+          '🔍 [DEBUG] 单位 ${i + 1}: ${unit.id} (换算�? ${unit.conversionRate})',
         );
       }
     }
 
-    // 获取 UI 状态，检查是否进入过辅单位编辑页�?
+    // 获取 UI 状态，检查是否进入过辅单位编辑页�?
     final uiState = ref.read(productFormUiProvider);
     final hasEnteredAuxUnitPage = uiState.hasEnteredAuxUnitPage;
     print('🔍 [DEBUG] 是否进入过辅单位页面: $hasEnteredAuxUnitPage');
@@ -72301,19 +72301,19 @@ class ProductAddEditController {
     List<AuxiliaryUnitData> auxiliaryUnits;
 
     if (hasEnteredAuxUnitPage) {
-      // �?用户进入过辅单位编辑页面，从表单状态获取数�?
+      // �?用户进入过辅单位编辑页面，从表单状态获取数�?
       print('🔍 [DEBUG] 从表单状态获取辅单位数据');
       final formState = ref.read(unitEditFormProvider);
       auxiliaryUnits = formState.auxiliaryUnits;
       print('🔍 [DEBUG] 表单中辅单位数量: ${auxiliaryUnits.length}');
     } else if (product.id != null) {
-      // �?用户未进入辅单位编辑页面且是编辑模式，从数据库加载现有辅单位
-      print('🔍 [DEBUG] 从数据库加载现有辅单位数�?);
+      // �?用户未进入辅单位编辑页面且是编辑模式，从数据库加载现有辅单位
+      print('🔍 [DEBUG] 从数据库加载现有辅单位数�?);
       auxiliaryUnits = await _loadExistingAuxiliaryUnits(product.id!);
-      print('🔍 [DEBUG] 从数据库加载�?${auxiliaryUnits.length} 个辅单位');
+      print('🔍 [DEBUG] 从数据库加载�?${auxiliaryUnits.length} 个辅单位');
     } else {
-      // 新增模式且未进入辅单位页�?
-      print('🔍 [DEBUG] 新增模式，无辅单位数�?);
+      // 新增模式且未进入辅单位页�?
+      print('🔍 [DEBUG] 新增模式，无辅单位数�?);
       auxiliaryUnits = [];
     }
 
@@ -72329,16 +72329,16 @@ class ProductAddEditController {
       ),
     );
 
-    // 直接从provider获取最新的单位列表�?future会自动处理加载状�?
+    // 直接从provider获取最新的单位列表�?future会自动处理加载状�?
     final allUnits = await ref.read(allUnitsProvider.future);
     print('🔍 [DEBUG] 刷新后单位总数: ${allUnits.length}');
 
     for (final auxUnit in auxiliaryUnits) {
       final unitName = auxUnit.unitName.trim();
-      print('🔍 [DEBUG] 处理辅单�? "$unitName", 换算�? ${auxUnit.conversionRate}');
+      print('🔍 [DEBUG] 处理辅单�? "$unitName", 换算�? ${auxUnit.conversionRate}');
 
       if (unitName.isEmpty) {
-        print('🔍 [DEBUG] 单位名称为空，跳�?);
+        print('🔍 [DEBUG] 单位名称为空，跳�?);
         continue;
       }
 
@@ -72352,8 +72352,8 @@ class ProductAddEditController {
       }
 
       // 如果在这里找不到单位，说明有一个辅单位的名称在单位表中不存在，
-      // 这在正常流程下不应该发生，因为所有新单位都应在_processAuxiliaryUnits中被添加�?
-      // 因此，这是一个关键错误，需要抛出异常而不是静默失败�?
+      // 这在正常流程下不应该发生，因为所有新单位都应在_processAuxiliaryUnits中被添加�?
+      // 因此，这是一个关键错误，需要抛出异常而不是静默失败�?
       if (unit != null && unit.id != null) {
         list.add(
           UnitProduct(
@@ -72370,13 +72370,13 @@ class ProductAddEditController {
           ),
         );
         print(
-          '🔍 [DEBUG] �?添加辅单�? ${unit.name} (ID: ${unit.id}, 换算�? ${auxUnit.conversionRate})',
+          '🔍 [DEBUG] �?添加辅单�? ${unit.name} (ID: ${unit.id}, 换算�? ${auxUnit.conversionRate})',
         );
       } else {
-        print('🔍 [DEBUG] �?在_saveProductUnits中未找到单位: "$unitName"');
-        // 这是一个关键错误，意味着在表单提交时，一个预期的单位没有被正确创建或找到�?
-        // 抛出异常以阻止不完整的数据被保存�?
-        throw Exception('保存产品单位失败：无法找到单�?"$unitName"。请检查单位是否已正确添加�?);
+        print('🔍 [DEBUG] �?在_saveProductUnits中未找到单位: "$unitName"');
+        // 这是一个关键错误，意味着在表单提交时，一个预期的单位没有被正确创建或找到�?
+        // 抛出异常以阻止不完整的数据被保存�?
+        throw Exception('保存产品单位失败：无法找到单�?"$unitName"。请检查单位是否已正确添加�?);
       }
     }
 
@@ -72384,28 +72384,28 @@ class ProductAddEditController {
     for (int i = 0; i < list.length; i++) {
       final unit = list[i];
       print(
-        '🔍 [DEBUG] 保存单位 ${i + 1}: ${unit.id} (换算�? ${unit.conversionRate})',
+        '🔍 [DEBUG] 保存单位 ${i + 1}: ${unit.id} (换算�? ${unit.conversionRate})',
       );
     }
 
     try {
       await ctrl.replaceProductUnits(product.id!, list);
-      print('🔍 [DEBUG] �?产品单位保存成功');
+      print('🔍 [DEBUG] �?产品单位保存成功');
     } catch (e) {
-      print('🔍 [DEBUG] �?产品单位保存失败: $e');
+      print('🔍 [DEBUG] �?产品单位保存失败: $e');
       rethrow;
     }
 
     print('🔍 [DEBUG] ==================== 产品单位保存完成 ====================');
   }
 
-  /// 保存主条�?
+  /// 保存主条�?
   Future<void> _saveMainBarcode(ProductModel product, String barcode) async {
     final code = barcode.trim();
     final barcodeCtrl = ref.read(barcodeControllerProvider.notifier);
     final productUnitRepository = ref.read(productUnitRepositoryProvider);
 
-    // 1. 找到新的基础产品单位ID (�?_saveProductUnits 执行�?
+    // 1. 找到新的基础产品单位ID (�?_saveProductUnits 执行�?
     final productUnitController = ref.read(
       productUnitControllerProvider.notifier,
     );
@@ -72416,7 +72416,7 @@ class ProductAddEditController {
         .where((pu) => pu.conversionRate == 1.0)
         .firstOrNull;
     if (baseProductUnit == null) {
-      throw Exception('保存主条码失败：未找到基础产品单位�?);
+      throw Exception('保存主条码失败：未找到基础产品单位�?);
     }
     final baseUnitProductId = baseProductUnit.id!;
 
@@ -72425,25 +72425,25 @@ class ProductAddEditController {
         ? null
         : await barcodeCtrl.getBarcodeByValue(code);
 
-    // 3. 验证条码是否被其他货品占�?
+    // 3. 验证条码是否被其他货品占�?
     if (existingBarcode != null) {
-      // 通过 unitProductId 找到对应�?product_unit 记录
+      // 通过 unitProductId 找到对应�?product_unit 记录
       final productUnit = await productUnitRepository.getProductUnitById(
         existingBarcode.unitProductId,
       );
-      // 如果能找�?product_unit 记录，并且其 productId 不是当前产品�?ID，则说明条码被占�?
+      // 如果能找�?product_unit 记录，并且其 productId 不是当前产品�?ID，则说明条码被占�?
       if (productUnit != null && productUnit.productId != product.id) {
-        throw Exception('条码 "$code" 已被其他货品使用，无法重复添加�?);
+        throw Exception('条码 "$code" 已被其他货品使用，无法重复添加�?);
       }
     }
 
     // 4. 查找与当前产品关联的所有条码，并找到主条码
-    // 由于 unit_id 已变，直接查找会很困难。我们转而处理与当前产品关联的所有条码�?
-    // 此处简化逻辑：我们信任验证步骤，并直接进�?upsert 操作�?
-    // 我们需要先删除所有与该产品基础单位无关的条码（即旧的条码）�?
-    // 这部分逻辑比较复杂，暂时的修复方案是只处理当前条码的更新�?
+    // 由于 unit_id 已变，直接查找会很困难。我们转而处理与当前产品关联的所有条码�?
+    // 此处简化逻辑：我们信任验证步骤，并直接进�?upsert 操作�?
+    // 我们需要先删除所有与该产品基础单位无关的条码（即旧的条码）�?
+    // 这部分逻辑比较复杂，暂时的修复方案是只处理当前条码的更新�?
 
-    // 5. 同步主条�?
+    // 5. 同步主条�?
     if (code.isEmpty) {
       // 如果输入为空，则删除现有的主条码（如果存在）
       if (existingBarcode != null &&
@@ -72451,16 +72451,16 @@ class ProductAddEditController {
         await barcodeCtrl.deleteBarcode(existingBarcode.id!);
       }
     } else {
-      // 输入不为�?
+      // 输入不为�?
       if (existingBarcode != null) {
-        // 条码已存在（验证已确认它属于当前产品），更新�?unitProductId 指向新的基础单位
+        // 条码已存在（验证已确认它属于当前产品），更新�?unitProductId 指向新的基础单位
         if (existingBarcode.unitProductId != baseUnitProductId) {
           await barcodeCtrl.updateBarcode(
             existingBarcode.copyWith(unitProductId: baseUnitProductId),
           );
         }
       } else {
-        // 条码不存在，添加新条�?
+        // 条码不存在，添加新条�?
         await barcodeCtrl.addBarcode(
           BarcodeModel(unitProductId: baseUnitProductId, barcodeValue: code),
         );
@@ -72468,14 +72468,14 @@ class ProductAddEditController {
     }
   }
 
-  /// 保存辅单位条�?
+  /// 保存辅单位条�?
   Future<void> _saveAuxiliaryUnitBarcodes(
     ProductModel product,
     List<AuxiliaryUnitBarcodeData>? auxiliaryBarcodes,
   ) async {
     print('🔍 [DEBUG] ==================== 开始保存辅单位条码 ====================');
 
-    // 获取 UI 状态，检查是否进入过辅单位编辑页�?
+    // 获取 UI 状态，检查是否进入过辅单位编辑页�?
     final uiState = ref.read(productFormUiProvider);
     final hasEnteredAuxUnitPage = uiState.hasEnteredAuxUnitPage;
     print('🔍 [DEBUG] 是否进入过辅单位页面: $hasEnteredAuxUnitPage');
@@ -72483,19 +72483,19 @@ class ProductAddEditController {
     List<AuxiliaryUnitData> auxiliaryUnits;
 
     if (hasEnteredAuxUnitPage) {
-      // �?用户进入过辅单位编辑页面，从表单状态获取数�?
+      // �?用户进入过辅单位编辑页面，从表单状态获取数�?
       print('🔍 [DEBUG] 从表单状态获取辅单位条码数据');
       final formState = ref.read(unitEditFormProvider);
       auxiliaryUnits = formState.auxiliaryUnits;
       print('🔍 [DEBUG] 表单中辅单位数量: ${auxiliaryUnits.length}');
     } else if (product.id != null) {
-      // �?用户未进入辅单位编辑页面且是编辑模式，从数据库加载现有辅单位
-      print('🔍 [DEBUG] 从数据库加载现有辅单位条码数�?);
+      // �?用户未进入辅单位编辑页面且是编辑模式，从数据库加载现有辅单位
+      print('🔍 [DEBUG] 从数据库加载现有辅单位条码数�?);
       auxiliaryUnits = await _loadExistingAuxiliaryUnits(product.id!);
-      print('🔍 [DEBUG] 从数据库加载�?${auxiliaryUnits.length} 个辅单位');
+      print('🔍 [DEBUG] 从数据库加载�?${auxiliaryUnits.length} 个辅单位');
     } else {
-      // 新增模式且未进入辅单位页�?
-      print('🔍 [DEBUG] 新增模式，无辅单位条码数�?);
+      // 新增模式且未进入辅单位页�?
+      print('🔍 [DEBUG] 新增模式，无辅单位条码数�?);
       auxiliaryUnits = [];
     }
 
@@ -72518,7 +72518,7 @@ class ProductAddEditController {
     for (final auxUnit in auxiliaryUnits) {
       final code = auxUnit.barcode.trim();
       if (code.isEmpty) {
-        print('🔍 [DEBUG] 辅单�?"${auxUnit.unitName}" 条码为空，跳�?);
+        print('🔍 [DEBUG] 辅单�?"${auxUnit.unitName}" 条码为空，跳�?);
         continue;
       }
 
@@ -72551,7 +72551,7 @@ class ProductAddEditController {
 
         if (matchingProductUnit == null) {
           throw Exception(
-            '数据不一致：在产品单位列表中找不到单�?${finalTargetUnit.name} (换算�? ${auxUnit.conversionRate})',
+            '数据不一致：在产品单位列表中找不到单�?${finalTargetUnit.name} (换算�? ${auxUnit.conversionRate})',
           );
         }
 
@@ -72563,29 +72563,29 @@ class ProductAddEditController {
             ),
           );
           print(
-            '🔍 [DEBUG] �?添加辅单位条�? ${auxUnit.unitName} -> $code (ProductUnitId: ${matchingProductUnit.id})',
+            '🔍 [DEBUG] �?添加辅单位条�? ${auxUnit.unitName} -> $code (ProductUnitId: ${matchingProductUnit.id})',
           );
         } else {
           print(
-            '🔍 [DEBUG] �?未找到匹配的产品单位: ${auxUnit.unitName} (换算�? ${auxUnit.conversionRate})',
+            '🔍 [DEBUG] �?未找到匹配的产品单位: ${auxUnit.unitName} (换算�? ${auxUnit.conversionRate})',
           );
         }
       } else {
-        print('🔍 [DEBUG] �?未找到单�? ${auxUnit.unitName}');
+        print('🔍 [DEBUG] �?未找到单�? ${auxUnit.unitName}');
       }
     }
 
     if (barcodes.isNotEmpty) {
       await ctrl.addMultipleBarcodes(barcodes);
-      print('🔍 [DEBUG] �?成功保存 ${barcodes.length} 个辅单位条码');
+      print('🔍 [DEBUG] �?成功保存 ${barcodes.length} 个辅单位条码');
     } else {
-      print('🔍 [DEBUG] 没有有效的辅单位条码需要保�?);
+      print('🔍 [DEBUG] 没有有效的辅单位条码需要保�?);
     }
 
-    print('🔍 [DEBUG] ==================== 辅单位条码保存完�?====================');
+    print('🔍 [DEBUG] ==================== 辅单位条码保存完�?====================');
   }
 
-  /// 从数据库加载现有辅单位数据并转换为表单格�?
+  /// 从数据库加载现有辅单位数据并转换为表单格�?
   Future<List<AuxiliaryUnitData>> _loadExistingAuxiliaryUnits(
     int productId,
   ) async {
@@ -72595,11 +72595,11 @@ class ProductAddEditController {
       );
       final barcodeController = ref.read(barcodeControllerProvider.notifier);
 
-      // 获取所有产品单�?
+      // 获取所有产品单�?
       final allProductUnits = await productUnitController
           .getProductUnitsByProductId(productId);
 
-      // 过滤出辅单位（换算率不为1�?
+      // 过滤出辅单位（换算率不为1�?
       final auxiliaryProductUnits = allProductUnits
           .where((pu) => pu.conversionRate != 1.0)
           .toList();
@@ -72608,10 +72608,10 @@ class ProductAddEditController {
         return [];
       }
 
-      // 获取所有单位信�?
+      // 获取所有单位信�?
       final allUnits = await ref.read(allUnitsProvider.future);
 
-      // 转换�?AuxiliaryUnitData 格式
+      // 转换�?AuxiliaryUnitData 格式
       final List<AuxiliaryUnitData> auxiliaryUnitsData = [];
 
       for (final productUnit in auxiliaryProductUnits) {
@@ -72650,28 +72650,28 @@ class ProductAddEditController {
         );
 
         print(
-          '🔍 [DEBUG] 加载辅单�? ${unit.name}, 换算�? ${productUnit.conversionRate}, '
-          '零售�? $retailPrice, 批发�? $wholesalePrice',
+          '🔍 [DEBUG] 加载辅单�? ${unit.name}, 换算�? ${productUnit.conversionRate}, '
+          '零售�? $retailPrice, 批发�? $wholesalePrice',
         );
       }
 
       return auxiliaryUnitsData;
     } catch (e) {
-      print('🔍 [DEBUG] �?加载现有辅单位失�? $e');
+      print('🔍 [DEBUG] �?加载现有辅单位失�? $e');
       return [];
     }
   }
 
-  /// 处理辅单�?- 检查并插入新的辅单位到单位�?
+  /// 处理辅单�?- 检查并插入新的辅单位到单位�?
   Future<void> _processAuxiliaryUnits(List<UnitProduct>? productUnits) async {
     print('🔍 [DEBUG] ==================== 开始处理辅单位 ====================');
 
-    // 获取辅单位表单数�?
+    // 获取辅单位表单数�?
     final formState = ref.read(unitEditFormProvider);
-    print('🔍 [DEBUG] 表单中的辅单位数�? ${formState.auxiliaryUnits.length}');
+    print('🔍 [DEBUG] 表单中的辅单位数�? ${formState.auxiliaryUnits.length}');
 
     if (formState.auxiliaryUnits.isEmpty) {
-      print('🔍 [DEBUG] 表单中没有辅单位数据，跳过处�?);
+      print('🔍 [DEBUG] 表单中没有辅单位数据，跳过处�?);
       return;
     }
 
@@ -72680,16 +72680,16 @@ class ProductAddEditController {
         .read(allUnitsProvider)
         .maybeWhen(data: (u) => u, orElse: () => <Unit>[]);
 
-    print('🔍 [DEBUG] 当前数据库中的单位数�? ${units.length}');
+    print('🔍 [DEBUG] 当前数据库中的单位数�? ${units.length}');
 
     for (int i = 0; i < formState.auxiliaryUnits.length; i++) {
       final auxUnit = formState.auxiliaryUnits[i];
       final unitName = auxUnit.unitName.trim();
 
-      print('🔍 [DEBUG] --- 处理辅单�?${i + 1}: "$unitName" ---');
+      print('🔍 [DEBUG] --- 处理辅单�?${i + 1}: "$unitName" ---');
 
       if (unitName.isEmpty) {
-        print('🔍 [DEBUG] 单位名称为空，跳�?);
+        print('🔍 [DEBUG] 单位名称为空，跳�?);
         continue;
       }
 
@@ -72701,41 +72701,41 @@ class ProductAddEditController {
 
       if (existingUnit != null) {
         print(
-          '🔍 [DEBUG] 单位已存�? ID=${existingUnit.id}, 名称="${existingUnit.name}"',
+          '🔍 [DEBUG] 单位已存�? ID=${existingUnit.id}, 名称="${existingUnit.name}"',
         );
       } else {
-        // 如果单位不存在，创建新单�?
-        print('🔍 [DEBUG] 创建新单�? 名称="$unitName"');
+        // 如果单位不存在，创建新单�?
+        print('🔍 [DEBUG] 创建新单�? 名称="$unitName"');
 
         try {
-          // 调用新的addUnit方法，它会处理一�?
+          // 调用新的addUnit方法，它会处理一�?
           final newUnit = await unitCtrl.addUnit(Unit(name: unitName));
-          print('🔍 [DEBUG] �?新单位创建成�? ID: ${newUnit.id}');
+          print('🔍 [DEBUG] �?新单位创建成�? ID: ${newUnit.id}');
 
-          // 将新创建的单位添加到当前循环的单位列表中�?
-          // 以便在同一个循环中处理依赖于这个新单位的其他逻辑�?
+          // 将新创建的单位添加到当前循环的单位列表中�?
+          // 以便在同一个循环中处理依赖于这个新单位的其他逻辑�?
           units.add(newUnit);
           ref.invalidate(allUnitsProvider);
         } catch (e) {
-          print('🔍 [DEBUG] �?新单位创建失�? $e');
+          print('🔍 [DEBUG] �?新单位创建失�? $e');
           throw Exception('创建单位失败: $unitName - $e');
         }
       }
     }
 
-    // 最终刷新一次单位数据以确保所有新单位都可�?
+    // 最终刷新一次单位数据以确保所有新单位都可�?
     ref.invalidate(allUnitsProvider);
-    print('🔍 [DEBUG] ==================== 辅单位处理完�?====================');
+    print('🔍 [DEBUG] ==================== 辅单位处理完�?====================');
   }
 }
 import 'package:flutter/material.dart';
 
 import '../../domain/model/product.dart';
 
-/// 负责管理 Product 表单�?TextEditingController �?FocusNode�?
-/// 将初始化/回填与资源释放从页面中抽离，页面只做 UI 组装与事件转发�?
+/// 负责管理 Product 表单�?TextEditingController �?FocusNode�?
+/// 将初始化/回填与资源释放从页面中抽离，页面只做 UI 组装与事件转发�?
 class ProductFormControllers {
-  // 文本控制�?
+  // 文本控制�?
   final TextEditingController categoryController = TextEditingController();
   final TextEditingController unitController = TextEditingController();
   late final TextEditingController nameController;
@@ -72755,7 +72755,7 @@ class ProductFormControllers {
   final FocusNode shelfLifeFocusNode = FocusNode();
   final FocusNode stockWarningValueFocusNode = FocusNode();
 
-  /// 根据传入�?[product] 初始化各输入框，空值使用页面默认值保持一致�?
+  /// 根据传入�?[product] 初始化各输入框，空值使用页面默认值保持一致�?
   void init(ProductModel? product) {
     nameController = TextEditingController(text: product?.name ?? '');
     barcodeController = TextEditingController(text: ''); // 条码异步加载
@@ -72788,11 +72788,11 @@ class ProductFormControllers {
 
     remarksController = TextEditingController(text: product?.remarks ?? '');
 
-    // categoryController �?unitController 初始文本由页面选择逻辑/回填决定
+    // categoryController �?unitController 初始文本由页面选择逻辑/回填决定
   }
 
   void dispose() {
-    // 文本控制�?
+    // 文本控制�?
     nameController.dispose();
     barcodeController.dispose();
     retailPriceController.dispose();
@@ -72865,7 +72865,7 @@ class ProductFormCoordinator {
     );
   }
 
-  /// 编辑辅单位与条码配置，返回页面回传的数据（兼�?Map �?List<UnitProduct>�?
+  /// 编辑辅单位与条码配置，返回页面回传的数据（兼�?Map �?List<UnitProduct>�?
   static Future<dynamic> editAuxiliaryUnits(
     BuildContext context,
     WidgetRef ref, {
@@ -72886,7 +72886,7 @@ class ProductFormCoordinator {
           baseUnitId = existing.first.id;
         }
       } catch (_) {
-        // 忽略读取失败，继续以输入名称进入编辑�?
+        // 忽略读取失败，继续以输入名称进入编辑�?
       }
     }
 
@@ -72969,13 +72969,13 @@ class _AuxiliaryUnitEditScreenState
       return;
     }
 
-    // 如果是新增模式，检查是否有持久化数�?
+    // 如果是新增模式，检查是否有持久化数�?
     final formState = ref.read(unitEditFormProvider);
     final hasPersistedData = formState.auxiliaryUnits.isNotEmpty;
     print('🔍 新增模式，hasPersistedData=$hasPersistedData');
 
     if (hasPersistedData) {
-      print('🔍 加载持久化数�?);
+      print('🔍 加载持久化数�?);
       _loadFromFormProvider();
       return;
     }
@@ -72985,20 +72985,20 @@ class _AuxiliaryUnitEditScreenState
   }
 
   Future<void> _initializeAuxiliaryUnits() async {
-    print('🔍 _initializeAuxiliaryUnits 开�?);
+    print('🔍 _initializeAuxiliaryUnits 开�?);
     try {
       final formState = ref.read(unitEditFormProvider);
       print(
         '🔍 formState.auxiliaryUnits.length=${formState.auxiliaryUnits.length}',
       );
       if (formState.auxiliaryUnits.isNotEmpty) {
-        print('🔍 从表单数据加�?);
+        print('🔍 从表单数据加�?);
         await _loadAuxiliaryUnitsFromFormData(formState.auxiliaryUnits);
         _auxiliaryCounter = formState.auxiliaryCounter;
         return;
       }
       if (widget.productId != null) {
-        print('🔍 从数据库加载辅单�?);
+        print('🔍 从数据库加载辅单�?);
         final productUnitController = ref.read(
           productUnitControllerProvider.notifier,
         );
@@ -73026,7 +73026,7 @@ class _AuxiliaryUnitEditScreenState
 
     for (final unitProduct in auxiliaryUnits) {
       try {
-        print('=================【仓储层调试�?================');
+        print('=================【仓储层调试�?================');
         print('UnitProduct ID: ${unitProduct.id}');
         print('SELLING PRICE: ${unitProduct.sellingPriceInCents}');
         print('WHOLESALE PRICE: ${unitProduct.wholesalePriceInCents}');
@@ -73047,7 +73047,7 @@ class _AuxiliaryUnitEditScreenState
           initialSellingPrice: (unitProduct.sellingPriceInCents ?? 0) / 100,
           initialWholesalePrice: (unitProduct.wholesalePriceInCents ?? 0) / 100,
         );
-        print('🔍 控制器初始化后售�? ${auxiliaryUnit.retailPriceController.text}');
+        print('🔍 控制器初始化后售�? ${auxiliaryUnit.retailPriceController.text}');
         print('🔍 控制器初始化后批发价: ${auxiliaryUnit.wholesalePriceController.text}');
 
         auxiliaryUnit.unitController.text = unit.name;
@@ -73084,7 +73084,7 @@ class _AuxiliaryUnitEditScreenState
       },
       child: Scaffold(
         appBar: AppBar(
-          title: const Text('编辑辅单�?),
+          title: const Text('编辑辅单�?),
           leading: IconButton(
             icon: const Icon(Icons.arrow_back),
             onPressed: _handleReturn,
@@ -73147,7 +73147,7 @@ class _AuxiliaryUnitEditScreenState
                           ),
                           const SizedBox(width: 12),
                           const Text(
-                            '添加辅单�?,
+                            '添加辅单�?,
                             style: TextStyle(fontSize: 14, color: Colors.grey),
                           ),
                         ],
@@ -73176,7 +73176,7 @@ class _AuxiliaryUnitEditScreenState
             Row(
               children: [
                 Text(
-                  '辅单�?{index + 1}',
+                  '辅单�?{index + 1}',
                   style: const TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
@@ -73198,7 +73198,7 @@ class _AuxiliaryUnitEditScreenState
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const Text(
-                  '辅单位名�?,
+                  '辅单位名�?,
                   style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
                 ),
                 const SizedBox(height: 8),
@@ -73217,7 +73217,7 @@ class _AuxiliaryUnitEditScreenState
                             .requestFocus(),
                         validator: (value) {
                           if (value == null || value.trim().isEmpty) {
-                            return '请输入单位名�?;
+                            return '请输入单位名�?;
                           }
                           return null;
                         },
@@ -73247,7 +73247,7 @@ class _AuxiliaryUnitEditScreenState
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  '换算�?(相对�?{widget.baseUnitName ?? '基本单位'})',
+                  '换算�?(相对�?{widget.baseUnitName ?? '基本单位'})',
                   style: const TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w500,
@@ -73272,10 +73272,10 @@ class _AuxiliaryUnitEditScreenState
                     }
                     final rate = double.tryParse(value.trim());
                     if (rate == null || rate <= 0) {
-                      return '请输入有效的换算�?;
+                      return '请输入有效的换算�?;
                     }
                     if (rate == 1.0) {
-                      return '辅单位换算率不能�?';
+                      return '辅单位换算率不能�?';
                     }
                     return null;
                   },
@@ -73344,7 +73344,7 @@ class _AuxiliaryUnitEditScreenState
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const Text(
-                  '建议零售�?,
+                  '建议零售�?,
                   style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
                 ),
                 const SizedBox(height: 8),
@@ -73386,7 +73386,7 @@ class _AuxiliaryUnitEditScreenState
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const Text(
-                  '批发�?,
+                  '批发�?,
                   style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
                 ),
                 const SizedBox(height: 8),
@@ -73429,10 +73429,10 @@ class _AuxiliaryUnitEditScreenState
   }
 
   void _onAuxiliaryUnitNameChanged(int index, String unitName) async {
-    print('🔍 辅单位名称变�?- 索引: $index, 输入: "$unitName"');
+    print('🔍 辅单位名称变�?- 索引: $index, 输入: "$unitName"');
     final trimmedName = unitName.trim();
     if (trimmedName.isEmpty) {
-      print('🔍 单位名称为空，清除单�?);
+      print('🔍 单位名称为空，清除单�?);
       setState(() {
         _auxiliaryUnits[index].unit = null;
       });
@@ -73445,7 +73445,7 @@ class _AuxiliaryUnitEditScreenState
     try {
       print('🔍 查找现有单位: "$trimmedName"');
       final allUnits = await ref.read(allUnitsProvider.future);
-      print('🔍 数据库中共有 ${allUnits.length} 个单�?);
+      print('🔍 数据库中共有 ${allUnits.length} 个单�?);
 
       Unit? existingUnit = allUnits.firstWhere(
         (unit) => unit.name == trimmedName,
@@ -73453,7 +73453,7 @@ class _AuxiliaryUnitEditScreenState
       );
 
       if (existingUnit.isNew) {
-        print('🔍 单位不存在，创建新单位对�? "$trimmedName"');
+        print('🔍 单位不存在，创建新单位对�? "$trimmedName"');
         existingUnit = Unit(name: trimmedName);
         print('🔍 新单位对象已创建: ID=${existingUnit.id}, 名称="${existingUnit.name}"');
       } else {
@@ -73477,13 +73477,13 @@ class _AuxiliaryUnitEditScreenState
         }
         return;
       }
-      print('🔍 设置辅单�?$index 的单位为: ${existingUnit.name}');
+      print('🔍 设置辅单�?$index 的单位为: ${existingUnit.name}');
       setState(() {
         _auxiliaryUnits[index].unit = existingUnit;
       });
 
       print(
-        '🔍 更新表单状�? 辅单位ID=${_auxiliaryUnits[index].id}, 单位ID=${existingUnit.id}',
+        '🔍 更新表单状�? 辅单位ID=${_auxiliaryUnits[index].id}, 单位ID=${existingUnit.id}',
       );
       ref
           .read(unitEditFormProvider.notifier)
@@ -73492,9 +73492,9 @@ class _AuxiliaryUnitEditScreenState
             trimmedName,
             unitId: existingUnit.id,
           );
-      print('�?辅单位名称变更完�?);
+      print('�?辅单位名称变更完�?);
     } catch (e) {
-      print('�?辅单位名称变更异�? $e');
+      print('�?辅单位名称变更异�? $e');
     }
   }
 
@@ -73598,19 +73598,19 @@ class _AuxiliaryUnitEditScreenState
   }
 
   List<UnitProduct> _buildProductUnits() {
-    print('🔍 [DEBUG] ==================== 开始构建产品单�?====================');
+    print('🔍 [DEBUG] ==================== 开始构建产品单�?====================');
     print('🔍 [DEBUG] 产品ID: ${widget.productId}');
     print('🔍 [DEBUG] 基本单位ID: ${widget.baseUnitId}');
     print('🔍 [DEBUG] 基本单位名称: ${widget.baseUnitName}');
-    print('🔍 [DEBUG] 辅单位数�? ${_auxiliaryUnits.length}');
+    print('🔍 [DEBUG] 辅单位数�? ${_auxiliaryUnits.length}');
 
     final List<UnitProduct> productUnits = [];
 
     // 添加基本单位
     final int? parsedBaseUnitId = int.tryParse(widget.baseUnitId);
     if (parsedBaseUnitId == null) {
-      print('�?基本单位ID无效: ${widget.baseUnitId}');
-      // 如果基本单位ID无效，直接返�?
+      print('�?基本单位ID无效: ${widget.baseUnitId}');
+      // 如果基本单位ID无效，直接返�?
       Navigator.of(context).pop();
       return [];
     }
@@ -73622,19 +73622,19 @@ class _AuxiliaryUnitEditScreenState
       conversionRate: 1,
     );
     productUnits.add(baseUnit);
-    print('🔍 [DEBUG] �?添加基本单位: ${baseUnit.id}');
+    print('🔍 [DEBUG] �?添加基本单位: ${baseUnit.id}');
 
-    // 处理辅单�?
+    // 处理辅单�?
     for (int i = 0; i < _auxiliaryUnits.length; i++) {
       final aux = _auxiliaryUnits[i];
-      print('🔍 [DEBUG] --- 处理辅单�?${i + 1} ---');
+      print('🔍 [DEBUG] --- 处理辅单�?${i + 1} ---');
       print('🔍 [DEBUG]   单位对象: ${aux.unit}');
       print('🔍 [DEBUG]   单位ID: ${aux.unit?.id}');
       print('🔍 [DEBUG]   单位名称: "${aux.unit?.name}"');
-      print('🔍 [DEBUG]   换算�? ${aux.conversionRate}');
-      print('🔍 [DEBUG]   输入框文�? "${aux.unitController.text}"');
+      print('🔍 [DEBUG]   换算�? ${aux.conversionRate}');
+      print('🔍 [DEBUG]   输入框文�? "${aux.unitController.text}"');
       print('🔍 [DEBUG]   条码: "${aux.barcodeController.text}"');
-      print('🔍 [DEBUG]   零售�? "${aux.retailPriceController.text}"');
+      print('🔍 [DEBUG]   零售�? "${aux.retailPriceController.text}"');
       print('🔍 [DEBUG]   批发价输入框: "${aux.wholesalePriceController.text}"');
 
       if (aux.unit != null && aux.conversionRate > 0) {
@@ -73674,15 +73674,15 @@ class _AuxiliaryUnitEditScreenState
         );
         productUnits.add(auxUnit);
         print(
-          '🔍 [DEBUG]   �?添加辅单�? ${auxUnit.id} 批发�? ${auxUnit.wholesalePriceInCents}',
+          '🔍 [DEBUG]   �?添加辅单�? ${auxUnit.id} 批发�? ${auxUnit.wholesalePriceInCents}',
         );
       } else {
-        print('🔍 [DEBUG]   �?跳过无效辅单�?');
+        print('🔍 [DEBUG]   �?跳过无效辅单�?');
         if (aux.unit == null) {
           print('🔍 [DEBUG]     - 单位对象为null');
         }
         if (aux.conversionRate <= 0) {
-          print('🔍 [DEBUG]     - 换算率无�? ${aux.conversionRate}');
+          print('🔍 [DEBUG]     - 换算率无�? ${aux.conversionRate}');
         }
       }
     }
@@ -73691,14 +73691,14 @@ class _AuxiliaryUnitEditScreenState
     print('🔍 [DEBUG] 总计产品单位数量: ${productUnits.length}');
     for (int i = 0; i < productUnits.length; i++) {
       final pu = productUnits[i];
-      print('🔍 [DEBUG] 产品单位 ${i + 1}: ${pu.id} (换算�? ${pu.conversionRate})');
+      print('🔍 [DEBUG] 产品单位 ${i + 1}: ${pu.id} (换算�? ${pu.conversionRate})');
     }
     print('🔍 [DEBUG] ==================== 构建完成 ====================');
 
     return productUnits;
   }
 
-  /// 构建辅单位条码数�?
+  /// 构建辅单位条码数�?
   List<Map<String, String>> _buildAuxiliaryUnitBarcodes() {
     final List<Map<String, String>> barcodes = [];
 
@@ -73715,15 +73715,15 @@ class _AuxiliaryUnitEditScreenState
   }
 
   void _handleReturn() {
-    print('🔍 处理返回，开始构建数�?..');
+    print('🔍 处理返回，开始构建数�?..');
     try {
       final productUnits = _buildProductUnits();
       final auxiliaryBarcodes = _buildAuxiliaryUnitBarcodes();
 
       if (productUnits.isNotEmpty) {
-        print('🔍 数据有效，返回产品单位数�?);
+        print('🔍 数据有效，返回产品单位数�?);
 
-        // �?先保存到 unitEditFormProvider，确保下次进入时能恢复数�?
+        // �?先保存到 unitEditFormProvider，确保下次进入时能恢复数�?
         _saveCurrentDataToFormProvider();
 
         // 返回包含产品单位和条码信息的数据
@@ -73736,15 +73736,15 @@ class _AuxiliaryUnitEditScreenState
         Navigator.of(context).pop();
       }
     } catch (e, s) {
-      print('�?返回处理异常: $e\n$s');
-      // 发生异常时，简单返�?
+      print('�?返回处理异常: $e\n$s');
+      // 发生异常时，简单返�?
       Navigator.of(context).pop();
     }
   }
 
   /// 将当前编辑的辅单位数据保存到 FormProvider，确保数据持久化
   void _saveCurrentDataToFormProvider() {
-    print('🔍 保存当前数据�?unitEditFormProvider');
+    print('🔍 保存当前数据�?unitEditFormProvider');
     try {
       final auxiliaryUnitsData = _auxiliaryUnits.map((aux) {
         // 将元转换为分存储
@@ -73783,10 +73783,10 @@ class _AuxiliaryUnitEditScreenState
           .read(unitEditFormProvider.notifier)
           .setAuxiliaryUnits(auxiliaryUnitsData, counter: _auxiliaryCounter);
       print(
-        '�?数据已保存到 unitEditFormProvider，共 ${auxiliaryUnitsData.length} 个辅单位',
+        '�?数据已保存到 unitEditFormProvider，共 ${auxiliaryUnitsData.length} 个辅单位',
       );
     } catch (e, s) {
-      print('�?保存数据�?FormProvider 失败: $e\n$s');
+      print('�?保存数据�?FormProvider 失败: $e\n$s');
     }
   }
 
@@ -73809,7 +73809,7 @@ class _AuxiliaryUnitEditScreenState
       final allUnits = await ref.read(allUnitsProvider.future);
 
       for (final auxData in auxiliaryUnitsData) {
-        print('=================【Provider调试�?================');
+        print('=================【Provider调试�?================');
         print('AuxiliaryUnitData ID: ${auxData.id}');
         print('unitName: ${auxData.unitName}, unitId: ${auxData.unitId}');
         print('conversionRate: ${auxData.conversionRate}');
@@ -73844,8 +73844,8 @@ class _AuxiliaryUnitEditScreenState
 
         auxiliaryUnit.unitController.text = auxData.unitName;
         auxiliaryUnit.barcodeController.text = auxData.barcode;
-        // retailPriceController �?wholesalePriceController 已在构造函数初始化，无需重复赋�?
-        print('=== Provider控件初始�?===');
+        // retailPriceController �?wholesalePriceController 已在构造函数初始化，无需重复赋�?
+        print('=== Provider控件初始�?===');
         print(
           'retailPriceController.text: "${auxiliaryUnit.retailPriceController.text}"',
         );
@@ -73938,11 +73938,11 @@ class CategorySelectionScreen extends ConsumerStatefulWidget {
 
 class _CategorySelectionScreenState
     extends ConsumerState<CategorySelectionScreen> {
-  // 用于管理每个类别的展开/收起状�?
+  // 用于管理每个类别的展开/收起状�?
   final Map<int, bool> _expandedCategories = {};
-  // 搜索关键�?
+  // 搜索关键�?
   String _searchQuery = '';
-  // 缓存每个类别的产品数�?
+  // 缓存每个类别的产品数�?
   final Map<int, int> _categoryProductCounts = {};
 
   @override
@@ -73951,7 +73951,7 @@ class _CategorySelectionScreenState
     _loadProductCounts();
   }
 
-  /// 加载所有类别的产品数量（包含子类别�?
+  /// 加载所有类别的产品数量（包含子类别�?
   Future<void> _loadProductCounts() async {
     final categoryState = ref.read(categoryListProvider);
     final productRepository = ref.read(productRepositoryProvider);
@@ -73960,13 +73960,13 @@ class _CategorySelectionScreenState
     for (final category in allCategories) {
       if (category.id != null) {
         try {
-          // 获取当前类别的产品数�?
+          // 获取当前类别的产品数�?
           final products = await productRepository.getProductsByCondition(
             categoryId: category.id,
           );
           int totalCount = products.length;
 
-          // 递归计算所有子类别的产品数�?
+          // 递归计算所有子类别的产品数�?
           totalCount += await _getSubCategoriesProductCount(
             category.id!,
             allCategories,
@@ -73993,7 +73993,7 @@ class _CategorySelectionScreenState
   ) async {
     int count = 0;
 
-    // 获取直接子类�?
+    // 获取直接子类�?
     final subCategories = allCategories
         .where((cat) => cat.parentId == parentId)
         .toList();
@@ -74007,7 +74007,7 @@ class _CategorySelectionScreenState
           );
           count += products.length as int;
 
-          // 递归计算子类别的子类�?
+          // 递归计算子类别的子类�?
           final subCount = await _getSubCategoriesProductCount(
             subCategory.id!,
             allCategories,
@@ -74087,7 +74087,7 @@ class _CategorySelectionScreenState
     final allCategories = categoryState.categories;
     final filteredCategories = _getFilteredCategories(allCategories);
 
-    // 当类别列表发生变化时，重新加载产品数�?
+    // 当类别列表发生变化时，重新加载产品数�?
     ref.listen(categoryListProvider, (previous, next) {
       if (previous?.categories != next.categories) {
         _loadProductCounts();
@@ -74147,7 +74147,7 @@ class _CategorySelectionScreenState
                     style: const TextStyle(fontSize: 18, color: Colors.grey),
                   ),
                   const SizedBox(height: 8),
-                  Text(_searchQuery.isNotEmpty ? '尝试其他关键�? : '点击右上�?+ 号添加新类别'),
+                  Text(_searchQuery.isNotEmpty ? '尝试其他关键�? : '点击右上�?+ 号添加新类别'),
                 ],
               ),
             )
@@ -74158,7 +74158,7 @@ class _CategorySelectionScreenState
                   : _buildHierarchicalList(filteredCategories).length,
               itemBuilder: (context, index) {
                 if (_searchQuery.isNotEmpty) {
-                  // 搜索模式：显示扁平列�?
+                  // 搜索模式：显示扁平列�?
                   final category = filteredCategories[index];
                   return _buildCategoryTile(
                     context,
@@ -74167,7 +74167,7 @@ class _CategorySelectionScreenState
                     allCategories,
                   );
                 } else {
-                  // 正常模式：显示层级结�?
+                  // 正常模式：显示层级结�?
                   final item = _buildHierarchicalList(
                     filteredCategories,
                   )[index];
@@ -74205,8 +74205,8 @@ class _CategorySelectionScreenState
     if (category.id != null) {
       final subCategories = allCategories
           .where((subCat) => subCat.parentId == category.id)
-          .toList(); // 只有在展开状态下才递归添加子类�?
-      final isExpanded = _expandedCategories[category.id!] ?? false; // 所有类别默认收�?
+          .toList(); // 只有在展开状态下才递归添加子类�?
+      final isExpanded = _expandedCategories[category.id!] ?? false; // 所有类别默认收�?
       if (isExpanded && subCategories.isNotEmpty) {
         for (final subCategory in subCategories) {
           _buildCategoryWithChildren(
@@ -74229,10 +74229,10 @@ class _CategorySelectionScreenState
     final isSelected = widget.selectedCategoryId == category.id;
     final isSubCategory = level > 0;
 
-    // 检查是否有子类�?
+    // 检查是否有子类�?
     final hasSubCategories =
         allCategories?.any((cat) => cat.parentId == category.id) ?? false;
-    final isExpanded = _expandedCategories[category.id!] ?? false; // 所有类别默认收�?
+    final isExpanded = _expandedCategories[category.id!] ?? false; // 所有类别默认收�?
 
     // 计算左侧边距
     final leftMargin = level * 24.0;
@@ -74250,7 +74250,7 @@ class _CategorySelectionScreenState
         child: ListTile(
           title: Row(
             children: [
-              // 展开/收起图标（只对有子类别的类别显示�?
+              // 展开/收起图标（只对有子类别的类别显示�?
               if (hasSubCategories) ...[
                 GestureDetector(
                   onTap: () {
@@ -74317,7 +74317,7 @@ class _CategorySelectionScreenState
                 onSelected: (action) =>
                     _handleCategoryAction(context, category, action),
                 itemBuilder: (context) => [
-                  // 可以为任何类别添加父�?
+                  // 可以为任何类别添加父�?
                   const PopupMenuItem(
                     value: 'add_parent_category',
                     child: Row(
@@ -74334,7 +74334,7 @@ class _CategorySelectionScreenState
                       children: [
                         Icon(Icons.edit, size: 20),
                         SizedBox(width: 8),
-                        Text('重命�?),
+                        Text('重命�?),
                       ],
                     ),
                   ),
@@ -74363,20 +74363,20 @@ class _CategorySelectionScreenState
           ),
           onTap: () {
             if (widget.isSelectionMode) {
-              // 检查是否为"�?类别且是一级类�?
-              if (category.name == '�? && level == 0 && hasSubCategories) {
-                // "�?类别且有子类别：切换展开/收起状�?
+              // 检查是否为"�?类别且是一级类�?
+              if (category.name == '�? && level == 0 && hasSubCategories) {
+                // "�?类别且有子类别：切换展开/收起状�?
                 setState(() {
                   if (category.id != null) {
                     _expandedCategories[category.id!] = !isExpanded;
                   }
                 });
               } else {
-                // 选择模式：直接返回选中的类�?
+                // 选择模式：直接返回选中的类�?
                 Navigator.of(context).pop(category);
               }
             } else if (hasSubCategories) {
-              // 非选择模式且有子类别：切换展开/收起状�?
+              // 非选择模式且有子类别：切换展开/收起状�?
               setState(() {
                 if (category.id != null) {
                   _expandedCategories[category.id!] = !isExpanded;
@@ -74421,16 +74421,16 @@ class _CategorySelectionScreenState
             controller: nameController,
             decoration: const InputDecoration(
               labelText: '类别名称',
-              hintText: '请输入类别名�?,
+              hintText: '请输入类别名�?,
               border: OutlineInputBorder(),
             ),
             validator: (value) {
               if (value == null || value.trim().isEmpty) {
-                return '请输入类别名�?;
+                return '请输入类别名�?;
               }
               final categories = ref.read(categoryListProvider).categories;
               if (categories.any((cat) => cat.name == value.trim())) {
-                return '类别名称已存�?;
+                return '类别名称已存�?;
               }
               return null;
             },
@@ -74474,23 +74474,23 @@ class _CategorySelectionScreenState
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text('�?${childCategory.name}"新增父类'),
+        title: Text('�?${childCategory.name}"新增父类'),
         content: Form(
           key: formKey,
           child: TextFormField(
             controller: nameController,
             decoration: const InputDecoration(
               labelText: '父类名称',
-              hintText: '请输入父类名�?,
+              hintText: '请输入父类名�?,
               border: OutlineInputBorder(),
             ),
             validator: (value) {
               if (value == null || value.trim().isEmpty) {
-                return '请输入父类名�?;
+                return '请输入父类名�?;
               }
               final categories = ref.read(categoryListProvider).categories;
               if (categories.any((cat) => cat.name == value.trim())) {
-                return '类别名称已存�?;
+                return '类别名称已存�?;
               }
               return null;
             },
@@ -74525,13 +74525,13 @@ class _CategorySelectionScreenState
                     (cat) => cat.name == nameController.text.trim(),
                   );
 
-                  // 3. 更新当前类别，让它成为新父类的子�?
+                  // 3. 更新当前类别，让它成为新父类的子�?
                   await ref
                       .read(categoryListProvider.notifier)
                       .updateCategory(
                         id: childCategory.id!,
                         name: childCategory.name,
-                        parentId: newParent.id, // 设置新创建的父类为父�?
+                        parentId: newParent.id, // 设置新创建的父类为父�?
                       );
 
                   Navigator.of(context).pop();
@@ -74559,7 +74559,7 @@ class _CategorySelectionScreenState
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('重命名类�?),
+        title: const Text('重命名类�?),
         content: Form(
           key: formKey,
           child: TextFormField(
@@ -74570,13 +74570,13 @@ class _CategorySelectionScreenState
             ),
             validator: (value) {
               if (value == null || value.trim().isEmpty) {
-                return '请输入类别名�?;
+                return '请输入类别名�?;
               }
               final categories = ref.read(categoryListProvider).categories;
               if (categories.any(
                 (cat) => cat.name == value.trim() && cat.id != category.id,
               )) {
-                return '类别名称已存�?;
+                return '类别名称已存�?;
               }
               return null;
             },
@@ -74599,10 +74599,10 @@ class _CategorySelectionScreenState
                         name: nameController.text.trim(),
                       );
                   Navigator.of(context).pop();
-                  showAppSnackBar(context, message: '类别重命名成�?);
+                  showAppSnackBar(context, message: '类别重命名成�?);
                   _loadProductCounts(); // 重新加载产品数量
                 } catch (e) {
-                  showAppSnackBar(context, message: '重命名失�? $e', isError: true);
+                  showAppSnackBar(context, message: '重命名失�? $e', isError: true);
                 }
               }
             },
@@ -74631,7 +74631,7 @@ class _CategorySelectionScreenState
       relatedProductsCount = products.length;
     } catch (e) {
       print('获取产品数量失败: $e');
-      // 如果获取失败，使�?作为默认�?
+      // 如果获取失败，使�?作为默认�?
     }
 
     showDialog(
@@ -74660,7 +74660,7 @@ class _CategorySelectionScreenState
                 .read(categoryListProvider.notifier)
                 .deleteCategoryCascade(category.id!);
             Navigator.of(context).pop();
-            showAppSnackBar(context, message: '类别及所有关联内容删除成�?, isError: true);
+            showAppSnackBar(context, message: '类别及所有关联内容删除成�?, isError: true);
             _loadProductCounts(); // 重新加载产品数量
           } catch (e) {
             Navigator.of(context).pop();
@@ -74678,14 +74678,14 @@ class _CategorySelectionScreenState
   ) {
     final result = <CategoryModel>[];
 
-    // 获取直接子类�?
+    // 获取直接子类�?
     final directSubCategories = allCategories
         .where((cat) => cat.parentId == parentId)
         .toList();
 
     for (final subCategory in directSubCategories) {
       result.add(subCategory);
-      // 递归获取子类别的子类�?
+      // 递归获取子类别的子类�?
       if (subCategory.id != null) {
         result.addAll(_getAllSubCategories(allCategories, subCategory.id!));
       }
@@ -74694,7 +74694,7 @@ class _CategorySelectionScreenState
   }
 }
 
-/// 删除类别对话框组�?
+/// 删除类别对话框组�?
 class _DeleteCategoryDialog extends StatefulWidget {
   final CategoryModel category;
   final bool hasSubCategories;
@@ -74717,7 +74717,7 @@ class _DeleteCategoryDialog extends StatefulWidget {
 }
 
 class _DeleteCategoryDialogState extends State<_DeleteCategoryDialog> {
-  int _selectedOption = 0; // 0: 仅删除当前类�? 1: 级联删除
+  int _selectedOption = 0; // 0: 仅删除当前类�? 1: 级联删除
 
   @override
   Widget build(BuildContext context) {
@@ -74743,7 +74743,7 @@ class _DeleteCategoryDialogState extends State<_DeleteCategoryDialog> {
             // 显示影响范围信息
             if (widget.hasSubCategories || widget.relatedProductsCount > 0) ...[
               const Text(
-                '影响范围�?,
+                '影响范围�?,
                 style: TextStyle(fontWeight: FontWeight.w600),
               ),
               const SizedBox(height: 8),
@@ -74753,7 +74753,7 @@ class _DeleteCategoryDialogState extends State<_DeleteCategoryDialog> {
                   children: [
                     Icon(Icons.folder, size: 16, color: Colors.blue),
                     const SizedBox(width: 4),
-                    Text('子类别：${widget.subCategoriesCount} �?),
+                    Text('子类别：${widget.subCategoriesCount} �?),
                   ],
                 ),
 
@@ -74763,7 +74763,7 @@ class _DeleteCategoryDialogState extends State<_DeleteCategoryDialog> {
                   children: [
                     Icon(Icons.inventory, size: 16, color: Colors.green),
                     const SizedBox(width: 4),
-                    Text('关联产品�?{widget.relatedProductsCount} �?),
+                    Text('关联产品�?{widget.relatedProductsCount} �?),
                   ],
                 ),
               ],
@@ -74772,7 +74772,7 @@ class _DeleteCategoryDialogState extends State<_DeleteCategoryDialog> {
             ],
 
             const Text(
-              '请选择删除模式�?,
+              '请选择删除模式�?,
               style: TextStyle(fontWeight: FontWeight.w600),
             ),
             const SizedBox(height: 12),
@@ -74800,7 +74800,7 @@ class _DeleteCategoryDialogState extends State<_DeleteCategoryDialog> {
                   });
                 },
                 title: const Text(
-                  '仅删除当前类�?,
+                  '仅删除当前类�?,
                   style: TextStyle(fontWeight: FontWeight.w600),
                 ),
                 subtitle: Column(
@@ -74822,8 +74822,8 @@ class _DeleteCategoryDialogState extends State<_DeleteCategoryDialog> {
                           Expanded(
                             child: Text(
                               widget.category.parentId != null
-                                  ? '子类别将转移到上级类�?
-                                  : '子类别将成为根类�?,
+                                  ? '子类别将转移到上级类�?
+                                  : '子类别将成为根类�?,
                               style: TextStyle(
                                 fontSize: 12,
                                 color: Colors.blue.shade700,
@@ -74848,7 +74848,7 @@ class _DeleteCategoryDialogState extends State<_DeleteCategoryDialog> {
                             child: Text(
                               widget.category.parentId != null
                                   ? '产品将转移到上级类别'
-                                  : '产品将取消类别关�?,
+                                  : '产品将取消类别关�?,
                               style: TextStyle(
                                 fontSize: 12,
                                 color: Colors.green.shade700,
@@ -74867,7 +74867,7 @@ class _DeleteCategoryDialogState extends State<_DeleteCategoryDialog> {
 
             const SizedBox(height: 12),
 
-            // 选项2：级联删�?
+            // 选项2：级联删�?
             Container(
               decoration: BoxDecoration(
                 border: Border.all(
@@ -74890,14 +74890,14 @@ class _DeleteCategoryDialogState extends State<_DeleteCategoryDialog> {
                   });
                 },
                 title: const Text(
-                  '级联删除所有内�?,
+                  '级联删除所有内�?,
                   style: TextStyle(fontWeight: FontWeight.w600),
                 ),
                 subtitle: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const SizedBox(height: 4),
-                    const Text('删除类别及所有关联内�?),
+                    const Text('删除类别及所有关联内�?),
                     const SizedBox(height: 8),
 
                     if (widget.hasSubCategories) ...[
@@ -74910,7 +74910,7 @@ class _DeleteCategoryDialogState extends State<_DeleteCategoryDialog> {
                           ),
                           const SizedBox(width: 4),
                           Text(
-                            '删除所有子类别�?{widget.subCategoriesCount} 个）',
+                            '删除所有子类别�?{widget.subCategoriesCount} 个）',
                             style: TextStyle(
                               fontSize: 12,
                               color: const Color.fromARGB(255, 178, 47, 211),
@@ -74948,7 +74948,7 @@ class _DeleteCategoryDialogState extends State<_DeleteCategoryDialog> {
                         SizedBox(width: 4),
                         Expanded(
                           child: Text(
-                            '此操作不可恢�?,
+                            '此操作不可恢�?,
                             style: TextStyle(
                               fontSize: 12,
                               color: Colors.orange,
@@ -74979,7 +74979,7 @@ class _DeleteCategoryDialogState extends State<_DeleteCategoryDialog> {
             backgroundColor: _selectedOption == 0 ? Colors.blue : Colors.red,
             foregroundColor: Colors.white,
           ),
-          child: Text(_selectedOption == 0 ? '仅删除类�? : '级联删除'),
+          child: Text(_selectedOption == 0 ? '仅删除类�? : '级联删除'),
         ),
       ],
     );
@@ -75021,11 +75021,11 @@ class ProductAddEditScreen extends ConsumerStatefulWidget {
 }
 
 class _ProductAddEditScreenState extends ConsumerState<ProductAddEditScreen> {
-  final _formKey = GlobalKey<FormState>(); // 表单控制�?
+  final _formKey = GlobalKey<FormState>(); // 表单控制�?
   // 控制器与焦点统一抽离管理
   late final ProductFormControllers _c;
 
-  // UI 常量（可放置于组件内，不�?provider�?
+  // UI 常量（可放置于组件内，不�?provider�?
   final List<String> _shelfLifeUnitOptions = ['days', 'months', 'years'];
 
   @override
@@ -75053,10 +75053,10 @@ class _ProductAddEditScreenState extends ConsumerState<ProductAddEditScreen> {
     // 初始化表单控制器
     _c = ProductFormControllers()..init(widget.product);
 
-    // 如果有初始条码，填充到条码输入框并让名称输入框获得焦�?
+    // 如果有初始条码，填充到条码输入框并让名称输入框获得焦�?
     if (widget.initialBarcode != null && widget.initialBarcode!.isNotEmpty) {
       _c.barcodeController.text = widget.initialBarcode!;
-      // 延迟让名称输入框获得焦点，确保页面完全加载后再执�?
+      // 延迟让名称输入框获得焦点，确保页面完全加载后再执�?
       WidgetsBinding.instance.addPostFrameCallback((_) {
         _c.nameFocusNode.requestFocus();
       });
@@ -75069,7 +75069,7 @@ class _ProductAddEditScreenState extends ConsumerState<ProductAddEditScreen> {
 
   @override
   void dispose() {
-    // 在父页结束时异步清空辅单位临时状态，避免�?dispose 生命周期直接修改 provider
+    // 在父页结束时异步清空辅单位临时状态，避免�?dispose 生命周期直接修改 provider
     Future.microtask(() {
       ref.read(unitEditFormProvider.notifier).resetUnitEditForm();
     });
@@ -75081,7 +75081,7 @@ class _ProductAddEditScreenState extends ConsumerState<ProductAddEditScreen> {
   Widget build(BuildContext context) {
     final operationsState = ref.watch(productOperationsProvider);
 
-    // 条码监听必须�?build 方法中处�?
+    // 条码监听必须�?build 方法中处�?
     if (widget.product?.id != null) {
       ref.listen<AsyncValue<String?>>(
         mainBarcodeProvider(widget.product!.id!),
@@ -75120,7 +75120,7 @@ class _ProductAddEditScreenState extends ConsumerState<ProductAddEditScreen> {
           key: _formKey,
           child: Column(
             children: [
-              // 显示加载状�?
+              // 显示加载状�?
               if (operationsState.isLoading) const LinearProgressIndicator(),
 
               // 表单内容
@@ -75196,7 +75196,7 @@ class _ProductAddEditScreenState extends ConsumerState<ProductAddEditScreen> {
                                 ref
                                     .read(productFormUiProvider.notifier)
                                     .setCategoryId(null);
-                                _c.categoryController.text = '未分�?;
+                                _c.categoryController.text = '未分�?;
                               } else {
                                 ref
                                     .read(productFormUiProvider.notifier)
@@ -75230,7 +75230,7 @@ class _ProductAddEditScreenState extends ConsumerState<ProductAddEditScreen> {
                                   ),
                                   borderRadius: BorderRadius.circular(12),
                                 ),
-                                child: const Center(child: Text('加载单位�?..')),
+                                child: const Center(child: Text('加载单位�?..')),
                               ),
                             ),
                             const SizedBox(width: 8),
@@ -75240,7 +75240,7 @@ class _ProductAddEditScreenState extends ConsumerState<ProductAddEditScreen> {
                                 currentUnitName: _c.unitController.text,
                               ),
                               icon: const Icon(Icons.add),
-                              tooltip: '添加辅单�?,
+                              tooltip: '添加辅单�?,
                             ),
                           ],
                         ),
@@ -75270,7 +75270,7 @@ class _ProductAddEditScreenState extends ConsumerState<ProductAddEditScreen> {
                                 currentUnitName: _c.unitController.text,
                               ),
                               icon: const Icon(Icons.add),
-                              tooltip: '添加辅单�?,
+                              tooltip: '添加辅单�?,
                             ),
                           ],
                         ),
@@ -75289,12 +75289,12 @@ class _ProductAddEditScreenState extends ConsumerState<ProductAddEditScreen> {
                       const SizedBox(height: 16),
                       AppTextField(
                         controller: _c.stockWarningValueController,
-                        label: '库存预警�?,
+                        label: '库存预警�?,
                         keyboardType: TextInputType.number,
                         focusNode: _c.stockWarningValueFocusNode,
                       ),
                       const SizedBox(height: 16),
-                      // 保质�?
+                      // 保质�?
                       ShelfLifeSection(
                         shelfLifeController: _c.shelfLifeController,
                         shelfLifeFocusNode: _c.shelfLifeFocusNode,
@@ -75324,9 +75324,9 @@ class _ProductAddEditScreenState extends ConsumerState<ProductAddEditScreen> {
     );
   }
 
-  // 移除本地输入构建方法，改为使�?AppTextField 组件
+  // 移除本地输入构建方法，改为使�?AppTextField 组件
 
-  // 单位验证函数 - 只在表单提交时验证，不在输入时显示错�?
+  // 单位验证函数 - 只在表单提交时验证，不在输入时显示错�?
   String? _getUnitValidationError(List<Unit> units) {
     return null;
   }
@@ -75367,9 +75367,9 @@ class _ProductAddEditScreenState extends ConsumerState<ProductAddEditScreen> {
     );
   }
 
-  // 辅单位编辑已移至 actions.editAuxUnits，UI 侧直接调�?
+  // 辅单位编辑已移至 actions.editAuxUnits，UI 侧直接调�?
 
-  // 扫码逻辑已移�?actions.scanBarcode
+  // 扫码逻辑已移�?actions.scanBarcode
 
   /// 提交表单
   void _submitForm() async {
@@ -75399,7 +75399,7 @@ class _ProductAddEditScreenState extends ConsumerState<ProductAddEditScreen> {
     );
   }
 
-  /// 验证并确保单位选择的有效�?
+  /// 验证并确保单位选择的有效�?
   void _ensureValidUnitSelection(List<Unit> units) {
     // 如果当前选择的单位ID不在单位列表中，清除选择
     final ui = ref.read(productFormUiProvider);
@@ -75409,10 +75409,10 @@ class _ProductAddEditScreenState extends ConsumerState<ProductAddEditScreen> {
       ref.read(productFormUiProvider.notifier).setUnitId(null);
       _c.unitController.clear();
     }
-    // 允许用户不选择单位，不强制设置默认�?
+    // 允许用户不选择单位，不强制设置默认�?
   }
 
-  /// 在编辑模式下回填单位和类别数�?
+  /// 在编辑模式下回填单位和类别数�?
   Future<void> _populateUnitAndCategoryData() async {
     if (widget.product == null || !mounted) return;
 
@@ -75423,7 +75423,7 @@ class _ProductAddEditScreenState extends ConsumerState<ProductAddEditScreen> {
           .setImagePath(widget.product!.image);
     }
 
-    // 设置单位ID和名�?
+    // 设置单位ID和名�?
     ref
         .read(productFormUiProvider.notifier)
         .setUnitId(widget.product!.baseUnitId);
@@ -75438,7 +75438,7 @@ class _ProductAddEditScreenState extends ConsumerState<ProductAddEditScreen> {
       });
     }
 
-    // 设置类别ID和名�?
+    // 设置类别ID和名�?
     if (widget.product!.categoryId != null && mounted) {
       ref
           .read(productFormUiProvider.notifier)
@@ -75459,15 +75459,15 @@ class _ProductAddEditScreenState extends ConsumerState<ProductAddEditScreen> {
         });
       } else if (mounted) {
         // 如果在类别列表中找不到对应的类别，可能是数据不一致的问题
-        print('⚠️ [WARNING] 产品的类别ID ${widget.product!.categoryId} 在类别列表中不存�?);
+        print('⚠️ [WARNING] 产品的类别ID ${widget.product!.categoryId} 在类别列表中不存�?);
         setState(() {
-          _c.categoryController.text = '未分�?;
+          _c.categoryController.text = '未分�?;
         });
       }
     } else if (mounted) {
-      // 如果没有类别，设置为未分�?
+      // 如果没有类别，设置为未分�?
       setState(() {
-        _c.categoryController.text = '未分�?;
+        _c.categoryController.text = '未分�?;
       });
     }
   }
@@ -75515,7 +75515,7 @@ class ProductDetailScreen extends ConsumerWidget {
           }
           return _buildProductDetail(context, ref, product);
         },
-        loading: () => const LoadingWidget(message: '加载商品详情�?..'),
+        loading: () => const LoadingWidget(message: '加载商品详情�?..'),
         error: (error, stackTrace) => CustomErrorWidget(
           message: '加载商品详情失败',
           onRetry: () => ref.invalidate(allProductsProvider),
@@ -75621,7 +75621,7 @@ class ProductDetailScreen extends ConsumerWidget {
                           Icon(Icons.sell, color: Colors.grey.shade600),
                           const SizedBox(width: 8),
                           Text(
-                            '零售�?,
+                            '零售�?,
                             style: Theme.of(context).textTheme.bodyMedium
                                 ?.copyWith(color: Colors.grey.shade600),
                           ),
@@ -75642,7 +75642,7 @@ class ProductDetailScreen extends ConsumerWidget {
                           Icon(Icons.local_offer, color: Colors.red.shade600),
                           const SizedBox(width: 8),
                           Text(
-                            '促销�?,
+                            '促销�?,
                             style: Theme.of(context).textTheme.bodyMedium
                                 ?.copyWith(
                                   color: Colors.red.shade600,
@@ -75686,13 +75686,13 @@ class ProductDetailScreen extends ConsumerWidget {
                   if (product.stockWarningValue != null)
                     _buildDetailItem(
                       context,
-                      '库存预警�?,
+                      '库存预警�?,
                       '${product.stockWarningValue}',
                     ),
                   if (product.shelfLife != null)
                     _buildDetailItem(
                       context,
-                      '保质�?,
+                      '保质�?,
                       _formatShelfLife(
                         product.shelfLife,
                         _getProductShelfLifeUnit(product),
@@ -75701,14 +75701,14 @@ class ProductDetailScreen extends ConsumerWidget {
                   _buildDetailItem(
                     context,
                     '批量管理',
-                    product.enableBatchManagement ? '已启�? : '未启�?,
+                    product.enableBatchManagement ? '已启�? : '未启�?,
                   ),
                   if (product.remarks != null)
                     _buildDetailItem(context, '备注', product.remarks!),
                   if (product.lastUpdated != null)
                     _buildDetailItem(
                       context,
-                      '最后更�?,
+                      '最后更�?,
                       _formatDateTime(product.lastUpdated!),
                     ),
                 ],
@@ -75785,15 +75785,15 @@ class ProductDetailScreen extends ConsumerWidget {
     return '$shelfLife$unitText';
   }
 
-  /// 获取保质期单位显示名�?
+  /// 获取保质期单位显示名�?
   String _getShelfLifeUnitDisplayName(String unit) {
     switch (unit) {
       case 'days':
-        return '�?;
+        return '�?;
       case 'months':
         return '个月';
       case 'years':
-        return '�?;
+        return '�?;
       default:
         return '个月';
     }
@@ -75805,7 +75805,7 @@ class ProductDetailScreen extends ConsumerWidget {
     return product.shelfLifeUnit.name;
   }
 
-  /// 显示全屏图片查看�?
+  /// 显示全屏图片查看�?
   void _showFullScreenImage(BuildContext context, String imagePath) {
     Navigator.of(context).push(
       PageRouteBuilder(
@@ -75849,7 +75849,7 @@ class ProductListScreen extends ConsumerWidget {
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('确认删除'),
-        content: Text('确定要删除货品�?{product.name}」吗�?),
+        content: Text('确定要删除货品�?{product.name}」吗�?),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
@@ -75922,7 +75922,7 @@ class ProductListScreen extends ConsumerWidget {
                   TextField(
                     controller: quantityController,
                     keyboardType: TextInputType.number,
-                    decoration: const InputDecoration(labelText: '新库存数�?),
+                    decoration: const InputDecoration(labelText: '新库存数�?),
                     autofocus: true,
                   ),
                 ],
@@ -75956,7 +75956,7 @@ class ProductListScreen extends ConsumerWidget {
         final newQuantity = int.tryParse(newQuantityString);
         if (newQuantity == null) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('无效的数字格�?)),
+            const SnackBar(content: Text('无效的数字格�?)),
           );
           return;
         }
@@ -75998,7 +75998,7 @@ class ProductListScreen extends ConsumerWidget {
             autofocus: true,
             onSubmitted: (value) => Navigator.of(context).pop(value),
             decoration: InputDecoration(
-              // hintText: '输入关键�?..',
+              // hintText: '输入关键�?..',
               filled: true,
               fillColor: Theme.of(context).scaffoldBackgroundColor,
               border: OutlineInputBorder(
@@ -76068,7 +76068,7 @@ class ProductListScreen extends ConsumerWidget {
         actions: [
           IconButton(
             icon: const Icon(Icons.leaderboard),
-            tooltip: '商品排行�?,
+            tooltip: '商品排行�?,
             onPressed: () => context.push(AppRoutes.productRanking),
           ),
           if (searchQuery.isNotEmpty || selectedCategoryId != null)
@@ -76087,7 +76087,7 @@ class ProductListScreen extends ConsumerWidget {
           ),
           IconButton(
             icon: const Icon(Icons.filter_list),
-            tooltip: '按分类筛�?,
+            tooltip: '按分类筛�?,
             onPressed: () async {
               final selectedCategory = await Navigator.push<CategoryModel>(
                 context,
@@ -76166,7 +76166,7 @@ class ProductRankingScreen extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('商品排行�?),
+        title: const Text('商品排行�?),
         actions: [
           Consumer(
             builder: (context, ref, child) {
@@ -76193,7 +76193,7 @@ class ProductRankingScreen extends ConsumerWidget {
             child: rankingAsync.when(
               data: (list) {
                 if (list.isEmpty) {
-                  return const Center(child: Text('暂无销�?));
+                  return const Center(child: Text('暂无销�?));
                 }
                 return ListView.separated(
                   itemCount: list.length,
@@ -76218,11 +76218,11 @@ class ProductRankingScreen extends ConsumerWidget {
                         crossAxisAlignment: CrossAxisAlignment.end,
                         children: [
                           Text(
-                            '${it.totalQty} �?,
+                            '${it.totalQty} �?,
                             style: const TextStyle(fontWeight: FontWeight.w600),
                           ),
                           Text(
-                            '�?{(it.totalAmountInCents / 100).toStringAsFixed(2)}',
+                            '�?{(it.totalAmountInCents / 100).toStringAsFixed(2)}',
                             style: const TextStyle(color: Colors.grey),
                           ),
                           const SizedBox(height: 2),
@@ -76231,7 +76231,7 @@ class ProductRankingScreen extends ConsumerWidget {
                             children: [
                               if (hasMissingCost)
                                 const Tooltip(
-                                  message: '无采购记录，利润�?计算',
+                                  message: '无采购记录，利润�?计算',
                                   child: Icon(
                                     Icons.info_outline,
                                     size: 14,
@@ -76240,7 +76240,7 @@ class ProductRankingScreen extends ConsumerWidget {
                                 ),
                               const SizedBox(width: 4),
                               Text(
-                                '利润 �?{profitYuan.toStringAsFixed(2)}',
+                                '利润 �?{profitYuan.toStringAsFixed(2)}',
                                 style: TextStyle(
                                   color: profitColor,
                                   fontWeight: FontWeight.w600,
@@ -76272,14 +76272,14 @@ class _SortToggle extends ConsumerWidget {
       mainAxisAlignment: MainAxisAlignment.end,
       children: [
         ChoiceChip(
-          label: const Text('按销�?),
+          label: const Text('按销�?),
           selected: sort == ProductRankingSort.byQtyDesc,
           onSelected: (_) => ref.read(rankingSortProvider.notifier).state =
               ProductRankingSort.byQtyDesc,
         ),
         const SizedBox(width: 8),
         ChoiceChip(
-          label: const Text('按利�?),
+          label: const Text('按利�?),
           selected: sort == ProductRankingSort.byProfitDesc,
           onSelected: (_) => ref.read(rankingSortProvider.notifier).state =
               ProductRankingSort.byProfitDesc,
@@ -76319,7 +76319,7 @@ class _RankBadge extends StatelessWidget {
   }
 }
 
-// 获取时间筛选显示文�?
+// 获取时间筛选显示文�?
 String _getTimeFilterText(RankingRange range) {
   final now = DateTime.now();
   final today = DateTime(now.year, now.month, now.day);
@@ -76331,7 +76331,7 @@ String _getTimeFilterText(RankingRange range) {
     range.endOpen.day,
   ).subtract(const Duration(days: 1));
 
-  // 检查是否是无限制（全部时间�?
+  // 检查是否是无限制（全部时间�?
   if (start.year <= 2000 &&
       end.isAfter(today.subtract(const Duration(days: 2)))) {
     return '全部';
@@ -76351,14 +76351,14 @@ String _getTimeFilterText(RankingRange range) {
   final startOfWeek = today.subtract(Duration(days: today.weekday - 1));
   final endOfWeek = startOfWeek.add(const Duration(days: 6));
   if (start == startOfWeek && end == endOfWeek) {
-    return now.year == start.year ? '本周' : '${start.year}年本�?;
+    return now.year == start.year ? '本周' : '${start.year}年本�?;
   }
 
   // 检查是否是上周
   final startOfLastWeek = startOfWeek.subtract(const Duration(days: 7));
   final endOfLastWeek = startOfWeek.subtract(const Duration(days: 1));
   if (start == startOfLastWeek && end == endOfLastWeek) {
-    return now.year == start.year ? '上周' : '${start.year}年上�?;
+    return now.year == start.year ? '上周' : '${start.year}年上�?;
   }
 
   // 检查是否是本月
@@ -76369,7 +76369,7 @@ String _getTimeFilterText(RankingRange range) {
     1,
   ).subtract(const Duration(days: 1));
   if (start == startOfMonth && end == endOfMonth) {
-    return now.year == start.year ? '本月' : '${start.year}年本�?;
+    return now.year == start.year ? '本月' : '${start.year}年本�?;
   }
 
   // 检查是否是上月
@@ -76380,45 +76380,45 @@ String _getTimeFilterText(RankingRange range) {
     1,
   ).subtract(const Duration(days: 1));
   if (start == startOfLastMonth && end == endOfLastMonth) {
-    return now.year == start.year ? '上月' : '${start.year}年上�?;
+    return now.year == start.year ? '上月' : '${start.year}年上�?;
   }
 
-  // 检查是否是最�?�?
+  // 检查是否是最�?�?
   if (end == today && start == today.subtract(const Duration(days: 6))) {
-    return now.year == start.year ? '�?�? : '${start.year}年近7�?;
+    return now.year == start.year ? '�?�? : '${start.year}年近7�?;
   }
 
-  // 检查是否是最�?0�?
+  // 检查是否是最�?0�?
   if (end == today && start == today.subtract(const Duration(days: 29))) {
-    return now.year == start.year ? '�?0�? : '${start.year}年近30�?;
+    return now.year == start.year ? '�?0�? : '${start.year}年近30�?;
   }
 
   // 如果是同一天，显示日期
   if (start == end) {
     return now.year == start.year
-        ? '${start.month}�?{start.day}�?
-        : '${start.year}�?{start.month}�?{start.day}�?;
+        ? '${start.month}�?{start.day}�?
+        : '${start.year}�?{start.month}�?{start.day}�?;
   }
 
-  // 如果是同一月，显示月日-�?
+  // 如果是同一月，显示月日-�?
   if (start.year == end.year && start.month == end.month) {
     return now.year == start.year
-        ? '${start.month}�?{start.day}-${end.day}�?
-        : '${start.year}�?{start.month}�?{start.day}-${end.day}�?;
+        ? '${start.month}�?{start.day}-${end.day}�?
+        : '${start.year}�?{start.month}�?{start.day}-${end.day}�?;
   }
 
   // 如果是同一年，显示月日-月日
   if (start.year == end.year) {
     return now.year == start.year
-        ? '${start.month}�?{start.day}-${end.month}�?{end.day}�?
-        : '${start.year}�?{start.month}�?{start.day}-${end.month}�?{end.day}�?;
+        ? '${start.month}�?{start.day}-${end.month}�?{end.day}�?
+        : '${start.year}�?{start.month}�?{start.day}-${end.month}�?{end.day}�?;
   }
 
-  // 其他情况，显示完整日期范�?
+  // 其他情况，显示完整日期范�?
   return '${start.year}/${start.month}/${start.day}-${end.year}/${end.month}/${end.day}';
 }
 
-// 显示时间筛选底部面�?
+// 显示时间筛选底部面�?
 void _showTimeFilterBottomSheet(BuildContext context) {
   showModalBottomSheet(
     context: context,
@@ -76477,7 +76477,7 @@ class _ProductSelectionScreenState
             autofocus: true,
             onSubmitted: (value) => Navigator.of(context).pop(value),
             decoration: InputDecoration(
-              // hintText: '输入关键�?..',
+              // hintText: '输入关键�?..',
               filled: true,
               fillColor: Theme.of(context).scaffoldBackgroundColor,
               border: OutlineInputBorder(
@@ -76524,9 +76524,9 @@ class _ProductSelectionScreenState
     }
 
     Widget titleWidget;
-    final countSuffix = ' (已�?{selectedIds.length}�?';
+    final countSuffix = ' (已�?{selectedIds.length}�?';
 
-    // 使用 trim() 来确�?searchQuery 包含可见字符，而不仅仅是空格�?
+    // 使用 trim() 来确�?searchQuery 包含可见字符，而不仅仅是空格�?
     if (searchQuery.trim().isNotEmpty) {
       titleWidget = Row(
         children: [
@@ -76536,14 +76536,14 @@ class _ProductSelectionScreenState
               searchQuery,
               overflow: TextOverflow.ellipsis,
               softWrap: false,
-              style: const TextStyle(fontSize: 14), // 缩小字体以减少空间占�?
+              style: const TextStyle(fontSize: 14), // 缩小字体以减少空间占�?
             ),
           ),
           const SizedBox(width: 8),
           Flexible(
             flex: 5,
             child: Text(
-              '(已�?{selectedIds.length}�?',
+              '(已�?{selectedIds.length}�?',
               // overflow: TextOverflow.ellipsis,
               // softWrap: false,
               style: const TextStyle(fontSize: 14), // 统一缩小字体
@@ -76592,7 +76592,7 @@ class _ProductSelectionScreenState
                   padding: const EdgeInsets.symmetric(horizontal: 0),
                   constraints: const BoxConstraints(),
                   icon: const Icon(Icons.filter_list, size: 22),
-                  tooltip: '按分类筛�?,
+                  tooltip: '按分类筛�?,
                   onPressed: () async {
                     final selectedCategory = await Navigator.push<CategoryModel>(
                       context,
@@ -76669,7 +76669,7 @@ class _ProductSelectionScreenState
   }
 }
 // Product Screens Barrel File
-// 统一导出产品相关的页面组�?
+// 统一导出产品相关的页面组�?
 
 export 'product_add_edit_screen.dart';
 export 'product_detail_screen.dart';
@@ -76747,7 +76747,7 @@ class _UnitSelectionScreenState extends ConsumerState<UnitSelectionScreen> {
           Expanded(
             child: unitsAsyncValue.when(
               data: (units) => _buildUnitList(context, units),
-              loading: () => const LoadingWidget(message: '加载单位列表�?..'),
+              loading: () => const LoadingWidget(message: '加载单位列表�?..'),
               error: (error, stackTrace) => CustomErrorWidget(
                 message: '加载单位列表失败',
                 onRetry: () => ref.invalidate(allUnitsProvider),
@@ -76794,7 +76794,7 @@ class _UnitSelectionScreenState extends ConsumerState<UnitSelectionScreen> {
     );
   }
 
-  /// 构建单位列表�?
+  /// 构建单位列表�?
   Widget _buildUnitTile(BuildContext context, Unit unit) {
     final isSelected = _selectedUnitId == unit.id;
 
@@ -76812,7 +76812,7 @@ class _UnitSelectionScreenState extends ConsumerState<UnitSelectionScreen> {
                   if (unit.id != null) {
                     ref.read(unitControllerProvider.notifier).deleteUnit(unit.id!);
                   } else {
-                    showAppSnackBar(context, message: '无法删除没有ID的单�?, isError: true);
+                    showAppSnackBar(context, message: '无法删除没有ID的单�?, isError: true);
                   }
                 },
                 backgroundColor: Colors.red,
@@ -76857,7 +76857,7 @@ class _UnitSelectionScreenState extends ConsumerState<UnitSelectionScreen> {
     );
   }
 
-  /// 显示新增单位对话�?
+  /// 显示新增单位对话�?
   void _showAddUnitDialog(BuildContext context) {
     final nameController = TextEditingController();
     final formKey = GlobalKey<FormState>();
@@ -76872,13 +76872,13 @@ class _UnitSelectionScreenState extends ConsumerState<UnitSelectionScreen> {
             controller: nameController,
             decoration: const InputDecoration(
               labelText: '单位名称',
-              hintText: '请输入单位名�?,
+              hintText: '请输入单位名�?,
               border: OutlineInputBorder(),
               prefixIcon: Icon(Icons.straighten),
             ),
             validator: (value) {
               if (value == null || value.trim().isEmpty) {
-                return '请输入单位名�?;
+                return '请输入单位名�?;
               }
               return null;
             },
@@ -76901,7 +76901,7 @@ class _UnitSelectionScreenState extends ConsumerState<UnitSelectionScreen> {
 
                 if (exists) {
                   showAppSnackBar(context,
-                      message: '单位名称已存�?, isError: true);
+                      message: '单位名称已存�?, isError: true);
                   return;
                 }
 
@@ -76923,7 +76923,7 @@ class _UnitSelectionScreenState extends ConsumerState<UnitSelectionScreen> {
     );
   }
 
-  // 编辑和删除对话框都不再需�?
+  // 编辑和删除对话框都不再需�?
 
   /// 确认选择单位
   void _confirmSelection() {
@@ -76942,7 +76942,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../domain/model/product_unit.dart';
 
-/// 描述货品表单�?UI 层需要维护的可序列化状�?
+/// 描述货品表单�?UI 层需要维护的可序列化状�?
 class ProductFormUiState {
   final int? selectedCategoryId;
   final int? selectedUnitId;
@@ -77065,7 +77065,7 @@ final productFormUiProvider =
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-// 创建一个可复用�?Widget
+// 创建一个可复用�?Widget
 class AsyncValueWidget<T> extends StatelessWidget {
   const AsyncValueWidget({
     super.key,
@@ -77185,13 +77185,13 @@ class ProductDetailsDialog extends StatelessWidget {
             if (product.stockWarningValue != null)
               _buildDetailItem(
                 context,
-                '库存预警�?,
+                '库存预警�?,
                 '${product.stockWarningValue}',
               ),
             if (product.shelfLife != null)
               _buildDetailItem(
                 context,
-                '保质�?,
+                '保质�?,
                 _formatShelfLife(
                   product.shelfLife,
                   _getProductShelfLifeUnit(product),
@@ -77201,7 +77201,7 @@ class ProductDetailsDialog extends StatelessWidget {
             _buildDetailItem(
               context,
               '批次管理',
-              product.enableBatchManagement ? '已启�? : '未启�?,
+              product.enableBatchManagement ? '已启�? : '未启�?,
             ),
 
             if (product.remarks != null)
@@ -77210,7 +77210,7 @@ class ProductDetailsDialog extends StatelessWidget {
             if (product.lastUpdated != null)
               _buildDetailItem(
                 context,
-                '最后更�?,
+                '最后更�?,
                 _formatDateTime(product.lastUpdated!),
               ),
 
@@ -77268,15 +77268,15 @@ class ProductDetailsDialog extends StatelessWidget {
     return '$shelfLife$unitText';
   }
 
-  /// 获取保质期单位显示名�?
+  /// 获取保质期单位显示名�?
   String _getShelfLifeUnitDisplayName(String unit) {
     switch (unit) {
       case 'days':
-        return '�?;
+        return '�?;
       case 'months':
         return '个月';
       case 'years':
-        return '�?;
+        return '�?;
       default:
         return '个月';
     }
@@ -77290,7 +77290,7 @@ class ProductDetailsDialog extends StatelessWidget {
 }
 import 'package:flutter/material.dart';
 
-/// 表单底部操作栏（提交按钮�?
+/// 表单底部操作栏（提交按钮�?
 class ProductFormActionBar extends StatelessWidget {
   final bool isLoading;
   final bool isEdit;
@@ -77342,7 +77342,7 @@ import 'package:flutter/material.dart';
 import '../../../../core/services/image_service.dart';
 import '../../../../core/utils/snackbar_helper.dart';
 
-/// 产品图片选择器组�?
+/// 产品图片选择器组�?
 class ProductImagePicker extends StatefulWidget {
   final String? initialImagePath;
   final ValueChanged<String?> onImageChanged;
@@ -77593,7 +77593,7 @@ class _TimeFilterBottomSheetState extends ConsumerState<TimeFilterBottomSheet> {
       ),
       child: Column(
         children: [
-          // 顶部指示�?
+          // 顶部指示�?
           Container(
             margin: const EdgeInsets.only(top: 8, bottom: 16),
             height: 4,
@@ -77626,19 +77626,19 @@ class _TimeFilterBottomSheetState extends ConsumerState<TimeFilterBottomSheet> {
 
           const Divider(),
 
-          // 模式切换�?
+          // 模式切换�?
           _ModeSelector(),
 
           const Divider(),
 
-          // 日期选择�?
+          // 日期选择�?
           Expanded(
             child: _DateSelector(),
           ),
 
           const Divider(),
 
-          // 操作按钮�?
+          // 操作按钮�?
           _ActionButtons(),
         ],
       ),
@@ -77697,7 +77697,7 @@ class _ModeSelector extends ConsumerWidget {
   }
 }
 
-// 日期选择�?
+// 日期选择�?
 class _DateSelector extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -77714,7 +77714,7 @@ class _DateSelector extends ConsumerWidget {
   }
 }
 
-// 每日选择�?
+// 每日选择�?
 class _DailySelector extends ConsumerStatefulWidget {
   @override
   ConsumerState<_DailySelector> createState() => _DailySelectorState();
@@ -77754,7 +77754,7 @@ class _DailySelectorState extends ConsumerState<_DailySelector> {
                   icon: const Icon(Icons.chevron_left),
                 ),
                 Text(
-                  '${_displayedMonth.year}�?{_displayedMonth.month}�?,
+                  '${_displayedMonth.year}�?{_displayedMonth.month}�?,
                   style: Theme.of(context).textTheme.titleLarge?.copyWith(
                     fontWeight: FontWeight.bold,
                   ),
@@ -77859,7 +77859,7 @@ class _DailySelectorState extends ConsumerState<_DailySelector> {
   }
 }
 
-// 每周选择�?
+// 每周选择�?
 class _WeeklySelector extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -77881,7 +77881,7 @@ class _WeeklySelector extends ConsumerWidget {
                 icon: const Icon(Icons.chevron_left),
               ),
               Text(
-                '${selectedDate.year}�?,
+                '${selectedDate.year}�?,
                 style: Theme.of(context).textTheme.titleLarge?.copyWith(
                   fontWeight: FontWeight.bold,
                 ),
@@ -77910,7 +77910,7 @@ class _WeeklySelector extends ConsumerWidget {
 
 }
 
-// 自定义每周滚轮选择�?
+// 自定义每周滚轮选择�?
 class _WeeklyWheelPicker extends StatefulWidget {
   final DateTime? selectedDate;
   final ValueChanged<DateTime> onDateChanged;
@@ -78053,7 +78053,7 @@ class _WeeklyWheelPickerState extends State<_WeeklyWheelPicker> {
                         : null,
                   ),
                   child: Text(
-                    '${weekDate.month}�?{weekDate.day}�?- ${endDate.month}�?{endDate.day}�?,
+                    '${weekDate.month}�?{weekDate.day}�?- ${endDate.month}�?{endDate.day}�?,
                     style: TextStyle(
                       color: isSelected ? colorScheme.onPrimary : colorScheme.onSurface,
                       fontSize: 14,
@@ -78071,7 +78071,7 @@ class _WeeklyWheelPickerState extends State<_WeeklyWheelPicker> {
   }
 }
 
-// 每月选择�?
+// 每月选择�?
 class _MonthlySelector extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -78082,7 +78082,7 @@ class _MonthlySelector extends ConsumerWidget {
 
     return Column(
       children: [
-        // 年份选择�?
+        // 年份选择�?
         Padding(
           padding: const EdgeInsets.all(16),
           child: Row(
@@ -78096,7 +78096,7 @@ class _MonthlySelector extends ConsumerWidget {
                 icon: const Icon(Icons.chevron_left),
               ),
               Text(
-                '${selectedMonth.year}�?,
+                '${selectedMonth.year}�?,
                 style: Theme.of(context).textTheme.titleLarge?.copyWith(
                   fontWeight: FontWeight.bold,
                 ),
@@ -78171,7 +78171,7 @@ class _MonthlySelector extends ConsumerWidget {
                           fontWeight: isSelected || isCurrentMonth ? FontWeight.bold : FontWeight.w600,
                           fontSize: isSelected || isCurrentMonth ? 15 : 14,
                         ),
-                        child: Text('$month�?),
+                        child: Text('$month�?),
                       ),
                     ),
                   ),
@@ -78185,7 +78185,7 @@ class _MonthlySelector extends ConsumerWidget {
   }
 }
 
-// 操作按钮�?
+// 操作按钮�?
 class _ActionButtons extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -78199,7 +78199,7 @@ class _ActionButtons extends ConsumerWidget {
             width: double.infinity,
             child: OutlinedButton.icon(
               onPressed: () {
-                // 设置为全部时�?
+                // 设置为全部时�?
                 final now = DateTime.now();
                 final endOpen = DateTime(now.year, now.month, now.day).add(const Duration(days: 1));
                 final start = DateTime(2000, 1, 1);
@@ -78220,7 +78220,7 @@ class _ActionButtons extends ConsumerWidget {
               Expanded(
                 child: OutlinedButton(
                   onPressed: () {
-                    // 重置到默认状�?
+                    // 重置到默认状�?
                     ref.read(timeFilterModeProvider.notifier).state = TimeFilterMode.daily;
                     ref.read(selectedDateProvider.notifier).state = DateTime.now();
                     ref.read(selectedMonthProvider.notifier).state = DateTime.now();
@@ -78290,8 +78290,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../domain/model/unit.dart';
 import '../../application/provider/unit_providers.dart';
 
-/// 单位列表项组�?
-/// 用于在单位列表中显示单个单位的信�?
+/// 单位列表项组�?
+/// 用于在单位列表中显示单个单位的信�?
 class UnitListTile extends ConsumerWidget {
   final Unit unit;
   final VoidCallback? onTap;
@@ -78328,7 +78328,7 @@ class UnitListTile extends ConsumerWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // 头部信息：名�?
+              // 头部信息：名�?
               Row(
                 children: [
                   Expanded(
@@ -78410,13 +78410,13 @@ class UnitListTile extends ConsumerWidget {
     );
   }
 
-  /// 显示删除确认对话�?
+  /// 显示删除确认对话�?
   void _showDeleteConfirmation(BuildContext context, WidgetRef ref) {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('确认删除'),
-        content: Text('确定要删除单�?"${unit.name}" 吗？此操作不可恢复�?),
+        content: Text('确定要删除单�?"${unit.name}" 吗？此操作不可恢复�?),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
@@ -78444,7 +78444,7 @@ class UnitListTile extends ConsumerWidget {
   }
 }
 
-/// 单位列表项的简化版�?
+/// 单位列表项的简化版�?
 /// 适用于只需要显示基本信息的场景
 class SimpleUnitListTile extends StatelessWidget {
   final Unit unit;
@@ -78477,7 +78477,7 @@ class SimpleUnitListTile extends StatelessWidget {
   }
 }
 // Product Widgets Barrel File
-// 统一导出产品相关�?Widget 组件
+// 统一导出产品相关�?Widget 组件
 
 export 'product_image_picker.dart';
 export 'unit_list_tile.dart';
@@ -78491,7 +78491,7 @@ import 'package:flutter/material.dart';
 class MeasuredContainer extends StatefulWidget {
   final Widget child;
   final EdgeInsetsGeometry? padding;
-  final String? label; // 可选标签，用于区分不同的容�?
+  final String? label; // 可选标签，用于区分不同的容�?
 
   const MeasuredContainer({
     super.key,
@@ -78568,7 +78568,7 @@ class _MeasuredContainerState extends State<MeasuredContainer> {
 }
 import 'package:flutter/material.dart';
 
-/// 通用表单文本输入�?
+/// 通用表单文本输入�?
 class AppTextField extends StatefulWidget {
   final TextEditingController controller;
   final String label;
@@ -78603,13 +78603,13 @@ class _AppTextFieldState extends State<AppTextField> {
   @override
   void initState() {
     super.initState();
-    // 使用传入�?focusNode 或创建一个新�?
+    // 使用传入�?focusNode 或创建一个新�?
     _focusNode = widget.focusNode ?? FocusNode();
   }
 
   @override
   void dispose() {
-    // 如果我们创建了新�?FocusNode，则需要释放它
+    // 如果我们创建了新�?FocusNode，则需要释放它
     if (widget.focusNode == null) {
       _focusNode.dispose();
     }
@@ -78621,7 +78621,7 @@ class _AppTextFieldState extends State<AppTextField> {
     return Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          // 标签显示在左�?
+          // 标签显示在左�?
           SizedBox(
             width: 100,
             child: Padding(
@@ -78635,7 +78635,7 @@ class _AppTextFieldState extends State<AppTextField> {
               ),
             ),
           ),
-          // 输入�?
+          // 输入�?
           Expanded(
             child: SizedBox(
               height: 48,
@@ -78705,13 +78705,13 @@ class _CategoryTypeAheadFieldState extends State<CategoryTypeAheadField> {
   @override
   void initState() {
     super.initState();
-    // 添加监听�?
+    // 添加监听�?
     widget.focusNode.addListener(_onFocusChange);
   }
 
   @override
   void dispose() {
-    // 移除监听�?
+    // 移除监听�?
     widget.focusNode.removeListener(_onFocusChange);
     super.dispose();
   }
@@ -78727,7 +78727,7 @@ class _CategoryTypeAheadFieldState extends State<CategoryTypeAheadField> {
     return Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          // 标签显示在左�?
+          // 标签显示在左�?
           SizedBox(
             width: 100,
             child: Padding(
@@ -78749,7 +78749,7 @@ class _CategoryTypeAheadFieldState extends State<CategoryTypeAheadField> {
                 suggestionsCallback: (pattern) {
                   if (pattern.isEmpty) {
                     return Future.value([
-                      const CategoryModel(name: '未分�?),
+                      const CategoryModel(name: '未分�?),
                       ...widget.categories,
                     ]);
                   }
@@ -78761,8 +78761,8 @@ class _CategoryTypeAheadFieldState extends State<CategoryTypeAheadField> {
                             .contains(pattern.toLowerCase()),
                       )
                       .toList();
-                  if (filtered.isEmpty || pattern == '未分�?) {
-                    filtered.insert(0, const CategoryModel(name: '未分�?));
+                  if (filtered.isEmpty || pattern == '未分�?) {
+                    filtered.insert(0, const CategoryModel(name: '未分�?));
                   }
                   return Future.value(filtered);
                 },
@@ -78777,7 +78777,7 @@ class _CategoryTypeAheadFieldState extends State<CategoryTypeAheadField> {
                 builder: (context, c, fNode) {
                   return TextField(
                     controller: c,
-                    focusNode: widget.focusNode, // 使用外部传入�?focusNode
+                    focusNode: widget.focusNode, // 使用外部传入�?focusNode
                     onSubmitted: (_) => widget.onSubmitted?.call(),
                     inputFormatters: [
                       FilteringTextInputFormatter.deny(RegExp(r'\s')),
@@ -78808,7 +78808,7 @@ class _CategoryTypeAheadFieldState extends State<CategoryTypeAheadField> {
 import 'package:dropdown_button2/dropdown_button2.dart';
 import 'package:flutter/material.dart';
 
-/// 保质期单位下�?
+/// 保质期单位下�?
 class ShelfLifeUnitDropdown extends StatelessWidget {
   final String value;
   final List<String> options;
@@ -78870,11 +78870,11 @@ class ShelfLifeUnitDropdown extends StatelessWidget {
   String _displayName(String unit) {
     switch (unit) {
       case 'days':
-        return '�?;
+        return '�?;
       case 'months':
         return '个月';
       case 'years':
-        return '�?;
+        return '�?;
       default:
         return unit;
     }
@@ -78926,13 +78926,13 @@ class _UnitTypeAheadFieldState extends State<UnitTypeAheadField> {
   @override
   void initState() {
     super.initState();
-    // 添加监听�?
+    // 添加监听�?
     widget.focusNode.addListener(_onFocusChange);
   }
 
   @override
   void dispose() {
-    // 移除监听�?
+    // 移除监听�?
     widget.focusNode.removeListener(_onFocusChange);
     super.dispose();
   }
@@ -78948,7 +78948,7 @@ class _UnitTypeAheadFieldState extends State<UnitTypeAheadField> {
     return Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          // 标签显示在左�?
+          // 标签显示在左�?
           SizedBox(
             width: 100,
             child: Padding(
@@ -78988,7 +78988,7 @@ class _UnitTypeAheadFieldState extends State<UnitTypeAheadField> {
                 builder: (context, c, fNode) {
                   return TextField(
                     controller: c,
-                    focusNode: widget.focusNode, // 使用外部传入�?focusNode 以便页面控制焦点
+                    focusNode: widget.focusNode, // 使用外部传入�?focusNode 以便页面控制焦点
                     onSubmitted: (_) => widget.onSubmitted?.call(),
                     inputFormatters: [
                       FilteringTextInputFormatter.deny(RegExp(r'\s')),
@@ -79016,7 +79016,7 @@ class _UnitTypeAheadFieldState extends State<UnitTypeAheadField> {
           IconButton(
             onPressed: widget.onTapAddAuxiliary,
             icon: const Icon(Icons.add),
-            tooltip: '添加辅单�?,
+            tooltip: '添加辅单�?,
           ),
           IconButton(
             onPressed: widget.onTapChooseUnit,
@@ -79051,9 +79051,9 @@ class _BarcodeSectionState extends State<BarcodeSection> {
   @override
   void initState() {
     super.initState();
-    // 创建一个新�?FocusNode
+    // 创建一个新�?FocusNode
     _focusNode = FocusNode();
-    // 添加监听�?
+    // 添加监听�?
     _focusNode.addListener(_onFocusChange);
   }
 
@@ -79075,7 +79075,7 @@ class _BarcodeSectionState extends State<BarcodeSection> {
     return Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          // 标签显示在左�?
+          // 标签显示在左�?
           SizedBox(
             width: 100,
             child: Padding(
@@ -79123,7 +79123,7 @@ import '../product_image_picker.dart';
 import '../inputs/app_text_field.dart';
 import 'barcode_section.dart';
 
-/// 基础信息区：图片、名称、条�?
+/// 基础信息区：图片、名称、条�?
 class BasicInfoSection extends StatelessWidget {
   final String? initialImagePath;
   final ValueChanged<String?> onImageChanged;
@@ -79191,7 +79191,7 @@ class BasicInfoSection extends StatelessWidget {
 }
 import 'package:flutter/material.dart';
 
-/// 价格区块：零售价 + 促销�?+ 建议零售�?
+/// 价格区块：零售价 + 促销�?+ 建议零售�?
 class PricingSection extends StatefulWidget {
   final TextEditingController retailPriceController;
   final TextEditingController promotionalPriceController;
@@ -79235,19 +79235,19 @@ class _PricingSectionState extends State<PricingSection> {
     return Column(
       children: [
         _buildPriceField(
-          label: '促销�?,
+          label: '促销�?,
           controller: widget.promotionalPriceController,
           focusNode: _promotionalPriceFocusNode,
         ),
         const SizedBox(height: 16),
         _buildPriceField(
-          label: '建议零售�?,
+          label: '建议零售�?,
           controller: widget.suggestedRetailPriceController,
           focusNode: _suggestedRetailPriceFocusNode,
         ),
         const SizedBox(height: 16),
         _buildPriceField(
-          label: '零售�?,
+          label: '零售�?,
           controller: widget.retailPriceController,
           focusNode: widget.retailPriceFocusNode,
           onFieldSubmitted: (_) => widget.onRetailPriceSubmitted?.call(),
@@ -79300,8 +79300,8 @@ class _PricingSectionState extends State<PricingSection> {
 import 'package:flutter/material.dart';
 import '../inputs/shelf_life_unit_dropdown.dart';
 
-/// 保质期表单区�?
-/// - 左侧：保质期数值输�?
+/// 保质期表单区�?
+/// - 左侧：保质期数值输�?
 /// - 右侧：保质期单位下拉
 class ShelfLifeSection extends StatefulWidget {
   final TextEditingController shelfLifeController;
@@ -79332,15 +79332,15 @@ class _ShelfLifeSectionState extends State<ShelfLifeSection> {
   @override
   void initState() {
     super.initState();
-    // 使用传入�?focusNode 或创建一个新�?
+    // 使用传入�?focusNode 或创建一个新�?
     _focusNode = widget.shelfLifeFocusNode ?? FocusNode();
-    // 添加监听�?
+    // 添加监听�?
     _focusNode.addListener(_onFocusChange);
   }
 
   @override
   void dispose() {
-    // 如果我们创建了新�?FocusNode，则需要释放它
+    // 如果我们创建了新�?FocusNode，则需要释放它
     if (widget.shelfLifeFocusNode == null) {
       _focusNode.dispose();
     }
@@ -79358,13 +79358,13 @@ class _ShelfLifeSectionState extends State<ShelfLifeSection> {
     return Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          // 标签显示在左�?
+          // 标签显示在左�?
           SizedBox(
             width: 100,
             child: Padding(
               padding: const EdgeInsets.only(right: 12),
               child: Text(
-                '保质�?,
+                '保质�?,
                 style: const TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w500,
@@ -79488,10 +79488,10 @@ import '../../domain/repository/i_supplier_repository.dart';
 import '../../data/repository/supplier_repository.dart';
 import '../../../../core/database/database.dart';
 
-/// 供应商操作状�?
+/// 供应商操作状�?
 enum SupplierOperationStatus { initial, loading, success, error }
 
-/// 供应商控制器状�?
+/// 供应商控制器状�?
 class SupplierControllerState {
   final SupplierOperationStatus status;
   final String? errorMessage;
@@ -79520,13 +79520,13 @@ class SupplierControllerState {
   bool get isSuccess => status == SupplierOperationStatus.success;
 }
 
-/// 供应商控制器 - 管理供应商的增删改操�?
+/// 供应商控制器 - 管理供应商的增删改操�?
 class SupplierController extends StateNotifier<SupplierControllerState> {
   final ISupplierRepository _repository;
 
   SupplierController(this._repository) : super(const SupplierControllerState());
 
-  /// 添加供应�?
+  /// 添加供应�?
   Future<void> addSupplier(Supplier supplier) async {
     state = state.copyWith(status: SupplierOperationStatus.loading);
 
@@ -79546,9 +79546,9 @@ class SupplierController extends StateNotifier<SupplierControllerState> {
         lastOperatedSupplier: supplier,
       );
 
-      print('🎮 控制器：供应商添加成�?);
+      print('🎮 控制器：供应商添加成�?);
     } catch (e) {
-      print('🎮 控制器：供应商添加失�? $e');
+      print('🎮 控制器：供应商添加失�? $e');
       state = state.copyWith(
         status: SupplierOperationStatus.error,
         errorMessage: e.toString(),
@@ -79557,14 +79557,14 @@ class SupplierController extends StateNotifier<SupplierControllerState> {
     }
   }
 
-  /// 更新供应�?
+  /// 更新供应�?
   Future<void> updateSupplier(Supplier supplier) async {
     state = state.copyWith(status: SupplierOperationStatus.loading);
 
     try {
       print('🎮 控制器：开始更新供应商 - ${supplier.name}');
 
-      // 检查名称是否已存在（排除当前供应商�?
+      // 检查名称是否已存在（排除当前供应商�?
       final exists = await _repository.isSupplierNameExists(
         supplier.name,
         supplier.id,
@@ -79575,7 +79575,7 @@ class SupplierController extends StateNotifier<SupplierControllerState> {
 
       final success = await _repository.updateSupplier(supplier);
       if (!success) {
-        throw Exception('更新供应商失�?);
+        throw Exception('更新供应商失�?);
       }
 
       state = state.copyWith(
@@ -79583,9 +79583,9 @@ class SupplierController extends StateNotifier<SupplierControllerState> {
         lastOperatedSupplier: supplier,
       );
 
-      print('🎮 控制器：供应商更新成�?);
+      print('🎮 控制器：供应商更新成�?);
     } catch (e) {
-      print('🎮 控制器：供应商更新失�? $e');
+      print('🎮 控制器：供应商更新失�? $e');
       state = state.copyWith(
         status: SupplierOperationStatus.error,
         errorMessage: e.toString(),
@@ -79594,7 +79594,7 @@ class SupplierController extends StateNotifier<SupplierControllerState> {
     }
   }
 
-  /// 删除供应�?
+  /// 删除供应�?
   Future<void> deleteSupplier(int id) async {
     state = state.copyWith(status: SupplierOperationStatus.loading);
 
@@ -79608,9 +79608,9 @@ class SupplierController extends StateNotifier<SupplierControllerState> {
 
       state = state.copyWith(status: SupplierOperationStatus.success);
 
-      print('🎮 控制器：供应商删除成�?);
+      print('🎮 控制器：供应商删除成�?);
     } catch (e) {
-      print('🎮 控制器：供应商删除失�? $e');
+      print('🎮 控制器：供应商删除失�? $e');
       state = state.copyWith(
         status: SupplierOperationStatus.error,
         errorMessage: e.toString(),
@@ -79619,36 +79619,36 @@ class SupplierController extends StateNotifier<SupplierControllerState> {
     }
   }
 
-  /// 重置状�?
+  /// 重置状�?
   void resetState() {
     state = const SupplierControllerState();
   }
 }
 
 // =============================================================================
-// Riverpod 提供者定�?
+// Riverpod 提供者定�?
 // =============================================================================
 
-/// 供应商仓储提供�?
+/// 供应商仓储提供�?
 final supplierRepositoryProvider = Provider<ISupplierRepository>((ref) {
   final database = ref.watch(appDatabaseProvider);
   return SupplierRepository(database);
 });
 
-/// 供应商控制器提供�?
+/// 供应商控制器提供�?
 final supplierControllerProvider =
     StateNotifierProvider<SupplierController, SupplierControllerState>((ref) {
       final repository = ref.watch(supplierRepositoryProvider);
       return SupplierController(repository);
     });
 
-/// 获取所有供应商提供�?
+/// 获取所有供应商提供�?
 final allSuppliersProvider = StreamProvider<List<Supplier>>((ref) {
   final repository = ref.watch(supplierRepositoryProvider);
   return repository.watchAllSuppliers();
 });
 
-/// 根据ID获取供应商提供�?
+/// 根据ID获取供应商提供�?
 final supplierByIdProvider = FutureProvider.family<Supplier?, int>((
   ref,
   id,
@@ -79657,7 +79657,7 @@ final supplierByIdProvider = FutureProvider.family<Supplier?, int>((
   return repository.getSupplierById(id);
 });
 
-/// 根据名称搜索供应商提供�?
+/// 根据名称搜索供应商提供�?
 final searchSuppliersProvider = FutureProvider.family<List<Supplier>, String>((
   ref,
   searchTerm,
@@ -79669,13 +79669,13 @@ final searchSuppliersProvider = FutureProvider.family<List<Supplier>, String>((
   return repository.searchSuppliersByName(searchTerm);
 });
 
-/// 供应商数量提供�?
+/// 供应商数量提供�?
 final supplierCountProvider = FutureProvider<int>((ref) {
   final repository = ref.watch(supplierRepositoryProvider);
   return repository.getSupplierCount();
 });
 
-/// 检查供应商名称是否存在提供�?
+/// 检查供应商名称是否存在提供�?
 final supplierNameExistsProvider =
     FutureProvider.family<bool, Map<String, String?>>((ref, params) {
       final repository = ref.watch(supplierRepositoryProvider);
@@ -79695,7 +79695,7 @@ import 'package:rxdart/rxdart.dart';
 
 part 'purchase_dao.g.dart';
 
-/// 采购订单及其所有明细的数据�?
+/// 采购订单及其所有明细的数据�?
 class PurchaseOrderWithItems {
   final PurchaseOrderData order;
   final List<PurchaseOrderItemWithDetails> items;
@@ -79767,7 +79767,7 @@ class PurchaseDao extends DatabaseAccessor<AppDatabase>
     });
   }
 
-  /// 获取指定采购订单的所有明�?
+  /// 获取指定采购订单的所有明�?
   Future<List<PurchaseOrderItemData>> getPurchaseOrderItems(int orderId) {
     return (select(
       db.purchaseOrderItem,
@@ -79775,10 +79775,10 @@ class PurchaseDao extends DatabaseAccessor<AppDatabase>
   }
 
   // ===========================================================================
-  // 组合查询和事务性操�?
+  // 组合查询和事务性操�?
   // ===========================================================================
 
-  /// 监听一个完整的采购订单（包含其所有明细及产品信息�?
+  /// 监听一个完整的采购订单（包含其所有明细及产品信息�?
   Stream<PurchaseOrderWithItems> watchPurchaseOrderWithItems(int orderId) {
     final orderStream = (select(
       db.purchaseOrder,
@@ -79807,8 +79807,8 @@ class PurchaseDao extends DatabaseAccessor<AppDatabase>
     });
   }
 
-  /// 创建一个完整的采购订单（包括订单头和多个明细项�?
-  /// 这是一个事务性操作，确保数据一致�?
+  /// 创建一个完整的采购订单（包括订单头和多个明细项�?
+  /// 这是一个事务性操作，确保数据一致�?
   Future<int> createFullPurchaseOrder({
     required PurchaseOrderCompanion order,
     required List<PurchaseOrderItemCompanion> items,
@@ -79867,26 +79867,26 @@ import '../../../../core/database/suppliers_table.dart';
 
 part 'supplier_dao.g.dart';
 
-/// 供应商数据访问对�?(DAO)
-/// 专门负责供应商相关的数据库操�?
+/// 供应商数据访问对�?(DAO)
+/// 专门负责供应商相关的数据库操�?
 @DriftAccessor(tables: [Supplier])
 class SupplierDao extends DatabaseAccessor<AppDatabase>
     with _$SupplierDaoMixin {
   SupplierDao(super.db);
 
-  /// 添加供应�?
+  /// 添加供应�?
   Future<int> insertSupplier(SupplierCompanion companion) async {
     return await into(db.supplier).insert(companion);
   }
 
-  /// 根据ID获取供应�?
+  /// 根据ID获取供应�?
   Future<SupplierData?> getSupplierById(int id) async {
     return await (select(
       db.supplier,
     )..where((tbl) => tbl.id.equals(id))).getSingleOrNull();
   }
 
-  /// 根据名称获取供应�?
+  /// 根据名称获取供应�?
   Future<SupplierData?> getSupplierByName(String name) async {
     return await (select(
       db.supplier,
@@ -79903,7 +79903,7 @@ class SupplierDao extends DatabaseAccessor<AppDatabase>
     return select(db.supplier).watch();
   }
 
-  /// 更新供应�?
+  /// 更新供应�?
   Future<bool> updateSupplier(SupplierCompanion companion) async {
     final rowsAffected = await (update(
       db.supplier,
@@ -79911,7 +79911,7 @@ class SupplierDao extends DatabaseAccessor<AppDatabase>
     return rowsAffected > 0;
   }
 
-  /// 删除供应�?
+  /// 删除供应�?
   Future<bool> deleteSupplier(int id) async {
     final rowsAffected = await (delete(
       db.supplier,
@@ -79919,7 +79919,7 @@ class SupplierDao extends DatabaseAccessor<AppDatabase>
     return rowsAffected > 0;
   }
 
-  /// 根据名称搜索供应�?
+  /// 根据名称搜索供应�?
   Future<List<SupplierData>> searchSuppliersByName(
     String searchTerm,
   ) async {
@@ -79938,7 +79938,7 @@ class SupplierDao extends DatabaseAccessor<AppDatabase>
     return result != null;
   }
 
-  /// 获取供应商数�?
+  /// 获取供应商数�?
   Future<int> getSupplierCount() async {
     final countQuery = selectOnly(db.supplier)
       ..addColumns([db.supplier.id.count()]);
@@ -79971,10 +79971,10 @@ class SupplierRepository implements ISupplierRepository {
   @override
   Future<int> addSupplier(Supplier supplier) async {
     try {
-      print('🗃�?仓储层：添加供应商，ID: ${supplier.id}, 名称: ${supplier.name}');
+      print('🗃�?仓储层：添加供应商，ID: ${supplier.id}, 名称: ${supplier.name}');
       return await _supplierDao.insertSupplier(_supplierToCompanion(supplier));
     } catch (e) {
-      print('🗃�?仓储层：添加供应商失�? $e');
+      print('🗃�?仓储层：添加供应商失�? $e');
       rethrow;
     }
   }
@@ -79985,7 +79985,7 @@ class SupplierRepository implements ISupplierRepository {
       final data = await _supplierDao.getSupplierById(id);
       return data != null ? _supplierDataToModel(data) : null;
     } catch (e) {
-      print('🗃�?仓储层：根据ID获取供应商失�? $e');
+      print('🗃�?仓储层：根据ID获取供应商失�? $e');
       rethrow;
     }
   }
@@ -79996,7 +79996,7 @@ class SupplierRepository implements ISupplierRepository {
       final data = await _supplierDao.getSupplierByName(name);
       return data != null ? _supplierDataToModel(data) : null;
     } catch (e) {
-      print('🗃�?仓储层：根据名称获取供应商失�? $e');
+      print('🗃�?仓储层：根据名称获取供应商失�? $e');
       rethrow;
     }
   }
@@ -80007,7 +80007,7 @@ class SupplierRepository implements ISupplierRepository {
       final dataList = await _supplierDao.getAllSuppliers();
       return dataList.map(_supplierDataToModel).toList();
     } catch (e) {
-      print('🗃�?仓储层：获取所有供应商失败: $e');
+      print('🗃�?仓储层：获取所有供应商失败: $e');
       rethrow;
     }
   }
@@ -80019,7 +80019,7 @@ class SupplierRepository implements ISupplierRepository {
         (dataList) => dataList.map(_supplierDataToModel).toList(),
       );
     } catch (e) {
-      print('🗃�?仓储层：监听所有供应商失败: $e');
+      print('🗃�?仓储层：监听所有供应商失败: $e');
       rethrow;
     }
   }
@@ -80027,10 +80027,10 @@ class SupplierRepository implements ISupplierRepository {
   @override
   Future<bool> updateSupplier(Supplier supplier) async {
     try {
-      print('🗃�?仓储层：更新供应商，ID: ${supplier.id}, 名称: ${supplier.name}');
+      print('🗃�?仓储层：更新供应商，ID: ${supplier.id}, 名称: ${supplier.name}');
       return await _supplierDao.updateSupplier(_supplierToCompanion(supplier));
     } catch (e) {
-      print('🗃�?仓储层：更新供应商失�? $e');
+      print('🗃�?仓储层：更新供应商失�? $e');
       rethrow;
     }
   }
@@ -80038,11 +80038,11 @@ class SupplierRepository implements ISupplierRepository {
   @override
   Future<int> deleteSupplier(int id) async {
     try {
-      print('🗃�?仓储层：删除供应商，ID: $id');
+      print('🗃�?仓储层：删除供应商，ID: $id');
       final success = await _supplierDao.deleteSupplier(id);
       return success ? 1 : 0;
     } catch (e) {
-      print('🗃�?仓储层：删除供应商失�? $e');
+      print('🗃�?仓储层：删除供应商失�? $e');
       rethrow;
     }
   }
@@ -80055,7 +80055,7 @@ class SupplierRepository implements ISupplierRepository {
       if (excludeId != null && supplier.id == excludeId) return false;
       return true;
     } catch (e) {
-      print('🗃�?仓储层：检查供应商名称是否存在失败: $e');
+      print('🗃�?仓储层：检查供应商名称是否存在失败: $e');
       rethrow;
     }
   }
@@ -80066,7 +80066,7 @@ class SupplierRepository implements ISupplierRepository {
       final dataList = await _supplierDao.searchSuppliersByName(searchTerm);
       return dataList.map(_supplierDataToModel).toList();
     } catch (e) {
-      print('🗃�?仓储层：根据名称搜索供应商失�? $e');
+      print('🗃�?仓储层：根据名称搜索供应商失�? $e');
       rethrow;
     }
   }
@@ -80076,7 +80076,7 @@ class SupplierRepository implements ISupplierRepository {
     try {
       return await _supplierDao.getSupplierCount();
     } catch (e) {
-      print('🗃�?仓储层：获取供应商数量失�? $e');
+      print('🗃�?仓储层：获取供应商数量失�? $e');
       rethrow;
     }
   }
@@ -80090,7 +80090,7 @@ class SupplierRepository implements ISupplierRepository {
     );
   }
 
-  /// 将数据库Data对象转换为领域模�?
+  /// 将数据库Data对象转换为领域模�?
   Supplier _supplierDataToModel(SupplierData data) {
     return Supplier(id: data.id, name: data.name);
   }
@@ -80387,7 +80387,7 @@ abstract class PurchaseOrderItemModel with _$PurchaseOrderItemModel {
 
   const PurchaseOrderItemModel._();
 
-  // --- 简单校�?---
+  // --- 简单校�?---
   bool get isValidOrderId => purchaseOrderId > 0;
   bool get isValidProductId => productId > 0;
   bool get isValidQuantity => quantity > 0;
@@ -80404,12 +80404,12 @@ abstract class PurchaseOrderItemModel with _$PurchaseOrderItemModel {
     if (!isValidOrderId) errors.add('采购订单ID必须大于0');
     if (!isValidProductId) errors.add('产品ID必须大于0');
     if (!isValidQuantity) errors.add('数量必须大于0');
-    if (!isValidUnitPrice) errors.add('单价不能为负�?);
+    if (!isValidUnitPrice) errors.add('单价不能为负�?);
     return errors;
   }
 
-  /// 转为 Drift Companion（插�?更新用）
-  /// 在创建整单时通常先拿�?orderId，再传入此方法统一设置外键
+  /// 转为 Drift Companion（插�?更新用）
+  /// 在创建整单时通常先拿�?orderId，再传入此方法统一设置外键
   PurchaseOrderItemCompanion toTableCompanion(int orderId) {
     return PurchaseOrderItemCompanion(
       id: id == null ? const Value.absent() : Value(id!),
@@ -80836,16 +80836,16 @@ Map<String, dynamic> _$SupplierToJson(_Supplier instance) => <String, dynamic>{
 };
 import '../model/supplier.dart';
 
-/// 供应商仓储接�?
+/// 供应商仓储接�?
 /// 定义供应商相关的业务操作规范
 abstract class ISupplierRepository {
-  /// 添加供应�?
+  /// 添加供应�?
   Future<int> addSupplier(Supplier supplier);
 
-  /// 根据ID获取供应�?
+  /// 根据ID获取供应�?
   Future<Supplier?> getSupplierById(int id);
 
-  /// 根据名称获取供应�?
+  /// 根据名称获取供应�?
   Future<Supplier?> getSupplierByName(String name);
 
   /// 获取所有供应商
@@ -80854,19 +80854,19 @@ abstract class ISupplierRepository {
   /// 监听所有供应商变化
   Stream<List<Supplier>> watchAllSuppliers();
 
-  /// 更新供应�?
+  /// 更新供应�?
   Future<bool> updateSupplier(Supplier supplier);
 
-  /// 删除供应�?
+  /// 删除供应�?
   Future<int> deleteSupplier(int id);
 
-  /// 检查供应商名称是否已存�?
+  /// 检查供应商名称是否已存�?
   Future<bool> isSupplierNameExists(String name, [int? excludeId]);
 
-  /// 根据名称搜索供应�?
+  /// 根据名称搜索供应�?
   Future<List<Supplier>> searchSuppliersByName(String searchTerm);
 
-  /// 获取供应商数�?
+  /// 获取供应商数�?
   Future<int> getSupplierCount();
 }
 import 'package:flutter/material.dart';
@@ -80914,7 +80914,7 @@ class PurchaseRecordsScreen extends ConsumerWidget {
           IconButton(
             onPressed: () => context.push(AppRoutes.purchaseCreate),
             icon: const Icon(Icons.add),
-            tooltip: '新建采购�?,
+            tooltip: '新建采购�?,
           ),
         ],
       ),
@@ -80987,7 +80987,7 @@ class _PurchaseOrderCardState extends ConsumerState<PurchaseOrderCard> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          '订单�? ${widget.order.id}',
+                          '订单�? ${widget.order.id}',
                           style: const TextStyle(fontWeight: FontWeight.bold),
                         ),
                         const SizedBox(height: 4),
@@ -80997,10 +80997,10 @@ class _PurchaseOrderCardState extends ConsumerState<PurchaseOrderCard> {
                             final supplier = suppliers
                                 .where((s) => s.id == widget.order.supplierId)
                                 .firstOrNull;
-                            return Text('供应�? ${supplier?.name ?? '未知'}');
+                            return Text('供应�? ${supplier?.name ?? '未知'}');
                           },
-                          loading: () => const Text('供应�? 加载�?..'),
-                          error: (_, __) => const Text('供应�? 加载失败'),
+                          loading: () => const Text('供应�? 加载�?..'),
+                          error: (_, __) => const Text('供应�? 加载失败'),
                         ),
                       ],
                     ),
@@ -81022,14 +81022,14 @@ class _PurchaseOrderCardState extends ConsumerState<PurchaseOrderCard> {
                             crossAxisAlignment: CrossAxisAlignment.end,
                             children: [
                               Text(
-                                '�?{(totalAmount / 100).toStringAsFixed(2)}',
+                                '�?{(totalAmount / 100).toStringAsFixed(2)}',
                                 style: const TextStyle(
                                   fontWeight: FontWeight.bold,
                                   color: Colors.green,
                                 ),
                               ),
                               Text(
-                                '${totalQuantity.toInt()}�?,
+                                '${totalQuantity.toInt()}�?,
                                 style: const TextStyle(fontSize: 12, color: Colors.grey),
                               ),
                             ],
@@ -81099,7 +81099,7 @@ class PurchaseOrderItemTile extends ConsumerWidget {
                 product?.name ?? '货品ID: ${item.productId}',
                 style: const TextStyle(fontSize: 16),
               ),
-              loading: () => const Text('加载�?..'),
+              loading: () => const Text('加载�?..'),
               error: (err, stack) => Text(
                 '加载货品失败',
                 style: TextStyle(color: Theme.of(context).colorScheme.error),
@@ -81120,10 +81120,10 @@ class PurchaseOrderItemTile extends ConsumerWidget {
         crossAxisAlignment: CrossAxisAlignment.end,
         children: [
           Text(
-            '�?{(item.unitPriceInCents / 100).toStringAsFixed(2)} × ${item.quantity.toInt()}',
+            '�?{(item.unitPriceInCents / 100).toStringAsFixed(2)} × ${item.quantity.toInt()}',
           ),
           Text(
-            '�?{((item.unitPriceInCents * item.quantity) / 100).toStringAsFixed(2)}',
+            '�?{((item.unitPriceInCents * item.quantity) / 100).toStringAsFixed(2)}',
             style: const TextStyle(fontWeight: FontWeight.bold),
           ),
         ],
@@ -81208,18 +81208,18 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../product/domain/model/product.dart';
 import '../../domain/model/sale_cart_item.dart';
 
-/// 销售列表状态通知�?
+/// 销售列表状态通知�?
 ///
-/// 管理销售项列表的状态，并提供增、删、改、查等操作�?
+/// 管理销售项列表的状态，并提供增、删、改、查等操作�?
 class SaleListNotifier extends StateNotifier<List<SaleCartItem>> {
   SaleListNotifier() : super([]);
 
-  /// 添加单个销售项到列表头�?
+  /// 添加单个销售项到列表头�?
   void addItem(SaleCartItem item) {
     state = [item, ...state];
   }
 
-  /// 添加多个销售项到列表头�?
+  /// 添加多个销售项到列表头�?
   void addAllItems(List<SaleCartItem> items) {
     state = [...items.reversed, ...state];
   }
@@ -81237,7 +81237,7 @@ class SaleListNotifier extends StateNotifier<List<SaleCartItem>> {
     ];
   }
 
-  /// 添加一个新货品，或如果已存在则更新其数�?
+  /// 添加一个新货品，或如果已存在则更新其数�?
   ///
   /// [product] - 要添加的货品对象
   /// [unitName] - 单位名称
@@ -81253,7 +81253,7 @@ class SaleListNotifier extends StateNotifier<List<SaleCartItem>> {
     required int conversionRate,
   }) {
     final actualUnitName = unitName ?? '未知单位';
-    // 优先通过条码匹配，其次通过货品ID和单位匹�?
+    // 优先通过条码匹配，其次通过货品ID和单位匹�?
     final existingItemIndex = state.indexWhere((item) {
       if (barcode != null && item.id.contains('item_${barcode}_')) {
         return true;
@@ -81302,7 +81302,7 @@ class SaleListNotifier extends StateNotifier<List<SaleCartItem>> {
 
 /// 销售列表Provider
 ///
-/// 这是UI层访�?[SaleListNotifier] 的入口�?
+/// 这是UI层访�?[SaleListNotifier] 的入口�?
 final saleListProvider =
     StateNotifierProvider<SaleListNotifier, List<SaleCartItem>>(
       (ref) => SaleListNotifier(),
@@ -81310,7 +81310,7 @@ final saleListProvider =
 
 /// 销售统计信息Provider
 ///
-/// 派生�?[saleListProvider]，用于高效计算总计信息�?
+/// 派生�?[saleListProvider]，用于高效计算总计信息�?
 final saleTotalsProvider = Provider<Map<String, double>>((ref) {
   final items = ref.watch(saleListProvider);
   // final totalQuantity = items.fold(0.0, (sum, item) => sum + item.quantity * item.conversionRate);
@@ -81382,17 +81382,17 @@ class SaleService {
 
       final salesId = await salesTransactionRepository.addSalesTransaction(transaction);
 
-      // 2) 仅销售模式：写出库单与明细，并在同事务内扣减库存并记录流�?
+      // 2) 仅销售模式：写出库单与明细，并在同事务内扣减库存并记录流�?
       if (isSaleMode) {
         await salesTransactionRepository.handleOutbound(
             shopId, salesId, saleItems);
       }
 
-      // 3) 扣减或回补库�?+ 写库存流水（允许负库存）
+      // 3) 扣减或回补库�?+ 写库存流水（允许负库存）
       for (final item in saleItems) {
         print('🔍 [DEBUG] Processing inventory for product ${item.productId}, shop $shopId, batch ${item.batchId}');
         
-        // 检查库存记录是否存�?
+        // 检查库存记录是否存�?
         final existingInventory = await inventoryService.getInventory(item.productId, shopId);
         print('🔍 [DEBUG] Existing inventory: ${existingInventory?.quantity ?? "not found"}');
         
@@ -81486,22 +81486,22 @@ part 'sales_transaction_dao.g.dart';
 class SalesTransactionDao extends DatabaseAccessor<AppDatabase> with _$SalesTransactionDaoMixin {
   SalesTransactionDao(super.db);
 
-  /// 插入一笔新的销售交�?
+  /// 插入一笔新的销售交�?
   Future<int> insertSalesTransaction(SalesTransactionCompanion companion) {
     return into(db.salesTransaction).insert(companion);
   }
 
-  /// 根据ID查找销售交�?
+  /// 根据ID查找销售交�?
   Future<SalesTransactionData?> findSalesTransactionById(int id) {
     return (select(db.salesTransaction)..where((tbl) => tbl.id.equals(id))).getSingleOrNull();
   }
 
-  /// 监听所有的销售交�?
+  /// 监听所有的销售交�?
   Stream<List<SalesTransactionData>> watchAllSalesTransactions() {
     return select(db.salesTransaction).watch();
   }
 
-  /// 更新销售交易状�?
+  /// 更新销售交易状�?
   Future<bool> updateSalesTransactionStatus(int id, String status) {
     return (update(db.salesTransaction)..where((tbl) => tbl.id.equals(id)))
         .write(SalesTransactionCompanion(
@@ -81532,19 +81532,19 @@ part 'sales_transaction_item_dao.g.dart';
 class SalesTransactionItemDao extends DatabaseAccessor<AppDatabase> with _$SalesTransactionItemDaoMixin {
   SalesTransactionItemDao(super.db);
 
-  /// 插入一个销售交易项�?
+  /// 插入一个销售交易项�?
   Future<int> insertSalesTransactionItem(SalesTransactionItemCompanion companion) {
     return into(db.salesTransactionItem).insert(companion);
   }
 
-  /// 批量插入销售交易项�?
+  /// 批量插入销售交易项�?
   Future<void> insertSalesTransactionItems(List<SalesTransactionItemCompanion> companions) {
     return batch((batch) {
       batch.insertAll(db.salesTransactionItem, companions);
     });
   }
 
-  /// 根据交易ID查找销售项�?
+  /// 根据交易ID查找销售项�?
   Future<List<SalesTransactionItemData>> findSalesTransactionItemsByTransactionId(String transactionId) {
     print('🔍 [DEBUG] DAO: findSalesTransactionItemsByTransactionId called with: $transactionId (type: ${transactionId.runtimeType})');
     print('🔍 [DEBUG] DAO: transactionId content: "$transactionId"');
@@ -81669,7 +81669,7 @@ class SalesTransactionRepository implements ISalesTransactionRepository {
         }).toList();
         print('🔍 [DEBUG] Repository: ${itemCompanions.length} item companions created');
         
-        // 插入销售交易项�?
+        // 插入销售交易项�?
         await _db.salesTransactionItemDao.insertSalesTransactionItems(itemCompanions);
         print('🔍 [DEBUG] Repository: items inserted successfully');
         return transactionId;
@@ -81703,7 +81703,7 @@ class SalesTransactionRepository implements ISalesTransactionRepository {
     final receiptId = await _db.outboundReceiptDao.insertOutboundReceipt(
       OutboundReceiptCompanion(
         shopId: drift.Value(shopId),
-        reason: const drift.Value('销售出�?),
+        reason: const drift.Value('销售出�?),
         salesTransactionId: drift.Value(salesId),
       ),
     );
@@ -81774,7 +81774,7 @@ part 'customer.freezed.dart';
 part 'customer.g.dart';
 
 /// 客户领域模型
-/// 表示客户的业务实�?
+/// 表示客户的业务实�?
 @freezed
 abstract class Customer with _$Customer {
   const factory Customer({int? id, required String name}) = _Customer;
@@ -82012,8 +82012,8 @@ abstract class SalesTransaction with _$SalesTransaction {
       id: data.id,
       customerId: data.customerId,
       totalAmount: data.totalAmount,
-      actualAmount: data.totalAmount, // 假设实际金额等于总金�?
-      shopId: 0, // 数据库中没有，暂时设�?
+      actualAmount: data.totalAmount, // 假设实际金额等于总金�?
+      shopId: 0, // 数据库中没有，暂时设�?
       status: SalesStatus.values.firstWhere(
         (e) => e.toString().split('.').last == data.status,
         orElse: () => SalesStatus.preset,
@@ -82278,19 +82278,19 @@ abstract class SalesTransactionItem with _$SalesTransactionItem {
 
   const SalesTransactionItem._();
 
-  /// 验证产品ID的有效�?
+  /// 验证产品ID的有效�?
   bool get isValidProductId => productId > 0;
 
-  /// 验证批次ID的有效性（如果提供了批次ID�?
+  /// 验证批次ID的有效性（如果提供了批次ID�?
   bool get isValidBatchId => batchId == null;
 
-  /// 验证数量的有效�?
+  /// 验证数量的有效�?
   bool get isValidQuantity => quantity > 0;
 
-  /// 验证单位价格的有效�?
+  /// 验证单位价格的有效�?
   bool get isValidPrice => priceInCents > 0;
 
-  /// 验证所有必填字段的有效�?
+  /// 验证所有必填字段的有效�?
   bool get isValid =>
       isValidSalesTransactionId &&
       isValidProductId &&
@@ -82298,7 +82298,7 @@ abstract class SalesTransactionItem with _$SalesTransactionItem {
       isValidQuantity &&
       isValidPrice;
 
-  /// 验证销售交易ID的有效�?
+  /// 验证销售交易ID的有效�?
   bool get isValidSalesTransactionId => salesTransactionId > 0;
 
   /// 批次引用关系验证 - 检查是否为批次相关商品
@@ -82317,7 +82317,7 @@ abstract class SalesTransactionItem with _$SalesTransactionItem {
     }
 
     if (!isValidBatchId && batchId != null) {
-      errors.add('批次ID不能为空字符�?);
+      errors.add('批次ID不能为空字符�?);
     }
 
     if (!isValidQuantity) {
@@ -82348,7 +82348,7 @@ abstract class SalesTransactionItem with _$SalesTransactionItem {
     print('🔍 [DEBUG] ID is null: ${id == null}');
     print('🔍 [DEBUG] id is null: ${id == null}');
 
-    // 检查类型转�?
+    // 检查类型转�?
     if (id != null && id is! int) {
       print('🔍 [ERROR] ID type mismatch: expected int, got ${id.runtimeType}');
     }
@@ -82382,7 +82382,7 @@ abstract class SalesTransactionItem with _$SalesTransactionItem {
     );
   }
 
-  /// 创建带有数据验证的实�?
+  /// 创建带有数据验证的实�?
   /// 使用此方法确保所有数据验证通过
   static SalesTransactionItem createWithValidation({
     int? id,
@@ -82862,7 +82862,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:collection/collection.dart'; // 导入 collection �?
+import 'package:collection/collection.dart'; // 导入 collection �?
 import '../../../product/domain/model/product.dart';
 import '../../../../core/constants/app_routes.dart';
 import '../../application/provider/sale_list_provider.dart';
@@ -82897,10 +82897,10 @@ class CreateSaleScreen extends ConsumerStatefulWidget {
 class _CreateSaleScreenState extends ConsumerState<CreateSaleScreen> {
   final _remarksController = TextEditingController();
   final _customerController = TextEditingController();
-  final _sourceController = TextEditingController(); // �?来源'新增Controller
+  final _sourceController = TextEditingController(); // �?来源'新增Controller
   final _paymentController = TextEditingController(); // 收款Controller
 
-  final SaleMode _currentMode = SaleMode.sale; // 默认是销售模�?
+  final SaleMode _currentMode = SaleMode.sale; // 默认是销售模�?
   Customer? _selectedCustomer;
   Shop? _selectedShop;
   bool _isProcessing = false;
@@ -82925,7 +82925,7 @@ class _CreateSaleScreenState extends ConsumerState<CreateSaleScreen> {
     _paymentController.addListener(() => setState(() {}));
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref.read(saleListProvider.notifier).clear();
-      // 接收来自首页或其他页面的扫码货品，自动添加到销售清�?
+      // 接收来自首页或其他页面的扫码货品，自动添加到销售清�?
       final p = widget.payload;
       if (p != null) {
         // 如果是基本单位（conversionRate = 1），使用 Product 表的 effectivePrice
@@ -82943,7 +82943,7 @@ class _CreateSaleScreenState extends ConsumerState<CreateSaleScreen> {
                 sellingPriceInCents: priceCents,
                 conversionRate: p.conversionRate,
               );
-          // 可选：提示已添�?
+          // 可选：提示已添�?
           // showAppSnackBar(context, message: '已添加：${p.product.name}');
         } catch (_) {}
       }
@@ -82975,7 +82975,7 @@ class _CreateSaleScreenState extends ConsumerState<CreateSaleScreen> {
     while (_priceFocusNodes.length < itemCount) {
       _priceFocusNodes.add(FocusNode());
     }
-    // 如果条目减少，不立刻销毁已存在的节点，避免异步 rebuild 期间访问已释放对�?
+    // 如果条目减少，不立刻销毁已存在的节点，避免异步 rebuild 期间访问已释放对�?
   }
 
   Future<void> _handleNextStep(int index) async {
@@ -83001,11 +83001,11 @@ class _CreateSaleScreenState extends ConsumerState<CreateSaleScreen> {
       MaterialPageRoute(builder: (context) => const ProductSelectionScreen()),
     );
 
-    // 如果没有返回结果或结果为空，则直接返�?
+    // 如果没有返回结果或结果为空，则直接返�?
     if (result == null || result.isEmpty) return;
 
     try {
-      // 核心修复：安全获取产品数�?
+      // 核心修复：安全获取产品数�?
       final List<
         ({
           ProductModel product,
@@ -83049,12 +83049,12 @@ class _CreateSaleScreenState extends ConsumerState<CreateSaleScreen> {
               );
         } catch (e) {
           print('添加产品失败: ${p.product.name}, 错误: $e');
-          // 继续处理下一个产�?
+          // 继续处理下一个产�?
         }
       }
     } catch (e) {
       // 捕获并处理可能的异常
-      print('添加手动产品时发生错�? $e');
+      print('添加手动产品时发生错�? $e');
       if (!mounted) return;
       showAppSnackBar(
         context,
@@ -83083,7 +83083,7 @@ class _CreateSaleScreenState extends ConsumerState<CreateSaleScreen> {
   }
 
   void _continuousScan() {
-    _lastScannedBarcode = null; // 重置上次扫描的条�?
+    _lastScannedBarcode = null; // 重置上次扫描的条�?
     Navigator.of(context).push(
       MaterialPageRoute(
         builder: (context) => Scaffold(
@@ -83091,7 +83091,7 @@ class _CreateSaleScreenState extends ConsumerState<CreateSaleScreen> {
             child: UniversalBarcodeScanner(
               config: const BarcodeScannerConfig(
                 title: '连续扫码',
-                subtitle: '将条码对准扫描框，自动连续添�?,
+                subtitle: '将条码对准扫描框，自动连续添�?,
                 continuousMode: true, // 启用连续扫码模式
                 continuousDelay: 1500, // 设置扫码间隔
               ),
@@ -83144,7 +83144,7 @@ class _CreateSaleScreenState extends ConsumerState<CreateSaleScreen> {
               : _customerController.text.trim();
         }
       } else {
-        // 非销售模�?
+        // 非销售模�?
         customerId = null;
         customerName = null;
       }
@@ -83182,9 +83182,9 @@ class _CreateSaleScreenState extends ConsumerState<CreateSaleScreen> {
       );
 
       Navigator.of(context).pop();
-      showAppSnackBar(context, message: '�?销售成功！销售单号：$receiptNumber');
+      showAppSnackBar(context, message: '�?销售成功！销售单号：$receiptNumber');
 
-      // 核心修复：使入库记录和库存查询的Provider失效，以便在导航后刷新数�?
+      // 核心修复：使入库记录和库存查询的Provider失效，以便在导航后刷新数�?
       ref.invalidate(inboundRecordsProvider);
       // 同步刷新：使出库记录 Provider 失效，库存记录页的“出库记录”可自动更新
       ref.invalidate(outboundReceiptsProvider);
@@ -83192,7 +83192,7 @@ class _CreateSaleScreenState extends ConsumerState<CreateSaleScreen> {
 
       Future.delayed(const Duration(seconds: 1), () {
         if (mounted) {
-          // 使用 go 而不�?push, 以替换当前页面，而不是堆�?
+          // 使用 go 而不�?push, 以替换当前页面，而不是堆�?
           context.go(AppRoutes.saleRecords);
         }
       });
@@ -83200,7 +83200,7 @@ class _CreateSaleScreenState extends ConsumerState<CreateSaleScreen> {
       Navigator.of(context).pop();
       showAppSnackBar(
         context,
-        message: '�?销售失�? ${e.toString()}',
+        message: '�?销售失�? ${e.toString()}',
         isError: true,
       );
     } finally {
@@ -83251,7 +83251,7 @@ class _CreateSaleScreenState extends ConsumerState<CreateSaleScreen> {
               : _customerController.text.trim();
         }
       } else {
-        // 非销售模�?
+        // 非销售模�?
         customerId = null;
         customerName = null;
       }
@@ -83283,16 +83283,16 @@ class _CreateSaleScreenState extends ConsumerState<CreateSaleScreen> {
         isSaleMode: isSaleMode,
         customerId: customerId ?? 0,
         customerName: customerName,
-        status: SalesStatus.credit, // 设置为赊账状�?
+        status: SalesStatus.credit, // 设置为赊账状�?
       );
       print(
         '🔍 [DEBUG] UI: processOneClickSale (Credit) Settled, receipt: $receiptNumber',
       );
 
       Navigator.of(context).pop();
-      showAppSnackBar(context, message: '�?赊账成功！销售单号：$receiptNumber');
+      showAppSnackBar(context, message: '�?赊账成功！销售单号：$receiptNumber');
 
-      // 核心修复：使入库记录和库存查询的Provider失效，以便在导航后刷新数�?
+      // 核心修复：使入库记录和库存查询的Provider失效，以便在导航后刷新数�?
       ref.invalidate(inboundRecordsProvider);
       // 同步刷新：使出库记录 Provider 失效，库存记录页的“出库记录”可自动更新
       ref.invalidate(outboundReceiptsProvider);
@@ -83300,7 +83300,7 @@ class _CreateSaleScreenState extends ConsumerState<CreateSaleScreen> {
 
       Future.delayed(const Duration(seconds: 1), () {
         if (mounted) {
-          // 使用 go 而不�?push, 以替换当前页面，而不是堆�?
+          // 使用 go 而不�?push, 以替换当前页面，而不是堆�?
           context.go(AppRoutes.saleRecords);
         }
       });
@@ -83308,7 +83308,7 @@ class _CreateSaleScreenState extends ConsumerState<CreateSaleScreen> {
       Navigator.of(context).pop();
       showAppSnackBar(
         context,
-        message: '�?赊账失败: ${e.toString()}',
+        message: '�?赊账失败: ${e.toString()}',
         isError: true,
       );
     } finally {
@@ -83329,7 +83329,7 @@ class _CreateSaleScreenState extends ConsumerState<CreateSaleScreen> {
 
       if (!mounted) return;
 
-      // 无论成功与否，都先关闭扫码页�?
+      // 无论成功与否，都先关闭扫码页�?
       Navigator.of(context).pop();
 
       if (result != null) {
@@ -83347,7 +83347,7 @@ class _CreateSaleScreenState extends ConsumerState<CreateSaleScreen> {
               sellingPriceInCents: sellingPrice,
               conversionRate: result.conversionRate,
             );
-        // 成功添加商品后播放音�?
+        // 成功添加商品后播放音�?
         HapticFeedback.lightImpact();
         SoundHelper.playSuccessSound();
       } else {
@@ -83359,17 +83359,17 @@ class _CreateSaleScreenState extends ConsumerState<CreateSaleScreen> {
       // 关闭扫码页面
       Navigator.of(context).pop();
       // 显示错误信息
-      showAppSnackBar(context, message: '�?查询货品失败: $e', isError: true);
+      showAppSnackBar(context, message: '�?查询货品失败: $e', isError: true);
     }
   }
 
   void _handleContinuousProductScan(String barcode) async {
-    // 连续扫码去重：如果条码与上一个相同，则忽�?
+    // 连续扫码去重：如果条码与上一个相同，则忽�?
     if (barcode == _lastScannedBarcode) {
       return;
     }
 
-    // 在连续扫码模式下，不显示全局的加载提示，而是快速反�?
+    // 在连续扫码模式下，不显示全局的加载提示，而是快速反�?
     HapticFeedback.lightImpact();
     showAppSnackBar(context, message: '条码: $barcode...');
 
@@ -83396,24 +83396,24 @@ class _CreateSaleScreenState extends ConsumerState<CreateSaleScreen> {
               sellingPriceInCents: sellingPrice,
               conversionRate: result.conversionRate,
             );
-        _lastScannedBarcode = barcode; // 仅在成功时更新上一个条�?
-        // 成功添加商品后播放音�?
+        _lastScannedBarcode = barcode; // 仅在成功时更新上一个条�?
+        // 成功添加商品后播放音�?
         SoundHelper.playSuccessSound();
-        // 成功添加后给予一个更明确的提�?
-        showAppSnackBar(context, message: '�?${result.product.name} 已添�?);
+        // 成功添加后给予一个更明确的提�?
+        showAppSnackBar(context, message: '�?${result.product.name} 已添�?);
       } else {
-        _lastScannedBarcode = null; // 如果未找到，则允许立即重�?
-        // 未找到货品时给予一个失败提�?
+        _lastScannedBarcode = null; // 如果未找到，则允许立即重�?
+        // 未找到货品时给予一个失败提�?
         showAppSnackBar(
           context,
-          message: '�?未找到条码对应的货品: $barcode',
+          message: '�?未找到条码对应的货品: $barcode',
           isError: true,
         );
       }
     } catch (e) {
       if (!mounted) return;
       _lastScannedBarcode = null; // 如果出错，则允许立即重扫
-      showAppSnackBar(context, message: '�?查询失败: $e', isError: true);
+      showAppSnackBar(context, message: '�?查询失败: $e', isError: true);
     }
   }
 
@@ -83424,9 +83424,9 @@ class _CreateSaleScreenState extends ConsumerState<CreateSaleScreen> {
         final theme = Theme.of(context);
         final textTheme = theme.textTheme;
         return AlertDialog(
-          title: Text('货品未找�?, style: textTheme.titleLarge),
+          title: Text('货品未找�?, style: textTheme.titleLarge),
           content: Text(
-            '条码 $barcode 对应的货品未在系统中找到�?,
+            '条码 $barcode 对应的货品未在系统中找到�?,
             style: textTheme.bodyMedium,
           ),
           actions: [
@@ -83444,7 +83444,7 @@ class _CreateSaleScreenState extends ConsumerState<CreateSaleScreen> {
     if (_currentMode == SaleMode.sale) {
       // if (_selectedCustomer == null &&
       //     _customerController.text.trim().isEmpty) {
-      //   showAppSnackBar(context, message: '请选择或输入客户名�?, isError: true);
+      //   showAppSnackBar(context, message: '请选择或输入客户名�?, isError: true);
       //   return false;
       // }
     }
@@ -83461,7 +83461,7 @@ class _CreateSaleScreenState extends ConsumerState<CreateSaleScreen> {
       if (item.quantity <= 0) {
         showAppSnackBar(
           context,
-          message: '货品"${item.productName}"的数量必须大�?',
+          message: '货品"${item.productName}"的数量必须大�?',
           isError: true,
         );
         return false;
@@ -83474,7 +83474,7 @@ class _CreateSaleScreenState extends ConsumerState<CreateSaleScreen> {
         );
         return false;
       }
-      // 采购模式下，单价不能�?
+      // 采购模式下，单价不能�?
       if (_currentMode == SaleMode.sale && item.sellingPriceInCents == 0) {
         showAppSnackBar(
           context,
@@ -83556,7 +83556,7 @@ class _CreateSaleScreenState extends ConsumerState<CreateSaleScreen> {
     final totalQuantity = totals['quantity']?.toInt() ?? 0;
     final totalAmount = totals['amount'] ?? 0.0;
 
-    // 根据总金额自动更新收款金额：收款 = 100 * ⌈总金�?100�?
+    // 根据总金额自动更新收款金额：收款 = 100 * ⌈总金�?100�?
     if (!_paymentFocusNode.hasFocus) {
       final calculatedPayment = totalAmount > 0
           ? (totalAmount / 100).ceil() * 100.0
@@ -83591,7 +83591,7 @@ class _CreateSaleScreenState extends ConsumerState<CreateSaleScreen> {
                     tooltip: '返回',
                   )
                 : null,
-            title: Row(mainAxisSize: MainAxisSize.min, children: [Text('收银�?)]),
+            title: Row(mainAxisSize: MainAxisSize.min, children: [Text('收银�?)]),
             actions: [const SizedBox(width: 8)],
           ),
           body: SingleChildScrollView(
@@ -83614,14 +83614,14 @@ class _CreateSaleScreenState extends ConsumerState<CreateSaleScreen> {
                         itemId: itemId,
                         shopId: _selectedShop?.id,
                         showPriceInfo: _currentMode == SaleMode.sale, // 新增
-                        // 价格与数�?FocusNode 注入，构建焦点链�?
+                        // 价格与数�?FocusNode 注入，构建焦点链�?
                         sellingPriceFocusNode: _priceFocusNodes.length > index
                             ? _priceFocusNodes[index]
                             : null,
                         quantityFocusNode: _quantityFocusNodes.length > index
                             ? _quantityFocusNodes[index]
                             : null,
-                        // 当数量提交时，跳到下一项的售价或收�?
+                        // 当数量提交时，跳到下一项的售价或收�?
                         onSubmitted: () => _handleNextStep(index),
                       ),
                     );
@@ -83672,7 +83672,7 @@ class _CreateSaleScreenState extends ConsumerState<CreateSaleScreen> {
           ),
           const SizedBox(height: 8),
           Text(
-            '请使用下方按钮添加货品到入库�?,
+            '请使用下方按钮添加货品到入库�?,
             style: textTheme.bodyMedium?.copyWith(
               color: theme.colorScheme.onSurfaceVariant.withOpacity(0.7),
             ),
@@ -83745,7 +83745,7 @@ class _CreateSaleScreenState extends ConsumerState<CreateSaleScreen> {
           if (_currentMode == SaleMode.sale)
             _buildTotalItem(
               textTheme,
-              '总金�?,
+              '总金�?,
               '¥${totalAmount.toStringAsFixed(1)}',
               isAmount: true,
             ),
@@ -83785,7 +83785,7 @@ class _CreateSaleScreenState extends ConsumerState<CreateSaleScreen> {
     return Row(
       children: [
         Expanded(
-          flex: 2, // 赊账按钮�?2 份宽�?
+          flex: 2, // 赊账按钮�?2 份宽�?
           child: ElevatedButton.icon(
             onPressed: _isProcessing ? null : _confirmCreditSale,
             icon: _isProcessing
@@ -83817,7 +83817,7 @@ class _CreateSaleScreenState extends ConsumerState<CreateSaleScreen> {
         ),
         const SizedBox(width: 12),
         Expanded(
-          flex: 3, // 结账按钮�?3 份宽�?
+          flex: 3, // 结账按钮�?3 份宽�?
           child: ElevatedButton.icon(
             onPressed: _isProcessing ? null : _confirmSale,
             icon: _isProcessing
@@ -83948,7 +83948,7 @@ class _CreateSaleScreenState extends ConsumerState<CreateSaleScreen> {
                                 _selectedCustomer = suggestion;
                                 _customerController.text = suggestion.name;
                               });
-                              // 选中客户后失去焦�?
+                              // 选中客户后失去焦�?
                               _customerFocusNode.unfocus();
                             },
                             builder: (context, controller, focusNode) {
@@ -83964,7 +83964,7 @@ class _CreateSaleScreenState extends ConsumerState<CreateSaleScreen> {
                                 ),
                                 textInputAction: TextInputAction.next,
                                 onSubmitted: (_) {
-                                  // 顾客后跳到首个售价；如果没有条目则跳到收�?
+                                  // 顾客后跳到首个售价；如果没有条目则跳到收�?
                                   WidgetsBinding.instance.addPostFrameCallback((
                                     _,
                                   ) {
@@ -83992,7 +83992,7 @@ class _CreateSaleScreenState extends ConsumerState<CreateSaleScreen> {
                             controller: _sourceController,
                             style: const TextStyle(fontSize: 15.5),
                             decoration: const InputDecoration(
-                              hintText: '输入货品来源 (可�?',
+                              hintText: '输入货品来源 (可�?',
                               isDense: true,
                               contentPadding: EdgeInsets.symmetric(vertical: 0),
                             ),
@@ -84056,7 +84056,7 @@ class _CustomerSelectionScreenState extends ConsumerState<CustomerSelectionScree
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('选择客户'),
+        title: const Text('客户管理'),
         actions: [
           IconButton(
             onPressed: () => _showAddCustomerDialog(context),
@@ -84071,7 +84071,7 @@ class _CustomerSelectionScreenState extends ConsumerState<CustomerSelectionScree
           Expanded(
             child: customersAsyncValue.when(
               data: (customers) => _buildCustomerList(context, customers),
-              loading: () => const LoadingWidget(message: '加载客户列表�?..'),
+              loading: () => const LoadingWidget(message: '加载客户列表�?..'),
               error: (error, stackTrace) => CustomErrorWidget(
                 message: '加载客户列表失败',
                 onRetry: () => ref.invalidate(allCustomersProvider),
@@ -84192,13 +84192,13 @@ class _CustomerSelectionScreenState extends ConsumerState<CustomerSelectionScree
             controller: nameController,
             decoration: const InputDecoration(
               labelText: '客户名称',
-              hintText: '请输入客户名�?,
+              hintText: '请输入客户名�?,
               border: OutlineInputBorder(),
               prefixIcon: Icon(Icons.person),
             ),
             validator: (value) {
               if (value == null || value.trim().isEmpty) {
-                return '请输入客户名�?;
+                return '请输入客户名�?;
               }
               return null;
             },
@@ -84221,7 +84221,7 @@ class _CustomerSelectionScreenState extends ConsumerState<CustomerSelectionScree
 
                 if (exists) {
                   showAppSnackBar(context,
-                      message: '客户名称已存�?, isError: true);
+                      message: '客户名称已存�?, isError: true);
                   return;
                 }
 
@@ -84310,7 +84310,7 @@ class SalesRecordsScreen extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('销售记�?),
+        title: const Text('销售记�?),
         actions: [
           IconButton(
             onPressed: () => context.push(AppRoutes.saleCreate),
@@ -84329,7 +84329,7 @@ class SalesRecordsScreen extends ConsumerWidget {
                   Icon(Icons.receipt_long, size: 64, color: Colors.grey),
                   SizedBox(height: 16),
                   Text(
-                    '暂无销售订�?,
+                    '暂无销售订�?,
                     style: TextStyle(fontSize: 18, color: Colors.grey),
                   ),
                 ],
@@ -84375,7 +84375,7 @@ class SaleOrderCard extends ConsumerWidget {
           title: Row(
             children: [
               Text(
-                '销售单�? ${sale.id}',
+                '销售单�? ${sale.id}',
                 style: const TextStyle(fontWeight: FontWeight.bold),
               ),
               if (sale.status == 'credit') ...[
@@ -84411,7 +84411,7 @@ class SaleOrderCard extends ConsumerWidget {
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: const Text(
-                    '已结�?,
+                    '已结�?,
                     style: TextStyle(
                       color: Colors.white,
                       fontSize: 12,
@@ -84437,7 +84437,7 @@ class SaleOrderCard extends ConsumerWidget {
                       .firstOrNull;
                   return Text('客户: ${customer?.name ?? '未知'}');
                 },
-                loading: () => const Text('客户: 加载�?..'),
+                loading: () => const Text('客户: 加载�?..'),
                 error: (_, __) => const Text('客户: 加载失败'),
               ),
             ],
@@ -84457,14 +84457,14 @@ class SaleOrderCard extends ConsumerWidget {
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
                   Text(
-                    '�?{(totalAmount / 100).toStringAsFixed(2)}',
+                    '�?{(totalAmount / 100).toStringAsFixed(2)}',
                     style: const TextStyle(
                       fontWeight: FontWeight.bold,
                       color: Colors.red,
                     ),
                   ),
                   Text(
-                    '${totalQuantity.toInt()}�?,
+                    '${totalQuantity.toInt()}�?,
                     style: const TextStyle(fontSize: 12, color: Colors.grey),
                   ),
                 ],
@@ -84498,7 +84498,7 @@ class SaleOrderCard extends ConsumerWidget {
       ),
     );
 
-    // 只有赊账单才能左滑显示销账按�?
+    // 只有赊账单才能左滑显示销账按�?
     Widget content;
     if (sale.status == 'credit') {
       content = Slidable(
@@ -84513,7 +84513,7 @@ class SaleOrderCard extends ConsumerWidget {
               backgroundColor: Colors.green,
               foregroundColor: Colors.white,
               icon: Icons.check_circle,
-              label: '销�?,
+              label: '销�?,
               borderRadius: BorderRadius.circular(12),
               padding: EdgeInsets.zero,
               autoClose: true,
@@ -84536,11 +84536,11 @@ class SaleOrderCard extends ConsumerWidget {
 
     if (success) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('销账成�?), backgroundColor: Colors.green),
+        const SnackBar(content: Text('销账成�?), backgroundColor: Colors.green),
       );
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('销账失败，请重�?), backgroundColor: Colors.red),
+        const SnackBar(content: Text('销账失败，请重�?), backgroundColor: Colors.red),
       );
     }
   }
@@ -84575,7 +84575,7 @@ class SaleOrderItemTile extends ConsumerWidget {
                 product?.name ?? '货品ID: ${item.productId}',
                 style: const TextStyle(fontSize: 16),
               ),
-              loading: () => const Text('加载�?..'),
+              loading: () => const Text('加载�?..'),
               error: (err, stack) => Text(
                 '加载货品失败',
                 style: TextStyle(color: Theme.of(context).colorScheme.error),
@@ -84589,10 +84589,10 @@ class SaleOrderItemTile extends ConsumerWidget {
         crossAxisAlignment: CrossAxisAlignment.end,
         children: [
           Text(
-            '�?{(item.priceInCents / 100).toStringAsFixed(2)} × ${item.quantity.toInt()}',
+            '�?{(item.priceInCents / 100).toStringAsFixed(2)} × ${item.quantity.toInt()}',
           ),
           Text(
-            '�?{(item.priceInCents * item.quantity / 100).toStringAsFixed(2)}',
+            '�?{(item.priceInCents * item.quantity / 100).toStringAsFixed(2)}',
             style: const TextStyle(fontWeight: FontWeight.bold),
           ),
         ],
@@ -84608,16 +84608,16 @@ import '../../../../core/widgets/cached_image_widget.dart';
 import '../../application/provider/sale_list_provider.dart';
 import '../../domain/model/sale_cart_item.dart';
 
-/// 销售单商品项卡�?
-/// 显示商品信息、价格、数量和金额输入�?
+/// 销售单商品项卡�?
+/// 显示商品信息、价格、数量和金额输入�?
 class SaleItemCard extends ConsumerStatefulWidget {
   final String itemId;
   final FocusNode? quantityFocusNode;
-  // 新增：允许外部传入售价输入框�?FocusNode，用于跨卡片焦点链路
+  // 新增：允许外部传入售价输入框�?FocusNode，用于跨卡片焦点链路
   final FocusNode? sellingPriceFocusNode;
   final VoidCallback? onSubmitted;
   final bool showPriceInfo;
-  // 新增：用于加载批次（按产�?店铺�?
+  // 新增：用于加载批次（按产�?店铺�?
   final int? shopId;
 
   const SaleItemCard({
@@ -84640,7 +84640,7 @@ class _SaleItemCardState extends ConsumerState<SaleItemCard> {
 
   final _sellingPriceFocusNode = FocusNode();
 
-  // 统一获取当前使用的售�?FocusNode（外部优先，其次内部�?
+  // 统一获取当前使用的售�?FocusNode（外部优先，其次内部�?
   FocusNode get _priceNode =>
       widget.sellingPriceFocusNode ?? _sellingPriceFocusNode;
 
@@ -84652,7 +84652,7 @@ class _SaleItemCardState extends ConsumerState<SaleItemCard> {
         final item = ref
             .read(saleListProvider)
             .firstWhere((it) => it.id == widget.itemId);
-        // 显示为元（分/100�?
+        // 显示为元（分/100�?
         _sellingPriceController.text = (item.sellingPriceInCents / 100)
             .toStringAsFixed(1);
       }
@@ -84698,7 +84698,7 @@ class _SaleItemCardState extends ConsumerState<SaleItemCard> {
   void dispose() {
     _sellingPriceController.dispose();
     _quantityController.dispose();
-    // 仅移除监听；仅销毁内部节�?
+    // 仅移除监听；仅销毁内部节�?
     (widget.sellingPriceFocusNode ?? _sellingPriceFocusNode).removeListener(
       _onSellingPriceFocusChange,
     );
@@ -84708,7 +84708,7 @@ class _SaleItemCardState extends ConsumerState<SaleItemCard> {
   }
 
   void _updateItem(SaleCartItem item) {
-    // 将输入的小数价格（元）转换为�?
+    // 将输入的小数价格（元）转换为�?
     final String priceText = _sellingPriceController.text.trim();
     final sellingPriceInCents = ((double.tryParse(priceText) ?? 0) * 100)
         .round();
@@ -84740,7 +84740,7 @@ class _SaleItemCardState extends ConsumerState<SaleItemCard> {
     if (!_priceNode.hasFocus &&
         _sellingPriceController.text !=
             (item.sellingPriceInCents / 100).toStringAsFixed(2)) {
-      // 同步控制器文本为元（�?100�?
+      // 同步控制器文本为元（�?100�?
       _sellingPriceController.text = (item.sellingPriceInCents / 100)
           .toStringAsFixed(1);
     }
@@ -84852,7 +84852,7 @@ class _SaleItemCardState extends ConsumerState<SaleItemCard> {
                                               ),
                                             ),
                                             data: (list) {
-                                              // 选项：显示生产日期（�?id 去重，防止出现重�?value�?
+                                              // 选项：显示生产日期（�?id 去重，防止出现重�?value�?
                                               final options = list;
                                               final uniqueOptions = {
                                                 for (final b in options)
@@ -84862,7 +84862,7 @@ class _SaleItemCardState extends ConsumerState<SaleItemCard> {
                                                 item.batchId ?? '',
                                               );
 
-                                              // 若当前选中批次不在新店铺的批次列表中，置空以避�?Dropdown 的断言错误
+                                              // 若当前选中批次不在新店铺的批次列表中，置空以避�?Dropdown 的断言错误
                                               final isValid =
                                                   selectedId != null &&
                                                   uniqueOptions.any(
@@ -84923,7 +84923,7 @@ class _SaleItemCardState extends ConsumerState<SaleItemCard> {
                                                           DropdownMenuItem<int>(
                                                             value: b.id,
                                                             child: Text(
-                                                              // 仅日期部�?
+                                                              // 仅日期部�?
                                                               b.productionDate
                                                                   .toLocal()
                                                                   .toString()
@@ -85175,14 +85175,14 @@ class _ImageCacheManagementScreenState
       setState(() {
         _isLoading = false;
       });
-      showAppSnackBar(context, message: '获取缓存状态失�? $e', isError: true);
+      showAppSnackBar(context, message: '获取缓存状态失�? $e', isError: true);
     }
   }
 
   Future<void> _clearAllCache() async {
     final confirmed = await _showConfirmDialog(
-      '清理所有缓�?,
-      '确定要清理所有图片缓存吗？这个操作不可恢复�?,
+      '清理所有缓�?,
+      '确定要清理所有图片缓存吗？这个操作不可恢复�?,
     );
 
     if (confirmed) {
@@ -85224,7 +85224,7 @@ class _ImageCacheManagementScreenState
 
   Widget _buildContent() {
     if (_cacheStatus == null) {
-      return const Center(child: Text('无法获取缓存状�?));
+      return const Center(child: Text('无法获取缓存状�?));
     }
 
     return SingleChildScrollView(
@@ -85312,19 +85312,19 @@ class _ImageCacheManagementScreenState
             ),
             const SizedBox(height: 16),
             _buildDetailItem(
-              '缩略图缓存目�?,
-              _cacheStatus!['thumbnailCacheDir'] ?? '未设�?,
+              '缩略图缓存目�?,
+              _cacheStatus!['thumbnailCacheDir'] ?? '未设�?,
               Icons.folder,
             ),
             const SizedBox(height: 8),
             _buildDetailItem(
-              '内存缓存使用�?,
+              '内存缓存使用�?,
               '${((_cacheStatus!['memoryCount'] as int) / (_cacheStatus!['maxMemorySize'] as int) * 100).toStringAsFixed(1)}%',
               Icons.pie_chart,
             ),
             const SizedBox(height: 8),
             _buildDetailItem(
-              '字节缓存使用�?,
+              '字节缓存使用�?,
               '${((_cacheStatus!['byteCount'] as int) / (_cacheStatus!['maxByteSize'] as int) * 100).toStringAsFixed(1)}%',
               Icons.donut_small,
             ),
@@ -85359,7 +85359,7 @@ class _ImageCacheManagementScreenState
               child: ElevatedButton.icon(
                 onPressed: _clearAllCache,
                 icon: const Icon(Icons.clear_all),
-                label: const Text('清理所有缓�?),
+                label: const Text('清理所有缓�?),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.red,
                   foregroundColor: Colors.white,
@@ -85372,7 +85372,7 @@ class _ImageCacheManagementScreenState
               child: OutlinedButton.icon(
                 onPressed: _loadCacheStatus,
                 icon: const Icon(Icons.refresh),
-                label: const Text('刷新缓存状�?),
+                label: const Text('刷新缓存状�?),
               ),
             ),
           ],
@@ -85404,11 +85404,11 @@ class _ImageCacheManagementScreenState
             ),
             const SizedBox(height: 12),
             Text(
-              '�?内存缓存：存储已解码的图片对象，访问速度最快\n'
-              '�?字节缓存：存储图片字节数据，减少磁盘读取\n'
-              '�?磁盘缓存：存储优化后的缩略图，持久化存储\n'
-              '�?缓存会自动管理，无需手动清理\n'
-              '�?清理缓存会释放内存并删除磁盘文件',
+              '�?内存缓存：存储已解码的图片对象，访问速度最快\n'
+              '�?字节缓存：存储图片字节数据，减少磁盘读取\n'
+              '�?磁盘缓存：存储优化后的缩略图，持久化存储\n'
+              '�?缓存会自动管理，无需手动清理\n'
+              '�?清理缓存会释放内存并删除磁盘文件',
               style: TextStyle(color: Colors.blue.shade700, fontSize: 14),
             ),
           ],
@@ -85511,7 +85511,7 @@ class _ImageCacheManagementScreenState
 
   void _copyToClipboard(String text) {
     Clipboard.setData(ClipboardData(text: text));
-    showAppSnackBar(context, message: '已复制到剪贴�?);
+    showAppSnackBar(context, message: '已复制到剪贴�?);
   }
 
 }
@@ -85574,7 +85574,7 @@ class PrivacyTestScreen extends StatelessWidget {
             
             ElevatedButton(
               onPressed: () => PrivacyDebugHelper.showDebugInfo(context),
-              child: const Text('查看隐私政策状�?),
+              child: const Text('查看隐私政策状�?),
             ),
             
             const SizedBox(height: 10),
@@ -85589,7 +85589,7 @@ class PrivacyTestScreen extends StatelessWidget {
                 }
               },
               style: ElevatedButton.styleFrom(backgroundColor: Colors.orange),
-              child: const Text('重置隐私政策状�?),
+              child: const Text('重置隐私政策状�?),
             ),
             
             const SizedBox(height: 10),
@@ -85622,12 +85622,12 @@ class PrivacyTestScreen extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      '使用说明�?,
+                      '使用说明�?,
                       style: TextStyle(fontWeight: FontWeight.bold),
                     ),
                     SizedBox(height: 8),
-                    Text('1. 点击"查看隐私政策状�?检查当前状�?),
-                    Text('2. 点击"重置隐私政策状�?清除同意记录'),
+                    Text('1. 点击"查看隐私政策状�?检查当前状�?),
+                    Text('2. 点击"重置隐私政策状�?清除同意记录'),
                     Text('3. 重启应用查看弹窗是否正常显示'),
                     Text('4. 点击"手动显示"测试弹窗功能'),
                   ],
@@ -85679,7 +85679,7 @@ class SettingsScreen extends StatelessWidget {
     );
   }
 
-  /// 显示备份功能帮助对话�?
+  /// 显示备份功能帮助对话�?
   void _showBackupHelpDialog(BuildContext context) {
     showDialog(
       context: context,
@@ -85698,26 +85698,26 @@ class SettingsScreen extends StatelessWidget {
             children: [
               _buildHelpSection(
                 context,
-                '什么是数据备份�?,
-                '数据备份是将您的库存数据（产品、库存、销售记录等）导出到文件中，以防数据丢失或设备更换时使用�?,
+                '什么是数据备份�?,
+                '数据备份是将您的库存数据（产品、库存、销售记录等）导出到文件中，以防数据丢失或设备更换时使用�?,
               ),
               const SizedBox(height: 16),
               _buildHelpSection(
                 context,
-                '如何创建备份�?,
+                '如何创建备份�?,
                 '1. 点击"备份管理"进入备份界面\n2. 点击"创建备份"按钮\n3. 设置备份选项（名称、加密等）\n4. 等待备份完成',
               ),
               const SizedBox(height: 16),
               _buildHelpSection(
                 context,
-                '如何恢复数据�?,
-                '1. 在备份管理界面点�?恢复"按钮\n2. 选择备份文件\n3. 选择恢复模式（替换或合并）\n4. 确认恢复操作',
+                '如何恢复数据�?,
+                '1. 在备份管理界面点�?恢复"按钮\n2. 选择备份文件\n3. 选择恢复模式（替换或合并）\n4. 确认恢复操作',
               ),
               const SizedBox(height: 16),
               _buildHelpSection(
                 context,
                 '自动备份功能',
-                '启用自动备份后，系统会定期自动创建备份文件，无需手动操作。建议开启此功能以确保数据安全�?,
+                '启用自动备份后，系统会定期自动创建备份文件，无需手动操作。建议开启此功能以确保数据安全�?,
               ),
               const SizedBox(height: 16),
               Container(
@@ -85736,7 +85736,7 @@ class SettingsScreen extends StatelessWidget {
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
-                        '建议定期创建备份，并将重要备份文件保存到云存储或其他安全位置�?,
+                        '建议定期创建备份，并将重要备份文件保存到云存储或其他安全位置�?,
                         style: Theme.of(context).textTheme.bodySmall?.copyWith(
                           color: Theme.of(context).colorScheme.onSurface,
                         ),
@@ -85751,7 +85751,7 @@ class SettingsScreen extends StatelessWidget {
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
-            child: const Text('知道�?),
+            child: const Text('知道�?),
           ),
           ElevatedButton(
             onPressed: () {
@@ -85796,12 +85796,12 @@ class SettingsScreen extends StatelessWidget {
       appBar: AppBar(title: const Text('设置')),
       body: ListView(
         children: [
-          // 数据备份和恢复部�?
-          _buildSectionHeader(context, '数据备份和恢�?),
+          // 数据备份和恢复部�?
+          _buildSectionHeader(context, '数据备份和恢�?),
           ListTile(
             leading: const Icon(Icons.backup),
             title: const Text('备份管理'),
-            subtitle: const Text('创建和管理数据备�?),
+            subtitle: const Text('创建和管理数据备�?),
             trailing: IconButton(
               icon: const Icon(Icons.help_outline),
               onPressed: () => _showBackupHelpDialog(context),
@@ -85834,7 +85834,7 @@ class SettingsScreen extends StatelessWidget {
           ListTile(
             leading: const Icon(Icons.cached),
             title: const Text('图片缓存管理'),
-            subtitle: const Text('查看和清理应用缓�?),
+            subtitle: const Text('查看和清理应用缓�?),
             onTap: () {
               Navigator.push(
                 context,
@@ -85874,7 +85874,7 @@ class SettingsScreen extends StatelessWidget {
           const _DataManagementSection(),
           if (kDebugMode) ...[
            const Divider(),
-           _buildSectionHeader(context, '开发调�?),
+           _buildSectionHeader(context, '开发调�?),
            ListTile(
              leading: const Icon(Icons.bug_report),
              title: const Text('产品恢复测试'),
@@ -85883,7 +85883,7 @@ class SettingsScreen extends StatelessWidget {
            ),
            ListTile(
              leading: const Icon(Icons.restore),
-             title: const Text('重置隐私政策状�?),
+             title: const Text('重置隐私政策状�?),
              subtitle: const Text('仅在开发模式下可见'),
              onTap: () async {
                final prefs = await SharedPreferences.getInstance();
@@ -85921,7 +85921,7 @@ class _DataManagementSection extends ConsumerWidget {
         return;
       }
 
-      // 2. 读取并解析文�?
+      // 2. 读取并解析文�?
       final file = File(result.files.single.path!);
       final content = await file.readAsString();
       final List<dynamic> jsonData = jsonDecode(content);
@@ -85929,7 +85929,7 @@ class _DataManagementSection extends ConsumerWidget {
           .cast<Map<String, dynamic>>();
 
       // 3. 调用服务执行导入
-      final db = ref.read(appDatabaseProvider); // 使用正确�?provider
+      final db = ref.read(appDatabaseProvider); // 使用正确�?provider
       final importService = ProductImportService(db);
 
       ToastService.info('正在导入...');
@@ -85973,7 +85973,7 @@ class _DataManagementSection extends ConsumerWidget {
         'assets/data/jy_products11.json',
       ];
 
-      // 2. 读取并解析所有文�?
+      // 2. 读取并解析所有文�?
       final List<Map<String, dynamic>> productsData = [];
       for (final assetFile in assetFiles) {
         try {
@@ -85987,7 +85987,7 @@ class _DataManagementSection extends ConsumerWidget {
       }
 
       if (productsData.isEmpty) {
-        ToastService.info('没有可导入的货品数据�?);
+        ToastService.info('没有可导入的货品数据�?);
         return;
       }
 
@@ -86015,14 +86015,14 @@ class _DataManagementSection extends ConsumerWidget {
     return ExpansionTile(
       leading: const Icon(Icons.storage),
       title: const Text('数据管理'),
-      subtitle: const Text('导入和导出数�?),
+      subtitle: const Text('导入和导出数�?),
       children: [
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
           child: ElevatedButton.icon(
             onPressed: () => _importProductsFromFile(context, ref),
             icon: const Icon(Icons.file_upload),
-            label: const Text('从文件导入货�?),
+            label: const Text('从文件导入货�?),
             style: ElevatedButton.styleFrom(
               minimumSize: const Size(double.infinity, 40), // 按钮宽度填充
             ),
@@ -86096,7 +86096,7 @@ class _PrivacyPolicyDialogState extends State<PrivacyPolicyDialog> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: const Text('用户协议与隐私政�?),
+      title: const Text('用户协议与隐私政�?),
       content: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -86105,9 +86105,9 @@ class _PrivacyPolicyDialogState extends State<PrivacyPolicyDialog> {
             text: TextSpan(
               style: Theme.of(context).textTheme.bodyMedium,
               children: [
-                const TextSpan(text: '请您在使用本应用前，仔细阅读并充分理�?),
+                const TextSpan(text: '请您在使用本应用前，仔细阅读并充分理�?),
                 TextSpan(
-                  text: '《用户协议�?,
+                  text: '《用户协议�?,
                   style: const TextStyle(
                     color: Colors.blue,
                     decoration: TextDecoration.underline,
@@ -86117,9 +86117,9 @@ class _PrivacyPolicyDialogState extends State<PrivacyPolicyDialog> {
                       context.push('/settings/user-agreement');
                     },
                 ),
-                const TextSpan(text: '�?),
+                const TextSpan(text: '�?),
                 TextSpan(
-                  text: '《隐私政策�?,
+                  text: '《隐私政策�?,
                   style: const TextStyle(
                     color: Colors.blue,
                     decoration: TextDecoration.underline,
@@ -86130,7 +86130,7 @@ class _PrivacyPolicyDialogState extends State<PrivacyPolicyDialog> {
                     },
                 ),
                 const TextSpan(
-                  text: '的全部内容。当您点�?同意"并开始使用我们的产品或服务，即表示您已充分理解并同意本协议和政策�?,
+                  text: '的全部内容。当您点�?同意"并开始使用我们的产品或服务，即表示您已充分理解并同意本协议和政策�?,
                 ),
               ],
             ),
@@ -86147,7 +86147,7 @@ class _PrivacyPolicyDialogState extends State<PrivacyPolicyDialog> {
                 },
               ),
               const Flexible(
-                child: Text('我已阅读并同意《用户协议》和《隐私政策�?),
+                child: Text('我已阅读并同意《用户协议》和《隐私政策�?),
               ),
             ],
           ),
@@ -86156,10 +86156,10 @@ class _PrivacyPolicyDialogState extends State<PrivacyPolicyDialog> {
       actions: [
         TextButton(
           onPressed: () {
-            // 用户不同意隐私政策，退出应�?
+            // 用户不同意隐私政策，退出应�?
             SystemNavigator.pop();
           },
-          child: const Text('不同�?),
+          child: const Text('不同�?),
         ),
         TextButton(
           onPressed: _agreed

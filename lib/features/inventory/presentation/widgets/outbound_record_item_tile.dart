@@ -58,31 +58,7 @@ class OutboundRecordItemTile extends ConsumerWidget {
           ),
         ],
       ),
-      trailing: Column(
-        mainAxisSize: MainAxisSize.min,
-        mainAxisAlignment: MainAxisAlignment.center,
-        crossAxisAlignment: CrossAxisAlignment.end,
-        children: [
-          Text('数量: ${item.quantity}'),
-          if (batchAsync != null)
-            batchAsync.when(
-              data: (batch) {
-                if (batch?.productionDate == null) {
-                  return const SizedBox.shrink();
-                }
-                return Text(
-                  '生产日期: ${DateFormat('yyyy-MM-dd').format(batch!.productionDate)}',
-                  style: const TextStyle(fontSize: 12, color: Colors.grey),
-                );
-              },
-              loading: () => const SizedBox(
-                  width: 12,
-                  height: 12,
-                  child: CircularProgressIndicator(strokeWidth: 2)),
-              error: (e, s) => const SizedBox.shrink(),
-            ),
-        ],
-      ),
+      trailing: Text('数量: ${item.quantity}'),
     );
   }
   

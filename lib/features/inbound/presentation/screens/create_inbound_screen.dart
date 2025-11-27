@@ -1,4 +1,4 @@
-﻿import 'dart:async';
+import 'dart:async';
 import 'package:flutter_typeahead/flutter_typeahead.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -253,6 +253,75 @@ class _CreateInboundScreenState extends ConsumerState<CreateInboundScreen> {
     );
   }
 
+  /// 获取供应商信息（采购模式共用）
+  ({int? supplierId, String? supplierName}) _getSupplierInfo() {
+    if (_selectedSupplier != null) {
+      return (supplierId: _selectedSupplier!.id, supplierName: _selectedSupplier!.name);
+    } else {
+      return (supplierId: null, supplierName: _supplierController.text.trim());
+    }
+  }
+
+  /// 仅采购（不入库）
+  void _confirmPurchaseOnly() async {
+    if (_isProcessing) return;
+    if (!_validateForm()) return;
+
+    setState(() => _isProcessing = true);
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) {
+        final theme = Theme.of(context);
+        return AlertDialog(
+          content: Row(
+            children: [
+              CircularProgressIndicator(color: theme.colorScheme.primary),
+              const SizedBox(width: 24),
+              Text('正在处理...', style: theme.textTheme.titleMedium),
+            ],
+          ),
+        );
+      },
+    );
+
+    try {
+      final inboundService = ref.read(inboundServiceProvider);
+      final supplierInfo = _getSupplierInfo();
+      final inboundItems = ref.read(inboundListProvider);
+
+      final orderNumber = await inboundService.processPurchaseOnly(
+        shopId: _selectedShop!.id!,
+        inboundItems: inboundItems,
+        supplierId: supplierInfo.supplierId,
+        supplierName: supplierInfo.supplierName,
+      );
+
+      Navigator.of(context).pop();
+      showAppSnackBar(context, message: '✅ 采购成功！采购单号：$orderNumber');
+
+      Future.delayed(const Duration(seconds: 1), () {
+        if (mounted) {
+          context.go(AppRoutes.inventoryPurchaseRecords);
+        }
+      });
+    } catch (e, st) {
+      Navigator.of(context).pop();
+      debugPrint('❌ 采购失败: $e');
+      debugPrintStack(stackTrace: st);
+      showAppSnackBar(
+        context,
+        message: '❌ 采购失败: ${e.toString()}',
+        isError: true,
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _isProcessing = false);
+      }
+    }
+  }
+
   void _confirmInbound() async {
     if (_isProcessing) return;
     if (!_validateForm()) return;
@@ -285,13 +354,9 @@ class _CreateInboundScreenState extends ConsumerState<CreateInboundScreen> {
 
       if (isPurchaseMode) {
         source = '采购';
-        if (_selectedSupplier != null) {
-          supplierId = _selectedSupplier!.id;
-          supplierName = _selectedSupplier!.name;
-        } else {
-          supplierId = null;
-          supplierName = _supplierController.text.trim();
-        }
+        final supplierInfo = _getSupplierInfo();
+        supplierId = supplierInfo.supplierId;
+        supplierName = supplierInfo.supplierName;
       } else {
         // 非采购模式
         source = _sourceController.text.trim().isEmpty
@@ -742,33 +807,94 @@ class _CreateInboundScreenState extends ConsumerState<CreateInboundScreen> {
   }
 
   Widget _buildBottomAppBar(ThemeData theme, TextTheme textTheme) {
-    return ElevatedButton.icon(
-      onPressed: _isProcessing ? null : _confirmInbound,
-      icon: _isProcessing
-          ? const SizedBox(
-              width: 24,
-              height: 0, // 修复：将高度从 0 改为 24
-              child: CircularProgressIndicator(
-                strokeWidth: 3,
-                color: Colors.white,
+    final isPurchaseMode = _currentMode == InboundMode.purchase;
+    
+    if (isPurchaseMode) {
+      // 采购模式：显示两个按钮
+      return Row(
+        children: [
+          Expanded(
+            child: OutlinedButton.icon(
+              onPressed: _isProcessing ? null : _confirmPurchaseOnly,
+              icon: _isProcessing
+                  ? const SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : const Icon(Icons.shopping_cart_checkout, size: 20),
+              label: Text(
+                _isProcessing ? '处理中...' : '采购',
+                style: textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
               ),
-            )
-          : const Icon(Icons.check_circle_outline, size: 24),
-      label: Text(
-        _isProcessing ? '正在入库...' : '一键入库',
-        style: textTheme.titleMedium?.copyWith(
-          color: theme.colorScheme.onPrimary,
-          fontWeight: FontWeight.bold,
+              style: OutlinedButton.styleFrom(
+                padding: const EdgeInsets.symmetric(vertical: 0),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              ),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: ElevatedButton.icon(
+              onPressed: _isProcessing ? null : _confirmInbound,
+              icon: _isProcessing
+                  ? const SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: Colors.white,
+                      ),
+                    )
+                  : const Icon(Icons.check_circle_outline, size: 20),
+              label: Text(
+                _isProcessing ? '处理中...' : '一键入库',
+                style: textTheme.titleMedium?.copyWith(
+                  color: theme.colorScheme.onPrimary,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              style: ElevatedButton.styleFrom(
+                padding: const EdgeInsets.symmetric(vertical: 0),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                backgroundColor: theme.colorScheme.primary,
+                foregroundColor: theme.colorScheme.onPrimary,
+              ),
+            ),
+          ),
+        ],
+      );
+    } else {
+      // 非采购模式：只显示一键入库按钮
+      return ElevatedButton.icon(
+        onPressed: _isProcessing ? null : _confirmInbound,
+        icon: _isProcessing
+            ? const SizedBox(
+                width: 24,
+                height: 24,
+                child: CircularProgressIndicator(
+                  strokeWidth: 3,
+                  color: Colors.white,
+                ),
+              )
+            : const Icon(Icons.check_circle_outline, size: 24),
+        label: Text(
+          _isProcessing ? '正在入库...' : '一键入库',
+          style: textTheme.titleMedium?.copyWith(
+            color: theme.colorScheme.onPrimary,
+            fontWeight: FontWeight.bold,
+          ),
         ),
-      ),
-      style: ElevatedButton.styleFrom(
-        // 修改：使用 padding 调整按钮高度
-        padding: const EdgeInsets.symmetric(vertical: 0),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        backgroundColor: theme.colorScheme.primary,
-        foregroundColor: theme.colorScheme.onPrimary,
-      ),
-    );
+        style: ElevatedButton.styleFrom(
+          padding: const EdgeInsets.symmetric(vertical: 0),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          backgroundColor: theme.colorScheme.primary,
+          foregroundColor: theme.colorScheme.onPrimary,
+        ),
+      );
+    }
   }
 
   Widget _buildHeaderSection(ThemeData theme, TextTheme textTheme) {

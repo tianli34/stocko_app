@@ -26,4 +26,4 @@ class PurchaseOrder extends Table {
 }
 
 /// 订单状态枚举
-enum PurchaseOrderStatus { preset, draft, completed }
+enum PurchaseOrderStatus { preset, draft, completed, pendingInbound, inbounded }

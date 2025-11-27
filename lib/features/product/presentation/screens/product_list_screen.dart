@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/constants/app_routes.dart';
 import '../../../../core/widgets/product_list/product_list.dart';
+import '../../../../core/widgets/product_list/grouped_product_list.dart';
 import '../../application/category_notifier.dart';
 import '../../../inventory/application/inventory_service.dart';
 import '../../../inventory/application/provider/shop_providers.dart';
@@ -54,8 +55,8 @@ class ProductListScreen extends ConsumerWidget {
     final shops = await ref.read(allShopsProvider.future);
     Shop? selectedShop = shops.isNotEmpty ? shops.first : null;
 
-    // ignore: use_build_context_synchronously
     if (shops.isEmpty) {
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('没有可用的店铺，请先添加店铺')),
       );
@@ -69,6 +70,7 @@ class ProductListScreen extends ConsumerWidget {
       quantityController.text = inventory.quantity.toStringAsFixed(0);
     }
 
+    if (!context.mounted) return;
     final result = await showDialog<Map<String, dynamic>>(
       context: context,
       builder: (context) {
@@ -130,6 +132,7 @@ class ProductListScreen extends ConsumerWidget {
       if (newQuantityString.isNotEmpty) {
         final newQuantity = int.tryParse(newQuantityString);
         if (newQuantity == null) {
+          if (!context.mounted) return;
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('无效的数字格式')),
           );
@@ -142,11 +145,13 @@ class ProductListScreen extends ConsumerWidget {
                 quantity: newQuantity,
                 shopId: shop.id!,
               );
+          if (!context.mounted) return;
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('库存调整成功')),
           );
           ref.invalidate(filteredProductsProvider); // Refresh the product list
         } catch (e) {
+          if (!context.mounted) return;
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text('库存调整失败: $e')),
           );
@@ -206,10 +211,11 @@ class ProductListScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final productsAsyncValue = ref.watch(filteredProductsProvider);
+    final groupedProductsAsyncValue = ref.watch(groupedProductsProvider);
+    final isGroupedView = ref.watch(groupedViewEnabledProvider);
     final selectedCategoryId = ref.watch(selectedCategoryIdProvider);
     final searchQuery = ref.watch(searchQueryProvider);
     final allCategories = ref.watch(categoryListProvider).categories;
-
 
     String? categoryName;
     if (selectedCategoryId != null) {
@@ -242,90 +248,177 @@ class ProductListScreen extends ConsumerWidget {
         title: titleWidget,
         actions: [
           IconButton(
-            icon: const Icon(Icons.folder_outlined),
-            tooltip: '商品组管理',
-            onPressed: () => context.push(AppRoutes.productGroups),
-          ),
-          IconButton(
-            icon: const Icon(Icons.leaderboard),
-            tooltip: '商品排行榜',
-            onPressed: () => context.push(AppRoutes.productRanking),
-          ),
-          if (searchQuery.isNotEmpty || selectedCategoryId != null)
-            IconButton(
-              icon: const Icon(Icons.clear_all),
-              tooltip: '清除所有筛选和搜索',
-              onPressed: () {
-                ref.read(searchQueryProvider.notifier).state = '';
-                ref.read(selectedCategoryIdProvider.notifier).state = null;
-              },
-            ),
-          IconButton(
             icon: const Icon(Icons.search),
             tooltip: '搜索',
             onPressed: () => _showSearchDialog(context, ref),
           ),
-          IconButton(
-            icon: const Icon(Icons.filter_list),
-            tooltip: '按分类筛选',
-            onPressed: () async {
-              final selectedCategory = await Navigator.push<CategoryModel>(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => const CategorySelectionScreen(),
-                ),
-              );
-              if (selectedCategory != null) {
-                ref.read(selectedCategoryIdProvider.notifier).state =
-                    selectedCategory.id;
+          PopupMenuButton<String>(
+            icon: const Icon(Icons.more_vert),
+            onSelected: (value) async {
+              switch (value) {
+                case 'toggle_view':
+                  ref.read(groupedViewEnabledProvider.notifier).state = !isGroupedView;
+                  break;
+                case 'product_groups':
+                  context.push(AppRoutes.productGroups);
+                  break;
+                case 'filter':
+                  final selectedCategory = await Navigator.push<CategoryModel>(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const CategorySelectionScreen(),
+                    ),
+                  );
+                  if (selectedCategory != null) {
+                    ref.read(selectedCategoryIdProvider.notifier).state = selectedCategory.id;
+                  }
+                  break;
+                case 'clear':
+                  ref.read(searchQueryProvider.notifier).state = '';
+                  ref.read(selectedCategoryIdProvider.notifier).state = null;
+                  break;
+                case 'add':
+                  context.push(AppRoutes.productNew);
+                  break;
               }
             },
-          ),
-          IconButton(
-            onPressed: () => context.push(AppRoutes.productNew),
-            icon: const Icon(Icons.add),
-            tooltip: '新增货品',
-          ),
-        ],
-      ),
-      body: productsAsyncValue.when(
-        data: (products) {
-          final sortedProducts = [...products]
-            ..sort(
-              (a, b) =>
-                  (b.lastUpdated ??
-                          DateTime.fromMillisecondsSinceEpoch(
-                            b.id ?? 0,
-                          ))
-                      .compareTo(
-                        a.lastUpdated ??
-                            DateTime.fromMillisecondsSinceEpoch(
-                              a.id ?? 0,
-                            ),
-                      ),
-            );
-          return ProductList(
-            data: sortedProducts,
-            onEdit: (product) =>
-                context.push(AppRoutes.productEditPath(product.id.toString())),
-            onDelete: (product) =>
-                _showDeleteConfirmDialog(context, ref, product),
-            onAdjustInventory: (product) =>
-                _showAdjustInventoryDialog(context, ref, product),
-          );
-        },
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (error, stack) => Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text('加载失败: $error'),
-              ElevatedButton(
-                onPressed: () => ref.invalidate(allProductsProvider),
-                child: const Text('重试'),
+            itemBuilder: (context) => [
+              PopupMenuItem(
+                value: 'toggle_view',
+                child: Row(
+                  children: [
+                    Icon(isGroupedView ? Icons.view_list : Icons.folder_copy_outlined),
+                    const SizedBox(width: 12),
+                    Text(isGroupedView ? '列表视图' : '商品组视图'),
+                  ],
+                ),
+              ),
+              const PopupMenuItem(
+                value: 'product_groups',
+                child: Row(
+                  children: [
+                    Icon(Icons.folder_outlined),
+                    SizedBox(width: 12),
+                    Text('商品组管理'),
+                  ],
+                ),
+              ),
+              const PopupMenuItem(
+                value: 'filter',
+                child: Row(
+                  children: [
+                    Icon(Icons.filter_list),
+                    SizedBox(width: 12),
+                    Text('按分类筛选'),
+                  ],
+                ),
+              ),
+              if (searchQuery.isNotEmpty || selectedCategoryId != null)
+                const PopupMenuItem(
+                  value: 'clear',
+                  child: Row(
+                    children: [
+                      Icon(Icons.clear_all),
+                      SizedBox(width: 12),
+                      Text('清除筛选'),
+                    ],
+                  ),
+                ),
+              const PopupMenuItem(
+                value: 'add',
+                child: Row(
+                  children: [
+                    Icon(Icons.add),
+                    SizedBox(width: 12),
+                    Text('新增货品'),
+                  ],
+                ),
               ),
             ],
           ),
+        ],
+      ),
+      body: isGroupedView
+          ? _buildGroupedView(context, ref, groupedProductsAsyncValue)
+          : _buildListView(context, ref, productsAsyncValue),
+    );
+  }
+
+  Widget _buildListView(
+    BuildContext context,
+    WidgetRef ref,
+    AsyncValue<List<ProductModel>> productsAsyncValue,
+  ) {
+    return productsAsyncValue.when(
+      data: (products) {
+        final sortedProducts = [...products]
+          ..sort(
+            (a, b) =>
+                (b.lastUpdated ??
+                        DateTime.fromMillisecondsSinceEpoch(
+                          b.id ?? 0,
+                        ))
+                    .compareTo(
+                      a.lastUpdated ??
+                          DateTime.fromMillisecondsSinceEpoch(
+                            a.id ?? 0,
+                          ),
+                    ),
+          );
+        return ProductList(
+          data: sortedProducts,
+          onEdit: (product) =>
+              context.push(AppRoutes.productEditPath(product.id.toString())),
+          onDelete: (product) =>
+              _showDeleteConfirmDialog(context, ref, product),
+          onAdjustInventory: (product) =>
+              _showAdjustInventoryDialog(context, ref, product),
+        );
+      },
+      loading: () => const Center(child: CircularProgressIndicator()),
+      error: (error, stack) => Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text('加载失败: $error'),
+            ElevatedButton(
+              onPressed: () => ref.invalidate(allProductsProvider),
+              child: const Text('重试'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildGroupedView(
+    BuildContext context,
+    WidgetRef ref,
+    AsyncValue<List<ProductGroupAggregate>> groupedProductsAsyncValue,
+  ) {
+    return groupedProductsAsyncValue.when(
+      data: (groupedProducts) {
+        return GroupedProductList(
+          data: groupedProducts,
+          onEdit: (product) =>
+              context.push(AppRoutes.productEditPath(product.id.toString())),
+          onDelete: (product) =>
+              _showDeleteConfirmDialog(context, ref, product),
+          onAdjustInventory: (product) =>
+              _showAdjustInventoryDialog(context, ref, product),
+        );
+      },
+      loading: () => const Center(child: CircularProgressIndicator()),
+      error: (error, stack) => Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text('加载失败: $error'),
+            ElevatedButton(
+              onPressed: () => ref.invalidate(allProductsProvider),
+              child: const Text('重试'),
+            ),
+          ],
         ),
       ),
     );
