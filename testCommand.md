@@ -2,7 +2,7 @@
 
 cd E:\stocko_app\
 git add .
-git commit -m "1127 1 1K 修修修bugssss"
+git commit -m "1127 1 1K 采购按钮"
 git push
 
 

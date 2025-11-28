@@ -1,12 +1,14 @@
 import 'package:drift/drift.dart';
 import 'database.dart';
+import '../../config/flavor_config.dart';
 
 /// 数据库初始化服务
 /// 负责初始化各种默认数据
 class DatabaseInitializer {
   final AppDatabase _database;
+  final FlavorConfig _flavorConfig;
 
-  DatabaseInitializer(this._database);
+  DatabaseInitializer(this._database, this._flavorConfig);
 
   /// 初始化所有默认数据
   Future<void> initializeAllDefaults() async {
@@ -33,22 +35,33 @@ class DatabaseInitializer {
         return;
       }
 
-      final defaultShops = [
-        ShopCompanion.insert(
-          id: Value(1),
-          name: '长山的店',
-          manager: 'changshan',
-          
-          updatedAt: Value(DateTime.now()),
-        ),
-        ShopCompanion.insert(
-          id: Value(2),
-          name: '田立的店',
-          manager: 'tianli',
-          
-          updatedAt: Value(DateTime.now()),
-        ),
-      ];
+      // 根据 flavor 初始化不同的店铺
+      final List<ShopCompanion> defaultShops;
+      if (_flavorConfig.flavor == AppFlavor.generic) {
+        defaultShops = [
+          ShopCompanion.insert(
+            id: Value(1),
+            name: '我的店铺',
+            manager: 'admin',
+            updatedAt: Value(DateTime.now()),
+          ),
+        ];
+      } else {
+        defaultShops = [
+          ShopCompanion.insert(
+            id: Value(1),
+            name: '长山的店',
+            manager: 'changshan',
+            updatedAt: Value(DateTime.now()),
+          ),
+          ShopCompanion.insert(
+            id: Value(2),
+            name: '田立的店',
+            manager: 'tianli',
+            updatedAt: Value(DateTime.now()),
+          ),
+        ];
+      }
 
       // 使用事务批量插入
       await _database.transaction(() async {

@@ -349,6 +349,7 @@ class _SaleItemCardState extends ConsumerState<SaleItemCard> {
                                 ],
                               ),
                               const SizedBox(height: 3),
+                              // 显示价格信息时的完整行
                               if (widget.showPriceInfo)
                                 Row(
                                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -496,6 +497,52 @@ class _SaleItemCardState extends ConsumerState<SaleItemCard> {
                                             ),
                                           ),
                                         ],
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              // 不显示价格信息时，仅显示数量和单位
+                              if (!widget.showPriceInfo)
+                                Row(
+                                  crossAxisAlignment: CrossAxisAlignment.center,
+                                  children: [
+                                    const Text(
+                                      '数量:',
+                                      style: TextStyle(
+                                        fontSize: 14,
+                                        color: Colors.grey,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 8),
+                                    SizedBox(
+                                      width: 80,
+                                      height: 32,
+                                      child: TextFormField(
+                                        controller: _quantityController,
+                                        focusNode: widget.quantityFocusNode,
+                                        keyboardType:
+                                            const TextInputType.numberWithOptions(
+                                              decimal: false,
+                                            ),
+                                        textInputAction: TextInputAction.next,
+                                        decoration: const InputDecoration(
+                                          border: OutlineInputBorder(),
+                                          contentPadding: EdgeInsets.symmetric(
+                                            horizontal: 12,
+                                            vertical: 4,
+                                          ),
+                                        ),
+                                        onChanged: (value) => _updateItem(item),
+                                        onFieldSubmitted: (value) =>
+                                            widget.onSubmitted?.call(),
+                                      ),
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Text(
+                                      item.unitName,
+                                      style: TextStyle(
+                                        fontSize: 16,
+                                        color: Colors.grey[600],
                                       ),
                                     ),
                                   ],

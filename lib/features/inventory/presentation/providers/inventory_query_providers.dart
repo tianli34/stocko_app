@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../application/inventory_query_service.dart';
 import '../../../product/application/provider/product_providers.dart';
 import '../../domain/model/aggregated_inventory.dart';
+import '../../../../config/flavor_config.dart';
 
 enum InventorySortType { none, byQuantity, byShelfLife }
 
@@ -65,7 +66,13 @@ class InventoryFilterNotifier extends StateNotifier<InventoryFilterState> {
 /// 库存筛选Provider
 final inventoryFilterProvider =
     StateNotifierProvider<InventoryFilterNotifier, InventoryFilterState>((ref) {
-      return InventoryFilterNotifier();
+      final flavor = ref.watch(flavorConfigProvider).flavor;
+      final isGeneric = flavor == AppFlavor.generic;
+      final notifier = InventoryFilterNotifier();
+      if (isGeneric) {
+        notifier.updateShop('我的店铺');
+      }
+      return notifier;
     });
 
 /// 库存查询数据Provider - 使用真实数据库查询

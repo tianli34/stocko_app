@@ -25,6 +25,7 @@ import '../../features/sale/presentation/screens/customer_selection_screen.dart'
 import '../../features/home/presentation/screens/home_screen.dart';
 import '../../core/models/scanned_product_payload.dart';
 import '../../debug/product_restore_debug_page.dart';
+import '../../features/outbound/presentation/screens/non_sale_outbound_screen.dart';
 
 // GoRouter Provider
 final routerProvider = Provider<GoRouter>((ref) {
@@ -180,6 +181,14 @@ final routerProvider = Provider<GoRouter>((ref) {
                             child: const Text('采购管理'),
                           ),
                         ),
+                        const SizedBox(height: 16),
+                        SizedBox(
+                          width: 200,
+                          child: ElevatedButton(
+                            onPressed: () => context.push(AppRoutes.nonSaleOutbound),
+                            child: const Text('非售出库'),
+                          ),
+                        ),
                         const SizedBox(height: 20),
                         ElevatedButton(
                           onPressed: () => context.go(AppRoutes.home),
@@ -193,7 +202,10 @@ final routerProvider = Provider<GoRouter>((ref) {
                   GoRoute(
                     path: 'inbound-records',
                     name: 'inventory-inbound-records',
-                    builder: (context, state) => const InventoryRecordsScreen(),
+                    builder: (context, state) {
+                      final showOutbound = state.uri.queryParameters['showOutbound'] == 'true';
+                      return InventoryRecordsScreen(showOutbound: showOutbound);
+                    },
                   ),
                   GoRoute(
                     path: 'purchase-records',
@@ -348,6 +360,11 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: AppRoutes.productRestoreDebug,
         name: 'product-restore-debug',
         builder: (context, state) => const ProductRestoreDebugPage(),
+      ),
+      GoRoute(
+        path: AppRoutes.nonSaleOutbound,
+        name: 'non-sale-outbound',
+        builder: (context, state) => const NonSaleOutboundScreen(),
       ),
     ],
     errorBuilder: (context, state) => Scaffold(

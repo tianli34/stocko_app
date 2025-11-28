@@ -10,7 +10,9 @@ import '../widgets/outbound_record_card.dart';
 /// 库存记录页面
 /// 展示所有入库和出库记录，支持查看详情
 class InventoryRecordsScreen extends ConsumerStatefulWidget {
-  const InventoryRecordsScreen({super.key});
+  final bool showOutbound;
+  
+  const InventoryRecordsScreen({super.key, this.showOutbound = false});
 
   @override
   ConsumerState<InventoryRecordsScreen> createState() =>
@@ -18,7 +20,13 @@ class InventoryRecordsScreen extends ConsumerStatefulWidget {
 }
 
 class _InventoryRecordsScreenState extends ConsumerState<InventoryRecordsScreen> {
-  bool _isOutboundView = false; // false: 入库记录, true: 出库记录
+  late bool _isOutboundView;
+  
+  @override
+  void initState() {
+    super.initState();
+    _isOutboundView = widget.showOutbound;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -44,6 +52,11 @@ class _InventoryRecordsScreenState extends ConsumerState<InventoryRecordsScreen>
           foregroundColor: Theme.of(context).colorScheme.onSurface,
           elevation: 0,
           actions: [
+            IconButton(
+              icon: const Icon(Icons.add),
+              onPressed: () => context.push(_isOutboundView ? AppRoutes.nonSaleOutbound : AppRoutes.inboundCreate),
+              tooltip: _isOutboundView ? '新建出库' : '新建入库',
+            ),
             TextButton(
               onPressed: () {
                 setState(() {

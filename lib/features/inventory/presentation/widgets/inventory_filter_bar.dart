@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/inventory_query_providers.dart';
 import '../../application/provider/shop_providers.dart';
 import '../../../product/application/category_service.dart';
+import '../../../../config/flavor_config.dart';
 
 /// 分类流提供者
 final categoriesStreamProvider = StreamProvider((ref) {
@@ -20,6 +21,8 @@ class InventoryFilterBar extends ConsumerWidget {
     final filterState = ref.watch(inventoryFilterProvider);
     final shopsAsync = ref.watch(allShopsProvider);
     final categoriesAsync = ref.watch(categoriesStreamProvider);
+    final flavor = ref.watch(flavorConfigProvider).flavor;
+    final isGeneric = flavor == AppFlavor.generic;
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -32,37 +35,38 @@ class InventoryFilterBar extends ConsumerWidget {
       child: Row(
         children: [
           // 所有仓库筛选 - 使用店铺表数据
-          Expanded(
-            child: shopsAsync.when(
-              data: (shops) {
-                // 构建店铺下拉选项
-                final shopItems = ['所有仓库', ...shops.map((shop) => shop.name)];
-                return _buildFilterDropdown(
+          if (!isGeneric)
+            Expanded(
+              child: shopsAsync.when(
+                data: (shops) {
+                  // 构建店铺下拉选项
+                  final shopItems = ['所有仓库', ...shops.map((shop) => shop.name)];
+                  return _buildFilterDropdown(
+                    context: context,
+                    value: filterState.selectedShop,
+                    items: shopItems,
+                    onChanged: (value) {
+                      ref
+                          .read(inventoryFilterProvider.notifier)
+                          .updateShop(value);
+                    },
+                  );
+                },
+                loading: () => _buildFilterDropdown(
                   context: context,
-                  value: filterState.selectedShop,
-                  items: shopItems,
-                  onChanged: (value) {
-                    ref
-                        .read(inventoryFilterProvider.notifier)
-                        .updateShop(value);
-                  },
-                );
-              },
-              loading: () => _buildFilterDropdown(
-                context: context,
-                value: '所有仓库',
-                items: const ['所有仓库'],
-                onChanged: (_) {}, // 加载时禁用
-              ),
-              error: (error, stackTrace) => _buildFilterDropdown(
-                context: context,
-                value: '所有仓库',
-                items: const ['所有仓库'],
-                onChanged: (_) {}, // 错误时禁用
+                  value: '所有仓库',
+                  items: const ['所有仓库'],
+                  onChanged: (_) {}, // 加载时禁用
+                ),
+                error: (error, stackTrace) => _buildFilterDropdown(
+                  context: context,
+                  value: '所有仓库',
+                  items: const ['所有仓库'],
+                  onChanged: (_) {}, // 错误时禁用
+                ),
               ),
             ),
-          ),
-          const SizedBox(width: 12),
+          if (!isGeneric) const SizedBox(width: 12),
 
           // 所有分类筛选
           Expanded(

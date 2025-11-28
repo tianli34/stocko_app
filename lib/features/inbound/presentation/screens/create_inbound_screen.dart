@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:collection/collection.dart'; // 导入 collection 包
 import '../../../product/domain/model/product.dart';
+import '../../../../config/flavor_config.dart';
 import '../../../../core/constants/app_routes.dart';
 import '../../application/provider/inbound_list_provider.dart';
 import '../../../purchase/application/provider/supplier_providers.dart';
@@ -899,32 +900,42 @@ class _CreateInboundScreenState extends ConsumerState<CreateInboundScreen> {
 
   Widget _buildHeaderSection(ThemeData theme, TextTheme textTheme) {
     final allShopsAsync = ref.watch(allShopsProvider);
+    final flavor = ref.watch(flavorConfigProvider).flavor;
+    final isGeneric = flavor == AppFlavor.generic;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        allShopsAsync.when(
+          data: (shops) {
+            if (_selectedShop == null) {
+              final defaultShopName = isGeneric ? '我的店铺' : '长山的店';
+              final defaultShop = shops.firstWhereOrNull(
+                (shop) => shop.name == defaultShopName,
+              );
+              if (defaultShop != null) {
+                WidgetsBinding.instance.addPostFrameCallback((_) {
+                  if (mounted) {
+                    setState(() {
+                      _selectedShop = defaultShop;
+                    });
+                  }
+                });
+              }
+            }
+            return const SizedBox.shrink();
+          },
+          loading: () => const SizedBox.shrink(),
+          error: (_, __) => const SizedBox.shrink(),
+        ),
         Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Expanded(
-              flex: 2,
-              child: allShopsAsync.when(
-                data: (shops) {
-                  if (_selectedShop == null) {
-                    final defaultShop = shops.firstWhereOrNull(
-                      (shop) => shop.name == '长山的店',
-                    );
-                    if (defaultShop != null) {
-                      WidgetsBinding.instance.addPostFrameCallback((_) {
-                        if (mounted) {
-                          setState(() {
-                            _selectedShop = defaultShop;
-                          });
-                        }
-                      });
-                    }
-                  }
-                  return DropdownButtonFormField<Shop>(
+            if (!isGeneric)
+              IntrinsicWidth(
+                child: allShopsAsync.when(
+                  data: (shops) {
+                    return DropdownButtonFormField<Shop>(
                     key: const Key('shop_dropdown'),
                     focusNode: _shopFocusNode,
                     value: _selectedShop,
@@ -948,12 +959,11 @@ class _CreateInboundScreenState extends ConsumerState<CreateInboundScreen> {
                   );
                 },
                 loading: () => const Center(child: CircularProgressIndicator()),
-                error: (err, stack) => Text('无法加载店铺: $err'),
+                  error: (err, stack) => Text('无法加载店铺: $err'),
+                ),
               ),
-            ),
-            const SizedBox(width: 16),
+            if (!isGeneric) const SizedBox(width: 16),
             Expanded(
-              flex: 5,
               child: _currentMode == InboundMode.purchase
                   ? Row(
                       crossAxisAlignment: CrossAxisAlignment.baseline,
