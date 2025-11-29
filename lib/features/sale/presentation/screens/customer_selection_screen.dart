@@ -108,6 +108,7 @@ class _CustomerSelectionScreenState extends ConsumerState<CustomerSelectionScree
 
   Widget _buildCustomerTile(BuildContext context, Customer customer) {
     final isSelected = _selectedCustomerId == customer.id;
+    final profitsAsyncValue = ref.watch(allCustomerProfitsProvider);
 
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4.0),
@@ -153,6 +154,29 @@ class _CustomerSelectionScreenState extends ConsumerState<CustomerSelectionScree
               style: TextStyle(
                 fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
                 fontSize: 16,
+              ),
+            ),
+            trailing: profitsAsyncValue.when(
+              data: (profits) {
+                final profitCents = profits[customer.id] ?? 0;
+                final profitYuan = profitCents / 100;
+                final isPositive = profitCents >= 0;
+                return Text(
+                  '利润: ¥${profitYuan.toStringAsFixed(2)}',
+                  style: TextStyle(
+                    color: isPositive ? Colors.green : Colors.red,
+                    fontWeight: FontWeight.w500,
+                  ),
+                );
+              },
+              loading: () => const SizedBox(
+                width: 16,
+                height: 16,
+                child: CircularProgressIndicator(strokeWidth: 2),
+              ),
+              error: (_, __) => const Text(
+                '利润: --',
+                style: TextStyle(color: Colors.grey),
               ),
             ),
           ),

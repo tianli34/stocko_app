@@ -20,6 +20,13 @@ final allCustomersProvider = FutureProvider<List<Customer>>((ref) async {
   return repository.getAllCustomers();
 });
 
+/// 监听所有客户的利润贡献变化 Map<customerId, profitInCents>
+/// 当销售交易或交易明细变化时自动更新
+final allCustomerProfitsProvider = StreamProvider<Map<int, int>>((ref) {
+  final dao = ref.watch(customerDaoProvider);
+  return dao.watchAllCustomerProfits();
+});
+
 final customerControllerProvider =
     StateNotifierProvider<CustomerController, AsyncValue<void>>((ref) {
   final repository = ref.watch(customerRepositoryProvider);
