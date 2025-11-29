@@ -100,7 +100,7 @@ part 'database.g.dart';
 class AppDatabase extends _$AppDatabase {
   AppDatabase(super.e);
   @override
-  int get schemaVersion => 27; 
+  int get schemaVersion => 28; 
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -162,6 +162,71 @@ class AppDatabase extends _$AppDatabase {
       );
     },
     onUpgrade: (Migrator m, int from, int to) async {
+      
+      if (from < 28 && to >= 28) {
+        // 迁移 purchase_order_item 表：将 unit_price_in_cents 改为 unit_price_in_sis
+        // 数据迁移：分转丝（1分 = 1000丝，因为 1元 = 100分 = 100,000丝）
+        
+        // 检查旧列是否存在
+        final poiResult = await customSelect(
+          "SELECT COUNT(*) as count FROM pragma_table_info('purchase_order_item') WHERE name='unit_price_in_cents'",
+        ).getSingle();
+        
+        final hasOldColumn = poiResult.read<int>('count') > 0;
+        
+        if (hasOldColumn) {
+          // 1. 添加新列
+          await customStatement(
+            'ALTER TABLE purchase_order_item ADD COLUMN unit_price_in_sis INTEGER NOT NULL DEFAULT 0;',
+          );
+          
+          // 2. 迁移数据：分转丝（乘以1000）
+          await customStatement(
+            'UPDATE purchase_order_item SET unit_price_in_sis = unit_price_in_cents * 1000;',
+          );
+          
+          // 3. 由于SQLite不支持删除列，需要重建表
+          await customStatement('''
+            CREATE TABLE IF NOT EXISTS purchase_order_item_new (
+              id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+              purchase_order_id INTEGER NOT NULL REFERENCES purchase_order (id) ON DELETE CASCADE,
+              unit_product_id INTEGER NOT NULL REFERENCES unit_product (id) ON DELETE RESTRICT,
+              production_date INTEGER,
+              unit_price_in_sis INTEGER NOT NULL,
+              quantity INTEGER NOT NULL,
+              CHECK(quantity >= 1),
+              CHECK(unit_price_in_sis >= 0)
+            );
+          ''');
+          
+          // 4. 复制数据到新表
+          await customStatement('''
+            INSERT INTO purchase_order_item_new (id, purchase_order_id, unit_product_id, production_date, unit_price_in_sis, quantity)
+            SELECT id, purchase_order_id, unit_product_id, production_date, unit_price_in_sis, quantity
+            FROM purchase_order_item;
+          ''');
+          
+          // 5. 删除旧表
+          await customStatement('DROP TABLE purchase_order_item;');
+          
+          // 6. 重命名新表
+          await customStatement('ALTER TABLE purchase_order_item_new RENAME TO purchase_order_item;');
+          
+          // 7. 重建索引
+          await customStatement(
+            'CREATE INDEX IF NOT EXISTS idx_poi_po ON purchase_order_item(purchase_order_id);',
+          );
+          await customStatement(
+            'CREATE INDEX IF NOT EXISTS idx_poi_unit_product ON purchase_order_item(unit_product_id);',
+          );
+          await customStatement(
+            'CREATE UNIQUE INDEX IF NOT EXISTS poi_unique_with_date ON purchase_order_item(purchase_order_id, unit_product_id, production_date) WHERE production_date IS NOT NULL;',
+          );
+          await customStatement(
+            'CREATE UNIQUE INDEX IF NOT EXISTS poi_unique_without_date ON purchase_order_item(purchase_order_id, unit_product_id) WHERE production_date IS NULL;',
+          );
+        }
+      }
       
       if (from < 27 && to >= 27) {
         // 创建商品组表

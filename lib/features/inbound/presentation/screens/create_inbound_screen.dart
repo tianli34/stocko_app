@@ -549,7 +549,7 @@ class _CreateInboundScreenState extends ConsumerState<CreateInboundScreen> {
         );
         return false;
       }
-      if (_currentMode == InboundMode.purchase && item.unitPriceInCents < 0) {
+      if (_currentMode == InboundMode.purchase && item.unitPriceInSis < 0) {
         showAppSnackBar(
           context,
           message: '货品"${item.productName}"的单价不能为负数',
@@ -558,7 +558,7 @@ class _CreateInboundScreenState extends ConsumerState<CreateInboundScreen> {
         return false;
       }
       // 采购模式下，单价不能为0
-      if (_currentMode == InboundMode.purchase && item.unitPriceInCents == 0) {
+      if (_currentMode == InboundMode.purchase && item.unitPriceInSis == 0) {
         showAppSnackBar(
           context,
           message: '货品"${item.productName}"的单价不能为0',

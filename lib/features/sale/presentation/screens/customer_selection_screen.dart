@@ -174,10 +174,14 @@ class _CustomerSelectionScreenState extends ConsumerState<CustomerSelectionScree
                 height: 16,
                 child: CircularProgressIndicator(strokeWidth: 2),
               ),
-              error: (_, __) => const Text(
-                '利润: --',
-                style: TextStyle(color: Colors.grey),
-              ),
+              error: (error, stackTrace) {
+                debugPrint('利润加载错误: $error');
+                debugPrint('堆栈: $stackTrace');
+                return const Text(
+                  '利润: --',
+                  style: TextStyle(color: Colors.grey),
+                );
+              },
             ),
           ),
         ),

@@ -50,7 +50,7 @@ class CustomerDao extends DatabaseAccessor<AppDatabase> with _$CustomerDaoMixin 
         c.id as customer_id,
         COALESCE(SUM(
           (sti.price_in_cents - COALESCE(
-            (SELECT poi.unit_price_in_cents 
+            (SELECT poi.unit_price_in_sis / 1000
              FROM purchase_order_item poi
              JOIN unit_product up ON poi.unit_product_id = up.id
              WHERE up.product_id = sti.product_id 
@@ -62,7 +62,7 @@ class CustomerDao extends DatabaseAccessor<AppDatabase> with _$CustomerDaoMixin 
         ), 0) as total_profit
       FROM customers c
       LEFT JOIN sales_transaction st ON c.id = st.customer_id 
-        AND st.status NOT IN ('cancelled', 'preset')
+        AND st.status NOT IN ('cancelled', 'credit')
       LEFT JOIN sales_transaction_item sti ON st.id = sti.sales_transaction_id
       GROUP BY c.id
     ''').get();
@@ -99,7 +99,7 @@ class CustomerDao extends DatabaseAccessor<AppDatabase> with _$CustomerDaoMixin 
       SELECT 
         COALESCE(SUM(
           (sti.price_in_cents - COALESCE(
-            (SELECT poi.unit_price_in_cents 
+            (SELECT poi.unit_price_in_sis / 1000
              FROM purchase_order_item poi
              JOIN unit_product up ON poi.unit_product_id = up.id
              WHERE up.product_id = sti.product_id 
@@ -112,7 +112,7 @@ class CustomerDao extends DatabaseAccessor<AppDatabase> with _$CustomerDaoMixin 
       FROM sales_transaction st
       JOIN sales_transaction_item sti ON st.id = sti.sales_transaction_id
       WHERE st.customer_id = ?
-        AND st.status NOT IN ('cancelled', 'preset')
+        AND st.status NOT IN ('cancelled', 'credit')
     ''', variables: [Variable.withInt(customerId)]).getSingle();
 
     return result.read<int>('total_profit');

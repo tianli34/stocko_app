@@ -12,12 +12,14 @@ class WeightedAveragePriceService {
   /// 计算并更新移动加权平均价格
   /// 当有新的入库时调用此方法
   /// 注意：此方法只更新平均价格，不更新库存数量（库存数量由 InventoryService.inbound 负责）
+  /// 
+  /// [inboundUnitPriceInSis] 入库单价（以丝为单位，1元 = 100,000丝）
   Future<void> updateWeightedAveragePrice({
     required int productId,
     required int shopId,
     required int? batchId,
     required int inboundQuantity,
-    required int inboundUnitPriceInCents,
+    required int inboundUnitPriceInSis,
   }) async {
     await _database.transaction(() async {
       // 获取当前库存信息
@@ -39,7 +41,7 @@ class WeightedAveragePriceService {
         // 新平均价格 = (入库前库存数量 × 现有平均价格 + 入库数量 × 入库单价) ÷ (入库前库存数量 + 入库数量)
         final totalValue =
             (quantityBeforeInbound * currentAveragePrice) +
-            (inboundQuantity * inboundUnitPriceInCents);
+            (inboundQuantity * inboundUnitPriceInSis);
         final totalQuantity = quantityBeforeInbound + inboundQuantity;
 
         final newAveragePrice = totalQuantity > 0
@@ -132,7 +134,7 @@ class WeightedAveragePriceService {
     // 按时间顺序重新计算移动加权平均价格
     for (final record in inboundRecords) {
       final inboundQuantity = record['quantity'] as int;
-      final inboundPrice = record['unitPriceInCents'] as int;
+      final inboundPrice = record['unitPriceInSis'] as int;
 
       if (cumulativeQuantity == 0) {
         // 第一次入库
@@ -166,6 +168,7 @@ class WeightedAveragePriceService {
 
   /// 获取指定库存的入库记录
   /// 从采购单明细表获取单价信息（仅支持通过采购入库的记录）
+  /// 返回的单价以丝为单位（1元 = 100,000丝）
   Future<List<Map<String, dynamic>>> _getInboundRecordsForStock({
     required int productId,
     required int shopId,
@@ -180,14 +183,14 @@ class WeightedAveragePriceService {
           '''
       SELECT 
         ii.quantity, 
-        poi.unit_price_in_cents,
+        poi.unit_price_in_sis,
         ir.created_at
       FROM inbound_item ii
       JOIN inbound_receipt ir ON ii.receipt_id = ir.id
       JOIN unit_product up ON ii.unit_product_id = up.id
       LEFT JOIN purchase_order_item poi ON ir.purchase_order_id = poi.purchase_order_id AND poi.unit_product_id = up.id
       WHERE up.product_id = ? AND ir.shop_id = ? $batchCondition
-        AND poi.unit_price_in_cents IS NOT NULL
+        AND poi.unit_price_in_sis IS NOT NULL
       ORDER BY ir.created_at ASC
       ''',
           variables: [
@@ -201,7 +204,7 @@ class WeightedAveragePriceService {
         .map(
           (row) => {
             'quantity': row.read<int>('quantity'),
-            'unitPriceInCents': row.read<int>('unit_price_in_cents'),
+            'unitPriceInSis': row.read<int>('unit_price_in_sis'),
             'createdAt': row.read<DateTime>('created_at'),
           },
         )

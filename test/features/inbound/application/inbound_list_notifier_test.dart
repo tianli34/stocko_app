@@ -14,7 +14,7 @@ void main() {
         unitId: 1,
         unitName: '个',
         quantity: 1,
-        unitPriceInCents: 100,
+        unitPriceInSis: 10000000, // 100元 = 100 * 100,000丝
         conversionRate: 1,
       );
       final b = InboundItemState(
@@ -24,7 +24,7 @@ void main() {
         unitId: 1,
         unitName: '个',
         quantity: 2,
-        unitPriceInCents: 200,
+        unitPriceInSis: 20000000, // 200元 = 200 * 100,000丝
         conversionRate: 1,
       );
 

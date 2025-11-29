@@ -12,7 +12,8 @@ class InboundItemState {
   final int unitId;
   final String unitName;
   final int quantity;
-  final int unitPriceInCents;
+  /// 单位价格（以丝为单位，1元 = 100,000丝）
+  final int unitPriceInSis;
   final int conversionRate; // 新增：单位换算率
   final DateTime? productionDate;
   final String? barcode;
@@ -24,14 +25,14 @@ class InboundItemState {
     required this.unitId,
     required this.unitName,
     required this.quantity,
-    required this.unitPriceInCents,
+    required this.unitPriceInSis,
     required this.conversionRate, // 新增
     this.productionDate,
     this.barcode,
   });
 
-  /// Total amount for this item line, in cents.
-  int get amountInCents => quantity * unitPriceInCents;
+  /// Total amount for this item line, in sis (丝).
+  int get amountInSis => quantity * unitPriceInSis;
 
   /// The total quantity in the base unit.
   // int get totalBaseQuantity => quantity * conversionRate;
@@ -44,7 +45,7 @@ class InboundItemState {
     int? unitId,
     String? unitName,
     int? quantity,
-    int? unitPriceInCents,
+    int? unitPriceInSis,
     int? conversionRate, // 新增
     DateTime? productionDate,
     String? barcode,
@@ -57,7 +58,7 @@ class InboundItemState {
       unitId: unitId ?? this.unitId,
       unitName: unitName ?? this.unitName,
       quantity: quantity ?? this.quantity,
-      unitPriceInCents: unitPriceInCents ?? this.unitPriceInCents,
+      unitPriceInSis: unitPriceInSis ?? this.unitPriceInSis,
       conversionRate: conversionRate ?? this.conversionRate, // 新增
       productionDate:
           clearProductionDate ? null : productionDate ?? this.productionDate,
@@ -97,6 +98,9 @@ class InboundListNotifier extends StateNotifier<List<InboundItemState>> {
 
   /// 添加一个新货品，或如果已存在则更新其数量
   /// 合并策略：优先按条码匹配，如果没有条码或条码不匹配，则按产品ID+单位ID匹配
+  /// 
+  /// [wholesalePriceInCents] 批发价（以分为单位，来自产品单位表）
+  /// 内部会转换为丝存储（1分 = 1000丝）
   void addOrUpdateItem({
     required ProductModel product,
     required int unitId,
@@ -128,6 +132,8 @@ class InboundListNotifier extends StateNotifier<List<InboundItemState>> {
     } else {
       final itemId =
           'item_${product.id}_${unitId}_${DateTime.now().millisecondsSinceEpoch}';
+      // 将分转换为丝（1分 = 1000丝）
+      final priceInSis = (wholesalePriceInCents ?? 0) * 1000;
       final newItem = InboundItemState(
         id: itemId,
         productId: product.id!,
@@ -135,7 +141,7 @@ class InboundListNotifier extends StateNotifier<List<InboundItemState>> {
         unitId: unitId,
         unitName: unitName ?? '未知单位',
         quantity: quantity,
-        unitPriceInCents: wholesalePriceInCents ?? 0,
+        unitPriceInSis: priceInSis,
         conversionRate: conversionRate,
         barcode: barcode,
         productionDate: product.enableBatchManagement
@@ -169,11 +175,11 @@ final inboundTotalsProvider = Provider<Map<String, double>>((ref) {
   // 使用 `totalBaseQuantity` 计算基础单位总数
   final totalQuantity =
       items.fold(0.0, (sum, item) => sum + item.totalBaseQuantity);
-  final totalAmountInCents =
-      items.fold(0.0, (sum, item) => sum + item.amountInCents);
+  final totalAmountInSis =
+      items.fold(0.0, (sum, item) => sum + item.amountInSis);
   return {
     'varieties': items.length.toDouble(),
     'quantity': totalQuantity,
-    'amount': totalAmountInCents / 100.0, // 将总金额从分转换为元
+    'amount': totalAmountInSis / 100000.0, // 将总金额从丝转换为元（1元 = 100,000丝）
   };
 });

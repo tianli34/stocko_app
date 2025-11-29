@@ -207,9 +207,10 @@ class _PurchaseOrderCardState extends ConsumerState<PurchaseOrderCard> {
                     children: [
                       itemsAsync.when(
                         data: (items) {
-                          final totalAmount = items.fold<double>(
+                          // 丝转元：除以 100,000
+                          final totalAmountInSis = items.fold<double>(
                             0,
-                            (sum, item) => sum + (item.unitPriceInCents * item.quantity),
+                            (sum, item) => sum + (item.unitPriceInSis * item.quantity),
                           );
                           final totalQuantity = items.fold<double>(
                             0,
@@ -220,7 +221,7 @@ class _PurchaseOrderCardState extends ConsumerState<PurchaseOrderCard> {
                             crossAxisAlignment: CrossAxisAlignment.end,
                             children: [
                               Text(
-                                '￥${(totalAmount / 100).toStringAsFixed(2)}',
+                                '￥${(totalAmountInSis / 100000).toStringAsFixed(2)}',
                                 style: const TextStyle(
                                   fontWeight: FontWeight.bold,
                                   color: Colors.green,
@@ -395,11 +396,12 @@ class PurchaseOrderItemTile extends ConsumerWidget {
               mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
+                // 丝转元：除以 100,000
                 Text(
-                  '￥${(item.unitPriceInCents / 100).toStringAsFixed(2)} × ${item.quantity.toInt()}',
+                  '￥${(item.unitPriceInSis / 100000).toStringAsFixed(2)} × ${item.quantity.toInt()}',
                 ),
                 Text(
-                  '￥${((item.unitPriceInCents * item.quantity) / 100).toStringAsFixed(2)}',
+                  '￥${((item.unitPriceInSis * item.quantity) / 100000).toStringAsFixed(2)}',
                   style: const TextStyle(fontWeight: FontWeight.bold),
                 ),
               ],

@@ -18,7 +18,7 @@ import '../../../../core/database/purchase_orders_table.dart';
 /// A private record type to hold both domain model and UI-related info internally.
 typedef _PurchaseItem = ({
   InboundItemModel model,
-  int unitPriceInCents,
+  int unitPriceInSis,
   String productName,
   String unitName,
   DateTime? productionDate
@@ -68,7 +68,7 @@ class InboundService {
       );
       return (
         model: domainModel,
-        unitPriceInCents: item.unitPriceInCents,
+        unitPriceInSis: item.unitPriceInSis,
         productName: item.productName,
         unitName: item.unitName,
         productionDate: item.productionDate
@@ -216,7 +216,7 @@ class InboundService {
         );
         return (
           model: domainModel,
-          unitPriceInCents: item.unitPriceInCents,
+          unitPriceInSis: item.unitPriceInSis,
           productName: product?.name ?? '未知商品',
           unitName: unit?.name ?? '',
           productionDate: item.productionDate,
@@ -312,7 +312,7 @@ class InboundService {
       final itemCompanion = PurchaseOrderItemCompanion.insert(
         purchaseOrderId: 0, // 临时值，将在createFullPurchaseOrder中被替换
         unitProductId: item.model.unitProductId,
-        unitPriceInCents: item.unitPriceInCents,
+        unitPriceInSis: item.unitPriceInSis,
         quantity: item.model.quantity,
         productionDate: drift.Value(item.productionDate),
       );
@@ -542,7 +542,7 @@ class InboundService {
         shopId: shopId,
         batchId: batchId,
         inboundQuantity: baseUnitQuantity,
-        inboundUnitPriceInCents: item.unitPriceInCents,
+        inboundUnitPriceInSis: item.unitPriceInSis,
       );
 
       print('✅ 商品 ${item.productName} 库存和移动加权平均价格更新完成');

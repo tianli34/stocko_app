@@ -57,6 +57,7 @@ dependencies:
   rxdart: ^0.28.0
   flutter_slidable: ^4.0.0
   equatable: ^2.0.7
+  decimal: ^3.2.1
   markdown_widget: ^2.3.2+8
   archive: ^4.0.7
   shared_preferences: ^2.2.3

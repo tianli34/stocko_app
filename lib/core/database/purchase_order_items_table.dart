@@ -19,8 +19,9 @@ class PurchaseOrderItem extends Table {
   /// 生产日期
   DateTimeColumn get productionDate => dateTime().nullable()();
 
-  /// 单位价格（以分为单位）
-  IntColumn get unitPriceInCents => integer()();
+  /// 单位价格（以丝为单位，1元 = 100,000丝）
+  /// 使用高精度存储，避免浮点数精度丢失
+  IntColumn get unitPriceInSis => integer()();
 
   /// 数量
   IntColumn get quantity => integer()();
@@ -28,6 +29,6 @@ class PurchaseOrderItem extends Table {
   @override
   List<String> get customConstraints => [
         'CHECK(quantity >= 1)',
-        'CHECK(unit_price_in_cents >= 0)',
+        'CHECK(unit_price_in_sis >= 0)',
       ];
 }

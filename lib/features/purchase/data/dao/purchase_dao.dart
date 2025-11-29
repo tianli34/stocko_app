@@ -152,7 +152,7 @@ class PurchaseDao extends DatabaseAccessor<AppDatabase>
   // 工具方法
   // ===========================================================================
 
-  /// 根据单位产品ID获取最近一次的采购单价
+  /// 根据单位产品ID获取最近一次的采购单价（以丝为单位）
   Future<int?> getLatestPurchasePrice(int unitProductId) async {
     final query = select(db.purchaseOrderItem)
       ..where((tbl) => tbl.unitProductId.equals(unitProductId))
@@ -160,6 +160,6 @@ class PurchaseDao extends DatabaseAccessor<AppDatabase>
       ..limit(1);
 
     final result = await query.getSingleOrNull();
-    return result?.unitPriceInCents;
+    return result?.unitPriceInSis;
   }
 }

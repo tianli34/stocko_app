@@ -1,6 +1,8 @@
+import 'package:decimal/decimal.dart';
 import 'package:drift/drift.dart' hide JsonKey;
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:stocko_app/core/database/database.dart';
+import 'package:stocko_app/core/database/converters/sis_price_converter.dart';
 
 part 'purchase_order_item.freezed.dart';
 part 'purchase_order_item.g.dart';
@@ -11,18 +13,22 @@ abstract class PurchaseOrderItemModel with _$PurchaseOrderItemModel {
     int? id,
     required int purchaseOrderId,
     required int unitProductId,
-    required int unitPriceInCents,
+    /// 单位价格（以丝为单位存储，1元 = 100,000丝）
+    required int unitPriceInSis,
     required int quantity,
     DateTime? productionDate,
   }) = _PurchaseOrderItemModel;
 
   const PurchaseOrderItemModel._();
 
+  /// 获取单价（元，Decimal类型，高精度）
+  Decimal get unitPrice => unitPriceInSis.toYuanDecimal();
+
   // --- 简单校验 ---
   bool get isValidOrderId => purchaseOrderId > 0;
   bool get isValidUnitProductId => unitProductId > 0;
   bool get isValidQuantity => quantity > 0;
-  bool get isValidUnitPrice => unitPriceInCents >= 0; // 单价允许0（赠品场景）
+  bool get isValidUnitPrice => unitPriceInSis >= 0; // 单价允许0（赠品场景）
 
   bool get isValid =>
       isValidOrderId &&
@@ -46,7 +52,7 @@ abstract class PurchaseOrderItemModel with _$PurchaseOrderItemModel {
       id: id == null ? const Value.absent() : Value(id!),
       purchaseOrderId: Value(orderId),
       unitProductId: Value(unitProductId),
-      unitPriceInCents: Value(unitPriceInCents),
+      unitPriceInSis: Value(unitPriceInSis),
       quantity: Value(quantity),
       productionDate:
           productionDate != null ? Value(productionDate) : const Value.absent(),
@@ -63,7 +69,7 @@ abstract class PurchaseOrderItemModel with _$PurchaseOrderItemModel {
       id: data.id,
       purchaseOrderId: data.purchaseOrderId,
       unitProductId: data.unitProductId,
-      unitPriceInCents: data.unitPriceInCents,
+      unitPriceInSis: data.unitPriceInSis,
       quantity: data.quantity,
       productionDate: data.productionDate,
     );
@@ -74,7 +80,7 @@ abstract class PurchaseOrderItemModel with _$PurchaseOrderItemModel {
     int? id,
     required int purchaseOrderId,
     required int unitProductId,
-    required int unitPriceInCents,
+    required int unitPriceInSis,
     required int quantity,
     DateTime? productionDate,
   }) {
@@ -82,7 +88,7 @@ abstract class PurchaseOrderItemModel with _$PurchaseOrderItemModel {
       id: id,
       purchaseOrderId: purchaseOrderId,
       unitProductId: unitProductId,
-      unitPriceInCents: unitPriceInCents,
+      unitPriceInSis: unitPriceInSis,
       quantity: quantity,
       productionDate: productionDate,
     );

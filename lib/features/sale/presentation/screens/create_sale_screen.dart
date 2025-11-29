@@ -336,7 +336,7 @@ class _CreateSaleScreenState extends ConsumerState<CreateSaleScreen> {
         isSaleMode: isSaleMode,
         customerId: customerId ?? 0,
         customerName: customerName,
-        status: SalesStatus.settled, // 普通销售使用已结算状态
+        status: SalesStatus.preset, // 普通销售使用已结算状态
       );
       print(
         '🔍 [DEBUG] UI: processOneClickSale Settled, receipt: $receiptNumber',

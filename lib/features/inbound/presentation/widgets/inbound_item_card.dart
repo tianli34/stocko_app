@@ -48,7 +48,7 @@ class _InboundItemCardState extends ConsumerState<InboundItemCard> {
         final item = ref
             .read(inboundListProvider)
             .firstWhere((it) => it.id == widget.itemId);
-        _unitPriceController.text = (item.unitPriceInCents / 100)
+        _unitPriceController.text = (item.unitPriceInSis / 100000)
             .toStringAsFixed(2);
       }
     }
@@ -75,7 +75,8 @@ class _InboundItemCardState extends ConsumerState<InboundItemCard> {
         final item = ref
             .read(inboundListProvider)
             .firstWhere((it) => it.id == widget.itemId);
-        _amountController.text = (item.amountInCents / 100).toStringAsFixed(2);
+        // 丝转元：除以 100,000
+        _amountController.text = (item.amountInSis / 100000).toStringAsFixed(2);
       }
     }
   }
@@ -116,16 +117,17 @@ class _InboundItemCardState extends ConsumerState<InboundItemCard> {
   }
 
   void _updateItem(InboundItemState item, {DateTime? newProductionDate}) {
-    final unitPrice = (double.tryParse(_unitPriceController.text) ?? 0.0) * 100;
+    // 将元转换为丝（1元 = 100,000丝）
+    final unitPriceInSis = ((double.tryParse(_unitPriceController.text) ?? 0.0) * 100000).round();
     final quantity = int.tryParse(_quantityController.text) ?? 0;
-    final amount = unitPrice * quantity / 100;
+    final amountInSis = unitPriceInSis * quantity;
 
     if (!_isUpdatingFromAmount) {
-      _amountController.text = (amount / 100).toStringAsFixed(2);
+      _amountController.text = (amountInSis / 100000).toStringAsFixed(2);
     }
 
     final updatedItem = item.copyWith(
-      unitPriceInCents: unitPrice.toInt(),
+      unitPriceInSis: unitPriceInSis,
       quantity: quantity,
       productionDate: newProductionDate ?? item.productionDate,
     );
@@ -134,17 +136,18 @@ class _InboundItemCardState extends ConsumerState<InboundItemCard> {
   }
 
   void _updateFromAmount(InboundItemState item) {
-    final amount = (double.tryParse(_amountController.text) ?? 0.0) * 100;
+    // 将元转换为丝（1元 = 100,000丝）
+    final amountInSis = ((double.tryParse(_amountController.text) ?? 0.0) * 100000).round();
     final quantity = int.tryParse(_quantityController.text) ?? 1;
 
     if (quantity > 0) {
-      final unitPriceInCents = amount / quantity;
+      final unitPriceInSis = amountInSis ~/ quantity;
 
       _isUpdatingFromAmount = true;
-      _unitPriceController.text = (unitPriceInCents / 100).toStringAsFixed(2);
+      _unitPriceController.text = (unitPriceInSis / 100000).toStringAsFixed(2);
 
       final updatedItem = item.copyWith(
-        unitPriceInCents: unitPriceInCents.toInt(),
+        unitPriceInSis: unitPriceInSis,
         quantity: quantity,
       );
 
@@ -184,10 +187,11 @@ class _InboundItemCardState extends ConsumerState<InboundItemCard> {
 
     // --- 同步Controller与State ---
     // 只有在非焦点且文本不同时才更新，避免覆盖用户输入
+    // 丝转元：除以 100,000
     if (!_unitPriceFocusNode.hasFocus &&
         _unitPriceController.text !=
-            (item.unitPriceInCents / 100).toStringAsFixed(2)) {
-      _unitPriceController.text = (item.unitPriceInCents / 100).toStringAsFixed(
+            (item.unitPriceInSis / 100000).toStringAsFixed(2)) {
+      _unitPriceController.text = (item.unitPriceInSis / 100000).toStringAsFixed(
         2,
       );
     }
@@ -198,8 +202,8 @@ class _InboundItemCardState extends ConsumerState<InboundItemCard> {
     if (widget.amountFocusNode?.hasFocus == false &&
         !_isUpdatingFromAmount &&
         _amountController.text !=
-            (item.amountInCents / 100).toStringAsFixed(2)) {
-      _amountController.text = (item.amountInCents / 100).toStringAsFixed(2);
+            (item.amountInSis / 100000).toStringAsFixed(2)) {
+      _amountController.text = (item.amountInSis / 100000).toStringAsFixed(2);
     }
     // --------------------------
 
