@@ -51,6 +51,7 @@ class ProductFormData {
   final String? imagePath;
   final String barcode;
   // 价格（元）
+  final double? costInCents;
   final double? retailPriceInCents;
   final double? promotionalPriceInCents;
   final double? suggestedRetailPriceInCents;
@@ -77,6 +78,7 @@ class ProductFormData {
     this.newUnitName = '',
     this.imagePath,
     this.barcode = '',
+    this.costInCents,
     this.retailPriceInCents,
     this.promotionalPriceInCents,
     this.suggestedRetailPriceInCents,
@@ -192,6 +194,7 @@ class ProductAddEditController {
             baseUnitId: unitId,
             groupId: groupId,
             variantName: variant.variantName.trim(),
+            cost: toMoney(data.costInCents),
             suggestedRetailPrice: toMoney(data.suggestedRetailPriceInCents),
             retailPrice: toMoney(data.retailPriceInCents),
             promotionalPrice: toMoney(data.promotionalPriceInCents),
@@ -388,6 +391,7 @@ class ProductAddEditController {
         groupId: data.groupId,
         variantName: data.variantName?.trim(),
         // 可选字段按需传入
+        cost: toMoney(data.costInCents),
         suggestedRetailPrice: toMoney(data.suggestedRetailPriceInCents),
         retailPrice: toMoney(data.retailPriceInCents),
         promotionalPrice: toMoney(data.promotionalPriceInCents),

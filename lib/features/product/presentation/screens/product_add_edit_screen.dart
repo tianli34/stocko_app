@@ -343,6 +343,7 @@ class _ProductAddEditScreenState extends ConsumerState<ProductAddEditScreen> {
                       ),
                       const SizedBox(height: 16),
                       PricingSection(
+                        costController: _c.costController,
                         retailPriceController: _c.retailPriceController,
                         promotionalPriceController:
                             _c.promotionalPriceController,
@@ -401,7 +402,7 @@ class _ProductAddEditScreenState extends ConsumerState<ProductAddEditScreen> {
                           },
                           onScanBarcode: () async {
                             try {
-                              final barcode = await BarcodeScannerService.scanForProduct(context);
+                              final barcode = await BarcodeScannerService.quickScan(context, title: '扫描条码');
                               return barcode;
                             } catch (e) {
                               ToastService.error('❌ 扫码失败: $e');
@@ -490,6 +491,7 @@ class _ProductAddEditScreenState extends ConsumerState<ProductAddEditScreen> {
       categoryController: _c.categoryController,
       unitController: _c.unitController,
       barcodeController: _c.barcodeController,
+      costController: _c.costController,
       retailPriceController: _c.retailPriceController,
       promotionalPriceController: _c.promotionalPriceController,
       suggestedRetailPriceController: _c.suggestedRetailPriceController,

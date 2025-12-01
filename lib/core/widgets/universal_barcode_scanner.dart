@@ -41,9 +41,21 @@ class BarcodeScannerConfig {
   final int? continuousDelay; // 连续扫码延迟（毫秒）
   final bool showScanHistory; // 显示扫码历史
   final int maxHistoryItems; // 最大历史记录数
+  final List<BarcodeFormat>? formats; // 支持的条码格式，null表示支持所有格式
   final List<Widget>? additionalActions;
   final Color? backgroundColor;
   final Color? foregroundColor;
+
+  /// 默认一维条码格式（屏蔽二维码）
+  static const List<BarcodeFormat> defaultBarcodeFormats = [
+    BarcodeFormat.ean13,
+    BarcodeFormat.ean8,
+    BarcodeFormat.code128,
+    BarcodeFormat.code39,
+    BarcodeFormat.code93,
+    BarcodeFormat.upcA,
+    BarcodeFormat.upcE,
+  ];
 
   const BarcodeScannerConfig({
     this.title = '扫描条码',
@@ -57,6 +69,7 @@ class BarcodeScannerConfig {
     this.continuousDelay = 1000, // 默认1秒延迟
     this.showScanHistory = false, // 默认不显示历史
     this.maxHistoryItems = 20, // 默认显示最近20条
+    this.formats = defaultBarcodeFormats, // 默认只扫描一维条码
     this.additionalActions,
     this.backgroundColor = Colors.black,
     this.foregroundColor = Colors.white,
@@ -93,12 +106,13 @@ class _UniversalBarcodeScannerState extends State<UniversalBarcodeScanner> {
   bool _isScanning = true;
   final List<ScanHistoryItem> _scanHistory = []; // 扫码历史记录
   int _totalScans = 0; // 扫码总数量
-  String? _lastScannedBarcode; // 上一次扫描的条码，用于去重
 
   @override
   void initState() {
     super.initState();
-    _cameraController = MobileScannerController();
+    _cameraController = MobileScannerController(
+      formats: widget.config.formats ?? [],
+    );
     _audioPlayer = AudioPlayer();
     _initializeAudioPlayer();
   }
@@ -655,17 +669,6 @@ class _UniversalBarcodeScannerState extends State<UniversalBarcodeScanner> {
 
   /// 处理扫码结果
   Future<void> _handleBarcodeScanned(String barcode) async {
-    // 连续扫码模式下的去重：如果条码与上一个相同，则忽略
-    if (widget.config.continuousMode && barcode == _lastScannedBarcode) {
-      if (kDebugMode) {
-        print('去重：忽略重复条码 $barcode');
-      }
-      return;
-    }
-
-    // 更新上一次扫描的条码
-    _lastScannedBarcode = barcode;
-
     // 更新扫码总数
     final currentScanNumber = _totalScans + 1;
     setState(() {

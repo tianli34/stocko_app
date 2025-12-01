@@ -21,6 +21,7 @@ import '../../../product/presentation/screens/product_selection_screen.dart';
 import '../widgets/inbound_item_card.dart';
 import '../../../../core/utils/snackbar_helper.dart';
 import '../../../../core/utils/sound_helper.dart';
+import '../../../../core/services/barcode_scanner_service.dart';
 import '../../../../core/widgets/universal_barcode_scanner.dart';
 import '../../../../core/models/scanned_product_payload.dart';
 import '../../../../core/widgets/custom_date_picker.dart';
@@ -196,59 +197,49 @@ class _CreateInboundScreenState extends ConsumerState<CreateInboundScreen> {
     }
   }
 
-  void _scanToAddProduct() {
-    Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (context) => Scaffold(
-          body: SafeArea(
-            child: UniversalBarcodeScanner(
-              config: const BarcodeScannerConfig(
-                title: '扫码添加货品',
-                subtitle: '扫描货品条码以添加入库单',
-              ),
-              onBarcodeScanned: _handleSingleProductScan,
-            ),
-          ),
-        ),
+  void _scanToAddProduct() async {
+    final barcode = await BarcodeScannerService.scan(
+      context,
+      config: const BarcodeScannerConfig(
+        title: '扫码添加货品',
+        subtitle: '扫描货品条码以添加入库单',
       ),
     );
+    if (barcode != null) {
+      _handleSingleProductScan(barcode);
+    }
   }
 
   void _continuousScan() {
-    _lastScannedBarcode = null; // 重置上次扫描的条码
+    _lastScannedBarcode = null;
     Navigator.of(context).push(
       MaterialPageRoute(
-        builder: (context) => Scaffold(
-          body: SafeArea(
-            child: UniversalBarcodeScanner(
-              config: const BarcodeScannerConfig(
-                title: '连续扫码',
-                subtitle: '将条码对准扫描框，自动连续添加',
-                continuousMode: true, // 启用连续扫码模式
-                continuousDelay: 1500, // 设置扫码间隔
-                showScanHistory: true, // 显示扫码历史
-                maxHistoryItems: 20, // 最多显示20条记录
-              ),
-              onBarcodeScanned: _handleContinuousProductScan,
-              getProductInfo: (barcode) async {
-                // 获取商品信息（名称和单位）
-                try {
-                  final productOperations = ref.read(productOperationsProvider.notifier);
-                  final result = await productOperations.getProductWithUnitByBarcode(barcode);
-                  if (result != null) {
-                    return (
-                      name: result.product.name,
-                      unitName: result.unitName,
-                      conversionRate: result.conversionRate,
-                    );
-                  }
-                  return null;
-                } catch (e) {
-                  return null;
-                }
-              },
-            ),
+        builder: (context) => BarcodeScannerService.scannerBuilder(
+          config: const BarcodeScannerConfig(
+            title: '连续扫码',
+            subtitle: '将条码对准扫描框，自动连续添加',
+            continuousMode: true,
+            continuousDelay: 1500,
+            showScanHistory: true,
+            maxHistoryItems: 20,
           ),
+          onBarcodeScanned: _handleContinuousProductScan,
+          getProductInfo: (barcode) async {
+            try {
+              final productOperations = ref.read(productOperationsProvider.notifier);
+              final result = await productOperations.getProductWithUnitByBarcode(barcode);
+              if (result != null) {
+                return (
+                  name: result.product.name,
+                  unitName: result.unitName,
+                  conversionRate: result.conversionRate,
+                );
+              }
+              return null;
+            } catch (e) {
+              return null;
+            }
+          },
         ),
       ),
     );

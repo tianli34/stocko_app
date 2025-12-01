@@ -36,6 +36,8 @@ class Product extends Table {
   TextColumn get brand => text().nullable()();
 
   // 使用 MoneyConverter，列名更简洁
+  IntColumn get cost =>
+      integer().map(const MoneyConverter()).nullable()();
   IntColumn get suggestedRetailPrice =>
       integer().map(const MoneyConverter()).nullable()();
   IntColumn get retailPrice =>

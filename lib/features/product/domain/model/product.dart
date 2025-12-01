@@ -67,6 +67,8 @@ abstract class ProductModel with _$ProductModel {
     String? specification,
     String? brand,
     @JsonKey(fromJson: _moneyFromJson, toJson: _moneyToJson)
+    Money? cost,
+    @JsonKey(fromJson: _moneyFromJson, toJson: _moneyToJson)
     Money? suggestedRetailPrice,
     @JsonKey(fromJson: _moneyFromJson, toJson: _moneyToJson)
     Money? retailPrice,

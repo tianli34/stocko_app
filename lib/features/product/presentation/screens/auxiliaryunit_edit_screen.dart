@@ -664,8 +664,9 @@ class _AuxiliaryUnitEditScreenState
 
   void _scanBarcode(int index) async {
     try {
-      final String? barcode = await BarcodeScannerService.scanForProduct(
+      final String? barcode = await BarcodeScannerService.quickScan(
         context,
+        title: '扫描条码',
       );
       if (barcode != null && barcode.isNotEmpty) {
         setState(() {

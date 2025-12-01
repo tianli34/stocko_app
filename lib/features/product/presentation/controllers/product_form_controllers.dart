@@ -10,6 +10,7 @@ class ProductFormControllers {
   final TextEditingController unitController = TextEditingController();
   late final TextEditingController nameController;
   late final TextEditingController barcodeController;
+  late final TextEditingController costController;
   late final TextEditingController retailPriceController;
   late final TextEditingController promotionalPriceController;
   late final TextEditingController suggestedRetailPriceController;
@@ -29,6 +30,12 @@ class ProductFormControllers {
   void init(ProductModel? product) {
     nameController = TextEditingController(text: product?.name ?? '');
     barcodeController = TextEditingController(text: ''); // 条码异步加载
+
+    costController = TextEditingController(
+      text: product?.cost != null
+          ? product!.cost!.yuan.toStringAsFixed(2)
+          : '',
+    );
 
     retailPriceController = TextEditingController(
       text: product?.retailPrice != null
@@ -66,6 +73,7 @@ class ProductFormControllers {
     return {
       'name': nameController.text,
       'barcode': barcodeController.text,
+      'cost': costController.text,
       'retailPrice': retailPriceController.text,
       'promotionalPrice': promotionalPriceController.text,
       'suggestedRetailPrice': suggestedRetailPriceController.text,
@@ -81,6 +89,7 @@ class ProductFormControllers {
   void restoreAllValues(Map<String, String> values) {
     nameController.text = values['name'] ?? '';
     barcodeController.text = values['barcode'] ?? '';
+    costController.text = values['cost'] ?? '';
     retailPriceController.text = values['retailPrice'] ?? '';
     promotionalPriceController.text = values['promotionalPrice'] ?? '';
     suggestedRetailPriceController.text = values['suggestedRetailPrice'] ?? '';
@@ -95,6 +104,7 @@ class ProductFormControllers {
     // 文本控制器
     nameController.dispose();
     barcodeController.dispose();
+    costController.dispose();
     retailPriceController.dispose();
     promotionalPriceController.dispose();
     suggestedRetailPriceController.dispose();

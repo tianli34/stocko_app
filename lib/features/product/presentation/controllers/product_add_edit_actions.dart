@@ -27,7 +27,7 @@ class ProductAddEditActions {
     FocusNode? nextFocus,
   }) async {
     try {
-      final String? barcode = await BarcodeScannerService.scanForProduct(context);
+      final String? barcode = await BarcodeScannerService.quickScan(context, title: '扫描条码');
       if (barcode != null && barcode.isNotEmpty) {
         barcodeController.text = barcode;
         ToastService.success('✅ 条码扫描成功: $barcode');
@@ -121,6 +121,7 @@ class ProductAddEditActions {
     required TextEditingController categoryController,
     required TextEditingController unitController,
     required TextEditingController barcodeController,
+    required TextEditingController costController,
     required TextEditingController retailPriceController,
     required TextEditingController promotionalPriceController,
     required TextEditingController suggestedRetailPriceController,
@@ -206,6 +207,7 @@ class ProductAddEditActions {
       newUnitName: unitController.text.trim(),
       imagePath: uiState.selectedImagePath,
       barcode: barcodeController.text.trim(),
+      costInCents: double.tryParse(costController.text.trim()),
       retailPriceInCents: double.tryParse(retailPriceController.text.trim()),
       promotionalPriceInCents: double.tryParse(promotionalPriceController.text.trim()),
       suggestedRetailPriceInCents: double.tryParse(suggestedRetailPriceController.text.trim()),

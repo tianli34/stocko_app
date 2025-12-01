@@ -100,7 +100,7 @@ part 'database.g.dart';
 class AppDatabase extends _$AppDatabase {
   AppDatabase(super.e);
   @override
-  int get schemaVersion => 28; 
+  int get schemaVersion => 29; 
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -162,6 +162,11 @@ class AppDatabase extends _$AppDatabase {
       );
     },
     onUpgrade: (Migrator m, int from, int to) async {
+      
+      if (from < 29 && to >= 29) {
+        // 添加成本字段到产品表
+        await m.addColumn(product, product.cost);
+      }
       
       if (from < 28 && to >= 28) {
         // 迁移 purchase_order_item 表：将 unit_price_in_cents 改为 unit_price_in_sis

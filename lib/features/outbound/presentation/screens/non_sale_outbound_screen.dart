@@ -16,6 +16,7 @@ import '../../../product/presentation/screens/product_selection_screen.dart';
 import '../../../sale/presentation/widgets/sale_item_card.dart';
 import '../../../../core/utils/snackbar_helper.dart';
 import '../../../../core/utils/sound_helper.dart';
+import '../../../../core/services/barcode_scanner_service.dart';
 import '../../../../core/widgets/universal_barcode_scanner.dart';
 import '../../application/service/outbound_service.dart';
 
@@ -122,57 +123,48 @@ class _NonSaleOutboundScreenState extends ConsumerState<NonSaleOutboundScreen> {
     }
   }
 
-  void _scanToAddProduct() {
-    Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (context) => Scaffold(
-          body: SafeArea(
-            child: UniversalBarcodeScanner(
-              config: const BarcodeScannerConfig(
-                title: '扫码添加货品',
-                subtitle: '扫描货品条码以添加出库单',
-              ),
-              onBarcodeScanned: _handleSingleProductScan,
-            ),
-          ),
-        ),
+  void _scanToAddProduct() async {
+    final barcode = await BarcodeScannerService.scan(
+      context,
+      config: const BarcodeScannerConfig(
+        title: '扫码添加货品',
+        subtitle: '扫描货品条码以添加出库单',
       ),
     );
+    if (barcode != null) {
+      _handleSingleProductScan(barcode);
+    }
   }
 
   void _continuousScan() {
     Navigator.of(context).push(
       MaterialPageRoute(
-        builder: (context) => Scaffold(
-          body: SafeArea(
-            child: UniversalBarcodeScanner(
-              config: const BarcodeScannerConfig(
-                title: '连续扫码',
-                subtitle: '将条码对准扫描框，自动连续添加',
-                continuousMode: true,
-                continuousDelay: 1500,
-                showScanHistory: true,
-                maxHistoryItems: 20,
-              ),
-              onBarcodeScanned: _handleContinuousProductScan,
-              getProductInfo: (barcode) async {
-                try {
-                  final productOperations = ref.read(productOperationsProvider.notifier);
-                  final result = await productOperations.getProductWithUnitByBarcode(barcode);
-                  if (result != null) {
-                    return (
-                      name: result.product.name,
-                      unitName: result.unitName,
-                      conversionRate: result.conversionRate,
-                    );
-                  }
-                  return null;
-                } catch (e) {
-                  return null;
-                }
-              },
-            ),
+        builder: (context) => BarcodeScannerService.scannerBuilder(
+          config: const BarcodeScannerConfig(
+            title: '连续扫码',
+            subtitle: '将条码对准扫描框，自动连续添加',
+            continuousMode: true,
+            continuousDelay: 1500,
+            showScanHistory: true,
+            maxHistoryItems: 20,
           ),
+          onBarcodeScanned: _handleContinuousProductScan,
+          getProductInfo: (barcode) async {
+            try {
+              final productOperations = ref.read(productOperationsProvider.notifier);
+              final result = await productOperations.getProductWithUnitByBarcode(barcode);
+              if (result != null) {
+                return (
+                  name: result.product.name,
+                  unitName: result.unitName,
+                  conversionRate: result.conversionRate,
+                );
+              }
+              return null;
+            } catch (e) {
+              return null;
+            }
+          },
         ),
       ),
     );

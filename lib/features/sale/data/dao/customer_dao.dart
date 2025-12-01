@@ -43,27 +43,26 @@ class CustomerDao extends DatabaseAccessor<AppDatabase> with _$CustomerDaoMixin 
   }
 
   /// 获取所有客户的利润贡献（一次性查询）
-  /// 利润 = 销售价 - 采购成本（取最新采购单价）
+  /// 利润 = 销售价 - 成本（优先使用移动加权平均价，其次使用Product表的cost）
   Future<Map<int, int>> getAllCustomerProfits() async {
     final result = await customSelect('''
       SELECT 
         c.id as customer_id,
         COALESCE(SUM(
           (sti.price_in_cents - COALESCE(
-            (SELECT poi.unit_price_in_sis / 1000
-             FROM purchase_order_item poi
-             JOIN unit_product up ON poi.unit_product_id = up.id
-             WHERE up.product_id = sti.product_id 
-               AND up.unit_id = sti.unit_id
-             ORDER BY poi.id DESC
-             LIMIT 1
-            ), 0)
-          ) * sti.quantity
+            s.average_unit_price_in_cents,
+            p.cost,
+            0
+          )) * sti.quantity
         ), 0) as total_profit
       FROM customers c
       LEFT JOIN sales_transaction st ON c.id = st.customer_id 
         AND st.status NOT IN ('cancelled', 'credit')
       LEFT JOIN sales_transaction_item sti ON st.id = sti.sales_transaction_id
+      LEFT JOIN product p ON p.id = sti.product_id
+      LEFT JOIN stock s ON s.product_id = sti.product_id 
+        AND s.shop_id = st.shop_id 
+        AND (s.batch_id = sti.batch_id OR (s.batch_id IS NULL AND sti.batch_id IS NULL))
       GROUP BY c.id
     ''').get();
 
@@ -99,18 +98,17 @@ class CustomerDao extends DatabaseAccessor<AppDatabase> with _$CustomerDaoMixin 
       SELECT 
         COALESCE(SUM(
           (sti.price_in_cents - COALESCE(
-            (SELECT poi.unit_price_in_sis / 1000
-             FROM purchase_order_item poi
-             JOIN unit_product up ON poi.unit_product_id = up.id
-             WHERE up.product_id = sti.product_id 
-               AND up.unit_id = sti.unit_id
-             ORDER BY poi.id DESC
-             LIMIT 1
-            ), 0)
-          ) * sti.quantity
+            s.average_unit_price_in_cents,
+            p.cost,
+            0
+          )) * sti.quantity
         ), 0) as total_profit
       FROM sales_transaction st
       JOIN sales_transaction_item sti ON st.id = sti.sales_transaction_id
+      JOIN product p ON p.id = sti.product_id
+      LEFT JOIN stock s ON s.product_id = sti.product_id 
+        AND s.shop_id = st.shop_id 
+        AND (s.batch_id = sti.batch_id OR (s.batch_id IS NULL AND sti.batch_id IS NULL))
       WHERE st.customer_id = ?
         AND st.status NOT IN ('cancelled', 'credit')
     ''', variables: [Variable.withInt(customerId)]).getSingle();

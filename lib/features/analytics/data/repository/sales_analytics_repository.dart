@@ -55,12 +55,15 @@ class SalesAnalyticsRepository {
         p.sku AS sku,
         SUM(si.quantity) AS total_qty,
         SUM(si.quantity * si.price_in_cents) AS total_amount_in_cents,
+        SUM(
+          si.quantity * (si.price_in_cents - COALESCE(
+            s.average_unit_price_in_cents,
+            p.cost,
+            0
+          ))
+        ) AS total_profit_in_cents,
         SUM(CASE 
-              WHEN s.average_unit_price_in_cents IS NULL OR s.average_unit_price_in_cents = 0 THEN 0 
-              ELSE si.quantity * (si.price_in_cents - s.average_unit_price_in_cents) 
-            END) AS total_profit_in_cents,
-        SUM(CASE 
-              WHEN s.average_unit_price_in_cents IS NULL OR s.average_unit_price_in_cents = 0 THEN 1 
+              WHEN COALESCE(s.average_unit_price_in_cents, p.cost) IS NULL THEN 1 
               ELSE 0 
             END) AS missing_cost_count
       FROM sales_transaction_item si
@@ -116,12 +119,15 @@ class SalesAnalyticsRepository {
         p.sku AS sku,
         SUM(si.quantity) AS total_qty,
         SUM(si.quantity * si.price_in_cents) AS total_amount_in_cents,
+        SUM(
+          si.quantity * (si.price_in_cents - COALESCE(
+            s.average_unit_price_in_cents,
+            p.cost,
+            0
+          ))
+        ) AS total_profit_in_cents,
         SUM(CASE 
-              WHEN s.average_unit_price_in_cents IS NULL OR s.average_unit_price_in_cents = 0 THEN 0 
-              ELSE si.quantity * (si.price_in_cents - s.average_unit_price_in_cents) 
-            END) AS total_profit_in_cents,
-        SUM(CASE 
-              WHEN s.average_unit_price_in_cents IS NULL OR s.average_unit_price_in_cents = 0 THEN 1 
+              WHEN COALESCE(s.average_unit_price_in_cents, p.cost) IS NULL THEN 1 
               ELSE 0 
             END) AS missing_cost_count
       FROM sales_transaction_item si
