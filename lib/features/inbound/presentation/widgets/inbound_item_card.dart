@@ -207,27 +207,40 @@ class _InboundItemCardState extends ConsumerState<InboundItemCard> {
     }
     // --------------------------
 
-    return Card(
-      elevation: 2,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(8),
-        side: BorderSide(
-          color: Colors.blue.shade300,
-          width: 1.5,
+    return Dismissible(
+      key: ValueKey(widget.itemId),
+      direction: DismissDirection.endToStart,
+      onDismissed: (_) => ref
+          .read(inboundListProvider.notifier)
+          .removeItem(widget.itemId),
+      background: Container(
+        alignment: Alignment.centerRight,
+        padding: const EdgeInsets.only(right: 20),
+        decoration: BoxDecoration(
+          color: Colors.red,
+          borderRadius: BorderRadius.circular(8),
         ),
+        child: const Icon(Icons.delete, color: Colors.white),
       ),
-      child: Stack(
-        children: [
-          Padding(
-            padding: const EdgeInsets.all(3),
-            child: Consumer(
-              builder: (context, ref, _) {
-                // 将product provider的监听提升到顶层，以便在多个地方共享其状态
-                final productAsync = ref.watch(
-                  productByIdProvider(item.productId),
-                );
+      child: Card(
+        elevation: 2,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(8),
+          side: BorderSide(
+            color: Colors.blue.shade300,
+            width: 1.5,
+          ),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(3),
+          child: Consumer(
+            builder: (context, ref, _) {
+              // 将product provider的监听提升到顶层，以便在多个地方共享其状态
+              final productAsync = ref.watch(
+                productByIdProvider(item.productId),
+              );
 
-                return productAsync.when(
+              return productAsync.when(
                   loading: () => const SizedBox(
                     height: 80,
                     child: Center(child: CircularProgressIndicator()),
@@ -543,27 +556,9 @@ class _InboundItemCardState extends ConsumerState<InboundItemCard> {
                     );
                   },
                 );
-              },
-            ),
+            },
           ),
-          Positioned(
-            top: -15,
-            right: -15,
-            child: IconButton(
-              onPressed: () => ref
-                  .read(inboundListProvider.notifier)
-                  .removeItem(widget.itemId),
-              icon: const Icon(Icons.close, size: 18),
-              style: IconButton.styleFrom(
-                backgroundColor: Colors.red.shade50,
-                foregroundColor: Colors.red,
-                minimumSize: const Size(24, 24),
-                padding: EdgeInsets.zero,
-              ),
-              tooltip: '删除',
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }

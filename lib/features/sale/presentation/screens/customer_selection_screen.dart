@@ -160,13 +160,30 @@ class _CustomerSelectionScreenState extends ConsumerState<CustomerSelectionScree
               data: (profits) {
                 final profitCents = profits[customer.id] ?? 0;
                 final profitYuan = profitCents / 100;
+                final points = (profitYuan * 14).toInt();
                 final isPositive = profitCents >= 0;
-                return Text(
-                  '利润: ¥${profitYuan.toStringAsFixed(2)}',
-                  style: TextStyle(
-                    color: isPositive ? Colors.green : Colors.red,
-                    fontWeight: FontWeight.w500,
-                  ),
+                return Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Text(
+                      '利润: ¥${profitYuan.toInt()}',
+                      style: TextStyle(
+                        color: isPositive ? Colors.green : Colors.red,
+                        fontWeight: FontWeight.w500,
+                        fontSize: 14,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      '积分: $points',
+                      style: const TextStyle(
+                        color: Colors.orange,
+                        fontWeight: FontWeight.w500,
+                        fontSize: 14,
+                      ),
+                    ),
+                  ],
                 );
               },
               loading: () => const SizedBox(
