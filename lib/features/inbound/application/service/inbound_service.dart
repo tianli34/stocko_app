@@ -522,6 +522,10 @@ class InboundService {
 
       // 将入库数量换算为基本单位数量
       final baseUnitQuantity = item.model.quantity * unitProduct.conversionRate;
+      
+      // 将入库单位价格换算为基本单位价格
+      // 例如：100元/箱，10个/箱 -> 10元/个
+      final baseUnitPriceInSis = (item.unitPriceInSis / unitProduct.conversionRate).round();
 
       // 先更新库存数量和记录流水
       final success = await _inventoryService.inbound(
@@ -542,7 +546,7 @@ class InboundService {
         shopId: shopId,
         batchId: batchId,
         inboundQuantity: baseUnitQuantity,
-        inboundUnitPriceInSis: item.unitPriceInSis,
+        inboundUnitPriceInSis: baseUnitPriceInSis,
       );
 
       print('✅ 商品 ${item.productName} 库存和移动加权平均价格更新完成');

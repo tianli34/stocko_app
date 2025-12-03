@@ -114,6 +114,6 @@ abstract class IInventoryRepository {
     int productId,
     int shopId,
     int? batchId,
-    int averageUnitPriceInCents,
+    int averageUnitPriceInSis,
   );
 }

@@ -180,14 +180,14 @@ class InventoryQueryScreen extends ConsumerWidget {
           previousValue + (element['quantity'] as num).toInt(),
     );
 
-    // 计算总价值
+    // 计算总价值（价格从丝转换为元，1元 = 100,000丝）
     final totalValue = inventoryList.fold<double>(
       0,
       (previousValue, element) =>
           previousValue +
           (element['quantity'] as num) *
-              (element['purchasePrice'] as num? ?? 0) /
-              100,
+              (element['purchasePrice'] as num? ?? 0).toDouble() /
+              100000,
     );
 
     return Column(

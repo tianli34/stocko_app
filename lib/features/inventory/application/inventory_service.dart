@@ -265,7 +265,7 @@ class InventoryService {
   /// 更新库存的移动加权平均价格
   Future<bool> updateAverageUnitPrice(
     int productId,
-    int averageUnitPriceInCents,
+    int averageUnitPriceInSis,
   ) async {
     try {
       // 获取该产品的所有库存记录并更新
@@ -282,7 +282,7 @@ class InventoryService {
           productId,
           inventory.shopId,
           inventory.batchId,
-          averageUnitPriceInCents,
+          averageUnitPriceInSis,
         );
       }
       

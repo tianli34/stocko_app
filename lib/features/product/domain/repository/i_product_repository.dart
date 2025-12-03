@@ -81,7 +81,7 @@ abstract class IProductRepository {
       int conversionRate,
       int? sellingPriceInCents,
       int? wholesalePriceInCents,
-      int? averageUnitPriceInCents
+      int? averageUnitPriceInSis
     })?
   >
   getProductWithUnitByBarcode(String barcode);

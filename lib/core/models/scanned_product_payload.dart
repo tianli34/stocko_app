@@ -10,7 +10,7 @@ class ScannedProductPayload extends Equatable {
   final int conversionRate;
   final int? sellingPriceInCents;
   final int? wholesalePriceInCents;
-  final int? averageUnitPriceInCents;
+  final int? averageUnitPriceInSis;
 
   const ScannedProductPayload({
     required this.product,
@@ -20,7 +20,7 @@ class ScannedProductPayload extends Equatable {
     required this.conversionRate,
     this.sellingPriceInCents,
     this.wholesalePriceInCents,
-    this.averageUnitPriceInCents,
+    this.averageUnitPriceInSis,
   });
 
   @override
@@ -32,6 +32,6 @@ class ScannedProductPayload extends Equatable {
         conversionRate,
         sellingPriceInCents,
         wholesalePriceInCents,
-        averageUnitPriceInCents,
+        averageUnitPriceInSis,
       ];
 }

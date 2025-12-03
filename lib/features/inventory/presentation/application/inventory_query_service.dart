@@ -184,6 +184,17 @@ class InventoryQueryService {
           }
         }
 
+        // 获取产品的基础单位对应的unitProductId，用于查询采购价格
+        int? unitProductId;
+        try {
+          final baseUnit = await _productUnitRepository.getBaseUnitForProduct(
+            inventory.productId,
+          );
+          unitProductId = baseUnit?.id;
+        } catch (e) {
+          print('📦 库存查询服务：获取unitProductId失败: $e');
+        }
+
         // 构建库存项目数据
         final inventoryItem = {
           'id': inventory.id,
@@ -196,7 +207,9 @@ class InventoryQueryService {
           'categoryId': product.categoryId,
           'categoryName': categoryName ?? '未分类',
           'productId': inventory.productId,
-          'purchasePrice': await _purchaseDao.getLatestPurchasePrice(inventory.productId) ?? 0,
+          'purchasePrice': unitProductId != null 
+              ? (await _purchaseDao.getLatestPurchasePrice(unitProductId) ?? 0)
+              : 0,
         };
 
         if (batch != null) {

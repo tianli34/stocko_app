@@ -50,7 +50,7 @@ class ScanProductService {
         conversionRate: result.conversionRate,
         sellingPriceInCents: result.sellingPriceInCents,
         wholesalePriceInCents: result.wholesalePriceInCents,
-        averageUnitPriceInCents: result.averageUnitPriceInCents,
+        averageUnitPriceInSis: result.averageUnitPriceInSis,
       );
 
       await _handleProductFound(context, payload);

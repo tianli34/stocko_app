@@ -210,7 +210,7 @@ class ProductRepository implements IProductRepository {
       int conversionRate,
       int? sellingPriceInCents,
       int? wholesalePriceInCents,
-      int? averageUnitPriceInCents
+      int? averageUnitPriceInSis
     })?
   >
   getProductWithUnitByBarcode(String barcode) async {
@@ -225,7 +225,7 @@ class ProductRepository implements IProductRepository {
         conversionRate: result.conversionRate,
         sellingPriceInCents: result.sellingPriceInCents,
         wholesalePriceInCents: result.wholesalePriceInCents,
-        averageUnitPriceInCents: result.averageUnitPriceInCents,
+        averageUnitPriceInSis: result.averageUnitPriceInSis,
       );
     } catch (e) {
       throw Exception('根据条码查询产品及单位失败: $e');

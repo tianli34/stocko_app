@@ -100,7 +100,7 @@ part 'database.g.dart';
 class AppDatabase extends _$AppDatabase {
   AppDatabase(super.e);
   @override
-  int get schemaVersion => 29; 
+  int get schemaVersion => 30; 
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -162,6 +162,47 @@ class AppDatabase extends _$AppDatabase {
       );
     },
     onUpgrade: (Migrator m, int from, int to) async {
+      
+      if (from < 30 && to >= 30) {
+        // 迁移 stock 表：将 average_unit_price_in_cents 重命名为 average_unit_price_in_sis
+        
+        final stockResult = await customSelect(
+          "SELECT COUNT(*) as count FROM pragma_table_info('stock') WHERE name='average_unit_price_in_cents'",
+        ).getSingle();
+        
+        final hasOldColumn = stockResult.read<int>('count') > 0;
+        
+        if (hasOldColumn) {
+          await customStatement('''
+            CREATE TABLE stock_new (
+              id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+              product_id INTEGER NOT NULL REFERENCES product (id),
+              batch_id INTEGER REFERENCES product_batch (id),
+              quantity INTEGER NOT NULL,
+              average_unit_price_in_sis INTEGER NOT NULL DEFAULT 0,
+              shop_id INTEGER NOT NULL REFERENCES shop (id),
+              created_at INTEGER NOT NULL DEFAULT (strftime('%s', 'now')),
+              updated_at INTEGER NOT NULL DEFAULT (strftime('%s', 'now'))
+            );
+          ''');
+          
+          await customStatement('''
+            INSERT INTO stock_new (id, product_id, batch_id, quantity, average_unit_price_in_sis, shop_id, created_at, updated_at)
+            SELECT id, product_id, batch_id, quantity, average_unit_price_in_cents, shop_id, created_at, updated_at
+            FROM stock;
+          ''');
+          
+          await customStatement('DROP TABLE stock;');
+          await customStatement('ALTER TABLE stock_new RENAME TO stock;');
+          
+          await customStatement(
+            'CREATE UNIQUE INDEX IF NOT EXISTS stock_unique_with_batch ON stock(product_id, shop_id, batch_id) WHERE batch_id IS NOT NULL;',
+          );
+          await customStatement(
+            'CREATE UNIQUE INDEX IF NOT EXISTS stock_unique_without_batch ON stock(product_id, shop_id) WHERE batch_id IS NULL;',
+          );
+        }
+      }
       
       if (from < 29 && to >= 29) {
         // 添加成本字段到产品表
@@ -457,7 +498,7 @@ class AppDatabase extends _$AppDatabase {
       }
       if (from < 22 && to >= 22) {
         // 添加移动加权平均价格字段
-        await m.addColumn(stock, stock.averageUnitPriceInCents);
+        await m.addColumn(stock, stock.averageUnitPriceInSis);
         // 添加入库单明细表单价字段
         // await m.addColumn(inboundItem, inboundItem.unitPriceInCents);
       }

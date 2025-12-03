@@ -33,7 +33,7 @@ class _ProductInfoDialogState extends ConsumerState<_ProductInfoDialog> {
   @override
   void initState() {
     super.initState();
-    final averagePrice = widget.payload.averageUnitPriceInCents;
+    final averagePrice = widget.payload.averageUnitPriceInSis;
     _averagePriceController = TextEditingController(
       text: averagePrice != null ? (averagePrice / 100).toStringAsFixed(2) : '',
     );
@@ -165,12 +165,12 @@ class _ProductInfoDialogState extends ConsumerState<_ProductInfoDialog> {
       sellingPriceInCents = widget.payload.sellingPriceInCents;
     }
 
-    // 计算采购价：优先使用 averageUnitPriceInCents * conversionRate，否则使用 wholesalePriceInCents
+    // 计算采购价：优先使用 averageUnitPriceInSis * conversionRate，否则使用 wholesalePriceInCents
     int? purchasePriceInCents;
     String priceSource = '';
-    if (widget.payload.averageUnitPriceInCents != null) {
+    if (widget.payload.averageUnitPriceInSis != null) {
       purchasePriceInCents =
-          widget.payload.averageUnitPriceInCents! * widget.payload.conversionRate;
+          ((widget.payload.averageUnitPriceInSis! / 1000) * widget.payload.conversionRate).round();
       priceSource = '(库存均价)';
     } else if (widget.payload.wholesalePriceInCents != null) {
       purchasePriceInCents = widget.payload.wholesalePriceInCents;
@@ -228,7 +228,7 @@ class _ProductInfoDialogState extends ConsumerState<_ProductInfoDialog> {
                   _isEditing = !_isEditing;
                   if (!_isEditing) {
                     // 取消编辑时恢复原值
-                    final averagePrice = widget.payload.averageUnitPriceInCents;
+                    final averagePrice = widget.payload.averageUnitPriceInSis;
                     _averagePriceController.text = averagePrice != null
                         ? (averagePrice / 100).toStringAsFixed(2)
                         : '';

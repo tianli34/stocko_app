@@ -79,7 +79,7 @@ class InventoryDao extends DatabaseAccessor<AppDatabase>
             productId: row.read<int>('product_id'),
             batchId: row.readNullable<int>('batch_id'),
             quantity: row.read<int>('quantity'),
-            averageUnitPriceInCents: row.read<int>('average_unit_price_in_cents'),
+            averageUnitPriceInSis: row.read<int>('average_unit_price_in_cents'),
             shopId: row.read<int>('shop_id'),
             createdAt: DateTime.tryParse(createdAtStr ?? '') ?? DateTime.now(),
             updatedAt: DateTime.tryParse(updatedAtStr ?? '') ?? DateTime.now(),
@@ -316,7 +316,7 @@ class InventoryDao extends DatabaseAccessor<AppDatabase>
   /// 获取库存的移动加权平均价格
   Future<int> getAverageUnitPrice(int productId, int shopId, int? batchId) async {
     final stock = await getInventoryByProductShopAndBatch(productId, shopId, batchId);
-    return stock?.averageUnitPriceInCents ?? 0;
+    return stock?.averageUnitPriceInSis ?? 0;
   }
 
   /// 更新库存的移动加权平均价格
@@ -324,7 +324,7 @@ class InventoryDao extends DatabaseAccessor<AppDatabase>
     int productId,
     int shopId,
     int? batchId,
-    int averageUnitPriceInCents,
+    int averageUnitPriceInSis,
   ) async {
     final updater = update(stock)
       ..where((t) => t.productId.equals(productId) & t.shopId.equals(shopId));
@@ -337,7 +337,7 @@ class InventoryDao extends DatabaseAccessor<AppDatabase>
 
     final result = await updater.write(
       StockCompanion(
-        averageUnitPriceInCents: Value(averageUnitPriceInCents),
+        averageUnitPriceInSis: Value(averageUnitPriceInSis),
         updatedAt: Value(DateTime.now()),
       ),
     );

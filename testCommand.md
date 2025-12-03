@@ -2,7 +2,7 @@
 
 cd E:\stocko_app\
 git add .
-git commit -m "121 4 1K 添加成本字段 加权平均法优先 屏蔽二维码"
+git commit -m "123 5 1K 小修"
 git push
 
 

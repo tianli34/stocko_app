@@ -376,14 +376,14 @@ class InventoryRepository implements IInventoryRepository {
     int productId,
     int shopId,
     int? batchId,
-    int averageUnitPriceInCents,
+    int averageUnitPriceInSis,
   ) async {
     try {
       return await _inventoryDao.updateAverageUnitPrice(
         productId,
         shopId,
         batchId,
-        averageUnitPriceInCents,
+        averageUnitPriceInSis,
       );
     } catch (e) {
       print('📦 仓储层：更新库存均价失败: $e');

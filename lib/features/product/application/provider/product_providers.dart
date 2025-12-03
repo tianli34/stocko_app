@@ -118,7 +118,7 @@ class ProductOperationsNotifier extends AsyncNotifier<void> {
       int conversionRate,
       int? sellingPriceInCents,
       int? wholesalePriceInCents,
-      int? averageUnitPriceInCents
+      int? averageUnitPriceInSis
     })?
   >
   getProductWithUnitByBarcode(String barcode) async {
@@ -133,7 +133,7 @@ class ProductOperationsNotifier extends AsyncNotifier<void> {
         conversionRate: result.conversionRate,
         sellingPriceInCents: result.sellingPriceInCents,
         wholesalePriceInCents: result.wholesalePriceInCents,
-        averageUnitPriceInCents: result.averageUnitPriceInCents,
+        averageUnitPriceInSis: result.averageUnitPriceInSis,
       );
     } catch (e, st) {
       state = AsyncValue.error(Exception('根据条码查询产品及单位失败: ${e.toString()}'), st);

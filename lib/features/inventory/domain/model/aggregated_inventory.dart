@@ -42,14 +42,14 @@ abstract class AggregatedInventoryItem with _$AggregatedInventoryItem {
       (sum, item) => sum + (item['quantity'] as int? ?? 0),
     );
 
-    // 计算总价值（数量 × 进货价格，价格从分转换为元）
+    // 计算总价值（数量 × 进货价格，价格从丝转换为元，1元 = 100,000丝）
     final totalValue = inventoryItems.fold<double>(
       0,
       (sum, item) =>
           sum +
           (item['quantity'] as num? ?? 0) *
               (item['purchasePrice'] as num? ?? 0) /
-              100,
+              100000,
     );
 
     // 构建详细记录列表

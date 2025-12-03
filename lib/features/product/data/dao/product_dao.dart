@@ -266,7 +266,7 @@ class ProductDao extends DatabaseAccessor<AppDatabase> with _$ProductDaoMixin {
       int conversionRate,
       int? sellingPriceInCents,
       int? wholesalePriceInCents,
-      int? averageUnitPriceInCents
+      int? averageUnitPriceInSis
     })?
   >
   getProductWithUnitByBarcode(String barcode) async {
@@ -313,7 +313,7 @@ class ProductDao extends DatabaseAccessor<AppDatabase> with _$ProductDaoMixin {
       ..limit(1);
     
     final stock = await stockQuery.getSingleOrNull();
-    final averageUnitPriceInCents = stock?.averageUnitPriceInCents;
+    final averageUnitPriceInSis = stock?.averageUnitPriceInSis;
 
     // 如果 UnitProduct 表中的售价为 null，则回退使用 Product 表中的价格
     // 优先级：UnitProduct.sellingPriceInCents > Product.retailPrice > Product.suggestedRetailPrice
@@ -328,7 +328,7 @@ class ProductDao extends DatabaseAccessor<AppDatabase> with _$ProductDaoMixin {
       conversionRate: unitProduct.conversionRate,
       sellingPriceInCents: effectiveSellingPrice,
       wholesalePriceInCents: unitProduct.wholesalePriceInCents,
-      averageUnitPriceInCents: averageUnitPriceInCents,
+      averageUnitPriceInSis: averageUnitPriceInSis,
     );
   }
 

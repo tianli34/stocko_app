@@ -33,16 +33,18 @@ class WeightedAveragePriceService {
         return;
       } else {
         // 计算新的移动加权平均价格
-        // 注意：currentStock.quantity 是入库后的数量，需要减去本次入库数量得到入库前的数量
-        final quantityBeforeInbound = currentStock.quantity - inboundQuantity;
-        final currentAveragePrice = currentStock.averageUnitPriceInCents;
+        // 注意：此方法在 InventoryService.inbound 之后调用，所以 currentStock.quantity 已经是入库后的数量
+        // 需要减去本次入库数量得到入库前的数量
+        final quantityAfterInbound = currentStock.quantity;
+        final quantityBeforeInbound = quantityAfterInbound - inboundQuantity;
+        final currentAveragePrice = currentStock.averageUnitPriceInSis;
 
         // 移动加权平均价格公式：
         // 新平均价格 = (入库前库存数量 × 现有平均价格 + 入库数量 × 入库单价) ÷ (入库前库存数量 + 入库数量)
         final totalValue =
             (quantityBeforeInbound * currentAveragePrice) +
             (inboundQuantity * inboundUnitPriceInSis);
-        final totalQuantity = quantityBeforeInbound + inboundQuantity;
+        final totalQuantity = quantityAfterInbound; // 等于 quantityBeforeInbound + inboundQuantity
 
         final newAveragePrice = totalQuantity > 0
             ? (totalValue / totalQuantity).round()
@@ -52,7 +54,7 @@ class WeightedAveragePriceService {
         await _database.inventoryDao.updateInventory(
           StockCompanion(
             id: drift.Value(currentStock.id),
-            averageUnitPriceInCents: drift.Value(newAveragePrice),
+            averageUnitPriceInSis: drift.Value(newAveragePrice),
             updatedAt: drift.Value(DateTime.now()),
           ),
         );
@@ -93,7 +95,7 @@ class WeightedAveragePriceService {
     final stock = await _database.inventoryDao
         .getInventoryByProductShopAndBatch(productId, shopId, batchId);
 
-    return stock?.averageUnitPriceInCents ?? 0;
+    return stock?.averageUnitPriceInSis ?? 0;
   }
 
   /// 批量重新计算所有库存的移动加权平均价格
@@ -159,7 +161,7 @@ class WeightedAveragePriceService {
       await _database.inventoryDao.updateInventory(
         StockCompanion(
           id: drift.Value(currentStock.id),
-          averageUnitPriceInCents: drift.Value(weightedAveragePrice),
+          averageUnitPriceInSis: drift.Value(weightedAveragePrice),
           updatedAt: drift.Value(DateTime.now()),
         ),
       );
