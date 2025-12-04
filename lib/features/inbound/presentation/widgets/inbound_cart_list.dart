@@ -21,7 +21,7 @@ class InboundCartList extends ConsumerWidget {
   });
 
   // EmptyInboundState 的最小高度
-  static const double _minHeight = 376.0;
+  static const double _minHeight = 538.0;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {

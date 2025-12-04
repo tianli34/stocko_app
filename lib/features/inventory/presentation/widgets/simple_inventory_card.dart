@@ -81,21 +81,7 @@ class SimpleInventoryCard extends StatelessWidget {
                   // 库存数量（无展开图标，样式与原始卡片一致）
                   Row(
                     children: [
-                      Text(
-                        '${item.totalQuantity}',
-                        style: const TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                      const SizedBox(width: 4),
-                      Text(
-                        item.unit,
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: Colors.grey[600],
-                        ),
-                      ),
+                      _buildQuantityDisplay(item.totalQuantity),
                       const Spacer(),
 
                       // 库存状态指示器
@@ -145,6 +131,76 @@ class SimpleInventoryCard extends StatelessWidget {
       default:
         return Colors.grey.shade700;
     }
+  }
+
+  /// 构建数量显示组件
+  Widget _buildQuantityDisplay(int quantity) {
+    if (item.largestUnitConversionRate != null && 
+        item.largestUnitConversionRate! > 1) {
+      final largeUnitQty = quantity ~/ item.largestUnitConversionRate!;
+      final baseUnitQty = quantity % item.largestUnitConversionRate!;
+      
+      if (largeUnitQty > 0 && baseUnitQty > 0) {
+        return Row(
+          children: [
+            Text(
+              '$largeUnitQty',
+              style: const TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            Text(
+              item.largestUnitName ?? '',
+              style: TextStyle(fontSize: 14, color: Colors.grey[600]),
+            ),
+            Text(
+              '$baseUnitQty',
+              style: const TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            Text(
+              item.unit,
+              style: TextStyle(fontSize: 14, color: Colors.grey[600]),
+            ),
+          ],
+        );
+      } else if (largeUnitQty > 0) {
+        return Row(
+          children: [
+            Text(
+              '$largeUnitQty',
+              style: const TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            Text(
+              item.largestUnitName ?? item.unit,
+              style: TextStyle(fontSize: 14, color: Colors.grey[600]),
+            ),
+          ],
+        );
+      }
+    }
+    return Row(
+      children: [
+        Text(
+          '$quantity',
+          style: const TextStyle(
+            fontSize: 20,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        const SizedBox(width: 4),
+        Text(
+          item.unit,
+          style: TextStyle(fontSize: 14, color: Colors.grey[600]),
+        ),
+      ],
+    );
   }
 
   /// 构建状态指示器

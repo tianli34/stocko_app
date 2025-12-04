@@ -106,21 +106,35 @@ class CreateInboundController {
     final item = inboundItems[index];
     final productAsync = ref.read(productByIdProvider(item.productId));
 
-    productAsync.when(
-      data: (product) async {
-        if (product?.enableBatchManagement == true) {
-          amountFocusNodes[index].unfocus();
-          final pickedDate = await _selectProductionDate(item);
-          if (pickedDate != null) {
-            final updatedItem = item.copyWith(productionDate: pickedDate);
-            ref.read(inboundListProvider.notifier).updateItem(updatedItem);
-          }
-        }
-        _moveToNextQuantity(index);
-      },
-      loading: () => _moveToNextQuantity(index),
-      error: (_, __) => _moveToNextQuantity(index),
-    );
+    final product = productAsync.valueOrNull;
+    
+    if (product?.enableBatchManagement == true) {
+      // 取消所有焦点，避免日期选择器关闭后焦点回到之前的输入框
+      FocusManager.instance.primaryFocus?.unfocus();
+      final pickedDate = await _selectProductionDate(item);
+      if (pickedDate != null) {
+        final updatedItem = item.copyWith(productionDate: pickedDate);
+        ref.read(inboundListProvider.notifier).updateItem(updatedItem);
+      }
+      // 日期选择完成后，处理焦点
+      _handleFocusAfterDatePicker(index);
+    } else {
+      // 不需要选择日期，直接移动到下一个
+      _moveToNextQuantity(index);
+    }
+  }
+
+  /// 日期选择器关闭后处理焦点：移动到下一个数量输入框或取消焦点
+  void _handleFocusAfterDatePicker(int index) {
+    final itemCount = ref.read(inboundListProvider).length;
+    if (index + 1 < itemCount) {
+      // 使用延迟确保在 Flutter 焦点恢复机制之后执行
+      Future.delayed(const Duration(milliseconds: 100), () {
+        quantityFocusNodes[index + 1].requestFocus();
+      });
+    } else {
+      // 没有下一个输入框，焦点保持取消状态
+    }
   }
 
   void _moveToNextQuantity(int index) {

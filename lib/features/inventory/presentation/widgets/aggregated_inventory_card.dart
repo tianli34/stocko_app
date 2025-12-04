@@ -147,19 +147,7 @@ class _AggregatedInventoryCardState extends State<AggregatedInventoryCard>
                   // 总库存（醒目显示）
                   Row(
                     children: [
-                      Text(
-                        '${widget.item.totalQuantity}',
-                        style: TextStyle(
-                          fontSize: 24,
-                          fontWeight: FontWeight.bold,
-                          color: Theme.of(context).primaryColor,
-                        ),
-                      ),
-                      const SizedBox(width: 4),
-                      Text(
-                        widget.item.unit,
-                        style: TextStyle(fontSize: 14, color: Colors.grey[600]),
-                      ),
+                      _buildQuantityDisplay(context, widget.item.totalQuantity),
                       const SizedBox(width: 8),
                       // 显示详细记录数量
                       Container(
@@ -381,11 +369,7 @@ class _AggregatedInventoryCardState extends State<AggregatedInventoryCard>
           // 库存数量
           Expanded(
             flex: 1,
-            child: Text(
-              '${detail.quantity}${widget.item.unit}',
-              style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500),
-              textAlign: TextAlign.right,
-            ),
+            child: _buildDetailQuantityDisplay(detail),
           ),
         ],
       ),
@@ -405,5 +389,139 @@ class _AggregatedInventoryCardState extends State<AggregatedInventoryCard>
       default:
         return Colors.grey.shade700;
     }
+  }
+
+  /// 构建数量显示组件
+  Widget _buildQuantityDisplay(BuildContext context, int quantity) {
+    if (widget.item.largestUnitConversionRate != null && 
+        widget.item.largestUnitConversionRate! > 1) {
+      final largeUnitQty = quantity ~/ widget.item.largestUnitConversionRate!;
+      final baseUnitQty = quantity % widget.item.largestUnitConversionRate!;
+      
+      if (largeUnitQty > 0 && baseUnitQty > 0) {
+        return Row(
+          children: [
+            Text(
+              '$largeUnitQty',
+              style: TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+                color: Theme.of(context).primaryColor,
+              ),
+            ),
+            Text(
+              widget.item.largestUnitName ?? '',
+              style: TextStyle(fontSize: 14, color: Colors.grey[600]),
+            ),
+            Text(
+              '$baseUnitQty',
+              style: TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+                color: Theme.of(context).primaryColor,
+              ),
+            ),
+            Text(
+              widget.item.unit,
+              style: TextStyle(fontSize: 14, color: Colors.grey[600]),
+            ),
+          ],
+        );
+      } else if (largeUnitQty > 0) {
+        return Row(
+          children: [
+            Text(
+              '$largeUnitQty',
+              style: TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+                color: Theme.of(context).primaryColor,
+              ),
+            ),
+            Text(
+              widget.item.largestUnitName ?? widget.item.unit,
+              style: TextStyle(fontSize: 14, color: Colors.grey[600]),
+            ),
+          ],
+        );
+      }
+    }
+    return Row(
+      children: [
+        Text(
+          '$quantity',
+          style: TextStyle(
+            fontSize: 24,
+            fontWeight: FontWeight.bold,
+            color: Theme.of(context).primaryColor,
+          ),
+        ),
+        const SizedBox(width: 4),
+        Text(
+          widget.item.unit,
+          style: TextStyle(fontSize: 14, color: Colors.grey[600]),
+        ),
+      ],
+    );
+  }
+
+  /// 构建详细记录的数量显示组件
+  Widget _buildDetailQuantityDisplay(InventoryDetail detail) {
+    if (widget.item.largestUnitConversionRate != null && 
+        widget.item.largestUnitConversionRate! > 1) {
+      final largeUnitQty = detail.quantity ~/ widget.item.largestUnitConversionRate!;
+      final baseUnitQty = detail.quantity % widget.item.largestUnitConversionRate!;
+      
+      if (largeUnitQty > 0 && baseUnitQty > 0) {
+        return Row(
+          mainAxisAlignment: MainAxisAlignment.end,
+          children: [
+            Text(
+              '$largeUnitQty',
+              style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500),
+            ),
+            Text(
+              widget.item.largestUnitName ?? '',
+              style: TextStyle(fontSize: 11, color: Colors.grey[600]),
+            ),
+            Text(
+              '$baseUnitQty',
+              style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500),
+            ),
+            Text(
+              widget.item.unit,
+              style: TextStyle(fontSize: 11, color: Colors.grey[600]),
+            ),
+          ],
+        );
+      } else if (largeUnitQty > 0) {
+        return Row(
+          mainAxisAlignment: MainAxisAlignment.end,
+          children: [
+            Text(
+              '$largeUnitQty',
+              style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500),
+            ),
+            Text(
+              widget.item.largestUnitName ?? widget.item.unit,
+              style: TextStyle(fontSize: 11, color: Colors.grey[600]),
+            ),
+          ],
+        );
+      }
+    }
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.end,
+      children: [
+        Text(
+          '${detail.quantity}',
+          style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500),
+        ),
+        Text(
+          widget.item.unit,
+          style: TextStyle(fontSize: 11, color: Colors.grey[600]),
+        ),
+      ],
+    );
   }
 }

@@ -18,9 +18,18 @@ final purchaseDaoProvider = Provider<PurchaseDao>((ref) {
 // Provider to watch all purchase orders
 final purchaseOrdersProvider = StreamProvider<List<PurchaseOrderData>>((ref) {
   final dao = ref.watch(purchaseDaoProvider);
-  // Sort by purchase date descending
   return dao.watchAllPurchaseOrders().map(
-    (orders) => orders..sort((a, b) => b.createdAt.compareTo(a.createdAt)),
+    (orders) => orders..sort((a, b) {
+      // 待入库订单置顶
+      final aIsPending = a.status == PurchaseOrderStatus.pendingInbound;
+      final bIsPending = b.status == PurchaseOrderStatus.pendingInbound;
+      
+      if (aIsPending && !bIsPending) return -1;
+      if (!aIsPending && bIsPending) return 1;
+      
+      // 同状态按创建时间降序排列
+      return b.createdAt.compareTo(a.createdAt);
+    }),
   );
 });
 

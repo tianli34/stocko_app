@@ -6,7 +6,7 @@ import '../../../../core/widgets/cached_image_widget.dart';
 import '../../application/provider/sale_list_provider.dart';
 import '../../domain/model/sale_cart_item.dart';
 
-/// 销售单商品项卡片
+/// 收银台商品项卡片
 /// 显示商品信息、价格、数量和金额输入等
 class SaleItemCard extends ConsumerStatefulWidget {
   final String itemId;
@@ -165,6 +165,10 @@ class _SaleItemCardState extends ConsumerState<SaleItemCard> {
       },
       child: Card(
         elevation: 2,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(8),
+          side: const BorderSide(color: Colors.grey, width: 1),
+        ),
         child: Padding(
           padding: const EdgeInsets.all(3),
           child: Consumer(
@@ -225,139 +229,31 @@ class _SaleItemCardState extends ConsumerState<SaleItemCard> {
                                   ),
                                 ),
 
-                                // 批次（生产日期）选择：仅当启用批次管理且存在店铺ID
+                                // 批次（生产日期）自动选择：后台自动选择最旧批次
                                 if (product?.enableBatchManagement == true &&
-                                    widget.shopId != null) ...[
-                                  const SizedBox(width: 8),
-                                  SizedBox(
-                                    width: 130,
-                                    child: Consumer(
-                                      builder: (context, ref, __) {
-                                        final batchesAsync = ref.watch(
-                                          batchesByProductAndShopProvider((
-                                            productId: item.productId,
-                                            shopId: widget.shopId!,
-                                          )),
-                                        );
-                                        return batchesAsync.when(
-                                          loading: () => const SizedBox(
-                                            height: 30,
-                                            child: Center(
-                                              child: SizedBox(
-                                                width: 16,
-                                                height: 16,
-                                                child:
-                                                    CircularProgressIndicator(
-                                                      strokeWidth: 2,
-                                                    ),
-                                              ),
-                                            ),
-                                          ),
-                                          error: (e, st) => const SizedBox(
-                                            height: 30,
-                                            child: Center(
-                                              child: Icon(
-                                                Icons.error,
-                                                size: 16,
-                                                color: Colors.red,
-                                              ),
-                                            ),
-                                          ),
-                                          data: (list) {
-                                            // 选项：显示生产日期（按 id 去重，防止出现重复 value）
-                                            final options = list;
-                                            final uniqueOptions = {
-                                              for (final b in options)
-                                                b.id: b,
-                                            }.values.toList();
-                                            final selectedId = int.tryParse(
-                                              item.batchId ?? '',
-                                            );
-
-                                            // 若当前选中批次不在新店铺的批次列表中，置空以避免 Dropdown 的断言错误
-                                            final isValid =
-                                                selectedId != null &&
-                                                uniqueOptions.any(
-                                                  (b) => b.id == selectedId,
-                                                );
-
-                                            // 若无有效选择，则默认使用最早的生产日期
-                                            int? defaultId;
-                                            if (!isValid &&
-                                                uniqueOptions.isNotEmpty) {
-                                              final sortedByDate =
-                                                  [...uniqueOptions]..sort(
-                                                    (a, b) => a.productionDate
-                                                        .compareTo(
-                                                          b.productionDate,
-                                                        ),
-                                                  );
-                                              defaultId =
-                                                  sortedByDate.first.id;
-                                            }
-
-                                            final effectiveValue = isValid
-                                                ? selectedId
-                                                : defaultId;
-
-                                            // 异步将默认值写回（或在切换店铺后修正为有效默认值）
-                                            if (!isValid &&
-                                                effectiveValue != null) {
-                                              WidgetsBinding.instance
-                                                  .addPostFrameCallback((_) {
-                                                    _updateItemBatch(
-                                                      item,
-                                                      effectiveValue,
-                                                    );
-                                                  });
-                                            }
-
-                                            return DropdownButtonFormField<
-                                              int
-                                            >(
-                                              isDense: true,
-                                              value: effectiveValue,
-                                              decoration:
-                                                  const InputDecoration(
-                                                    isDense: true,
-                                                    contentPadding:
-                                                        EdgeInsets.symmetric(
-                                                          horizontal: 8,
-                                                          vertical: 6,
-                                                        ),
-                                                    border:
-                                                        OutlineInputBorder(),
-                                                  ),
-                                              hint: const Text('生产日期'),
-                                              items: uniqueOptions
-                                                  .map(
-                                                    (b) =>
-                                                        DropdownMenuItem<int>(
-                                                          value: b.id,
-                                                          child: Text(
-                                                            // 仅日期部分
-                                                            b.productionDate
-                                                                .toLocal()
-                                                                .toString()
-                                                                .split(' ')
-                                                                .first,
-                                                            overflow:
-                                                                TextOverflow
-                                                                    .ellipsis,
-                                                          ),
-                                                        ),
-                                                  )
-                                                  .toList(),
-                                              onChanged: (val) {
-                                                _updateItemBatch(item, val);
-                                              },
-                                            );
-                                          },
-                                        );
-                                      },
-                                    ),
+                                    widget.shopId != null)
+                                  Consumer(
+                                    builder: (context, ref, __) {
+                                      final batchesAsync = ref.watch(
+                                        batchesByProductAndShopProvider((
+                                          productId: item.productId,
+                                          shopId: widget.shopId!,
+                                        )),
+                                      );
+                                      batchesAsync.whenData((list) {
+                                        if (list.isEmpty) return;
+                                        final selectedId = int.tryParse(item.batchId ?? '');
+                                        final isValid = selectedId != null && list.any((b) => b.id == selectedId);
+                                        if (!isValid) {
+                                          final sortedByDate = [...list]..sort((a, b) => a.productionDate.compareTo(b.productionDate));
+                                          WidgetsBinding.instance.addPostFrameCallback((_) {
+                                            _updateItemBatch(item, sortedByDate.first.id);
+                                          });
+                                        }
+                                      });
+                                      return const SizedBox.shrink();
+                                    },
                                   ),
-                                ],
 
                                 const Spacer(),
                               ],
@@ -466,17 +362,19 @@ class _SaleItemCardState extends ConsumerState<SaleItemCard> {
                                   ),
                                   const SizedBox.square(dimension: 12.0),
 
-                                  Padding(
-                                    padding: const EdgeInsets.only(top: 24.0),
-                                    child: Text(
-                                      item.unitName,
-                                      style: TextStyle(
-                                        fontSize: 16,
-                                        color: Colors.grey[600],
+                                  if (item.conversionRate != 1)
+                                    Padding(
+                                      padding: const EdgeInsets.only(top: 24.0),
+                                      child: Text(
+                                        item.unitName,
+                                        style: TextStyle(
+                                          fontSize: 16,
+                                          color: Colors.grey[600],
+                                        ),
                                       ),
                                     ),
-                                  ),
-                                  const SizedBox(width: 22.0),
+                                  if (item.conversionRate != 1)
+                                    const SizedBox(width: 22.0),
 
                                   Expanded(
                                     flex: 7,
@@ -551,14 +449,15 @@ class _SaleItemCardState extends ConsumerState<SaleItemCard> {
                                           widget.onSubmitted?.call(),
                                     ),
                                   ),
-                                  const SizedBox(width: 8),
-                                  Text(
-                                    item.unitName,
-                                    style: TextStyle(
-                                      fontSize: 16,
-                                      color: Colors.grey[600],
+                                  if (item.conversionRate != 1) ...[                                    const SizedBox(width: 8),
+                                    Text(
+                                      item.unitName,
+                                      style: TextStyle(
+                                        fontSize: 16,
+                                        color: Colors.grey[600],
+                                      ),
                                     ),
-                                  ),
+                                  ],
                                 ],
                               ),
                           ],

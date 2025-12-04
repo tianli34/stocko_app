@@ -158,6 +158,9 @@ class _InboundItemCardState extends ConsumerState<InboundItemCard> {
   }
 
   Future<void> _selectProductionDate(InboundItemState item) async {
+    // 在打开日期选择器前取消当前焦点
+    FocusManager.instance.primaryFocus?.unfocus();
+    
     final DateTime? picked = await CustomDatePicker.show(
       context: context,
       initialDate: item.productionDate ?? DateTime.now(),
@@ -165,6 +168,12 @@ class _InboundItemCardState extends ConsumerState<InboundItemCard> {
       lastDate: DateTime.now(),
       title: '选择生产日期',
     );
+
+    // Dialog 关闭后，在下一帧取消焦点，覆盖 Flutter 的自动焦点恢复
+    // 注意：这里只取消焦点，不转移焦点。焦点转移由 controller.handleNextStep 处理
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      FocusManager.instance.primaryFocus?.unfocus();
+    });
 
     if (picked != null && picked != item.productionDate) {
       _updateItem(item, newProductionDate: picked);

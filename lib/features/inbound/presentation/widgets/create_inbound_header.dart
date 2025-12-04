@@ -107,55 +107,58 @@ class CreateInboundHeader extends ConsumerWidget {
   }
 
   Widget _buildSupplierInput(BuildContext context, WidgetRef ref) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.center,
-      children: [
-        const Text('供应商:', style: TextStyle(fontSize: 17)),
-        const SizedBox(width: 8),
-        Expanded(
-          child: Align(
-            alignment: Alignment.centerLeft,
-            child: Container(
-              height: 40,
-              alignment: Alignment.center,
-              decoration: BoxDecoration(
-                border: Border.all(color: Colors.grey),
-                borderRadius: BorderRadius.circular(4),
-              ),
-              child: TypeAheadField<Supplier>(
-              key: const Key('supplier_typeahead'),
-              controller: controller.supplierController,
-              focusNode: controller.supplierFocusNode,
-              suggestionsCallback: (pattern) async {
-                return await ref.read(searchSuppliersProvider(pattern).future);
-              },
-              itemBuilder: (context, suggestion) {
-                return ListTile(
-                  title: Text(suggestion.name),
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 16.0),
-                );
-              },
-              onSelected: (suggestion) => controller.setSupplier(suggestion),
-              builder: (context, textController, focusNode) {
-                return TextField(
-                  controller: textController,
-                  focusNode: focusNode,
-                  textAlignVertical: TextAlignVertical.center,
-                  decoration: const InputDecoration(
-                    hintText: '搜索或选择',
-                    isDense: true,
-                    contentPadding: EdgeInsets.symmetric(horizontal: 8, vertical: 0),
-                    border: InputBorder.none,
-                  ),
-                );
-              },
-            ),
+  return Row(
+    // 依然保持几何中心对齐，通过调整 Padding 来修正视觉偏差
+    crossAxisAlignment: CrossAxisAlignment.center, 
+    children: [
+      const Text('供应商:', style: TextStyle(fontSize: 17)),
+      const SizedBox(width: 8),
+      Expanded(
+        child: TypeAheadField<Supplier>(
+          key: const Key('supplier_typeahead'),
+          controller: controller.supplierController,
+          focusNode: controller.supplierFocusNode,
+          suggestionsCallback: (pattern) =>
+              ref.read(searchSuppliersProvider(pattern).future),
+          itemBuilder: (context, suggestion) => ListTile(
+            title: Text(suggestion.name),
+            contentPadding: const EdgeInsets.symmetric(horizontal: 16.0),
           ),
+          onSelected: controller.setSupplier,
+          builder: (context, textController, focusNode) {
+            return TextField(
+              controller: textController,
+              focusNode: focusNode,
+              // 1. 确保输入字体大小与标签一致
+              style: const TextStyle(fontSize: 17), 
+              // 2. 移除 textAlignVertical: TextAlignVertical.center
+              // 因为这会强制垂直居中，反而我们要手动控制位置
+              
+              decoration: const InputDecoration(
+                hintText: '搜索或选择',
+                hintStyle: TextStyle(fontSize: 17, color: Colors.grey),
+                isDense: true,
+                // 3. 核心修改：使用非对称 Padding
+                // 增加 top (12)，减少 bottom (4)，将文字向下推，修正视觉偏差
+                contentPadding: EdgeInsets.fromLTRB(0, 12, 0, 4), 
+                
+                border: UnderlineInputBorder(
+                  borderSide: BorderSide(color: Colors.grey),
+                ),
+                enabledBorder: UnderlineInputBorder(
+                  borderSide: BorderSide(color: Colors.grey),
+                ),
+                focusedBorder: UnderlineInputBorder(
+                  borderSide: BorderSide(color: Colors.blue, width: 2),
+                ),
+              ),
+            );
+          },
         ),
-        )
-      ],
-    );
-  }
+      ),
+    ],
+  );
+}
 
   Widget _buildSourceInput(BuildContext context) {
     return Row(

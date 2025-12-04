@@ -63,7 +63,7 @@ class InventoryDao extends DatabaseAccessor<AppDatabase>
       // 如果标准查询失败，尝试使用原始 SQL 过滤有问题的记录
       try {
         final result = await customSelect(
-          'SELECT id, product_id, batch_id, quantity, average_unit_price_in_cents, shop_id, '
+          'SELECT id, product_id, batch_id, quantity, average_unit_price_in_sis, shop_id, '
           'datetime(COALESCE(created_at, CURRENT_TIMESTAMP)) as created_at, '
           'datetime(COALESCE(updated_at, CURRENT_TIMESTAMP)) as updated_at '
           'FROM stock WHERE id IS NOT NULL AND product_id IS NOT NULL',
@@ -79,7 +79,7 @@ class InventoryDao extends DatabaseAccessor<AppDatabase>
             productId: row.read<int>('product_id'),
             batchId: row.readNullable<int>('batch_id'),
             quantity: row.read<int>('quantity'),
-            averageUnitPriceInSis: row.read<int>('average_unit_price_in_cents'),
+            averageUnitPriceInSis: row.read<int>('average_unit_price_in_sis'),
             shopId: row.read<int>('shop_id'),
             createdAt: DateTime.tryParse(createdAtStr ?? '') ?? DateTime.now(),
             updatedAt: DateTime.tryParse(updatedAtStr ?? '') ?? DateTime.now(),
@@ -347,7 +347,7 @@ class InventoryDao extends DatabaseAccessor<AppDatabase>
   /// 获取库存总价值（数量 × 移动加权平均价格）
   Future<double> getTotalInventoryValue(int shopId) async {
     final result = await customSelect(
-      'SELECT SUM(quantity * average_unit_price_in_cents) as total_value FROM stock WHERE shop_id = ?',
+      'SELECT SUM(quantity * average_unit_price_in_sis) as total_value FROM stock WHERE shop_id = ?',
       variables: [Variable.withInt(shopId)],
       readsFrom: {stock},
     ).getSingleOrNull();
@@ -359,7 +359,7 @@ class InventoryDao extends DatabaseAccessor<AppDatabase>
   /// 获取指定产品的库存总价值
   Future<double> getProductInventoryValue(int productId) async {
     final result = await customSelect(
-      'SELECT SUM(quantity * average_unit_price_in_cents) as total_value FROM stock WHERE product_id = ?',
+      'SELECT SUM(quantity * average_unit_price_in_sis) as total_value FROM stock WHERE product_id = ?',
       variables: [Variable.withInt(productId)],
       readsFrom: {stock},
     ).getSingleOrNull();

@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:stocko_app/core/models/scanned_product_payload.dart';
 import 'package:stocko_app/features/inventory/application/inventory_service.dart';
+import 'package:stocko_app/features/product/data/repository/product_unit_repository.dart';
+import 'package:stocko_app/features/product/data/repository/unit_repository.dart';
 
 enum ProductInfoAction { sale, purchase, cancel }
 
@@ -45,6 +47,48 @@ class _ProductInfoDialogState extends ConsumerState<_ProductInfoDialog> {
     super.dispose();
   }
 
+  Future<Map<String, dynamic>> _getProductInventoryWithUnits(int productId) async {
+    final inventoryService = ref.read(inventoryServiceProvider);
+    final inventories = await inventoryService.getProductInventory(productId);
+    
+    final totalQuantity = inventories.fold<int>(
+      0,
+      (sum, inventory) => sum + (inventory.quantity as int),
+    );
+
+    try {
+      final productUnitRepository = ref.read(productUnitRepositoryProvider);
+      final unitRepository = ref.read(unitRepositoryProvider);
+      final allProductUnits = await productUnitRepository.getProductUnitsByProductId(productId);
+      
+      if (allProductUnits.isNotEmpty) {
+        final largestUnit = allProductUnits.reduce((a, b) => 
+          a.conversionRate > b.conversionRate ? a : b
+        );
+        
+        if (largestUnit.conversionRate > 1) {
+          final largestUnitData = await unitRepository.getUnitById(largestUnit.unitId);
+          final baseUnitData = await unitRepository.getUnitById(widget.payload.product.baseUnitId);
+          return {
+            'totalQuantity': totalQuantity,
+            'largestUnitConversionRate': largestUnit.conversionRate,
+            'largestUnitName': largestUnitData?.name,
+            'baseUnitName': baseUnitData?.name,
+          };
+        }
+      }
+    } catch (e) {
+      // 如果获取单位失败，只返回总数量
+    }
+
+    return {
+      'totalQuantity': totalQuantity,
+      'largestUnitConversionRate': null,
+      'largestUnitName': null,
+      'baseUnitName': null,
+    };
+  }
+
   @override
   Widget build(BuildContext context) {
     final inventoryService = ref.watch(inventoryServiceProvider);
@@ -56,19 +100,20 @@ class _ProductInfoDialogState extends ConsumerState<_ProductInfoDialog> {
       content: SizedBox(
         width: 300,
         child: product.id == null
-            ? _buildContent(null)
-            : FutureBuilder<List<dynamic>>(
-                future: inventoryService.getProductInventory(product.id!),
+            ? _buildContent(null, null, null, null)
+            : FutureBuilder<Map<String, dynamic>>(
+                future: _getProductInventoryWithUnits(product.id!),
                 builder: (context, snapshot) {
                   if (!snapshot.hasData) {
-                    return _buildContent(null);
+                    return _buildContent(null, null, null, null);
                   }
-                  // 计算所有店铺的总库存
-                  final totalQuantity = snapshot.data!.fold<int>(
-                    0,
-                    (sum, inventory) => sum + (inventory.quantity as int),
+                  final data = snapshot.data!;
+                  return _buildContent(
+                    data['totalQuantity'] as int?,
+                    data['largestUnitConversionRate'] as int?,
+                    data['largestUnitName'] as String?,
+                    data['baseUnitName'] as String?,
                   );
-                  return _buildContent(totalQuantity);
                 },
               ),
       ),
@@ -149,7 +194,7 @@ class _ProductInfoDialogState extends ConsumerState<_ProductInfoDialog> {
     }
   }
 
-  Widget _buildContent(int? stockQuantity) {
+  Widget _buildContent(int? stockQuantity, int? largestUnitConversionRate, String? largestUnitName, String? baseUnitName) {
     final product = widget.payload.product;
 
     // 判断是否为基本单位（conversionRate == 1）
@@ -239,7 +284,72 @@ class _ProductInfoDialogState extends ConsumerState<_ProductInfoDialog> {
           ],
         ),
         const SizedBox(height: 8),
-        Text('库存：${stockQuantity != null ? '$stockQuantity' : '-'}'),
+        Row(
+          children: [
+            const Text('库存：'),
+            if (stockQuantity != null)
+              _buildStockDisplay(stockQuantity, largestUnitConversionRate, largestUnitName, baseUnitName)
+            else
+              const Text('-'),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildStockDisplay(int quantity, int? largestUnitConversionRate, String? largestUnitName, String? baseUnitName) {
+    final displayBaseUnitName = baseUnitName ?? widget.payload.unitName;
+    
+    if (largestUnitConversionRate != null && largestUnitConversionRate > 1) {
+      final largeUnitQty = quantity ~/ largestUnitConversionRate;
+      final baseUnitQty = quantity % largestUnitConversionRate;
+      
+      if (largeUnitQty > 0 && baseUnitQty > 0) {
+        return Row(
+          children: [
+            Text(
+              '$largeUnitQty',
+              style: const TextStyle(fontWeight: FontWeight.w600),
+            ),
+            Text(
+              largestUnitName ?? '',
+              style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+            ),
+            Text(
+              '$baseUnitQty',
+              style: const TextStyle(fontWeight: FontWeight.w600),
+            ),
+            Text(
+              displayBaseUnitName,
+              style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+            ),
+          ],
+        );
+      } else if (largeUnitQty > 0) {
+        return Row(
+          children: [
+            Text(
+              '$largeUnitQty',
+              style: const TextStyle(fontWeight: FontWeight.w600),
+            ),
+            Text(
+              largestUnitName ?? displayBaseUnitName,
+              style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+            ),
+          ],
+        );
+      }
+    }
+    return Row(
+      children: [
+        Text(
+          '$quantity',
+          style: const TextStyle(fontWeight: FontWeight.w600),
+        ),
+        Text(
+          displayBaseUnitName,
+          style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+        ),
       ],
     );
   }

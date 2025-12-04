@@ -186,11 +186,26 @@ class InventoryQueryService {
 
         // 获取产品的基础单位对应的unitProductId，用于查询采购价格
         int? unitProductId;
+        int? largestUnitConversionRate;
+        String? largestUnitName;
         try {
           final baseUnit = await _productUnitRepository.getBaseUnitForProduct(
             inventory.productId,
           );
           unitProductId = baseUnit?.id;
+          
+          // 获取产品的所有单位，找出换算率最大的单位
+          final allProductUnits = await _productUnitRepository.getProductUnitsByProductId(inventory.productId);
+          if (allProductUnits.isNotEmpty) {
+            final largestUnit = allProductUnits.reduce((a, b) => 
+              a.conversionRate > b.conversionRate ? a : b
+            );
+            if (largestUnit.conversionRate > 1) {
+              largestUnitConversionRate = largestUnit.conversionRate;
+              final unit = unitMap[largestUnit.unitId];
+              largestUnitName = unit?.name;
+            }
+          }
         } catch (e) {
           print('📦 库存查询服务：获取unitProductId失败: $e');
         }
@@ -210,6 +225,8 @@ class InventoryQueryService {
           'purchasePrice': unitProductId != null 
               ? (await _purchaseDao.getLatestPurchasePrice(unitProductId) ?? 0)
               : 0,
+          'largestUnitConversionRate': largestUnitConversionRate,
+          'largestUnitName': largestUnitName,
         };
 
         if (batch != null) {

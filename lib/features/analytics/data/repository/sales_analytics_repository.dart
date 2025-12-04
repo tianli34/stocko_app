@@ -57,13 +57,13 @@ class SalesAnalyticsRepository {
         SUM(si.quantity * si.price_in_cents) AS total_amount_in_cents,
         SUM(
           si.quantity * (si.price_in_cents - COALESCE(
-            s.average_unit_price_in_cents,
+            s.average_unit_price_in_sis,
             p.cost,
             0
           ))
         ) AS total_profit_in_cents,
         SUM(CASE 
-              WHEN COALESCE(s.average_unit_price_in_cents, p.cost) IS NULL THEN 1 
+              WHEN COALESCE(s.average_unit_price_in_sis, p.cost) IS NULL THEN 1 
               ELSE 0 
             END) AS missing_cost_count
       FROM sales_transaction_item si
@@ -121,13 +121,13 @@ class SalesAnalyticsRepository {
         SUM(si.quantity * si.price_in_cents) AS total_amount_in_cents,
         SUM(
           si.quantity * (si.price_in_cents - COALESCE(
-            s.average_unit_price_in_cents,
+            s.average_unit_price_in_sis,
             p.cost,
             0
           ))
         ) AS total_profit_in_cents,
         SUM(CASE 
-              WHEN COALESCE(s.average_unit_price_in_cents, p.cost) IS NULL THEN 1 
+              WHEN COALESCE(s.average_unit_price_in_sis, p.cost) IS NULL THEN 1 
               ELSE 0 
             END) AS missing_cost_count
       FROM sales_transaction_item si

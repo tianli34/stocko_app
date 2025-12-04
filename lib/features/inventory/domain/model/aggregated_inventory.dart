@@ -17,6 +17,8 @@ abstract class AggregatedInventoryItem with _$AggregatedInventoryItem {
     required String categoryName,
     required List<InventoryDetail> details,
     required double totalValue, // 总价值（元）
+    int? largestUnitConversionRate, // 最大单位的换算率
+    String? largestUnitName, // 最大单位的名称
   }) = _AggregatedInventoryItem;
 
   const AggregatedInventoryItem._();
@@ -67,6 +69,8 @@ abstract class AggregatedInventoryItem with _$AggregatedInventoryItem {
       categoryName: firstItem['categoryName'] as String? ?? '未分类',
       details: details,
       totalValue: totalValue,
+      largestUnitConversionRate: firstItem['largestUnitConversionRate'] as int?,
+      largestUnitName: firstItem['largestUnitName'] as String?,
     );
   }
 
@@ -98,6 +102,34 @@ abstract class AggregatedInventoryItem with _$AggregatedInventoryItem {
   /// 是否可展开（判断是否有多条记录）
   /// 仅当有2条或以上记录时才需要展开/收起功能
   bool get isExpandable => details.length > 1;
+
+  /// 获取显示数量（不含单位）
+  String get displayQuantity {
+    if (largestUnitConversionRate != null && largestUnitConversionRate! > 1) {
+      final largeUnitQty = totalQuantity ~/ largestUnitConversionRate!;
+      final baseUnitQty = totalQuantity % largestUnitConversionRate!;
+      if (largeUnitQty > 0 && baseUnitQty > 0) {
+        return '$largeUnitQty$largestUnitName+$baseUnitQty';
+      } else if (largeUnitQty > 0) {
+        return '$largeUnitQty';
+      }
+    }
+    return '$totalQuantity';
+  }
+
+  /// 获取显示单位
+  String get displayUnit {
+    if (largestUnitConversionRate != null && largestUnitConversionRate! > 1) {
+      final largeUnitQty = totalQuantity ~/ largestUnitConversionRate!;
+      final baseUnitQty = totalQuantity % largestUnitConversionRate!;
+      if (largeUnitQty > 0 && baseUnitQty > 0) {
+        return unit;
+      } else if (largeUnitQty > 0) {
+        return largestUnitName ?? unit;
+      }
+    }
+    return unit;
+  }
 }
 
 /// 库存详细信息

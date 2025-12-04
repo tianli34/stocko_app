@@ -50,7 +50,7 @@ class CustomerDao extends DatabaseAccessor<AppDatabase> with _$CustomerDaoMixin 
         c.id as customer_id,
         COALESCE(SUM(
           (sti.price_in_cents - COALESCE(
-            s.average_unit_price_in_cents,
+            s.average_unit_price_in_sis / 1000,
             p.cost,
             0
           )) * sti.quantity
@@ -98,7 +98,7 @@ class CustomerDao extends DatabaseAccessor<AppDatabase> with _$CustomerDaoMixin 
       SELECT 
         COALESCE(SUM(
           (sti.price_in_cents - COALESCE(
-            s.average_unit_price_in_cents,
+            s.average_unit_price_in_sis / 1000,
             p.cost,
             0
           )) * sti.quantity

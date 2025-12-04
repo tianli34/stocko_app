@@ -44,118 +44,140 @@ class SaleHeaderSection extends ConsumerWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-        allShopsAsync.when(
-          data: (shops) {
-            if (selectedShop == null) {
-              final defaultShopName = isGeneric ? '我的店铺' : '长山的店';
-              final defaultShop = shops.firstWhereOrNull(
-                (shop) => shop.name == defaultShopName,
-              );
-              if (defaultShop != null) {
-                WidgetsBinding.instance.addPostFrameCallback((_) {
-                  onShopChanged(defaultShop);
-                });
+          allShopsAsync.when(
+            data: (shops) {
+              if (selectedShop == null) {
+                final defaultShopName = isGeneric ? '我的店铺' : '长山的店';
+                final defaultShop = shops.firstWhereOrNull(
+                  (shop) => shop.name == defaultShopName,
+                );
+                if (defaultShop != null) {
+                  WidgetsBinding.instance.addPostFrameCallback((_) {
+                    onShopChanged(defaultShop);
+                  });
+                }
               }
-            }
-            return const SizedBox.shrink();
-          },
-          loading: () => const SizedBox.shrink(),
-          error: (_, __) => const SizedBox.shrink(),
-        ),
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            if (!isGeneric)
-              IntrinsicWidth(
-                child: allShopsAsync.when(
-                  data: (shops) {
-                    return DropdownButtonFormField<Shop>(
-                      key: const Key('shop_dropdown'),
-                      focusNode: shopFocusNode,
-                      value: selectedShop,
-                      decoration: InputDecoration(
-                        isDense: false,
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-                        border: OutlineInputBorder(),
-                      ),
-                      items: shops
-                          .map(
-                            (shop) => DropdownMenuItem(
-                              value: shop,
-                              child: Text(shop.name),
+              return const SizedBox.shrink();
+            },
+            loading: () => const SizedBox.shrink(),
+            error: (_, __) => const SizedBox.shrink(),
+          ),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              if (!isGeneric)
+                IntrinsicWidth(
+                  child: allShopsAsync.when(
+                    data: (shops) {
+                      return DropdownButtonFormField<Shop>(
+                        key: const Key('shop_dropdown'),
+                        focusNode: shopFocusNode,
+                        value: selectedShop,
+                        decoration: InputDecoration(
+                          isDense: false,
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 8,
+                          ),
+                          border: InputBorder.none,
+                          enabledBorder: InputBorder.none,
+                          focusedBorder: InputBorder.none,
+                        ),
+                        items: shops
+                            .map(
+                              (shop) => DropdownMenuItem(
+                                value: shop,
+                                child: Text(shop.name),
+                              ),
+                            )
+                            .toList(),
+                        onChanged: onShopChanged,
+                      );
+                    },
+                    loading: () =>
+                        const Center(child: CircularProgressIndicator()),
+                    error: (err, stack) => Text('无法加载店铺: $err'),
+                  ),
+                ),
+              if (!isGeneric) const SizedBox(width: 16),
+              Expanded(
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.center, // 保持几何垂直居中
+                  children: [
+                    const Text('顾客:', style: TextStyle(fontSize: 17)),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: TypeAheadField<Customer>(
+                        key: const Key('customer_typeahead'),
+                        controller: customerController,
+                        focusNode: customerFocusNode,
+                        suggestionsCallback: (pattern) async {
+                          final allCustomers = await ref.read(
+                            allCustomersProvider.future,
+                          );
+                          if (pattern.isEmpty) return allCustomers;
+                          return allCustomers
+                              .where(
+                                (c) => c.name.toLowerCase().contains(
+                                  pattern.toLowerCase(),
+                                ),
+                              )
+                              .toList();
+                        },
+                        itemBuilder: (context, suggestion) {
+                          return ListTile(
+                            title: Text(suggestion.name),
+                            contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 16.0,
                             ),
-                          )
-                          .toList(),
-                      onChanged: onShopChanged,
-                    );
-                  },
-                  loading: () =>
-                      const Center(child: CircularProgressIndicator()),
-                  error: (err, stack) => Text('无法加载店铺: $err'),
+                          );
+                        },
+                        onSelected: (suggestion) {
+                          onCustomerSelected(suggestion);
+                          customerFocusNode.unfocus();
+                        },
+                        builder: (context, controller, focusNode) {
+                          return TextField(
+                            controller: controller,
+                            focusNode: focusNode,
+                            // 1. 字体大小保持 17
+                            style: const TextStyle(fontSize: 17),
+                            textInputAction: TextInputAction.next,
+                            onSubmitted: (_) => onCustomerSubmitted(),
+                            decoration: const InputDecoration(
+                              hintText: '搜索或选择',
+                              hintStyle: TextStyle(
+                                fontSize: 17,
+                                color: Colors.grey,
+                              ),
+                              isDense: true,
+                              // 2. 核心调整：从 (0, 12, 0, 4) 改为 (0, 9, 0, 5)
+                              // 减少顶部 Padding (12 -> 9)，让文字向上移动约 3px
+                              contentPadding: EdgeInsets.fromLTRB(0, 11, 0, 5),
+
+                              border: UnderlineInputBorder(
+                                borderSide: BorderSide(color: Colors.grey),
+                              ),
+                              enabledBorder: UnderlineInputBorder(
+                                borderSide: BorderSide(color: Colors.grey),
+                              ),
+                              focusedBorder: UnderlineInputBorder(
+                                borderSide: BorderSide(
+                                  color: Colors.blue,
+                                  width: 2,
+                                ),
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                  ],
                 ),
               ),
-            if (!isGeneric) const SizedBox(width: 16),
-            Expanded(
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.baseline,
-                textBaseline: TextBaseline.alphabetic,
-                children: [
-                  const Text('顾客:', style: TextStyle(fontSize: 18)),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: TypeAheadField<Customer>(
-                      key: const Key('customer_typeahead'),
-                      controller: customerController,
-                      focusNode: customerFocusNode,
-                      suggestionsCallback: (pattern) async {
-                        final allCustomers = await ref.read(
-                          allCustomersProvider.future,
-                        );
-                        if (pattern.isEmpty) {
-                          return allCustomers;
-                        }
-                        return allCustomers
-                            .where(
-                              (customer) => customer.name
-                                  .toLowerCase()
-                                  .contains(pattern.toLowerCase()),
-                            )
-                            .toList();
-                      },
-                      itemBuilder: (context, suggestion) {
-                        return ListTile(
-                          title: Text(suggestion.name),
-                          contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 16.0,
-                          ),
-                        );
-                      },
-                      onSelected: (suggestion) {
-                        onCustomerSelected(suggestion);
-                        customerFocusNode.unfocus();
-                      },
-                      builder: (context, controller, focusNode) {
-                        return TextField(
-                          controller: controller,
-                          focusNode: focusNode,
-                          decoration: InputDecoration(
-                            hintText: '搜索或选择',
-                            isDense: false,
-                            contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-                            border: OutlineInputBorder(),
-                          ),
-                          textInputAction: TextInputAction.next,
-                          onSubmitted: (_) => onCustomerSubmitted(),
-                        );
-                      },
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ],
+            ],
+          ),
+        ],
       ),
     );
   }
