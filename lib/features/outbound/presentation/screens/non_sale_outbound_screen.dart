@@ -178,7 +178,6 @@ class _NonSaleOutboundScreenState extends ConsumerState<NonSaleOutboundScreen> {
       final result = await productOperations.getProductWithUnitByBarcode(barcode);
 
       if (!mounted) return;
-      Navigator.of(context).pop();
 
       if (result != null) {
         ref.read(saleListProvider.notifier).addOrUpdateItem(
@@ -190,12 +189,12 @@ class _NonSaleOutboundScreenState extends ConsumerState<NonSaleOutboundScreen> {
         );
         HapticFeedback.lightImpact();
         SoundHelper.playSuccessSound();
+        showAppSnackBar(context, message: '✅ ${result.product.name} 已添加');
       } else {
         _showProductNotFoundDialog(barcode);
       }
     } catch (e) {
       if (!mounted) return;
-      Navigator.of(context).pop();
       showAppSnackBar(context, message: '❌ 查询货品失败: $e', isError: true);
     }
   }

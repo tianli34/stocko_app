@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import '../../../product/domain/model/product.dart';
 import '../../../../core/constants/app_routes.dart';
 import '../../application/provider/sale_list_provider.dart';
+import '../../application/provider/customer_providers.dart';
 import '../../application/service/sale_service.dart';
 import '../../domain/model/customer.dart';
 import '../../domain/model/sales_transaction.dart';
@@ -235,7 +236,6 @@ class _CreateSaleScreenState extends ConsumerState<CreateSaleScreen> {
           await productOperations.getProductWithUnitByBarcode(barcode);
 
       if (!mounted) return;
-      Navigator.of(context).pop();
 
       if (result != null) {
         final sellingPrice = result.conversionRate == 1
@@ -250,12 +250,12 @@ class _CreateSaleScreenState extends ConsumerState<CreateSaleScreen> {
             );
         HapticFeedback.lightImpact();
         SoundHelper.playSuccessSound();
+        showAppSnackBar(context, message: '✅ ${result.product.name} 已添加');
       } else {
         _showProductNotFoundDialog(barcode);
       }
     } catch (e) {
       if (!mounted) return;
-      Navigator.of(context).pop();
       showAppSnackBar(context, message: '❌ 查询货品失败: $e', isError: true);
     }
   }
@@ -361,10 +361,22 @@ class _CreateSaleScreenState extends ConsumerState<CreateSaleScreen> {
         customerId = _selectedCustomer!.id ?? 0;
         customerName = _selectedCustomer!.name;
       } else {
-        customerId = 0;
-        customerName = _customerController.text.trim().isEmpty
-            ? '匿名散客'
-            : _customerController.text.trim();
+        final inputName = _customerController.text.trim();
+        if (inputName.isEmpty) {
+          customerId = 0;
+          customerName = '匿名散客';
+        } else {
+          // 手动输入了新顾客名，先创建顾客记录
+          final customerController = ref.read(customerControllerProvider.notifier);
+          final newCustomer = Customer(name: inputName);
+          await customerController.addCustomer(newCustomer);
+          
+          // 获取刚创建的顾客ID
+          final allCustomers = await ref.read(allCustomersProvider.future);
+          final createdCustomer = allCustomers.firstWhere((c) => c.name == inputName);
+          customerId = createdCustomer.id ?? 0;
+          customerName = inputName;
+        }
       }
 
       final receiptNumber = await saleService.processOneClickSale(
@@ -491,8 +503,16 @@ class _CreateSaleScreenState extends ConsumerState<CreateSaleScreen> {
                   onCustomerSelected: (customer) {
                     setState(() {
                       _selectedCustomer = customer;
-                      _customerController.text = customer?.name ?? '';
+                      if (customer != null) {
+                        _customerController.text = customer.name;
+                      }
                     });
+                  },
+                  onCustomerTextChanged: () {
+                    // 当用户手动输入时，清除已选择的顾客
+                    if (_selectedCustomer != null) {
+                      setState(() => _selectedCustomer = null);
+                    }
                   },
                   onCustomerSubmitted: () {
                     WidgetsBinding.instance.addPostFrameCallback((_) {

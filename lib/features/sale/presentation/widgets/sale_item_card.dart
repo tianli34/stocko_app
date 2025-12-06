@@ -214,50 +214,39 @@ class _SaleItemCardState extends ConsumerState<SaleItemCard> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            Row(
-                              crossAxisAlignment: CrossAxisAlignment.center,
-                              children: [
-                                SizedBox(
-                                  width: 120,
-                                  child: Text(
-                                    item.productName,
-                                    style: const TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.w500,
-                                    ),
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                ),
-
-                                // 批次（生产日期）自动选择：后台自动选择最旧批次
-                                if (product?.enableBatchManagement == true &&
-                                    widget.shopId != null)
-                                  Consumer(
-                                    builder: (context, ref, __) {
-                                      final batchesAsync = ref.watch(
-                                        batchesByProductAndShopProvider((
-                                          productId: item.productId,
-                                          shopId: widget.shopId!,
-                                        )),
-                                      );
-                                      batchesAsync.whenData((list) {
-                                        if (list.isEmpty) return;
-                                        final selectedId = int.tryParse(item.batchId ?? '');
-                                        final isValid = selectedId != null && list.any((b) => b.id == selectedId);
-                                        if (!isValid) {
-                                          final sortedByDate = [...list]..sort((a, b) => a.productionDate.compareTo(b.productionDate));
-                                          WidgetsBinding.instance.addPostFrameCallback((_) {
-                                            _updateItemBatch(item, sortedByDate.first.id);
-                                          });
-                                        }
-                                      });
-                                      return const SizedBox.shrink();
-                                    },
-                                  ),
-
-                                const Spacer(),
-                              ],
+                            Text(
+                              item.productName,
+                              style: const TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w500,
+                              ),
+                              overflow: TextOverflow.ellipsis,
                             ),
+                            // 批次自动选择逻辑（后台处理，无UI显示）
+                            if (product?.enableBatchManagement == true &&
+                                widget.shopId != null)
+                              Consumer(
+                                builder: (context, ref, __) {
+                                  final batchesAsync = ref.watch(
+                                    batchesByProductAndShopProvider((
+                                      productId: item.productId,
+                                      shopId: widget.shopId!,
+                                    )),
+                                  );
+                                  batchesAsync.whenData((list) {
+                                    if (list.isEmpty) return;
+                                    final selectedId = int.tryParse(item.batchId ?? '');
+                                    final isValid = selectedId != null && list.any((b) => b.id == selectedId);
+                                    if (!isValid) {
+                                      final sortedByDate = [...list]..sort((a, b) => a.productionDate.compareTo(b.productionDate));
+                                      WidgetsBinding.instance.addPostFrameCallback((_) {
+                                        _updateItemBatch(item, sortedByDate.first.id);
+                                      });
+                                    }
+                                  });
+                                  return const SizedBox.shrink();
+                                },
+                              ),
                             const SizedBox(height: 3),
                             // 显示价格信息时的完整行
                             if (widget.showPriceInfo)

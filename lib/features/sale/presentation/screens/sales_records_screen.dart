@@ -53,6 +53,14 @@ final unitNameByIdProvider = FutureProvider.family<String?, int>((ref, unitId) a
   return unit?.name;
 });
 
+// Provider to check if unit is base unit for a product
+final isBaseUnitProvider = FutureProvider.family<bool, ({int productId, int unitId})>((ref, params) async {
+  final database = ref.watch(appDatabaseProvider);
+  final productUnitDao = database.productUnitDao;
+  final productUnit = await productUnitDao.getUnitProductByProductAndUnit(params.productId, params.unitId);
+  return productUnit?.conversionRate == 1;
+});
+
 class SalesRecordsScreen extends ConsumerWidget {
   const SalesRecordsScreen({super.key});
 
@@ -314,6 +322,9 @@ class SaleOrderItemTile extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final productAsync = ref.watch(watchProductByIdProvider(item.productId));
+    final isBaseUnitAsync = item.unitId != null
+        ? ref.watch(isBaseUnitProvider((productId: item.productId, unitId: item.unitId!)))
+        : const AsyncValue<bool>.data(true);
     final unitNameAsync = item.unitId != null 
         ? ref.watch(unitNameByIdProvider(item.unitId!))
         : const AsyncValue.data('');
@@ -341,19 +352,26 @@ class SaleOrderItemTile extends ConsumerWidget {
               ),
               loading: () => const Text('加载中...'),
               error: (err, stack) => Text(
-                '加载货品失败',
+                '加载中失败',
                 style: TextStyle(color: Theme.of(context).colorScheme.error),
               ),
             ),
           ),
           const SizedBox(width: 8),
-          unitNameAsync.when(
-            data: (unitName) => Text(
-              unitName ?? '',
-              style: const TextStyle(fontSize: 14, color: Colors.grey),
-            ),
+          isBaseUnitAsync.when(
+            data: (isBase) {
+              if (isBase) return const SizedBox.shrink();
+              return unitNameAsync.when(
+                data: (unitName) => Text(
+                  unitName ?? '',
+                  style: const TextStyle(fontSize: 14, color: Colors.grey),
+                ),
+                loading: () => const SizedBox.shrink(),
+                error: (_, __) => const SizedBox.shrink(),
+              );
+            },
             loading: () => const SizedBox.shrink(),
-            error: (_, _) => const SizedBox.shrink(),
+            error: (_, __) => const SizedBox.shrink(),
           ),
         ],
       ),

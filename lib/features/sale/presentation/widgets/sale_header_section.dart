@@ -17,6 +17,7 @@ class SaleHeaderSection extends ConsumerWidget {
   final ValueChanged<Shop?> onShopChanged;
   final ValueChanged<Customer?> onCustomerSelected;
   final VoidCallback onCustomerSubmitted;
+  final VoidCallback? onCustomerTextChanged;
 
   const SaleHeaderSection({
     super.key,
@@ -28,6 +29,7 @@ class SaleHeaderSection extends ConsumerWidget {
     required this.onShopChanged,
     required this.onCustomerSelected,
     required this.onCustomerSubmitted,
+    this.onCustomerTextChanged,
   });
 
   @override
@@ -143,6 +145,7 @@ class SaleHeaderSection extends ConsumerWidget {
                             // 1. 字体大小保持 17
                             style: const TextStyle(fontSize: 17),
                             textInputAction: TextInputAction.next,
+                            onChanged: (_) => onCustomerTextChanged?.call(),
                             onSubmitted: (_) => onCustomerSubmitted(),
                             decoration: const InputDecoration(
                               hintText: '搜索或选择',
