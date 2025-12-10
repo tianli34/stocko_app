@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:collection/collection.dart';
 import '../../../product/domain/model/product.dart';
 import '../../../../config/flavor_config.dart';
+import '../../../../core/mixins/product_scan_mixin.dart';
 import '../../../sale/application/provider/sale_list_provider.dart';
 import '../../../inventory/application/provider/shop_providers.dart';
 import '../../../inventory/domain/model/shop.dart';
@@ -15,9 +15,6 @@ import '../../../product/application/provider/product_providers.dart';
 import '../../../product/presentation/screens/product_selection_screen.dart';
 import '../../../sale/presentation/widgets/sale_item_card.dart';
 import '../../../../core/utils/snackbar_helper.dart';
-import '../../../../core/utils/sound_helper.dart';
-import '../../../../core/services/barcode_scanner_service.dart';
-import '../../../../core/widgets/universal_barcode_scanner.dart';
 import '../../application/service/outbound_service.dart';
 
 /// 预设的非售出库原因
@@ -124,124 +121,36 @@ class _NonSaleOutboundScreenState extends ConsumerState<NonSaleOutboundScreen> {
   }
 
   void _scanToAddProduct() async {
-    final barcode = await BarcodeScannerService.scan(
-      context,
-      config: const BarcodeScannerConfig(
-        title: '扫码添加货品',
-        subtitle: '扫描货品条码以添加出库单',
-      ),
+    final result = await ProductScanMixin.scanProduct(
+      context: context,
+      ref: ref,
+      title: '扫码添加货品',
+      subtitle: '扫描货品条码以添加出库单',
     );
-    if (barcode != null) {
-      _handleSingleProductScan(barcode);
+    if (result != null) {
+      ref.read(saleListProvider.notifier).addOrUpdateItem(
+        product: result.product,
+        unitId: result.unitId,
+        unitName: result.unitName,
+        sellingPriceInCents: 0,
+        conversionRate: result.conversionRate,
+      );
     }
   }
 
   void _continuousScan() {
-    Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (context) => BarcodeScannerService.scannerBuilder(
-          config: const BarcodeScannerConfig(
-            title: '连续扫码',
-            subtitle: '将条码对准扫描框，自动连续添加',
-            continuousMode: true,
-            continuousDelay: 1500,
-            showScanHistory: true,
-            maxHistoryItems: 20,
-          ),
-          onBarcodeScanned: _handleContinuousProductScan,
-          getProductInfo: (barcode) async {
-            try {
-              final productOperations = ref.read(productOperationsProvider.notifier);
-              final result = await productOperations.getProductWithUnitByBarcode(barcode);
-              if (result != null) {
-                return (
-                  name: result.product.name,
-                  unitName: result.unitName,
-                  conversionRate: result.conversionRate,
-                );
-              }
-              return null;
-            } catch (e) {
-              return null;
-            }
-          },
-        ),
-      ),
-    );
-  }
-
-  void _handleSingleProductScan(String barcode) async {
-    showAppSnackBar(context, message: '正在查询货品信息...');
-
-    try {
-      final productOperations = ref.read(productOperationsProvider.notifier);
-      final result = await productOperations.getProductWithUnitByBarcode(barcode);
-
-      if (!mounted) return;
-
-      if (result != null) {
-        ref.read(saleListProvider.notifier).addOrUpdateItem(
-          product: result.product,
-          unitId: result.unitId,
-          unitName: result.unitName,
-          sellingPriceInCents: 0,
-          conversionRate: result.conversionRate,
-        );
-        HapticFeedback.lightImpact();
-        SoundHelper.playSuccessSound();
-        showAppSnackBar(context, message: '✅ ${result.product.name} 已添加');
-      } else {
-        _showProductNotFoundDialog(barcode);
-      }
-    } catch (e) {
-      if (!mounted) return;
-      showAppSnackBar(context, message: '❌ 查询货品失败: $e', isError: true);
-    }
-  }
-
-  void _handleContinuousProductScan(String barcode) async {
-    showAppSnackBar(context, message: '条码: $barcode...');
-
-    try {
-      final productOperations = ref.read(productOperationsProvider.notifier);
-      final result = await productOperations.getProductWithUnitByBarcode(barcode);
-
-      if (!mounted) return;
-
-      if (result != null) {
-        ref.read(saleListProvider.notifier).addOrUpdateItem(
-          product: result.product,
-          unitId: result.unitId,
-          unitName: result.unitName,
-          sellingPriceInCents: 0,
-          conversionRate: result.conversionRate,
-        );
-        HapticFeedback.lightImpact();
-        SoundHelper.playSuccessSound();
-        showAppSnackBar(context, message: '✅ ${result.product.name} 已添加');
-      } else {
-        showAppSnackBar(context, message: '❌ 未找到条码对应的货品: $barcode', isError: true);
-      }
-    } catch (e) {
-      if (!mounted) return;
-      showAppSnackBar(context, message: '❌ 查询失败: $e', isError: true);
-    }
-  }
-
-  void _showProductNotFoundDialog(String barcode) {
-    showDialog(
+    ProductScanMixin.continuousScanProduct(
       context: context,
-      builder: (context) {
-        final theme = Theme.of(context);
-        return AlertDialog(
-          title: Text('货品未找到', style: theme.textTheme.titleLarge),
-          content: Text('条码 $barcode 对应的货品未在系统中找到。'),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: const Text('确定'),
-            ),
-          ],
+      ref: ref,
+      title: '连续扫码',
+      subtitle: '将条码对准扫描框，自动连续添加',
+      onProductScanned: (result) {
+        ref.read(saleListProvider.notifier).addOrUpdateItem(
+          product: result.product,
+          unitId: result.unitId,
+          unitName: result.unitName,
+          sellingPriceInCents: 0,
+          conversionRate: result.conversionRate,
         );
       },
     );

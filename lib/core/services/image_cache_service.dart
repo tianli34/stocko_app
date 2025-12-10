@@ -269,13 +269,26 @@ class ImageCacheService {
         return originalBytes;
       }
 
-      // 创建画布并绘制缩放后的图片
+      // 创建画布并绘制缩放后的图片（使用BoxFit.cover逻辑）
       final recorder = ui.PictureRecorder();
       final canvas = Canvas(recorder);
 
       final paint = Paint()
         ..isAntiAlias = true
         ..filterQuality = FilterQuality.high;
+
+      // 计算缩放比例，使图片完全覆盖目标区域
+      final scaleX = targetWidth / originalImage.width;
+      final scaleY = targetHeight / originalImage.height;
+      final scale = scaleX > scaleY ? scaleX : scaleY;
+
+      // 计算缩放后的尺寸
+      final scaledWidth = originalImage.width * scale;
+      final scaledHeight = originalImage.height * scale;
+
+      // 计算居中裁剪的偏移量
+      final offsetX = (targetWidth - scaledWidth) / 2;
+      final offsetY = (targetHeight - scaledHeight) / 2;
 
       canvas.drawImageRect(
         originalImage,
@@ -285,7 +298,7 @@ class ImageCacheService {
           originalImage.width.toDouble(),
           originalImage.height.toDouble(),
         ),
-        Rect.fromLTWH(0, 0, targetWidth.toDouble(), targetHeight.toDouble()),
+        Rect.fromLTWH(offsetX, offsetY, scaledWidth, scaledHeight),
         paint,
       );
 
