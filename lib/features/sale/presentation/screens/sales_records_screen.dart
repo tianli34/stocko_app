@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 import '../../../../core/constants/app_routes.dart';
+import '../../../../core/services/data_refresh_service.dart';
 import '../../application/provider/customer_providers.dart';
 import '../../data/dao/sales_transaction_dao.dart';
 import '../../data/dao/sales_transaction_item_dao.dart';
@@ -28,6 +29,9 @@ final salesTransactionItemDaoProvider = Provider<SalesTransactionItemDao>((
 final salesTransactionsProvider = StreamProvider<List<SalesTransactionData>>((
   ref,
 ) {
+  // 监听数据刷新触发器
+  ref.watch(dataRefreshTriggerProvider);
+  
   final dao = ref.watch(salesTransactionDaoProvider);
   // Sort by created date descending
   return dao.watchAllSalesTransactions().map(

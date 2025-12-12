@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../../core/services/data_refresh_service.dart';
 import '../../domain/model/shop.dart';
 import '../../domain/repository/i_shop_repository.dart';
 import '../../data/repository/shop_repository.dart';
@@ -150,6 +151,9 @@ final shopControllerProvider =
 
 /// 获取所有店铺提供者
 final allShopsProvider = StreamProvider<List<Shop>>((ref) {
+  // 监听数据刷新触发器
+  ref.watch(dataRefreshTriggerProvider);
+  
   final repository = ref.watch(shopRepositoryProvider);
   return repository.watchAllShops();
 });

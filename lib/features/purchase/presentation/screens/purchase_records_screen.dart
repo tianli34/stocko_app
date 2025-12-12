@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/constants/app_routes.dart';
 import '../../../../core/database/purchase_orders_table.dart';
+import '../../../../core/services/data_refresh_service.dart';
 import '../../application/provider/supplier_providers.dart';
 import '../../data/dao/purchase_dao.dart';
 import '../../../../core/database/database.dart';
@@ -17,6 +18,9 @@ final purchaseDaoProvider = Provider<PurchaseDao>((ref) {
 
 // Provider to watch all purchase orders
 final purchaseOrdersProvider = StreamProvider<List<PurchaseOrderData>>((ref) {
+  // 监听数据刷新触发器
+  ref.watch(dataRefreshTriggerProvider);
+  
   final dao = ref.watch(purchaseDaoProvider);
   return dao.watchAllPurchaseOrders().map(
     (orders) => orders..sort((a, b) {

@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:file_picker/file_picker.dart';
 
+import '../../../../core/services/data_refresh_service.dart';
 import '../../domain/models/backup_metadata.dart';
 import '../../domain/models/restore_preview.dart';
 import '../../domain/models/restore_result.dart';
@@ -57,9 +58,34 @@ abstract class RestoreProgressInfo with _$RestoreProgressInfo {
 /// 恢复控制器
 class RestoreController extends StateNotifier<RestoreState> {
   final IRestoreService _restoreService;
+  final Ref _ref;
   CancelToken? _cancelToken;
 
-  RestoreController(this._restoreService) : super(const RestoreState());
+  RestoreController(this._restoreService, this._ref) : super(const RestoreState());
+
+  /// 从指定路径加载备份文件（用于从备份列表直接恢复）
+  Future<void> loadBackupFromPath(String filePath) async {
+    try {
+      state = state.copyWith(
+        isLoading: true,
+        errorMessage: null,
+        selectedFilePath: filePath,
+        backupMetadata: null,
+        restorePreview: null,
+        requiresPassword: false,
+        password: null,
+      );
+
+      // 验证文件
+      await _validateBackupFile(filePath);
+    } catch (e) {
+      state = state.copyWith(
+        errorMessage: '加载备份文件失败: ${e.toString()}',
+      );
+    } finally {
+      state = state.copyWith(isLoading: false);
+    }
+  }
 
   /// 选择备份文件
   Future<void> selectBackupFile() async {
@@ -228,6 +254,11 @@ class RestoreController extends StateNotifier<RestoreState> {
           isCompleted: true,
         ),
       );
+
+      // 恢复成功后触发全局数据刷新，无需重启应用
+      if (result.success) {
+        _ref.triggerDataRefresh();
+      }
     } on RestoreCancelledException {
       state = state.copyWith(
         progressInfo: state.progressInfo?.copyWith(
@@ -273,5 +304,5 @@ class RestoreController extends StateNotifier<RestoreState> {
 /// 恢复控制器提供者
 final restoreControllerProvider = StateNotifierProvider<RestoreController, RestoreState>((ref) {
   final restoreService = ref.watch(restoreServiceProvider);
-  return RestoreController(restoreService);
+  return RestoreController(restoreService, ref);
 });

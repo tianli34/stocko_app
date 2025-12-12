@@ -53,7 +53,7 @@ class _ProductInfoDialogState extends ConsumerState<_ProductInfoDialog> {
     
     final totalQuantity = inventories.fold<int>(
       0,
-      (sum, inventory) => sum + (inventory.quantity as int),
+      (sum, inventory) => sum + (inventory.quantity),
     );
 
     try {

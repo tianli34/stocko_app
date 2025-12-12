@@ -1,6 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:mobile_scanner/mobile_scanner.dart';
-import 'package:stocko_app/core/utils/snackbar_helper.dart';
 import '../widgets/universal_barcode_scanner.dart';
 
 /// 扫码服务类

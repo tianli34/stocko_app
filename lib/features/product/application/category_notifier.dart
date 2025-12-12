@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../core/services/data_refresh_service.dart';
 import '../domain/model/category.dart';
 import 'category_service.dart';
 
@@ -137,6 +138,9 @@ class CategoryListNotifier extends StateNotifier<CategoryListState> {
 /// 类别列表 Provider
 final categoryListProvider =
     StateNotifierProvider<CategoryListNotifier, CategoryListState>((ref) {
+      // 监听数据刷新触发器，当备份恢复后会触发重新加载
+      ref.watch(dataRefreshTriggerProvider);
+      
       final categoryService = ref.watch(categoryServiceProvider);
       return CategoryListNotifier(categoryService);
     });
@@ -158,6 +162,9 @@ final subCategoriesProvider = StreamProvider.family<List<CategoryModel>, int>((
 
 /// 所有类别的流式 Provider
 final allCategoriesStreamProvider = StreamProvider<List<CategoryModel>>((ref) {
+  // 监听数据刷新触发器
+  ref.watch(dataRefreshTriggerProvider);
+  
   final categoryService = ref.watch(categoryServiceProvider);
   return categoryService.watchAllCategories();
 });

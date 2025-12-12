@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/database/database.dart' hide Customer;
+import '../../../../core/services/data_refresh_service.dart';
 import '../../data/dao/customer_dao.dart';
 import '../../data/repository/customer_repository.dart';
 import '../../domain/model/customer.dart';
@@ -16,6 +17,9 @@ final customerRepositoryProvider = Provider<ICustomerRepository>((ref) {
 });
 
 final allCustomersProvider = FutureProvider<List<Customer>>((ref) async {
+  // 监听数据刷新触发器
+  ref.watch(dataRefreshTriggerProvider);
+  
   final repository = ref.watch(customerRepositoryProvider);
   return repository.getAllCustomers();
 });
@@ -23,6 +27,9 @@ final allCustomersProvider = FutureProvider<List<Customer>>((ref) async {
 /// 监听所有客户的利润贡献变化 Map<customerId, profitInCents>
 /// 当销售交易或交易明细变化时自动更新
 final allCustomerProfitsProvider = StreamProvider<Map<int, int>>((ref) {
+  // 监听数据刷新触发器
+  ref.watch(dataRefreshTriggerProvider);
+  
   final dao = ref.watch(customerDaoProvider);
   return dao.watchAllCustomerProfits();
 });

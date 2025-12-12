@@ -185,6 +185,13 @@ class RestoreProgressDialog extends ConsumerWidget {
                   ),
                 ],
               ),
+              const SizedBox(height: 8),
+              Text(
+                '数据已自动刷新，无需重启应用',
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: Theme.of(context).colorScheme.onPrimaryContainer,
+                ),
+              ),
               const SizedBox(height: 12),
               _buildInfoRow(context, '总记录数', result.totalRecordsRestored.toString()),
               _buildInfoRow(context, '耗时', durationText),

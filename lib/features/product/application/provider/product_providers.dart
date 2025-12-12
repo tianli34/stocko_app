@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../../core/services/data_refresh_service.dart';
 import '../../domain/model/product.dart';
 import '../../domain/model/category.dart';
 import '../../data/repository/product_repository.dart'; // 这里包含了 productRepositoryProvider
@@ -146,6 +147,9 @@ class ProductOperationsNotifier extends AsyncNotifier<void> {
 class ProductListNotifier extends StreamNotifier<List<ProductModel>> {
   @override
   Stream<List<ProductModel>> build() {
+    // 监听数据刷新触发器，当备份恢复后会触发重新加载
+    ref.watch(dataRefreshTriggerProvider);
+    
     final repository = ref.watch(productRepositoryProvider);
     return repository.watchAllProducts().map((products) {
       final sortedProducts = List.of(products);

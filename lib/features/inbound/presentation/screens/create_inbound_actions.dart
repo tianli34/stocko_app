@@ -16,6 +16,7 @@ import 'create_inbound_controller.dart';
 /// 入库页面操作方法 - 作为 mixin 使用
 mixin CreateInboundActions<T extends ConsumerStatefulWidget> on ConsumerState<T> {
   CreateInboundController get controller;
+  @override
   bool get mounted;
 
 

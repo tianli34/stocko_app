@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../../core/services/data_refresh_service.dart';
 import '../../domain/model/unit.dart';
 import '../../domain/repository/i_unit_repository.dart';
 import '../../data/repository/unit_repository.dart';
@@ -206,6 +207,9 @@ class UnitController extends StateNotifier<UnitControllerState> {
 /// 所有单位列表的StreamProvider
 /// 监听单位数据的实时变化，当数据库中的单位发生变化时会自动更新UI
 final allUnitsProvider = StreamProvider<List<Unit>>((ref) {
+  // 监听数据刷新触发器
+  ref.watch(dataRefreshTriggerProvider);
+  
   final repository = ref.watch(unitRepositoryProvider);
   return repository.watchAllUnits().asBroadcastStream();
 });

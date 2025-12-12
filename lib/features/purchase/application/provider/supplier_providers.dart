@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../../core/services/data_refresh_service.dart';
 import '../../domain/model/supplier.dart';
 import '../../domain/repository/i_supplier_repository.dart';
 import '../../data/repository/supplier_repository.dart';
@@ -160,6 +161,9 @@ final supplierControllerProvider =
 
 /// 获取所有供应商提供者
 final allSuppliersProvider = StreamProvider<List<Supplier>>((ref) {
+  // 监听数据刷新触发器
+  ref.watch(dataRefreshTriggerProvider);
+  
   final repository = ref.watch(supplierRepositoryProvider);
   return repository.watchAllSuppliers();
 });

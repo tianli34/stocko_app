@@ -7,6 +7,7 @@ import '../../domain/models/backup_metadata.dart';
 import '../../domain/models/backup_options.dart';
 import '../controllers/backup_controller.dart';
 import '../controllers/backup_management_controller.dart';
+import '../controllers/restore_controller.dart';
 import '../widgets/progress_manager.dart';
 import '../widgets/create_backup_dialog.dart';
 import '../widgets/backup_details_dialog.dart';
@@ -211,6 +212,14 @@ class _BackupManagementScreenState extends ConsumerState<BackupManagementScreen>
                     onSelected: (value) => _handleMenuAction(context, value, backup),
                     itemBuilder: (context) => [
                       const PopupMenuItem(
+                        value: 'restore',
+                        child: ListTile(
+                          leading: Icon(Icons.restore),
+                          title: Text('恢复'),
+                          contentPadding: EdgeInsets.zero,
+                        ),
+                      ),
+                      const PopupMenuItem(
                         value: 'details',
                         child: ListTile(
                           leading: Icon(Icons.info_outline),
@@ -359,6 +368,9 @@ class _BackupManagementScreenState extends ConsumerState<BackupManagementScreen>
 
   void _handleMenuAction(BuildContext context, String action, BackupMetadata backup) {
     switch (action) {
+      case 'restore':
+        _restoreFromBackup(context, backup);
+        break;
       case 'details':
         _showBackupDetails(context, backup);
         break;
@@ -372,6 +384,17 @@ class _BackupManagementScreenState extends ConsumerState<BackupManagementScreen>
         _showDeleteConfirmation(context, backup);
         break;
     }
+  }
+
+  void _restoreFromBackup(BuildContext context, BackupMetadata backup) {
+    // 使用备份ID作为文件路径（BackupFileManager 会处理路径解析）
+    ref.read(restoreControllerProvider.notifier).loadBackupFromPath(backup.id);
+    
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => const RestoreScreen(),
+      ),
+    );
   }
 
   void _showRenameDialog(BuildContext context, BackupMetadata backup) {
