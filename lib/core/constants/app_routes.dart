@@ -22,6 +22,8 @@ class AppRoutes {
   static const String sales = '/sales';
   static const String saleCreate = '/sales/create';
   static const String saleRecords = '/sales/records';
+  static const String saleReturns = '/sales/returns';
+  static const String saleReturnCreate = '/sales/return/create';
   static const String test = '/test';
   static const String databaseViewer = '/database-viewer';
   static const String databaseManagement = '/database-management';
@@ -29,10 +31,22 @@ class AppRoutes {
   static const String customers = '/customers';
   static const String productRestoreDebug = '/debug/product-restore';
   static const String nonSaleOutbound = '/outbound/non-sale';
+  
+  // 盘点相关路由
+  static const String stocktakeList = '/stocktake';
+  static const String stocktakeCreate = '/stocktake/create';
+  static const String stocktakeEntry = '/stocktake/:id/entry';
+  static const String stocktakeDiff = '/stocktake/:id/diff';
+  static const String stocktakeDetail = '/stocktake/:id';
 
   // 辅助方法，用于生成带参数的路由
   static String productDetailPath(String id) => '/products/$id';
   static String productEditPath(String id) => '/product/$id/edit';
   static String purchaseDetailPath(String purchaseNumber) =>
       '/purchase/detail/$purchaseNumber';
+  static String stocktakeEntryPath(int id) => '/stocktake/$id/entry';
+  static String stocktakeDiffPath(int id) => '/stocktake/$id/diff';
+  static String stocktakeDetailPath(int id) => '/stocktake/$id';
+  static String saleReturnCreatePath(int transactionId, int shopId) => 
+      '/sales/return/create?transactionId=$transactionId&shopId=$shopId';
 }

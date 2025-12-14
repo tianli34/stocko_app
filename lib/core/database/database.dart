@@ -24,8 +24,12 @@ import 'barcodes_table.dart'; // 新增条码表
 import 'customers_table.dart';
 import 'sales_transactions_table.dart';
 import 'sales_transaction_items_table.dart';
+import 'sales_returns_table.dart';
+import 'sales_return_items_table.dart';
 import 'outbound_receipts_table.dart';
 import 'outbound_receipt_items_table.dart';
+import 'stocktake_orders_table.dart';
+import 'stocktake_items_table.dart';
 import '../../features/product/data/dao/product_dao.dart';
 import '../../features/product/data/dao/category_dao.dart';
 import '../../features/product/data/dao/product_group_dao.dart';
@@ -44,8 +48,12 @@ import '../../features/product/data/dao/barcode_dao.dart';
 import '../../features/sale/data/dao/customer_dao.dart';
 import '../../features/sale/data/dao/sales_transaction_dao.dart';
 import '../../features/sale/data/dao/sales_transaction_item_dao.dart';
+import '../../features/sale/data/dao/sales_return_dao.dart';
+import '../../features/sale/data/dao/sales_return_item_dao.dart';
 import '../../features/outbound/data/dao/outbound_receipt_dao.dart';
 import '../../features/outbound/data/dao/outbound_item_dao.dart';
+import '../../features/stocktake/data/dao/stocktake_order_dao.dart';
+import '../../features/stocktake/data/dao/stocktake_item_dao.dart';
 import '../../features/product/domain/model/product.dart';
 
 part 'database.g.dart';
@@ -71,8 +79,12 @@ part 'database.g.dart';
     Customers,
     SalesTransaction,
     SalesTransactionItem,
+    SalesReturn,
+    SalesReturnItem,
     OutboundReceipt,
     OutboundItem,
+    StocktakeOrder,
+    StocktakeItem,
   ],
   daos: [
     ProductDao,
@@ -93,14 +105,18 @@ part 'database.g.dart';
     CustomerDao,
     SalesTransactionDao,
     SalesTransactionItemDao,
+    SalesReturnDao,
+    SalesReturnItemDao,
     OutboundReceiptDao,
     OutboundItemDao,
+    StocktakeOrderDao,
+    StocktakeItemDao,
   ],
 )
 class AppDatabase extends _$AppDatabase {
   AppDatabase(super.e);
   @override
-  int get schemaVersion => 30; 
+  int get schemaVersion => 32; 
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -162,6 +178,41 @@ class AppDatabase extends _$AppDatabase {
       );
     },
     onUpgrade: (Migrator m, int from, int to) async {
+      
+      // 版本32：添加销售退货表
+      if (from < 32 && to >= 32) {
+        await m.createTable(salesReturn);
+        await m.createTable(salesReturnItem);
+        // 创建退货表索引
+        await customStatement(
+          'CREATE INDEX IF NOT EXISTS idx_sales_return_transaction ON sales_return(sales_transaction_id);',
+        );
+        await customStatement(
+          'CREATE INDEX IF NOT EXISTS idx_sales_return_shop ON sales_return(shop_id);',
+        );
+        await customStatement(
+          'CREATE INDEX IF NOT EXISTS idx_sales_return_item_return ON sales_return_item(sales_return_id);',
+        );
+      }
+      
+      // 版本31：添加盘点表
+      if (from < 31 && to >= 31) {
+        await m.createTable(stocktakeOrder);
+        await m.createTable(stocktakeItem);
+        // 创建盘点表索引
+        await customStatement(
+          'CREATE INDEX IF NOT EXISTS idx_stocktake_order_shop ON stocktake_order(shop_id);',
+        );
+        await customStatement(
+          'CREATE INDEX IF NOT EXISTS idx_stocktake_order_status ON stocktake_order(status);',
+        );
+        await customStatement(
+          'CREATE INDEX IF NOT EXISTS idx_stocktake_item_stocktake ON stocktake_item(stocktake_id);',
+        );
+        await customStatement(
+          'CREATE INDEX IF NOT EXISTS idx_stocktake_item_product ON stocktake_item(product_id);',
+        );
+      }
       
       if (from < 30 && to >= 30) {
         // 迁移 stock 表：将 average_unit_price_in_cents 重命名为 average_unit_price_in_sis

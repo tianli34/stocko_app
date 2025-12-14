@@ -3,6 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../config/flavor_config.dart';
 import '../../../../core/constants/app_routes.dart';
+import '../../../product/presentation/screens/unit_selection_screen.dart';
+import '../../../product/presentation/screens/category_selection_screen.dart';
+import '../../../product/presentation/screens/product_group_list_screen.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
@@ -52,7 +55,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 children: [
                   ElevatedButton(
                     onPressed: () => context.push(AppRoutes.products),
-                    child: const Text('产品管理'),
+                    child: const Text('货品列表'),
                   ),
                   ElevatedButton(
                     onPressed: () => context.push(AppRoutes.productNew),
@@ -95,6 +98,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     child: const Text('客户管理'),
                   ),
                   ElevatedButton(
+                    onPressed: () => _showProductManagementDialog(context),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.deepPurple,
+                      foregroundColor: Colors.white,
+                    ),
+                    child: const Text('产品管理'),
+                  ),
+                  ElevatedButton(
                     onPressed: () => context.push(AppRoutes.settings),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.grey.shade600,
@@ -129,6 +140,65 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             const SizedBox(height: 20),
           ],
         ),
+      ),
+    );
+  }
+
+  void _showProductManagementDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('产品管理'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.straighten, color: Colors.blue),
+              title: const Text('单位管理'),
+              onTap: () {
+                Navigator.pop(ctx);
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => const UnitSelectionScreen(),
+                  ),
+                );
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.category, color: Colors.orange),
+              title: const Text('类别管理'),
+              onTap: () {
+                Navigator.pop(ctx);
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => const CategorySelectionScreen(isSelectionMode: false),
+                  ),
+                );
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.folder, color: Colors.green),
+              title: const Text('商品组管理'),
+              onTap: () {
+                Navigator.pop(ctx);
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => const ProductGroupListScreen(),
+                  ),
+                );
+              },
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('关闭'),
+          ),
+        ],
       ),
     );
   }

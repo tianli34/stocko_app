@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
-import '../../../../core/constants/app_routes.dart';
+import '../../../../core/constants/app_routes.dart' show AppRoutes;
 import '../../../../core/services/data_refresh_service.dart';
 import '../../application/provider/customer_providers.dart';
 import '../../data/dao/sales_transaction_dao.dart';
@@ -270,14 +270,28 @@ class SaleOrderCard extends ConsumerWidget {
       ),
     );
 
-    // 只有赊账单才能左滑显示销账按钮
-    Widget content;
-    if (sale.status == 'credit') {
-      content = Slidable(
-        endActionPane: ActionPane(
-          motion: const DrawerMotion(),
-          extentRatio: 0.25,
-          children: [
+    // 左滑显示操作按钮
+    Widget content = Slidable(
+      endActionPane: ActionPane(
+        motion: const DrawerMotion(),
+        extentRatio: sale.status == 'credit' ? 0.5 : 0.25,
+        children: [
+          // 退货按钮
+          SlidableAction(
+            onPressed: (context) {
+              context.push(AppRoutes.saleReturnCreatePath(sale.id, sale.shopId));
+            },
+            backgroundColor: Colors.orange,
+            foregroundColor: Colors.white,
+            icon: Icons.assignment_return,
+            label: '退货',
+            borderRadius: BorderRadius.circular(12),
+            padding: EdgeInsets.zero,
+            autoClose: true,
+            flex: 1,
+          ),
+          // 赊账单显示销账按钮
+          if (sale.status == 'credit')
             SlidableAction(
               onPressed: (context) {
                 _handleSettlePayment(context, ref);
@@ -291,13 +305,10 @@ class SaleOrderCard extends ConsumerWidget {
               autoClose: true,
               flex: 1,
             ),
-          ],
-        ),
-        child: cardContent,
-      );
-    } else {
-      content = cardContent;
-    }
+        ],
+      ),
+      child: cardContent,
+    );
 
     return Container(margin: const EdgeInsets.all(4.0), child: content);
   }

@@ -26,6 +26,13 @@ import '../../features/home/presentation/screens/home_screen.dart';
 import '../../core/models/scanned_product_payload.dart';
 import '../../debug/product_restore_debug_page.dart';
 import '../../features/outbound/presentation/screens/non_sale_outbound_screen.dart';
+import '../../features/stocktake/presentation/screens/stocktake_list_screen.dart';
+import '../../features/stocktake/presentation/screens/create_stocktake_screen.dart';
+import '../../features/stocktake/presentation/screens/stocktake_entry_screen.dart';
+import '../../features/stocktake/presentation/screens/stocktake_diff_screen.dart';
+import '../../features/stocktake/presentation/screens/stocktake_detail_screen.dart';
+import '../../features/sale/presentation/screens/sales_return_list_screen.dart';
+import '../../features/sale/presentation/screens/create_sales_return_screen.dart';
 
 // GoRouter Provider
 final routerProvider = Provider<GoRouter>((ref) {
@@ -109,6 +116,15 @@ final routerProvider = Provider<GoRouter>((ref) {
                             child: const Text('销售记录'),
                           ),
                         ),
+                        const SizedBox(height: 16),
+                        SizedBox(
+                          width: 200,
+                          child: ElevatedButton(
+                            onPressed: () =>
+                                context.push(AppRoutes.saleReturns),
+                            child: const Text('退货记录'),
+                          ),
+                        ),
                         const SizedBox(height: 20),
                         ElevatedButton(
                           onPressed: () => context.go(AppRoutes.home),
@@ -123,6 +139,23 @@ final routerProvider = Provider<GoRouter>((ref) {
                     path: 'records',
                     name: 'sale-records',
                     builder: (context, state) => const SalesRecordsScreen(),
+                  ),
+                  GoRoute(
+                    path: 'returns',
+                    name: 'sale-returns',
+                    builder: (context, state) => const SalesReturnListScreen(),
+                  ),
+                  GoRoute(
+                    path: 'return/create',
+                    name: 'sale-return-create',
+                    builder: (context, state) {
+                      final transactionId = int.parse(state.uri.queryParameters['transactionId'] ?? '0');
+                      final shopId = int.parse(state.uri.queryParameters['shopId'] ?? '0');
+                      return CreateSalesReturnScreen(
+                        salesTransactionId: transactionId,
+                        shopId: shopId,
+                      );
+                    },
                   ),
                 ],
               ),
@@ -171,6 +204,14 @@ final routerProvider = Provider<GoRouter>((ref) {
                           child: ElevatedButton(
                             onPressed: () => context.push('/inventory-query'),
                             child: const Text('库存查询'),
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        SizedBox(
+                          width: 200,
+                          child: ElevatedButton(
+                            onPressed: () => context.push(AppRoutes.stocktakeList),
+                            child: const Text('库存盘点'),
                           ),
                         ),
                         const SizedBox(height: 16),
@@ -365,6 +406,41 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: AppRoutes.nonSaleOutbound,
         name: 'non-sale-outbound',
         builder: (context, state) => const NonSaleOutboundScreen(),
+      ),
+      // 盘点相关路由
+      GoRoute(
+        path: AppRoutes.stocktakeList,
+        name: 'stocktake-list',
+        builder: (context, state) => const StocktakeListScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.stocktakeCreate,
+        name: 'stocktake-create',
+        builder: (context, state) => const CreateStocktakeScreen(),
+      ),
+      GoRoute(
+        path: '/stocktake/:id/entry',
+        name: 'stocktake-entry',
+        builder: (context, state) {
+          final stocktakeId = int.parse(state.pathParameters['id']!);
+          return StocktakeEntryScreen(stocktakeId: stocktakeId);
+        },
+      ),
+      GoRoute(
+        path: '/stocktake/:id/diff',
+        name: 'stocktake-diff',
+        builder: (context, state) {
+          final stocktakeId = int.parse(state.pathParameters['id']!);
+          return StocktakeDiffScreen(stocktakeId: stocktakeId);
+        },
+      ),
+      GoRoute(
+        path: '/stocktake/:id',
+        name: 'stocktake-detail',
+        builder: (context, state) {
+          final stocktakeId = int.parse(state.pathParameters['id']!);
+          return StocktakeDetailScreen(stocktakeId: stocktakeId);
+        },
       ),
     ],
     errorBuilder: (context, state) => Scaffold(
