@@ -1,0 +1,21 @@
+/* my-pdf-style.css */
+
+/* 直接设置段落（正文）的字体大小 */
+p {
+    font-size: 16px; /* 这会直接作用于正文 */
+    line-height: 1.6; /* 推荐顺便设置一个合适的行高，阅读体验更好 */
+}
+
+/* 设置整个文档的默认字体，这部分可以保留 */
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+}
+
+/* 标题和代码块的样式可以保持不变 */
+h1 {
+    font-size: 32px;
+}
+
+pre, code {
+    font-size: 14px;
+}

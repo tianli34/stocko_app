@@ -4,6 +4,9 @@ import '../../application/category_notifier.dart';
 import '../../domain/model/category.dart';
 import '../../../../core/utils/snackbar_helper.dart';
 import '../../data/repository/product_repository.dart';
+import '../widgets/category_tile.dart';
+import '../widgets/category_dialogs.dart';
+import '../widgets/delete_category_dialog.dart';
 
 /// 类别选择屏幕
 /// 支持选择、新增、重命名、删除类别的功能
@@ -24,12 +27,10 @@ class CategorySelectionScreen extends ConsumerStatefulWidget {
 
 class _CategorySelectionScreenState
     extends ConsumerState<CategorySelectionScreen> {
-  // 用于管理每个类别的展开/收起状态
   final Map<int, bool> _expandedCategories = {};
-  // 搜索关键字
   String _searchQuery = '';
-  // 缓存每个类别的产品数量
   final Map<int, int> _categoryProductCounts = {};
+  List<CategoryModel>? _previousCategories;
 
   @override
   void initState() {
@@ -37,133 +38,82 @@ class _CategorySelectionScreenState
     _loadProductCounts();
   }
 
-  /// 加载所有类别的产品数量（包含子类别）
   Future<void> _loadProductCounts() async {
     final categoryState = ref.read(categoryListProvider);
     final productRepository = ref.read(productRepositoryProvider);
     final allCategories = categoryState.categories;
 
+    final childrenMap = <int, List<int>>{};
     for (final category in allCategories) {
-      if (category.id != null) {
-        try {
-          // 获取当前类别的产品数量
-          final products = await productRepository.getProductsByCondition(
-            categoryId: category.id,
-          );
-          int totalCount = products.length;
-
-          // 递归计算所有子类别的产品数量
-          totalCount += await _getSubCategoriesProductCount(
-            category.id!,
-            allCategories,
-            productRepository,
-          );
-
-          _categoryProductCounts[category.id!] = totalCount;
-        } catch (e) {
-          _categoryProductCounts[category.id!] = 0;
+      if (category.parentId != null) {
+        childrenMap.putIfAbsent(category.parentId!, () => []);
+        if (category.id != null) {
+          childrenMap[category.parentId!]!.add(category.id!);
         }
       }
     }
 
-    if (mounted) {
-      setState(() {});
-    }
-  }
-
-  /// 递归计算子类别的产品总数
-  Future<int> _getSubCategoriesProductCount(
-    int parentId,
-    List<CategoryModel> allCategories,
-    dynamic productRepository,
-  ) async {
-    int count = 0;
-
-    // 获取直接子类别
-    final subCategories = allCategories
-        .where((cat) => cat.parentId == parentId)
+    final directCounts = <int, int>{};
+    final categoryIds = allCategories
+        .where((c) => c.id != null)
+        .map((c) => c.id!)
         .toList();
 
-    for (final subCategory in subCategories) {
-      if (subCategory.id != null) {
+    try {
+      final futures = categoryIds.map((id) async {
         try {
-          // 获取子类别的产品数量
           final products = await productRepository.getProductsByCondition(
-            categoryId: subCategory.id,
+            categoryId: id,
           );
-          count += products.length as int;
-
-          // 递归计算子类别的子类别
-          final subCount = await _getSubCategoriesProductCount(
-            subCategory.id!,
-            allCategories,
-            productRepository,
-          );
-          count += subCount;
+          return MapEntry(id, products.length);
         } catch (e) {
-          // 忽略错误，继续计算其他子类别
+          debugPrint('获取类别 $id 产品数量失败: $e');
+          return MapEntry(id, 0);
         }
+      });
+
+      final results = await Future.wait(futures);
+      for (final entry in results) {
+        directCounts[entry.key] = entry.value;
+      }
+    } catch (e) {
+      debugPrint('批量获取产品数量失败: $e');
+    }
+
+    for (final category in allCategories) {
+      if (category.id != null) {
+        final totalCount = _calculateTotalCount(
+          category.id!,
+          directCounts,
+          childrenMap,
+        );
+        _categoryProductCounts[category.id!] = totalCount;
       }
     }
 
-    return count;
+    if (mounted) setState(() {});
   }
 
-  Future<void> _showSearchDialog(BuildContext context) async {
-    final searchController = TextEditingController();
-    searchController.text = _searchQuery;
-
-    final newQuery = await showDialog<String>(
-      context: context,
-      builder: (context) => Transform.translate(
-        offset: const Offset(0, 150),
-        child: Dialog(
-          backgroundColor: Colors.transparent,
-          elevation: 0,
-          insetPadding: const EdgeInsets.symmetric(horizontal: 9.0),
-          child: TextField(
-            controller: searchController,
-            autofocus: true,
-            onSubmitted: (value) => Navigator.of(context).pop(value),
-            decoration: InputDecoration(
-              filled: true,
-              fillColor: Theme.of(context).scaffoldBackgroundColor,
-              border: const OutlineInputBorder(borderSide: BorderSide.none),
-              contentPadding: const EdgeInsets.symmetric(
-                vertical: 15.0,
-                horizontal: 10.0,
-              ),
-              suffixIcon: Padding(
-                padding: const EdgeInsets.only(right: 4.0),
-                child: TextButton(
-                  onPressed: () =>
-                      Navigator.of(context).pop(searchController.text),
-                  child: const Text('搜索'),
-                ),
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-
-    if (newQuery != null) {
-      setState(() {
-        _searchQuery = newQuery;
-      });
+  int _calculateTotalCount(
+    int categoryId,
+    Map<int, int> directCounts,
+    Map<int, List<int>> childrenMap,
+  ) {
+    int total = directCounts[categoryId] ?? 0;
+    final children = childrenMap[categoryId];
+    if (children != null) {
+      for (final childId in children) {
+        total += _calculateTotalCount(childId, directCounts, childrenMap);
+      }
     }
+    return total;
   }
 
   List<CategoryModel> _getFilteredCategories(List<CategoryModel> categories) {
-    if (_searchQuery.isEmpty) {
-      return categories;
-    }
-
+    if (_searchQuery.isEmpty) return categories;
     final lowerCaseQuery = _searchQuery.toLowerCase();
     return categories
-        .where(
-          (category) => category.name.toLowerCase().contains(lowerCaseQuery),
-        )
+        .where((c) => c.name.toLowerCase().contains(lowerCaseQuery))
         .toList();
   }
 
@@ -173,101 +123,91 @@ class _CategorySelectionScreenState
     final allCategories = categoryState.categories;
     final filteredCategories = _getFilteredCategories(allCategories);
 
-    // 当类别列表发生变化时，重新加载产品数量
-    ref.listen(categoryListProvider, (previous, next) {
-      if (previous?.categories != next.categories) {
-        _loadProductCounts();
-      }
-    });
+    if (_previousCategories != allCategories) {
+      _previousCategories = allCategories;
+      WidgetsBinding.instance.addPostFrameCallback((_) => _loadProductCounts());
+    }
+
+    final hierarchicalList = _searchQuery.isEmpty
+        ? _buildHierarchicalList(filteredCategories)
+        : <Widget>[];
 
     return Scaffold(
-      appBar: AppBar(
-        title: _searchQuery.isNotEmpty
-            ? Row(
-                children: [
-                  const Icon(Icons.search, size: 20),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(_searchQuery, overflow: TextOverflow.ellipsis),
-                  ),
-                  Text('(${filteredCategories.length})'),
-                ],
-              )
-            : Text(widget.isSelectionMode ? '选择类别' : '类别管理'),
-        leading: IconButton(
-          onPressed: () => Navigator.of(context).pop(),
-          icon: const Icon(Icons.arrow_back),
-          tooltip: '返回',
-        ),
-        actions: [
-          if (_searchQuery.isNotEmpty)
-            IconButton(
-              icon: const Icon(Icons.clear),
-              tooltip: '清除搜索',
-              onPressed: () {
-                setState(() {
-                  _searchQuery = '';
-                });
-              },
-            ),
-          IconButton(
-            icon: const Icon(Icons.search),
-            tooltip: '搜索',
-            onPressed: () => _showSearchDialog(context),
-          ),
-          IconButton(
-            onPressed: () => _showAddCategoryDialog(context),
-            icon: const Icon(Icons.add),
-            tooltip: '新增类别',
-          ),
-        ],
-      ),
+      appBar: _buildAppBar(filteredCategories),
       body: filteredCategories.isEmpty
-          ? Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const SizedBox(height: 16),
-                  Text(
-                    _searchQuery.isNotEmpty ? '未找到匹配的类别' : '暂无类别',
-                    style: const TextStyle(fontSize: 18, color: Colors.grey),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(_searchQuery.isNotEmpty ? '尝试其他关键词' : '点击右上角 + 号添加新类别'),
-                ],
-              ),
-            )
+          ? _buildEmptyState()
           : ListView.builder(
               padding: const EdgeInsets.all(16),
               itemCount: _searchQuery.isNotEmpty
                   ? filteredCategories.length
-                  : _buildHierarchicalList(filteredCategories).length,
+                  : hierarchicalList.length,
               itemBuilder: (context, index) {
                 if (_searchQuery.isNotEmpty) {
-                  // 搜索模式：显示扁平列表
-                  final category = filteredCategories[index];
-                  return _buildCategoryTile(
-                    context,
-                    category,
-                    0,
-                    allCategories,
-                  );
-                } else {
-                  // 正常模式：显示层级结构
-                  final item = _buildHierarchicalList(
-                    filteredCategories,
-                  )[index];
-                  return item;
+                  return _buildCategoryTile(filteredCategories[index], 0, allCategories);
                 }
+                return hierarchicalList[index];
               },
             ),
     );
   }
 
+  AppBar _buildAppBar(List<CategoryModel> filteredCategories) {
+    return AppBar(
+      title: _searchQuery.isNotEmpty
+          ? Row(
+              children: [
+                const Icon(Icons.search, size: 20),
+                const SizedBox(width: 8),
+                Expanded(child: Text(_searchQuery, overflow: TextOverflow.ellipsis)),
+                Text('(${filteredCategories.length})'),
+              ],
+            )
+          : Text(widget.isSelectionMode ? '选择类别' : '类别管理'),
+      leading: IconButton(
+        onPressed: () => Navigator.of(context).pop(),
+        icon: const Icon(Icons.arrow_back),
+        tooltip: '返回',
+      ),
+      actions: [
+        if (_searchQuery.isNotEmpty)
+          IconButton(
+            icon: const Icon(Icons.clear),
+            tooltip: '清除搜索',
+            onPressed: () => setState(() => _searchQuery = ''),
+          ),
+        IconButton(
+          icon: const Icon(Icons.search),
+          tooltip: '搜索',
+          onPressed: _showSearchDialog,
+        ),
+        IconButton(
+          onPressed: _showAddCategoryDialog,
+          icon: const Icon(Icons.add),
+          tooltip: '新增类别',
+        ),
+      ],
+    );
+  }
+
+  Widget _buildEmptyState() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const SizedBox(height: 16),
+          Text(
+            _searchQuery.isNotEmpty ? '未找到匹配的类别' : '暂无类别',
+            style: const TextStyle(fontSize: 18, color: Colors.grey),
+          ),
+          const SizedBox(height: 8),
+          Text(_searchQuery.isNotEmpty ? '尝试其他关键词' : '点击右上角 + 号添加新类别'),
+        ],
+      ),
+    );
+  }
+
   List<Widget> _buildHierarchicalList(List<CategoryModel> categories) {
     final widgets = <Widget>[];
-
-    // 获取顶级类别（无父级的类别）
     final topLevelCategories = categories
         .where((category) => category.parentId == null)
         .toList();
@@ -275,7 +215,6 @@ class _CategorySelectionScreenState
     for (final category in topLevelCategories) {
       _buildCategoryWithChildren(widgets, categories, category, 0);
     }
-
     return widgets;
   }
 
@@ -285,456 +224,152 @@ class _CategorySelectionScreenState
     CategoryModel category,
     int level,
   ) {
-    widgets.add(_buildCategoryTile(context, category, level, allCategories));
+    widgets.add(_buildCategoryTile(category, level, allCategories));
 
-    // 获取当前类别的子类别
     if (category.id != null) {
       final subCategories = allCategories
           .where((subCat) => subCat.parentId == category.id)
-          .toList(); // 只有在展开状态下才递归添加子类别
-      final isExpanded = _expandedCategories[category.id!] ?? false; // 所有类别默认收起
+          .toList();
+      final isExpanded = _expandedCategories[category.id!] ?? false;
       if (isExpanded && subCategories.isNotEmpty) {
         for (final subCategory in subCategories) {
-          _buildCategoryWithChildren(
-            widgets,
-            allCategories,
-            subCategory,
-            level + 1,
-          );
+          _buildCategoryWithChildren(widgets, allCategories, subCategory, level + 1);
         }
       }
     }
   }
 
   Widget _buildCategoryTile(
-    BuildContext context,
-    CategoryModel category, [
-    int level = 0,
-    List<CategoryModel>? allCategories,
-  ]) {
-    final isSelected = widget.selectedCategoryId == category.id;
-    final isSubCategory = level > 0;
+    CategoryModel category,
+    int level,
+    List<CategoryModel> allCategories,
+  ) {
+    final categoryId = category.id;
+    if (categoryId == null) return const SizedBox.shrink();
 
-    // 检查是否有子类别
-    final hasSubCategories =
-        allCategories?.any((cat) => cat.parentId == category.id) ?? false;
-    final isExpanded = _expandedCategories[category.id!] ?? false; // 所有类别默认收起
+    final isSelected = widget.selectedCategoryId == categoryId;
+    final hasSubCategories = allCategories.any((cat) => cat.parentId == categoryId);
+    final isExpanded = _expandedCategories[categoryId] ?? false;
+    final productCount = _categoryProductCounts[categoryId] ?? 0;
+    final subCategoriesCount = allCategories.where((cat) => cat.parentId == categoryId).length;
 
-    // 计算左侧边距
-    final leftMargin = level * 24.0;
-
-    // 获取产品数量
-    final productCount = _categoryProductCounts[category.id] ?? 0;
-
-    return Container(
-      margin: EdgeInsets.only(bottom: 8, left: leftMargin),
-      child: Card(
-        elevation: isSelected ? 4 : 1,
-        color: isSelected
-            ? Theme.of(context).primaryColor.withOpacity(0.1)
-            : null,
-        child: ListTile(
-          title: Row(
-            children: [
-              // 展开/收起图标（只对有子类别的类别显示）
-              if (hasSubCategories) ...[
-                GestureDetector(
-                  onTap: () {
-                    setState(() {
-                      if (category.id != null) {
-                        _expandedCategories[category.id!] = !isExpanded;
-                      }
-                    });
-                  },
-                  child: Icon(
-                    isExpanded ? Icons.expand_less : Icons.expand_more,
-                    size: 20,
-                    color: Colors.grey.shade600,
-                  ),
-                ),
-                const SizedBox(width: 8),
-              ],
-              Expanded(
-                child: Row(
-                  children: [
-                    Text(
-                      category.name,
-                      style: TextStyle(
-                        fontWeight: isSelected
-                            ? FontWeight.bold
-                            : FontWeight.normal,
-                        fontSize: isSubCategory ? 14 : 16,
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 6,
-                        vertical: 2,
-                      ),
-                      decoration: BoxDecoration(
-                        color: Colors.blue.shade100,
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: Text(
-                        '$productCount',
-                        style: TextStyle(
-                          fontSize: 11,
-                          color: Colors.blue.shade700,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          subtitle: hasSubCategories
-              ? Text(
-                  '${allCategories?.where((cat) => cat.parentId == category.id).length ?? 0} 个子类别',
-                  style: const TextStyle(fontSize: 12, color: Colors.grey),
-                )
-              : null,
-          trailing: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              PopupMenuButton<String>(
-                onSelected: (action) =>
-                    _handleCategoryAction(context, category, action),
-                itemBuilder: (context) => [
-                  // 可以为任何类别添加父类
-                  const PopupMenuItem(
-                    value: 'add_parent_category',
-                    child: Row(
-                      children: [
-                        Icon(Icons.add, size: 20),
-                        SizedBox(width: 8),
-                        Text('新增父类'),
-                      ],
-                    ),
-                  ),
-                  const PopupMenuItem(
-                    value: 'edit',
-                    child: Row(
-                      children: [
-                        Icon(Icons.edit, size: 20),
-                        SizedBox(width: 8),
-                        Text('重命名'),
-                      ],
-                    ),
-                  ),
-                  const PopupMenuItem(
-                    value: 'delete',
-                    child: Row(
-                      children: [
-                        Icon(
-                          Icons.delete,
-                          size: 20,
-                          color: Color.fromARGB(255, 78, 6, 138),
-                        ),
-                        SizedBox(width: 8),
-                        Text(
-                          '删除',
-                          style: TextStyle(
-                            color: Color.fromARGB(255, 85, 0, 141),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-          onTap: () {
-            if (widget.isSelectionMode) {
-              // 检查是否为"烟"类别且是一级类别
-              if (category.name == '烟' && level == 0 && hasSubCategories) {
-                // "烟"类别且有子类别：切换展开/收起状态
-                setState(() {
-                  if (category.id != null) {
-                    _expandedCategories[category.id!] = !isExpanded;
-                  }
-                });
-              } else {
-                // 选择模式：直接返回选中的类别
-                Navigator.of(context).pop(category);
-              }
-            } else if (hasSubCategories) {
-              // 非选择模式且有子类别：切换展开/收起状态
-              setState(() {
-                if (category.id != null) {
-                  _expandedCategories[category.id!] = !isExpanded;
-                }
-              });
-            }
-          },
-        ),
-      ),
+    return CategoryTile(
+      category: category,
+      level: level,
+      isSelected: isSelected,
+      hasSubCategories: hasSubCategories,
+      isExpanded: isExpanded,
+      productCount: productCount,
+      subCategoriesCount: subCategoriesCount,
+      onExpandToggle: () => setState(() {
+        _expandedCategories[categoryId] = !isExpanded;
+      }),
+      onTap: () => _handleCategoryTap(category, level, hasSubCategories, isExpanded),
+      onAction: (action) => _handleCategoryAction(category, action),
     );
   }
 
-  void _handleCategoryAction(
-    BuildContext context,
+  void _handleCategoryTap(
     CategoryModel category,
-    String action,
+    int level,
+    bool hasSubCategories,
+    bool isExpanded,
   ) {
+    final categoryId = category.id;
+    if (categoryId == null) return;
+
+    if (widget.isSelectionMode) {
+      if (category.name == '烟' && level == 0 && hasSubCategories) {
+        setState(() => _expandedCategories[categoryId] = !isExpanded);
+      } else {
+        Navigator.of(context).pop(category);
+      }
+    } else if (hasSubCategories) {
+      setState(() => _expandedCategories[categoryId] = !isExpanded);
+    }
+  }
+
+  void _handleCategoryAction(CategoryModel category, String action) {
     switch (action) {
       case 'add_parent_category':
-        _showAddParentCategoryDialog(context, category);
+        _showAddParentCategoryDialog(category);
         break;
       case 'edit':
-        _showEditCategoryDialog(context, category);
+        _showEditCategoryDialog(category);
         break;
       case 'delete':
-        _showDeleteCategoryDialog(context, category);
+        _showDeleteCategoryDialog(category);
         break;
     }
   }
 
-  void _showAddCategoryDialog(BuildContext context) {
-    final nameController = TextEditingController();
-    final formKey = GlobalKey<FormState>();
+  Future<void> _showSearchDialog() async {
+    final newQuery = await showDialog<String>(
+      context: context,
+      builder: (context) => CategorySearchDialog(initialQuery: _searchQuery),
+    );
+    if (newQuery != null) setState(() => _searchQuery = newQuery);
+  }
 
+  void _showAddCategoryDialog() {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('新增类别'),
-        content: Form(
-          key: formKey,
-          child: TextFormField(
-            controller: nameController,
-            decoration: const InputDecoration(
-              labelText: '类别名称',
-              hintText: '请输入类别名称',
-              border: OutlineInputBorder(),
-            ),
-            validator: (value) {
-              if (value == null || value.trim().isEmpty) {
-                return '请输入类别名称';
-              }
-              final categories = ref.read(categoryListProvider).categories;
-              if (categories.any((cat) => cat.name == value.trim())) {
-                return '类别名称已存在';
-              }
-              return null;
-            },
-            autofocus: true,
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('取消'),
-          ),
-          ElevatedButton(
-            onPressed: () async {
-              if (formKey.currentState!.validate()) {
-                try {
-                  await ref
-                      .read(categoryListProvider.notifier)
-                      .addCategory(name: nameController.text.trim());
-                  Navigator.of(context).pop();
-                  showAppSnackBar(context, message: '类别添加成功');
-                  _loadProductCounts(); // 重新加载产品数量
-                } catch (e) {
-                  showAppSnackBar(context, message: '添加失败: $e', isError: true);
-                }
-              }
-            },
-            child: const Text('添加'),
-          ),
-        ],
+      builder: (context) => AddCategoryDialog(onSuccess: _loadProductCounts),
+    );
+  }
+
+  void _showAddParentCategoryDialog(CategoryModel category) {
+    showDialog(
+      context: context,
+      builder: (context) => AddParentCategoryDialog(
+        childCategory: category,
+        onSuccess: _loadProductCounts,
       ),
     );
   }
 
-  void _showAddParentCategoryDialog(
-    BuildContext context,
-    CategoryModel childCategory,
-  ) {
-    final nameController = TextEditingController();
-    final formKey = GlobalKey<FormState>();
-
+  void _showEditCategoryDialog(CategoryModel category) {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: Text('为"${childCategory.name}"新增父类'),
-        content: Form(
-          key: formKey,
-          child: TextFormField(
-            controller: nameController,
-            decoration: const InputDecoration(
-              labelText: '父类名称',
-              hintText: '请输入父类名称',
-              border: OutlineInputBorder(),
-            ),
-            validator: (value) {
-              if (value == null || value.trim().isEmpty) {
-                return '请输入父类名称';
-              }
-              final categories = ref.read(categoryListProvider).categories;
-              if (categories.any((cat) => cat.name == value.trim())) {
-                return '类别名称已存在';
-              }
-              return null;
-            },
-            autofocus: true,
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('取消'),
-          ),
-          ElevatedButton(
-            onPressed: () async {
-              if (formKey.currentState!.validate()) {
-                try {
-                  // 1. 先创建新的父类别
-                  await ref
-                      .read(categoryListProvider.notifier)
-                      .addCategory(
-                        name: nameController.text.trim(),
-                        parentId: childCategory.parentId, // 新父类继承当前类别的父级
-                      );
-
-                  // 2. 获取新创建的父类别ID（根据名称查找）
-                  await ref
-                      .read(categoryListProvider.notifier)
-                      .loadCategories();
-                  final updatedCategories = ref
-                      .read(categoryListProvider)
-                      .categories;
-                  final newParent = updatedCategories.firstWhere(
-                    (cat) => cat.name == nameController.text.trim(),
-                  );
-
-                  // 3. 更新当前类别，让它成为新父类的子类
-                  await ref
-                      .read(categoryListProvider.notifier)
-                      .updateCategory(
-                        id: childCategory.id!,
-                        name: childCategory.name,
-                        parentId: newParent.id, // 设置新创建的父类为父级
-                      );
-
-                  Navigator.of(context).pop();
-                  showAppSnackBar(
-                    context,
-                    message: '父类"${nameController.text.trim()}"创建成功',
-                  );
-                  _loadProductCounts(); // 重新加载产品数量
-                } catch (e) {
-                  showAppSnackBar(context, message: '添加失败: $e', isError: true);
-                }
-              }
-            },
-            child: const Text('添加'),
-          ),
-        ],
+      builder: (context) => EditCategoryDialog(
+        category: category,
+        onSuccess: _loadProductCounts,
       ),
     );
   }
 
-  void _showEditCategoryDialog(BuildContext context, CategoryModel category) {
-    final nameController = TextEditingController(text: category.name);
-    final formKey = GlobalKey<FormState>();
+  Future<void> _showDeleteCategoryDialog(CategoryModel category) async {
+    final categoryId = category.id;
+    if (categoryId == null) {
+      showAppSnackBar(context, message: '无效的类别', isError: true);
+      return;
+    }
 
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('重命名类别'),
-        content: Form(
-          key: formKey,
-          child: TextFormField(
-            controller: nameController,
-            decoration: const InputDecoration(
-              labelText: '类别名称',
-              border: OutlineInputBorder(),
-            ),
-            validator: (value) {
-              if (value == null || value.trim().isEmpty) {
-                return '请输入类别名称';
-              }
-              final categories = ref.read(categoryListProvider).categories;
-              if (categories.any(
-                (cat) => cat.name == value.trim() && cat.id != category.id,
-              )) {
-                return '类别名称已存在';
-              }
-              return null;
-            },
-            autofocus: true,
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('取消'),
-          ),
-          ElevatedButton(
-            onPressed: () async {
-              if (formKey.currentState!.validate()) {
-                try {
-                  await ref
-                      .read(categoryListProvider.notifier)
-                      .updateCategory(
-                        id: category.id!,
-                        name: nameController.text.trim(),
-                      );
-                  Navigator.of(context).pop();
-                  showAppSnackBar(context, message: '类别重命名成功');
-                  _loadProductCounts(); // 重新加载产品数量
-                } catch (e) {
-                  showAppSnackBar(context, message: '重命名失败: $e', isError: true);
-                }
-              }
-            },
-            child: const Text('保存'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _showDeleteCategoryDialog(
-    BuildContext context,
-    CategoryModel category,
-  ) async {
     final categories = ref.read(categoryListProvider).categories;
-    final allSubCategories = _getAllSubCategories(categories, category.id!);
-    final hasSubCategories = allSubCategories.isNotEmpty;
+    final allSubCategories = _getAllSubCategories(categories, categoryId);
 
-    // 获取关联产品数量
     int relatedProductsCount = 0;
     try {
       final productRepository = ref.read(productRepositoryProvider);
-      final products = await productRepository.getProductsByCondition(
-        categoryId: category.id,
-      );
+      final products = await productRepository.getProductsByCondition(categoryId: categoryId);
       relatedProductsCount = products.length;
     } catch (e) {
-      print('获取产品数量失败: $e');
-      // 如果获取失败，使用0作为默认值
+      debugPrint('获取产品数量失败: $e');
     }
 
     showDialog(
       context: context,
-      builder: (context) => _DeleteCategoryDialog(
+      builder: (context) => DeleteCategoryDialog(
         category: category,
-        hasSubCategories: hasSubCategories,
+        hasSubCategories: allSubCategories.isNotEmpty,
         subCategoriesCount: allSubCategories.length,
         relatedProductsCount: relatedProductsCount,
         onDeleteOnly: () async {
           try {
-            await ref
-                .read(categoryListProvider.notifier)
-                .deleteCategoryOnly(category.id!);
+            await ref.read(categoryListProvider.notifier).deleteCategoryOnly(categoryId);
             Navigator.of(context).pop();
             showAppSnackBar(context, message: '类别删除成功，子类别和产品已保留');
-            _loadProductCounts(); // 重新加载产品数量
+            _loadProductCounts();
           } catch (e) {
             Navigator.of(context).pop();
             showAppSnackBar(context, message: '删除失败: $e', isError: true);
@@ -742,12 +377,10 @@ class _CategorySelectionScreenState
         },
         onDeleteCascade: () async {
           try {
-            await ref
-                .read(categoryListProvider.notifier)
-                .deleteCategoryCascade(category.id!);
+            await ref.read(categoryListProvider.notifier).deleteCategoryCascade(categoryId);
             Navigator.of(context).pop();
             showAppSnackBar(context, message: '类别及所有关联内容删除成功', isError: true);
-            _loadProductCounts(); // 重新加载产品数量
+            _loadProductCounts();
           } catch (e) {
             Navigator.of(context).pop();
             showAppSnackBar(context, message: '删除失败: $e', isError: true);
@@ -757,317 +390,16 @@ class _CategorySelectionScreenState
     );
   }
 
-  // 递归获取所有子类别
-  List<CategoryModel> _getAllSubCategories(
-    List<CategoryModel> allCategories,
-    int parentId,
-  ) {
+  List<CategoryModel> _getAllSubCategories(List<CategoryModel> allCategories, int parentId) {
     final result = <CategoryModel>[];
-
-    // 获取直接子类别
-    final directSubCategories = allCategories
-        .where((cat) => cat.parentId == parentId)
-        .toList();
+    final directSubCategories = allCategories.where((cat) => cat.parentId == parentId).toList();
 
     for (final subCategory in directSubCategories) {
       result.add(subCategory);
-      // 递归获取子类别的子类别
       if (subCategory.id != null) {
         result.addAll(_getAllSubCategories(allCategories, subCategory.id!));
       }
     }
     return result;
-  }
-}
-
-/// 删除类别对话框组件
-class _DeleteCategoryDialog extends StatefulWidget {
-  final CategoryModel category;
-  final bool hasSubCategories;
-  final int subCategoriesCount;
-  final int relatedProductsCount;
-  final VoidCallback onDeleteOnly;
-  final VoidCallback onDeleteCascade;
-
-  const _DeleteCategoryDialog({
-    required this.category,
-    required this.hasSubCategories,
-    required this.subCategoriesCount,
-    required this.relatedProductsCount,
-    required this.onDeleteOnly,
-    required this.onDeleteCascade,
-  });
-
-  @override
-  State<_DeleteCategoryDialog> createState() => _DeleteCategoryDialogState();
-}
-
-class _DeleteCategoryDialogState extends State<_DeleteCategoryDialog> {
-  int _selectedOption = 0; // 0: 仅删除当前类别, 1: 级联删除
-
-  @override
-  Widget build(BuildContext context) {
-    return AlertDialog(
-      title: Row(
-        children: [
-          Icon(Icons.warning, color: Colors.orange, size: 24),
-          const SizedBox(width: 8),
-          const Text('删除类别'),
-        ],
-      ),
-      content: SingleChildScrollView(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              '即将删除类别 "${widget.category.name}"',
-              style: const TextStyle(fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 16),
-
-            // 显示影响范围信息
-            if (widget.hasSubCategories || widget.relatedProductsCount > 0) ...[
-              const Text(
-                '影响范围：',
-                style: TextStyle(fontWeight: FontWeight.w600),
-              ),
-              const SizedBox(height: 8),
-
-              if (widget.hasSubCategories)
-                Row(
-                  children: [
-                    Icon(Icons.folder, size: 16, color: Colors.blue),
-                    const SizedBox(width: 4),
-                    Text('子类别：${widget.subCategoriesCount} 个'),
-                  ],
-                ),
-
-              if (widget.relatedProductsCount > 0) ...[
-                const SizedBox(height: 4),
-                Row(
-                  children: [
-                    Icon(Icons.inventory, size: 16, color: Colors.green),
-                    const SizedBox(width: 4),
-                    Text('关联产品：${widget.relatedProductsCount} 个'),
-                  ],
-                ),
-              ],
-
-              const SizedBox(height: 16),
-            ],
-
-            const Text(
-              '请选择删除模式：',
-              style: TextStyle(fontWeight: FontWeight.w600),
-            ),
-            const SizedBox(height: 12),
-
-            // 选项1：仅删除当前类别
-            Container(
-              decoration: BoxDecoration(
-                border: Border.all(
-                  color: _selectedOption == 0
-                      ? Theme.of(context).primaryColor
-                      : Colors.grey.shade300,
-                  width: _selectedOption == 0 ? 2 : 1,
-                ),
-                borderRadius: BorderRadius.circular(8),
-                color: _selectedOption == 0
-                    ? Theme.of(context).primaryColor.withOpacity(0.1)
-                    : null,
-              ),
-              child: RadioListTile<int>(
-                value: 0,
-                groupValue: _selectedOption,
-                onChanged: (value) {
-                  setState(() {
-                    _selectedOption = value!;
-                  });
-                },
-                title: const Text(
-                  '仅删除当前类别',
-                  style: TextStyle(fontWeight: FontWeight.w600),
-                ),
-                subtitle: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const SizedBox(height: 4),
-                    const Text('保留子类别和关联产品'),
-                    const SizedBox(height: 8),
-
-                    if (widget.hasSubCategories) ...[
-                      Row(
-                        children: [
-                          Icon(
-                            Icons.arrow_forward,
-                            size: 14,
-                            color: Colors.blue,
-                          ),
-                          const SizedBox(width: 4),
-                          Expanded(
-                            child: Text(
-                              widget.category.parentId != null
-                                  ? '子类别将转移到上级类别'
-                                  : '子类别将成为根类别',
-                              style: TextStyle(
-                                fontSize: 12,
-                                color: Colors.blue.shade700,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 4),
-                    ],
-
-                    if (widget.relatedProductsCount > 0) ...[
-                      Row(
-                        children: [
-                          Icon(
-                            Icons.arrow_forward,
-                            size: 14,
-                            color: Colors.green,
-                          ),
-                          const SizedBox(width: 4),
-                          Expanded(
-                            child: Text(
-                              widget.category.parentId != null
-                                  ? '产品将转移到上级类别'
-                                  : '产品将取消类别关联',
-                              style: TextStyle(
-                                fontSize: 12,
-                                color: Colors.green.shade700,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 4),
-                    ],
-                  ],
-                ),
-                contentPadding: const EdgeInsets.symmetric(horizontal: 8),
-              ),
-            ),
-
-            const SizedBox(height: 12),
-
-            // 选项2：级联删除
-            Container(
-              decoration: BoxDecoration(
-                border: Border.all(
-                  color: _selectedOption == 1
-                      ? Colors.red
-                      : Colors.grey.shade300,
-                  width: _selectedOption == 1 ? 2 : 1,
-                ),
-                borderRadius: BorderRadius.circular(8),
-                color: _selectedOption == 1
-                    ? Colors.red.withOpacity(0.1)
-                    : null,
-              ),
-              child: RadioListTile<int>(
-                value: 1,
-                groupValue: _selectedOption,
-                onChanged: (value) {
-                  setState(() {
-                    _selectedOption = value!;
-                  });
-                },
-                title: const Text(
-                  '级联删除所有内容',
-                  style: TextStyle(fontWeight: FontWeight.w600),
-                ),
-                subtitle: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const SizedBox(height: 4),
-                    const Text('删除类别及所有关联内容'),
-                    const SizedBox(height: 8),
-
-                    if (widget.hasSubCategories) ...[
-                      Row(
-                        children: [
-                          Icon(
-                            Icons.delete,
-                            size: 14,
-                            color: const Color.fromARGB(255, 136, 54, 244),
-                          ),
-                          const SizedBox(width: 4),
-                          Text(
-                            '删除所有子类别（${widget.subCategoriesCount} 个）',
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: const Color.fromARGB(255, 178, 47, 211),
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 4),
-                    ],
-
-                    if (widget.relatedProductsCount > 0) ...[
-                      Row(
-                        children: [
-                          Icon(
-                            Icons.delete,
-                            size: 14,
-                            color: const Color.fromARGB(255, 152, 54, 244),
-                          ),
-                          const SizedBox(width: 4),
-                          Text(
-                            '删除所有关联产品（${widget.relatedProductsCount} 个）',
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: Colors.red.shade700,
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 4),
-                    ],
-
-                    const Row(
-                      children: [
-                        Icon(Icons.warning, size: 14, color: Colors.orange),
-                        SizedBox(width: 4),
-                        Expanded(
-                          child: Text(
-                            '此操作不可恢复',
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: Colors.orange,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-                contentPadding: const EdgeInsets.symmetric(horizontal: 8),
-              ),
-            ),
-          ],
-        ),
-      ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.of(context).pop(),
-          child: const Text('取消'),
-        ),
-        ElevatedButton(
-          onPressed: _selectedOption == 0
-              ? widget.onDeleteOnly
-              : widget.onDeleteCascade,
-          style: ElevatedButton.styleFrom(
-            backgroundColor: _selectedOption == 0 ? Colors.blue : Colors.red,
-            foregroundColor: Colors.white,
-          ),
-          child: Text(_selectedOption == 0 ? '仅删除类别' : '级联删除'),
-        ),
-      ],
-    );
   }
 }

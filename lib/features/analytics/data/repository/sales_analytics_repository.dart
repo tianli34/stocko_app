@@ -26,6 +26,7 @@ class SalesAnalyticsRepository {
     addSafely(() => _db.salesTransaction);
     addSafely(() => _db.product);
     addSafely(() => _db.stock);
+    addSafely(() => _db.unitProduct);
     return set;
   }
 
@@ -59,11 +60,12 @@ class SalesAnalyticsRepository {
           si.quantity * (si.price_in_cents - COALESCE(
             s.average_unit_price_in_sis,
             p.cost,
+            up.wholesale_price_in_cents,
             0
           ))
         ) AS total_profit_in_cents,
         SUM(CASE 
-              WHEN COALESCE(s.average_unit_price_in_sis, p.cost) IS NULL THEN 1 
+              WHEN COALESCE(s.average_unit_price_in_sis, p.cost, up.wholesale_price_in_cents) IS NULL THEN 1 
               ELSE 0 
             END) AS missing_cost_count
       FROM sales_transaction_item si
@@ -72,6 +74,8 @@ class SalesAnalyticsRepository {
       LEFT JOIN stock s ON s.product_id = si.product_id 
         AND s.shop_id = st.shop_id 
         AND (s.batch_id = si.batch_id OR (s.batch_id IS NULL AND si.batch_id IS NULL))
+      LEFT JOIN unit_product up ON up.product_id = si.product_id 
+        AND up.unit_id = si.unit_id
       WHERE st.created_at >= ? AND st.created_at < ? AND st.status != 'cancelled'
       GROUP BY p.id, p.name, p.sku
       HAVING SUM(si.quantity) > 0
@@ -123,11 +127,12 @@ class SalesAnalyticsRepository {
           si.quantity * (si.price_in_cents - COALESCE(
             s.average_unit_price_in_sis,
             p.cost,
+            up.wholesale_price_in_cents,
             0
           ))
         ) AS total_profit_in_cents,
         SUM(CASE 
-              WHEN COALESCE(s.average_unit_price_in_sis, p.cost) IS NULL THEN 1 
+              WHEN COALESCE(s.average_unit_price_in_sis, p.cost, up.wholesale_price_in_cents) IS NULL THEN 1 
               ELSE 0 
             END) AS missing_cost_count
       FROM sales_transaction_item si
@@ -136,6 +141,8 @@ class SalesAnalyticsRepository {
       LEFT JOIN stock s ON s.product_id = si.product_id 
         AND s.shop_id = st.shop_id 
         AND (s.batch_id = si.batch_id OR (s.batch_id IS NULL AND si.batch_id IS NULL))
+      LEFT JOIN unit_product up ON up.product_id = si.product_id 
+        AND up.unit_id = si.unit_id
       WHERE st.created_at >= ? AND st.created_at < ? AND st.status != 'cancelled'
       GROUP BY p.id, p.name, p.sku
       HAVING SUM(si.quantity) > 0

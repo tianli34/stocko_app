@@ -120,22 +120,21 @@ class _NonSaleOutboundScreenState extends ConsumerState<NonSaleOutboundScreen> {
     }
   }
 
-  void _scanToAddProduct() async {
-    final result = await ProductScanMixin.scanProduct(
+  void _scanToAddProduct() {
+    ProductScanMixin.scanAndAddProduct(
       context: context,
       ref: ref,
-      title: '扫码添加货品',
       subtitle: '扫描货品条码以添加出库单',
+      onProductScanned: (result) {
+        ref.read(saleListProvider.notifier).addOrUpdateItem(
+          product: result.product,
+          unitId: result.unitId,
+          unitName: result.unitName,
+          sellingPriceInCents: 0,
+          conversionRate: result.conversionRate,
+        );
+      },
     );
-    if (result != null) {
-      ref.read(saleListProvider.notifier).addOrUpdateItem(
-        product: result.product,
-        unitId: result.unitId,
-        unitName: result.unitName,
-        sellingPriceInCents: 0,
-        conversionRate: result.conversionRate,
-      );
-    }
   }
 
   void _continuousScan() {

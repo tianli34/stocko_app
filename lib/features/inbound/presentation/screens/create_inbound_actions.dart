@@ -53,23 +53,22 @@ mixin CreateInboundActions<T extends ConsumerStatefulWidget> on ConsumerState<T>
     }
   }
 
-  void scanToAddProduct() async {
-    final result = await ProductScanMixin.scanProduct(
+  void scanToAddProduct() {
+    ProductScanMixin.scanAndAddProduct(
       context: context,
       ref: ref,
-      title: '扫码添加货品',
       subtitle: '扫描货品条码以添加入库单',
+      onProductScanned: (result) {
+        ref.read(inboundListProvider.notifier).addOrUpdateItem(
+          product: result.product,
+          unitId: result.unitId,
+          unitName: result.unitName,
+          conversionRate: result.conversionRate,
+          barcode: result.barcode,
+          wholesalePriceInCents: result.wholesalePriceInCents,
+        );
+      },
     );
-    if (result != null) {
-      ref.read(inboundListProvider.notifier).addOrUpdateItem(
-        product: result.product,
-        unitId: result.unitId,
-        unitName: result.unitName,
-        conversionRate: result.conversionRate,
-        barcode: result.barcode,
-        wholesalePriceInCents: result.wholesalePriceInCents,
-      );
-    }
   }
 
   void continuousScan() {

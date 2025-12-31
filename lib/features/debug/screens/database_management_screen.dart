@@ -948,7 +948,7 @@ class DatabaseManagementScreen extends ConsumerWidget {
                           Text('数量: ${stock.quantity}'),
                           Text('店铺ID: ${stock.shopId}'),
                           Text(
-                            '均价(元): ${(stock.averageUnitPriceInSis! / 100000).toStringAsFixed(2)}',
+                            '均价(元): ${(stock.averageUnitPriceInSis / 100000).toStringAsFixed(2)}',
                           ),
                         ],
                       ),

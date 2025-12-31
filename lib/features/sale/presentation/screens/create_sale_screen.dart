@@ -176,25 +176,24 @@ class _CreateSaleScreenState extends ConsumerState<CreateSaleScreen> {
 
   // ==================== 扫码相关 ====================
 
-  void _scanToAddProduct() async {
-    final result = await ProductScanMixin.scanProduct(
+  void _scanToAddProduct() {
+    ProductScanMixin.scanAndAddProduct(
       context: context,
       ref: ref,
-      title: '扫码添加货品',
       subtitle: '扫描货品条码以添加销售单',
+      onProductScanned: (result) {
+        final sellingPrice = result.conversionRate == 1
+            ? (result.product.effectivePrice?.cents ?? 0)
+            : (result.sellingPriceInCents ?? 0);
+        ref.read(saleListProvider.notifier).addOrUpdateItem(
+          product: result.product,
+          unitId: result.unitId,
+          unitName: result.unitName,
+          sellingPriceInCents: sellingPrice,
+          conversionRate: result.conversionRate,
+        );
+      },
     );
-    if (result != null) {
-      final sellingPrice = result.conversionRate == 1
-          ? (result.product.effectivePrice?.cents ?? 0)
-          : (result.sellingPriceInCents ?? 0);
-      ref.read(saleListProvider.notifier).addOrUpdateItem(
-        product: result.product,
-        unitId: result.unitId,
-        unitName: result.unitName,
-        sellingPriceInCents: sellingPrice,
-        conversionRate: result.conversionRate,
-      );
-    }
   }
 
   void _continuousScan() {

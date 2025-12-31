@@ -20,6 +20,25 @@ typedef ProductScanResult = ({
 
 /// 货品扫码添加功能的通用工具类
 class ProductScanMixin {
+  /// 扫码并添加货品的通用方法
+  static Future<void> scanAndAddProduct({
+    required BuildContext context,
+    required WidgetRef ref,
+    required void Function(ProductScanResult) onProductScanned,
+    String title = '扫码添加货品',
+    String? subtitle,
+  }) async {
+    final result = await scanProduct(
+      context: context,
+      ref: ref,
+      title: title,
+      subtitle: subtitle ?? '扫描货品条码以添加',
+    );
+    if (result != null) {
+      onProductScanned(result);
+    }
+  }
+
   static Future<ProductScanResult?> scanProduct({
     required BuildContext context,
     required WidgetRef ref,
