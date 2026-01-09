@@ -78,7 +78,7 @@ class ProductRankingScreen extends ConsumerWidget {
                             children: [
                               if (hasMissingCost)
                                 const Tooltip(
-                                  message: '无采购记录，利润按0计算',
+                                  message: '部分销售无成本数据，利润可能不准确',
                                   child: Icon(
                                     Icons.info_outline,
                                     size: 14,

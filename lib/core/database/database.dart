@@ -116,7 +116,7 @@ part 'database.g.dart';
 class AppDatabase extends _$AppDatabase {
   AppDatabase(super.e);
   @override
-  int get schemaVersion => 32; 
+  int get schemaVersion => 33; 
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -178,6 +178,41 @@ class AppDatabase extends _$AppDatabase {
       );
     },
     onUpgrade: (Migrator m, int from, int to) async {
+      
+      // 版本33：采购订单表添加flowType字段，简化状态枚举
+      if (from < 33 && to >= 33) {
+        // 1. 检查flowType列是否已存在
+        final result = await customSelect(
+          "SELECT COUNT(*) as count FROM pragma_table_info('purchase_order') WHERE name='flow_type'",
+        ).getSingle();
+        
+        final hasFlowType = result.read<int>('count') > 0;
+        
+        // 只有在列不存在时才添加
+        if (!hasFlowType) {
+          await customStatement(
+            "ALTER TABLE purchase_order ADD COLUMN flow_type TEXT NOT NULL DEFAULT 'twoStep';",
+          );
+        }
+        
+        // 2. 迁移现有数据的状态
+        // completed -> completed (保持不变)
+        // inbounded -> completed (合并到completed)
+        // preset -> pendingInbound (修正为有意义的状态)
+        await customStatement(
+          "UPDATE purchase_order SET status = 'completed' WHERE status = 'inbounded';",
+        );
+        await customStatement(
+          "UPDATE purchase_order SET status = 'pendingInbound' WHERE status = 'preset';",
+        );
+        
+        // 3. 根据状态推断flowType
+        // 如果状态是completed，设置为oneClick（一键入库）
+        // 如果状态是pendingInbound，保持默认的twoStep（分步操作）
+        await customStatement(
+          "UPDATE purchase_order SET flow_type = 'oneClick' WHERE status = 'completed';",
+        );
+      }
       
       // 版本32：添加销售退货表
       if (from < 32 && to >= 32) {

@@ -43,15 +43,16 @@ class CustomerDao extends DatabaseAccessor<AppDatabase> with _$CustomerDaoMixin 
   }
 
   /// 获取所有客户的利润贡献（一次性查询）
-  /// 利润 = 销售价 - 成本（优先使用移动加权平均价，其次使用Product表的cost）
+  /// 利润 = 销售价 - 成本（优先使用移动加权平均价，其次使用Product表的cost，再次使用批发价）
   Future<Map<int, int>> getAllCustomerProfits() async {
     final result = await customSelect('''
       SELECT 
         c.id as customer_id,
         COALESCE(SUM(
           (sti.price_in_cents - COALESCE(
-            s.average_unit_price_in_sis / 1000,
+            CASE WHEN s.average_unit_price_in_sis > 0 THEN s.average_unit_price_in_sis / 1000 ELSE NULL END,
             p.cost,
+            up.wholesale_price_in_cents,
             0
           )) * sti.quantity
         ), 0) as total_profit
@@ -63,6 +64,8 @@ class CustomerDao extends DatabaseAccessor<AppDatabase> with _$CustomerDaoMixin 
       LEFT JOIN stock s ON s.product_id = sti.product_id 
         AND s.shop_id = st.shop_id 
         AND (s.batch_id = sti.batch_id OR (s.batch_id IS NULL AND sti.batch_id IS NULL))
+      LEFT JOIN unit_product up ON up.product_id = sti.product_id 
+        AND up.unit_id = sti.unit_id
       GROUP BY c.id
     ''').get();
 
@@ -98,8 +101,9 @@ class CustomerDao extends DatabaseAccessor<AppDatabase> with _$CustomerDaoMixin 
       SELECT 
         COALESCE(SUM(
           (sti.price_in_cents - COALESCE(
-            s.average_unit_price_in_sis / 1000,
+            CASE WHEN s.average_unit_price_in_sis > 0 THEN s.average_unit_price_in_sis / 1000 ELSE NULL END,
             p.cost,
+            up.wholesale_price_in_cents,
             0
           )) * sti.quantity
         ), 0) as total_profit
@@ -109,6 +113,8 @@ class CustomerDao extends DatabaseAccessor<AppDatabase> with _$CustomerDaoMixin 
       LEFT JOIN stock s ON s.product_id = sti.product_id 
         AND s.shop_id = st.shop_id 
         AND (s.batch_id = sti.batch_id OR (s.batch_id IS NULL AND sti.batch_id IS NULL))
+      LEFT JOIN unit_product up ON up.product_id = sti.product_id 
+        AND up.unit_id = sti.unit_id
       WHERE st.customer_id = ?
         AND st.status NOT IN ('cancelled', 'credit')
     ''', variables: [Variable.withInt(customerId)]).getSingle();

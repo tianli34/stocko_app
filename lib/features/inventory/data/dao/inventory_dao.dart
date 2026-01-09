@@ -345,9 +345,10 @@ class InventoryDao extends DatabaseAccessor<AppDatabase>
   }
 
   /// 获取库存总价值（数量 × 移动加权平均价格）
+  /// 只计算 averageUnitPriceInSis > 0 的库存
   Future<double> getTotalInventoryValue(int shopId) async {
     final result = await customSelect(
-      'SELECT SUM(quantity * average_unit_price_in_sis) as total_value FROM stock WHERE shop_id = ?',
+      'SELECT SUM(quantity * average_unit_price_in_sis) as total_value FROM stock WHERE shop_id = ? AND average_unit_price_in_sis > 0',
       variables: [Variable.withInt(shopId)],
       readsFrom: {stock},
     ).getSingleOrNull();
@@ -357,9 +358,10 @@ class InventoryDao extends DatabaseAccessor<AppDatabase>
   }
 
   /// 获取指定产品的库存总价值
+  /// 只计算 averageUnitPriceInSis > 0 的库存
   Future<double> getProductInventoryValue(int productId) async {
     final result = await customSelect(
-      'SELECT SUM(quantity * average_unit_price_in_sis) as total_value FROM stock WHERE product_id = ?',
+      'SELECT SUM(quantity * average_unit_price_in_sis) as total_value FROM stock WHERE product_id = ? AND average_unit_price_in_sis > 0',
       variables: [Variable.withInt(productId)],
       readsFrom: {stock},
     ).getSingleOrNull();

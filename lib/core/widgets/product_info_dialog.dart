@@ -213,7 +213,7 @@ class _ProductInfoDialogState extends ConsumerState<_ProductInfoDialog> {
     // 计算采购价：优先使用 averageUnitPriceInSis * conversionRate，否则使用 wholesalePriceInCents
     int? purchasePriceInCents;
     String priceSource = '';
-    if (widget.payload.averageUnitPriceInSis != null) {
+    if (widget.payload.averageUnitPriceInSis != null && widget.payload.averageUnitPriceInSis! > 0) {
       purchasePriceInCents =
           ((widget.payload.averageUnitPriceInSis! / 1000) * widget.payload.conversionRate).round();
       priceSource = '(库存均价)';

@@ -145,4 +145,21 @@ class BatchDao extends DatabaseAccessor<AppDatabase> with _$BatchDaoMixin {
           ..where((t) => t.productId.equals(productId) & t.shopId.equals(shopId)))
         .get();
   }
+
+  /// 安全扣减批次数量
+  /// 根据ID直接更新，避免 upsert 导致的插入负数错误
+  Future<void> decreaseBatchQuantity(int batchId, int decrement) async {
+    await customUpdate(
+      'UPDATE product_batch '
+      'SET total_inbound_quantity = MAX(0, total_inbound_quantity - ?), '
+      'updated_at = ? '
+      'WHERE id = ?',
+      variables: [
+        Variable.withInt(decrement),
+        Variable.withDateTime(DateTime.now()),
+        Variable.withInt(batchId),
+      ],
+      updates: {db.productBatch},
+    );
+  }
 }

@@ -58,14 +58,18 @@ class SalesAnalyticsRepository {
         SUM(si.quantity * si.price_in_cents) AS total_amount_in_cents,
         SUM(
           si.quantity * (si.price_in_cents - COALESCE(
-            s.average_unit_price_in_sis,
+            CASE WHEN s.average_unit_price_in_sis > 0 THEN s.average_unit_price_in_sis ELSE NULL END,
             p.cost,
             up.wholesale_price_in_cents,
             0
           ))
         ) AS total_profit_in_cents,
         SUM(CASE 
-              WHEN COALESCE(s.average_unit_price_in_sis, p.cost, up.wholesale_price_in_cents) IS NULL THEN 1 
+              WHEN COALESCE(
+                CASE WHEN s.average_unit_price_in_sis > 0 THEN s.average_unit_price_in_sis ELSE NULL END,
+                p.cost, 
+                up.wholesale_price_in_cents
+              ) IS NULL THEN 1 
               ELSE 0 
             END) AS missing_cost_count
       FROM sales_transaction_item si
@@ -125,14 +129,18 @@ class SalesAnalyticsRepository {
         SUM(si.quantity * si.price_in_cents) AS total_amount_in_cents,
         SUM(
           si.quantity * (si.price_in_cents - COALESCE(
-            s.average_unit_price_in_sis,
+            CASE WHEN s.average_unit_price_in_sis > 0 THEN s.average_unit_price_in_sis ELSE NULL END,
             p.cost,
             up.wholesale_price_in_cents,
             0
           ))
         ) AS total_profit_in_cents,
         SUM(CASE 
-              WHEN COALESCE(s.average_unit_price_in_sis, p.cost, up.wholesale_price_in_cents) IS NULL THEN 1 
+              WHEN COALESCE(
+                CASE WHEN s.average_unit_price_in_sis > 0 THEN s.average_unit_price_in_sis ELSE NULL END,
+                p.cost, 
+                up.wholesale_price_in_cents
+              ) IS NULL THEN 1 
               ELSE 0 
             END) AS missing_cost_count
       FROM sales_transaction_item si

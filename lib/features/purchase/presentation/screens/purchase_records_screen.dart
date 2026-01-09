@@ -152,12 +152,17 @@ class _PurchaseOrderCardState extends ConsumerState<PurchaseOrderCard> {
 
   @override
   Widget build(BuildContext context) {
+    print('DEBUG: Rendering Order ${widget.order.id}, Status: ${widget.order.status}');
     final suppliersAsync = ref.watch(allSuppliersProvider);
     final itemsAsync = ref.watch(purchaseOrderItemsProvider(widget.order.id));
     final isPendingInbound = widget.order.status == PurchaseOrderStatus.pendingInbound;
+    final isVoided = widget.order.status == PurchaseOrderStatus.voided;
+    final isCancelled = widget.order.status == PurchaseOrderStatus.cancelled;
+    final isInvalid = isVoided || isCancelled;
 
     Widget cardContent = Card(
       margin: const EdgeInsets.only(bottom: 12),
+      color: isInvalid ? Colors.grey.shade100 : null,
       child: Column(
         children: [
           InkWell(
@@ -178,7 +183,11 @@ class _PurchaseOrderCardState extends ConsumerState<PurchaseOrderCard> {
                           children: [
                             Text(
                               '订单号: ${widget.order.id}',
-                              style: const TextStyle(fontWeight: FontWeight.bold),
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                decoration: isInvalid ? TextDecoration.lineThrough : null,
+                                color: isInvalid ? Colors.grey : null,
+                              ),
                             ),
                             if (isPendingInbound) ...[
                               const SizedBox(width: 8),
@@ -195,6 +204,24 @@ class _PurchaseOrderCardState extends ConsumerState<PurchaseOrderCard> {
                                     fontSize: 11,
                                     color: Colors.orange,
                                     fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              ),
+                            ],
+                            if (isInvalid) ...[
+                              const SizedBox(width: 8),
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                decoration: BoxDecoration(
+                                  color: Colors.grey.shade300,
+                                  borderRadius: BorderRadius.circular(4),
+                                ),
+                                child: Text(
+                                  isVoided ? '已撤销' : '已作废',
+                                  style: const TextStyle(
+                                    fontSize: 11,
+                                    color: Colors.grey,
+                                    fontWeight: FontWeight.w600,
                                   ),
                                 ),
                               ),
@@ -235,9 +262,9 @@ class _PurchaseOrderCardState extends ConsumerState<PurchaseOrderCard> {
                             children: [
                               Text(
                                 '￥${(totalAmountInSis / 100000).toStringAsFixed(2)}',
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontWeight: FontWeight.bold,
-                                  color: Colors.green,
+                                  color: isInvalid ? Colors.grey : Colors.green,
                                 ),
                               ),
                               Text(

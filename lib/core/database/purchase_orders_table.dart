@@ -14,9 +14,13 @@ class PurchaseOrder extends Table {
   /// 外键 - 店铺ID
   IntColumn get shopId => integer().references(Shop, #id)();
 
-  // 使用受限枚举，避免任意字符串
-  TextColumn get status =>
-      textEnum<PurchaseOrderStatus>().withDefault(const Constant('preset'))();
+  /// 订单状态
+  TextColumn get status => textEnum<PurchaseOrderStatus>()
+      .withDefault(const Constant('pendingInbound'))();
+
+  /// 采购流程类型
+  TextColumn get flowType =>
+      textEnum<PurchaseFlowType>().withDefault(const Constant('twoStep'))();
 
   /// 创建时间
   DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
@@ -26,4 +30,10 @@ class PurchaseOrder extends Table {
 }
 
 /// 订单状态枚举
-enum PurchaseOrderStatus { preset, draft, completed, pendingInbound, inbounded }
+enum PurchaseOrderStatus { preset, draft, completed, pendingInbound, inbounded, voided, cancelled }
+
+/// 采购流程类型
+enum PurchaseFlowType {
+  oneClick, // 一键入库（采购+入库同时完成）
+  twoStep // 分步操作（先采购，后入库）
+}

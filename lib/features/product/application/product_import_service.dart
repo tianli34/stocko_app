@@ -129,38 +129,36 @@ class ProductImportService {
     final packUnitId = unitIdMap['包']!;
     final cartonUnitId = unitIdMap['条']!;
 
-    // --- 处理已存在的条码：删除旧产品数据以便覆盖 ---
+    // --- 处理已存在的条码：过滤掉已存在的货品 ---
+    final existingBarcodes = <String>{};
     if (allBarcodes.isNotEmpty) {
-      final existingBarcodes = await (db.select(
+      final existingBarcodeRecords = await (db.select(
         db.barcode,
       )..where((t) => t.barcodeValue.isIn(allBarcodes))).get();
 
-      if (existingBarcodes.isNotEmpty) {
-        // 收集需要删除的产品ID
-        final unitProductIds = existingBarcodes
-            .map((b) => b.unitProductId)
-            .toSet();
+      existingBarcodes.addAll(
+        existingBarcodeRecords.map((b) => b.barcodeValue),
+      );
+    }
 
-        // 查找这些unitProduct对应的产品ID
-        final unitProducts = await (db.select(
-          db.unitProduct,
-        )..where((t) => t.id.isIn(unitProductIds))).get();
+    // 过滤掉已存在条码的货品
+    final productsToImport = rawProductsData.where((productData) {
+      final packBarcode = productData['包条码'] as String?;
+      final cartonBarcode = productData['条条码'] as String?;
 
-        final productIds = unitProducts.map((up) => up.productId).toSet();
+      final hasExistingBarcode = (packBarcode != null &&
+              packBarcode.isNotEmpty &&
+              existingBarcodes.contains(packBarcode)) ||
+          (cartonBarcode != null &&
+              cartonBarcode.isNotEmpty &&
+              existingBarcodes.contains(cartonBarcode));
 
-        // 删除旧的条码记录
-        await (db.delete(
-          db.barcode,
-        )..where((t) => t.barcodeValue.isIn(allBarcodes))).go();
+      return !hasExistingBarcode;
+    }).toList();
 
-        // 删除旧的单位产品记录
-        await (db.delete(
-          db.unitProduct,
-        )..where((t) => t.productId.isIn(productIds))).go();
-
-        // 删除旧的产品记录
-        await (db.delete(db.product)..where((t) => t.id.isIn(productIds))).go();
-      }
+    final skippedCount = rawProductsData.length - productsToImport.length;
+    if (productsToImport.isEmpty) {
+      return '所有货品已存在，跳过导入。';
     }
     // --- 预检查结束 ---
 
@@ -171,7 +169,7 @@ class ProductImportService {
         final baseTimestamp = DateTime.now().millisecondsSinceEpoch;
         int idOffset = 0;
 
-        for (final productData in rawProductsData) {
+        for (final productData in productsToImport) {
           // 使用基础时间戳和偏移量生成唯一的ID
           final productId = baseTimestamp + idOffset;
           final productPackUnitId = baseTimestamp + idOffset + 1;
@@ -267,7 +265,10 @@ class ProductImportService {
           idOffset += 5;
         }
       });
-      return '批量导入任务完成，成功处理 ${rawProductsData.length} 条记录。';
+      final message = skippedCount > 0
+          ? '批量导入完成，成功导入 ${productsToImport.length} 条记录，跳过 $skippedCount 条已存在的记录。'
+          : '批量导入任务完成，成功处理 ${productsToImport.length} 条记录。';
+      return message;
     } catch (e, s) {
       // 在预检查后，此处的 UNIQUE constraint 错误理论上不应再发生
       // 但保留以防万一

@@ -84,6 +84,7 @@ class InboundService {
     required int? supplierId,
     required String? supplierName,
     PurchaseOrderStatus status = PurchaseOrderStatus.completed,
+    PurchaseFlowType flowType = PurchaseFlowType.oneClick,
   }) async {
     // 允许仅提供名称时自动创建供应商
     final actualSupplierId = await _ensureSupplierExists(supplierId, supplierName);
@@ -94,6 +95,7 @@ class InboundService {
       shopId: shopId,
       purchaseItems: internalItems,
       status: status,
+      flowType: flowType,
     );
     print('✅ 采购订单创建完成，ID: ${purchaseOrderData.orderId}');
     
@@ -121,7 +123,8 @@ class InboundService {
         internalItems: internalItems,
         supplierId: supplierId,
         supplierName: supplierName,
-        status: PurchaseOrderStatus.pendingInbound, // 待入库状态
+        status: PurchaseOrderStatus.pendingInbound,
+        flowType: PurchaseFlowType.twoStep, // 分步操作
       );
 
       print('🎉 采购流程执行完成！采购单号: ${purchaseOrderData.orderNumber}');
@@ -163,12 +166,18 @@ class InboundService {
           internalItems: internalItems,
           supplierId: supplierId,
           supplierName: supplierName,
+          status: PurchaseOrderStatus.completed,
+          flowType: PurchaseFlowType.oneClick, // 一键入库
         );
         purchaseOrderId = purchaseOrderData.orderId;
         id = purchaseOrderData.orderNumber;
+        print('🐛 DEBUG: 采购模式开启，生成的 purchaseOrderId: $purchaseOrderId');
+      } else {
+        print('🐛 DEBUG: 非采购模式 (isPurchaseMode=false)');
       }
 
       // --- 通用入库逻辑 ---
+      print('🐛 DEBUG: 调用 _processInboundCore, 传入 purchaseOrderId: $purchaseOrderId');
       final receiptNumber = await _processInboundCore(
         shopId: shopId,
         internalItems: internalItems,
@@ -233,8 +242,8 @@ class InboundService {
         source: '采购入库',
       );
 
-      // 4. 更新采购订单状态为已入库
-      await _updatePurchaseOrderStatus(purchaseOrderId, PurchaseOrderStatus.inbounded);
+      // 4. 更新采购订单状态为已完成
+      await _updatePurchaseOrderStatus(purchaseOrderId, PurchaseOrderStatus.completed);
 
       print('🎉 采购订单入库完成！入库单号: $receiptNumber');
       return receiptNumber;
@@ -294,6 +303,7 @@ class InboundService {
     required int shopId,
     required List<_PurchaseItem> purchaseItems,
     PurchaseOrderStatus status = PurchaseOrderStatus.completed,
+    PurchaseFlowType flowType = PurchaseFlowType.oneClick,
   }) async {
     // 生成采购单号
     final purchaseNumber = 'PO${DateTime.now().millisecondsSinceEpoch}';
@@ -304,6 +314,7 @@ class InboundService {
       supplierId: drift.Value(supplierId),
       shopId: drift.Value(shopId),
       status: drift.Value(status),
+      flowType: drift.Value(flowType),
     );
 
     // 准备订单明细列表（不包含purchaseOrderId，将在createFullPurchaseOrder中填充）
@@ -449,6 +460,9 @@ class InboundService {
       remarks: drift.Value(remarks),
       shopId: drift.Value(shopId),
       source: drift.Value(source),
+      purchaseOrderId: purchaseOrderId != null 
+          ? drift.Value(purchaseOrderId) 
+          : const drift.Value.absent(),
     );
 
     final receiptId = await _inboundReceiptDao.insertInboundReceipt(receipt);
@@ -595,6 +609,138 @@ class InboundService {
       print('❌ 创建供应商失败: $e');
       throw Exception('创建供应商失败: $e');
     }
+  }
+
+  /// 撤销入库单（红冲）
+  /// [inboundReceiptId] 入库单ID
+  Future<void> revokeInbound(int inboundReceiptId) async {
+    print('🚀 开始撤销入库单: $inboundReceiptId');
+
+    await _database.transaction(() async {
+      // 1. 获取入库单信息
+      final receipt = await _inboundReceiptDao.getInboundReceiptById(inboundReceiptId);
+      if (receipt == null) {
+        throw Exception('入库单不存在');
+      }
+      if (receipt.status == 'voided') {
+        throw Exception('入库单已撤销，请勿重复操作');
+      }
+
+      final items = await _inboundItemDao.getInboundItemsByReceiptId(inboundReceiptId);
+      if (items.isEmpty) {
+        print('⚠️ 入库单没有明细，仅更新状态');
+      }
+
+      // 2. 执行反向操作（红冲）
+      for (final item in items) {
+        // 获取商品信息
+        final unitProduct = await _database.productUnitDao.getUnitProductById(item.unitProductId);
+        if (unitProduct == null) continue; // 数据异常忽略
+
+        final product = await _database.productDao.getProductById(unitProduct.productId);
+        if (product == null) continue;
+
+        // 计算基础单位数量
+        final baseUnitQuantity = item.quantity * unitProduct.conversionRate;
+        final baseUnitPriceInSis = (await _purchaseDao.getLatestPurchasePrice(item.unitProductId)) ?? 0;
+        // 注意：这里取 LatestPurchasePrice 可能不准确，理想情况应该记录了当时的入库成本。
+        // 但 InboundItem 表目前没有存储 unitPriceInSis（它在 PurchaseOrderItem 里）。
+        // 如果是“一键入库”，PurchaseOrderItem 肯定有记录。
+        // 如果是“纯入库”，没有 POItem，那成本怎么算的？
+        // 回看 _writeInventoryRecords：
+        //   final baseUnitPriceInSis = (item.unitPriceInSis / unitProduct.conversionRate).round();
+        //   _weightedAveragePriceService.updateWeightedAveragePrice(...)
+        // 问题：InboundItem 表里竟然没有存单价？
+        // check `inbound_receipt_items_table.dart`.
+        // It seems `InboundItem` only has quantity. The price is in `PurchaseOrderItem`.
+        // If `PurchaseOrderItem` is linked via `PurchaseOrder`, we can find it.
+        // 但是，如果是 processOneClickInbound，我们有 PurchaseOrder。
+        // 如果我们要在 revoke 时反算均价，必须知道当时的入库价。
+        // 这是一个潜在的各种坑。
+        // 补救措施：尝试通过关联的 PurchaseOrder 找到对应的 PurchaseOrderItem 获取价格。
+        
+        int itemPriceInSis = 0;
+        if (receipt.purchaseOrderId != null) {
+          final poItems = await _purchaseDao.getPurchaseOrderItems(receipt.purchaseOrderId!);
+          final match = poItems.where((element) => element.unitProductId == item.unitProductId).firstOrNull;
+          if (match != null) {
+             // 换算为基本单位价格
+             itemPriceInSis = (match.unitPriceInSis / unitProduct.conversionRate).round();
+          }
+        }
+        
+        // 如果没找到原始入库价（例如非采购入库，或数据丢失），使用当前库存均价作为回滚价格
+        // 这样可以避免因价格为0导致回滚后均价异常升高（数学上相当于按当前成本出库，不影响剩余库存均价）
+        if (itemPriceInSis == 0) {
+           final currentStock = await _inventoryService.getInventory(unitProduct.productId, receipt.shopId);
+           itemPriceInSis = currentStock?.averageUnitPriceInSis ?? 0;
+           print('⚠️ 未找到原始入库价，使用当前库存均价兜底: $itemPriceInSis');
+        }
+        
+        print('🔧 撤销调试: 产品=${product.name}, 数量=$baseUnitQuantity, 找到单价=$itemPriceInSis');
+
+        // 2.1 先反向修正加权平均价 (在库存扣减前进行，确保计算基数包含该笔入库)
+        // 只有当价格 > 0 时才需要修正均价；如果是0元入库，均价只会因数量变动而自动调整（下一行出库时虽然不改均价字段，但数学上没问题吗？
+        // 不，InventoryService.outbound 不会改均价。
+        // 如果入库是 0 元，均价被拉低了。撤销时，均价应该回升。
+        // 所以即使 itemPriceInSis 是 0，也应该执行 reverse，让算法去处理 (0元也是价格)。
+        // 但 reverse 方法内部依赖 (CurrentValue - InboundValue) / NewQty。
+        // 如果 InboundValue 是 0，CurrentValue 不变，NewQty 变小，AvgPrice 变大。正确。
+        // 所以应该总是执行 reverse，只要有数量。
+        
+        await _weightedAveragePriceService.reverseInboundWeightedAveragePrice(
+          productId: unitProduct.productId,
+          shopId: receipt.shopId,
+          batchId: item.batchId,
+          inboundQuantity: baseUnitQuantity,
+          inboundUnitPriceInSis: itemPriceInSis,
+        );
+
+        // 2.2 扣减库存 (出库)
+        await _inventoryService.outbound(
+          productId: unitProduct.productId,
+          shopId: receipt.shopId,
+          batchId: item.batchId,
+          quantity: baseUnitQuantity,
+        );
+
+        // 2.3 扣减批次累计数量
+        if (item.batchId != null) {
+           // 使用专门的扣减方法，避免 upsert 导致的不存在即插入负数的问题
+           await _batchDao.decreaseBatchQuantity(item.batchId!, baseUnitQuantity);
+           print('📦 批次(ID:${item.batchId}) 数量回滚 -$baseUnitQuantity');
+        }
+      }
+
+      // 3. 更新入库单状态
+      await (_database.update(_database.inboundReceipt)
+        ..where((tbl) => tbl.id.equals(inboundReceiptId)))
+        .write(const InboundReceiptCompanion(
+          status: drift.Value('voided'),
+        ));
+
+      // 4. 处理关联采购单
+      if (receipt.purchaseOrderId != null) {
+        final order = await _purchaseDao.getPurchaseOrderById(receipt.purchaseOrderId!);
+        if (order != null) {
+          // 根据流程类型决定撤销后的状态
+          final newStatus = order.flowType == PurchaseFlowType.oneClick
+              ? PurchaseOrderStatus.cancelled      // 一键入库 → 取消
+              : PurchaseOrderStatus.pendingInbound; // 分步操作 → 回到待入库
+
+          await _updatePurchaseOrderStatus(receipt.purchaseOrderId!, newStatus);
+          print('🔄 关联采购单(${receipt.purchaseOrderId}) 状态更新为: $newStatus');
+          
+          // 验证数据库写入是否成功
+          final updatedOrder = await _purchaseDao.getPurchaseOrderById(receipt.purchaseOrderId!);
+          print('🔄 验证数据库实际状态: ${updatedOrder?.status}');
+        }
+      } else {
+        print('⚠️ 入库单没有关联的采购单ID，无法更新采购单状态');
+      }
+
+      print('✅ 入库单 $inboundReceiptId 已成功撤销');
+    });
   }
 }
 

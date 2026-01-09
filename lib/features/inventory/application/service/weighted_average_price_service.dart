@@ -62,6 +62,66 @@ class WeightedAveragePriceService {
     });
   }
 
+  /// 撤销入库时更新移动加权平均价格
+  /// 执行 updateWeightedAveragePrice 的逆操作
+  Future<void> reverseInboundWeightedAveragePrice({
+    required int productId,
+    required int shopId,
+    required int? batchId,
+    required int inboundQuantity,
+    required int inboundUnitPriceInSis,
+  }) async {
+    await _database.transaction(() async {
+      final currentStock = await _database.inventoryDao
+          .getInventoryByProductShopAndBatch(productId, shopId, batchId);
+
+      if (currentStock == null) {
+        return;
+      }
+
+      // 逆向计算逻辑：
+      // 当前状态：已包含要撤销的入库
+      // 目标状态：剔除该笔入库后的状态
+      
+      final currentQuantity = currentStock.quantity;
+      final currentAvgPrice = currentStock.averageUnitPriceInSis;
+      
+      // 撤销后的数量 (如果不允许负库存，这里应该 >= 0)
+      final quantityAfterReversal = currentQuantity - inboundQuantity;
+      
+      if (quantityAfterReversal <= 0) {
+        // 如果撤销后没有库存了，均价重置为0
+        // 或者如果变成负数（异常情况），也重置为0防错
+        await _database.inventoryDao.updateInventory(
+          StockCompanion(
+            id: drift.Value(currentStock.id),
+            averageUnitPriceInSis: const drift.Value(0),
+            updatedAt: drift.Value(DateTime.now()),
+          ),
+        );
+        return;
+      }
+
+      // 逆向公式：
+      // 原总价值 = 当前总价值 - 入库价值
+      // (Q_old * P_old) = (Q_curr * P_curr) - (Q_in * P_in)
+      final currentTotalValue = currentQuantity * currentAvgPrice;
+      final inboundValue = inboundQuantity * inboundUnitPriceInSis;
+      final oldTotalValue = currentTotalValue - inboundValue;
+      
+      final oldAvgPrice = (oldTotalValue / quantityAfterReversal).round();
+
+      // 只更新平均价格
+      await _database.inventoryDao.updateInventory(
+        StockCompanion(
+          id: drift.Value(currentStock.id),
+          averageUnitPriceInSis: drift.Value(oldAvgPrice),
+          updatedAt: drift.Value(DateTime.now()),
+        ),
+      );
+    });
+  }
+
   /// 出库时更新移动加权平均价格
   /// 出库不改变平均价格，只减少数量
   Future<void> updateOnOutbound({
