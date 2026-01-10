@@ -25,8 +25,8 @@ final homeStatsProvider = FutureProvider<HomeStats>((ref) async {
       AND status != 'cancelled'
     ''',
     variables: [
-      Variable.withInt(todayStart.millisecondsSinceEpoch),
-      Variable.withInt(todayEnd.millisecondsSinceEpoch),
+      Variable.withInt(todayStart.millisecondsSinceEpoch ~/ 1000),
+      Variable.withInt(todayEnd.millisecondsSinceEpoch ~/ 1000),
     ],
   ).getSingleOrNull();
   
@@ -35,28 +35,36 @@ final homeStatsProvider = FutureProvider<HomeStats>((ref) async {
   final todayCustomerCount = salesResult?.read<int>('customer_count') ?? 0;
   final todayOrderCount = salesResult?.read<int>('order_count') ?? 0;
   
-  // 2. 计算今日利润（简化计算：实收金额 - 成本）
-  // 获取今日销售商品的成本
+  // 2. 计算今日利润（参考商品排行榜的逻辑：实收金额 - 成本）
+  // 优先级：库存均价(Sis) > 商品成本(Cents->Sis) > 单位批发价(Cents->Sis) > 0
   final costResult = await db.customSelect(
     '''
     SELECT COALESCE(SUM(
       sti.quantity * COALESCE(
-        (SELECT s.average_unit_price_in_sis FROM stock s 
-         WHERE s.product_id = sti.product_id LIMIT 1), 0
+        CASE WHEN s.average_unit_price_in_sis > 0 THEN s.average_unit_price_in_sis ELSE NULL END,
+        p.cost * 1000,
+        up.wholesale_price_in_cents * 1000,
+        0
       )
     ), 0) as total_cost
     FROM sales_transaction_item sti
     JOIN sales_transaction st ON st.id = sti.sales_transaction_id
+    JOIN product p ON p.id = sti.product_id
+    LEFT JOIN stock s ON s.product_id = sti.product_id 
+      AND s.shop_id = st.shop_id
+      AND (s.batch_id = sti.batch_id OR (s.batch_id IS NULL AND sti.batch_id IS NULL))
+    LEFT JOIN unit_product up ON up.product_id = sti.product_id 
+      AND up.unit_id = sti.unit_id
     WHERE st.created_at >= ? AND st.created_at < ?
       AND st.status != 'cancelled'
     ''',
     variables: [
-      Variable.withInt(todayStart.millisecondsSinceEpoch),
-      Variable.withInt(todayEnd.millisecondsSinceEpoch),
+      Variable.withInt(todayStart.millisecondsSinceEpoch ~/ 1000),
+      Variable.withInt(todayEnd.millisecondsSinceEpoch ~/ 1000),
     ],
   ).getSingleOrNull();
   
-  final totalCostInSis = costResult?.read<int>('total_cost') ?? 0;
+  final totalCostInSis = costResult?.read<double>('total_cost') ?? 0.0;
   final totalCost = totalCostInSis / 100000.0; // 丝转元
   final todayProfit = todayActualSales - totalCost;
   
@@ -79,8 +87,8 @@ final homeStatsProvider = FutureProvider<HomeStats>((ref) async {
     WHERE created_at >= ? AND created_at < ?
     ''',
     variables: [
-      Variable.withInt(todayStart.millisecondsSinceEpoch),
-      Variable.withInt(todayEnd.millisecondsSinceEpoch),
+      Variable.withInt(todayStart.millisecondsSinceEpoch ~/ 1000),
+      Variable.withInt(todayEnd.millisecondsSinceEpoch ~/ 1000),
     ],
   ).getSingleOrNull();
   

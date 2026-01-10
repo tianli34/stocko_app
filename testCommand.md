@@ -2,7 +2,7 @@
 
 cd E:\stocko_app\
 git add .
-git commit -m "1212 3 1K 备份恢复"
+git commit -m "19 3 920 入库单撤销"
 git push
 
 

@@ -244,10 +244,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         badge: lowStockCount > 0 ? lowStockCount : null,
       ),
       _FeatureItem(
-        label: '采购管理',
-        icon: Icons.shopping_cart,
+        label: '采购记录',
+        icon: Icons.receipt_long,
         color: Colors.blue,
-        route: AppRoutes.purchase,
+        route: AppRoutes.inventoryPurchaseRecords,
       ),
       _FeatureItem(
         label: '客户管理',
